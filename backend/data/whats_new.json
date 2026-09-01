@@ -1,0 +1,41 @@
+{
+  "_comment": "Single source of truth for the What's New editorial feed. Seed with: python -m app.seed",
+  "posts": [
+    {
+      "id": "pistachio-latte",
+      "order": 1,
+      "kind": "drink",
+      "image": "https://images.unsplash.com/photo-1770282184778-f474bd3a379a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+      "title": {
+        "en": "Pistachio Latte",
+        "hu": "Pisztácia Latte"
+      },
+      "blurb": {
+        "en": "Creamy espresso with pistachio and steamed milk.",
+        "hu": "Krémes eszpresszó pisztáciával és gőzölt tejjel."
+      },
+      "body": {
+        "en": "Our newest seasonal pour: a smooth double shot balanced with house-made pistachio and silky steamed milk. Nutty, warm, and just sweet enough.",
+        "hu": "Legújabb szezonális kávénk: lágy dupla eszpresszó saját készítésű pisztáciakrémmel és selymes gőzölt tejjel. Diós, meleg és épp csak annyira édes."
+      }
+    },
+    {
+      "id": "almond-croissant",
+      "order": 2,
+      "kind": "pastry",
+      "image": "https://images.unsplash.com/photo-1623334044303-241021148842?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+      "title": {
+        "en": "Almond Croissant",
+        "hu": "Mandulás Croissant"
+      },
+      "blurb": {
+        "en": "Buttery, flaky, baked fresh every morning.",
+        "hu": "Vajas, leveles, minden reggel frissen sütve."
+      },
+      "body": {
+        "en": "Layered by hand and filled with almond frangipane, then dusted with toasted flakes. Best enjoyed warm with a flat white.",
+        "hu": "Kézzel hajtogatva, mandulás frangipane töltelékkel, pirított mandulapehellyel megszórva. Melegen, egy flat white mellé a legjobb."
+      }
+    }
+  ]
+}

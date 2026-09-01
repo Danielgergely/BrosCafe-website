@@ -1,0 +1,979 @@
+{
+  "_comment": "Single source of truth for the Bros Cafe product catalog. Prices are HUF (integers). Seed into MongoDB with: python -m app.seed",
+  "products": [
+    {
+      "id": "espresso",
+      "cat": "coffee",
+      "order": 1,
+      "price_huf": 1400,
+      "temp": "hot",
+      "allergens": [],
+      "flavor": {
+        "bitterSweet": 28,
+        "lightBold": 82,
+        "milkyCreamy": 12,
+        "hotIced": 95
+      },
+      "video": "https://assets.mixkit.co/videos/47954/47954-720.mp4",
+      "images": [
+        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwyfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "ESPRESSO",
+        "hu": "ESPRESSO"
+      },
+      "desc": {
+        "en": "Short, dark, honest. The way we judge a café — including our own.",
+        "hu": "Rövid, sötét, őszinte. Ezzel mérünk egy kávézót — magunkat is."
+      },
+      "tip": {
+        "en": "Best enjoyed standing at the bar, Italian style.",
+        "hu": "A pultnál állva a legjobb, olasz módra."
+      },
+      "ingredients": {
+        "en": [
+          "18g Bros blend",
+          "Water, 93°C",
+          "27 seconds"
+        ],
+        "hu": [
+          "18g Bros keverék",
+          "Víz, 93°C",
+          "27 másodperc"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Beans — our Brazil + Ethiopia blend",
+          "Grind — fine, 18g dose",
+          "Extraction — 27 slow seconds",
+          "Your cup — warmed, always"
+        ],
+        "hu": [
+          "Bab — brazil + etióp keverékünk",
+          "Őrlés — finom, 18g adag",
+          "Extrakció — 27 lassú másodperc",
+          "A csészéd — mindig előmelegítve"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Single",
+          "Double"
+        ],
+        "hu": [
+          "Szimpla",
+          "Dupla"
+        ]
+      },
+      "pairings": [
+        "croissant",
+        "bros-beans"
+      ]
+    },
+    {
+      "id": "cappuccino",
+      "cat": "coffee",
+      "order": 2,
+      "price_huf": 1800,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "flavor": {
+        "bitterSweet": 45,
+        "lightBold": 60,
+        "milkyCreamy": 70,
+        "hotIced": 95
+      },
+      "images": [
+        "https://images.pexels.com/photos/11201494/pexels-photo-11201494.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "https://customer-assets-m6fa6gv7.emergentagent.net/job_premium-cafe-vision/artifacts/bcss9hu4_Gemini_Generated_Image_10kd0510kd0510kd.webp",
+        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "CAPPUCCINO",
+        "hu": "CAPPUCCINO"
+      },
+      "desc": {
+        "en": "Rich espresso balanced with silky steamed milk and proper foam.",
+        "hu": "Karakteres espresso, selymesen gőzölt tejjel és rendes habbal."
+      },
+      "tip": {
+        "en": "Best enjoyed slowly. Ask for oat if that's your thing.",
+        "hu": "Lassan a legjobb. Ha úgy szereted, kérd zabbal."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Steamed milk",
+          "Dense microfoam"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Gőzölt tej",
+          "Sűrű mikrohab"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Beans — Brazil + Ethiopia blend",
+          "Espresso — double shot",
+          "Milk — steamed to 60°C",
+          "Foam — spooned, not poured"
+        ],
+        "hu": [
+          "Bab — brazil + etióp keverék",
+          "Espresso — dupla shot",
+          "Tej — 60°C-ra gőzölve",
+          "Hab — kanalazva, nem öntve"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Regular",
+          "Large"
+        ],
+        "hu": [
+          "Normál",
+          "Nagy"
+        ]
+      },
+      "pairings": [
+        "croissant",
+        "banana-bread",
+        "bros-mug"
+      ]
+    },
+    {
+      "id": "latte",
+      "cat": "coffee",
+      "order": 3,
+      "price_huf": 1800,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "flavor": {
+        "bitterSweet": 55,
+        "lightBold": 35,
+        "milkyCreamy": 88,
+        "hotIced": 90
+      },
+      "images": [
+        "https://images.pexels.com/photos/32590864/pexels-photo-32590864.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "https://customer-assets-m6fa6gv7.emergentagent.net/job_premium-cafe-vision/artifacts/bcss9hu4_Gemini_Generated_Image_10kd0510kd0510kd.webp",
+        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "LATTE",
+        "hu": "LATTE"
+      },
+      "desc": {
+        "en": "Milk, done properly. Soft, warm, and gently caffeinated.",
+        "hu": "Tej, rendesen megcsinálva. Lágy, meleg, gyengéden koffeines."
+      },
+      "tip": {
+        "en": "Perfect for a slow morning and a window seat.",
+        "hu": "Tökéletes egy lassú reggelhez és egy ablak melletti helyhez."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Lots of steamed milk",
+          "Latte art, if we're not slammed"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Sok gőzölt tej",
+          "Latte art, ha nincs rohanás"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Beans — Brazil + Ethiopia blend",
+          "Espresso — double shot",
+          "Milk — silky, glossy steam",
+          "The pour — where the art happens"
+        ],
+        "hu": [
+          "Bab — brazil + etióp keverék",
+          "Espresso — dupla shot",
+          "Tej — selymes, fényes gőzölés",
+          "Az öntés — itt történik a varázslat"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Regular",
+          "Large"
+        ],
+        "hu": [
+          "Normál",
+          "Nagy"
+        ]
+      },
+      "pairings": [
+        "cinnamon-waffles",
+        "bros-mug"
+      ]
+    },
+    {
+      "id": "americano",
+      "cat": "coffee",
+      "order": 4,
+      "price_huf": 1600,
+      "temp": "both",
+      "allergens": [],
+      "flavor": {
+        "bitterSweet": 35,
+        "lightBold": 55,
+        "milkyCreamy": 5,
+        "hotIced": 85
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "AMERICANO",
+        "hu": "AMERICANO"
+      },
+      "desc": {
+        "en": "Clean and slow. Espresso lengthened, flavor intact.",
+        "hu": "Tiszta és lassú. Hosszított espresso, ép ízzel."
+      },
+      "tip": {
+        "en": "Great black. Even better with ten quiet minutes.",
+        "hu": "Feketén remek. Tíz csendes perccel még jobb."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Hot water"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Forró víz"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Beans — Brazil + Ethiopia blend",
+          "Espresso — double shot",
+          "Water — hot, poured gently",
+          "Crema — kept on top"
+        ],
+        "hu": [
+          "Bab — brazil + etióp keverék",
+          "Espresso — dupla shot",
+          "Víz — forrón, óvatosan öntve",
+          "Crema — a tetején marad"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Regular",
+          "Large"
+        ],
+        "hu": [
+          "Normál",
+          "Nagy"
+        ]
+      },
+      "pairings": [
+        "bros-sandwich",
+        "bros-beans"
+      ]
+    },
+    {
+      "id": "cold-brew",
+      "cat": "cold",
+      "order": 5,
+      "price_huf": 1800,
+      "temp": "iced",
+      "allergens": [],
+      "flavor": {
+        "bitterSweet": 40,
+        "lightBold": 65,
+        "milkyCreamy": 10,
+        "hotIced": 5
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=900&q=80",
+        "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=900&q=80",
+        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "COLD BREW",
+        "hu": "COLD BREW"
+      },
+      "desc": {
+        "en": "Steeped for 18 hours. Smooth, chocolatey, dangerously drinkable.",
+        "hu": "18 órát ázott. Sima, csokis, veszélyesen iható."
+      },
+      "tip": {
+        "en": "Ask for a slice of orange if you like it bright.",
+        "hu": "Kérj hozzá egy szelet narancsot, ha frissen szereted."
+      },
+      "ingredients": {
+        "en": [
+          "Coarse-ground Bros blend",
+          "Cold water",
+          "Time — 18 hours"
+        ],
+        "hu": [
+          "Durvára őrölt Bros keverék",
+          "Hideg víz",
+          "Idő — 18 óra"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Regular",
+          "Large"
+        ],
+        "hu": [
+          "Normál",
+          "Nagy"
+        ]
+      },
+      "pairings": [
+        "brownie-sundae",
+        "bros-tee"
+      ]
+    },
+    {
+      "id": "iced-latte",
+      "cat": "cold",
+      "order": 6,
+      "price_huf": 2000,
+      "temp": "iced",
+      "allergens": [
+        "Milk"
+      ],
+      "flavor": {
+        "bitterSweet": 50,
+        "lightBold": 40,
+        "milkyCreamy": 80,
+        "hotIced": 5
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=900&q=80",
+        "https://images.pexels.com/photos/32590864/pexels-photo-32590864.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "ICED LATTE",
+        "hu": "JEGES LATTE"
+      },
+      "desc": {
+        "en": "Espresso over ice, cold milk on top. Summer in a glass.",
+        "hu": "Espresso jégen, hideg tej a tetején. Nyár egy pohárban."
+      },
+      "tip": {
+        "en": "Watch it marble before you stir. Half the fun.",
+        "hu": "Nézd, ahogy márványosodik, mielőtt megkevered. Ez a fele élmény."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Ice",
+          "Cold milk"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Jég",
+          "Hideg tej"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Regular",
+          "Large"
+        ],
+        "hu": [
+          "Normál",
+          "Nagy"
+        ]
+      },
+      "pairings": [
+        "croissant",
+        "brownie-sundae"
+      ]
+    },
+    {
+      "id": "espresso-tonic",
+      "cat": "cold",
+      "order": 7,
+      "price_huf": 2200,
+      "temp": "iced",
+      "allergens": [],
+      "flavor": {
+        "bitterSweet": 60,
+        "lightBold": 30,
+        "milkyCreamy": 0,
+        "hotIced": 5
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwyfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "ESPRESSO TONIC",
+        "hu": "ESPRESSO TONIC"
+      },
+      "desc": {
+        "en": "Sounds wrong, tastes right. Double shot over tonic and ice.",
+        "hu": "Rossznak hangzik, finom. Dupla shot tonic és jég felett."
+      },
+      "tip": {
+        "en": "Our most argued-about drink. Try it before you judge it.",
+        "hu": "A legtöbbet vitatott italunk. Kóstold meg, mielőtt ítélkezel."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Tonic water",
+          "Ice",
+          "Orange peel"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Tonic",
+          "Jég",
+          "Narancshéj"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "One size"
+        ],
+        "hu": [
+          "Egy méret"
+        ]
+      },
+      "pairings": [
+        "bros-sandwich"
+      ]
+    },
+    {
+      "id": "bros-sandwich",
+      "cat": "food",
+      "order": 8,
+      "price_huf": 3000,
+      "temp": "hot",
+      "allergens": [
+        "Gluten",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=900&q=80",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "BROS SANDWICH",
+        "hu": "BROS SZENDVICS"
+      },
+      "desc": {
+        "en": "Toasted sourdough, slow fillings, made when you order it.",
+        "hu": "Pirított kovászos kenyér, lassan készült töltelék, rendelésre frissen."
+      },
+      "tip": {
+        "en": "The sauce recipe is a secret. We've tried to get it out of them.",
+        "hu": "A szósz receptje titok. Hiába próbáltuk kiszedni belőlük."
+      },
+      "ingredients": {
+        "en": [
+          "Sourdough",
+          "Slow-cooked filling of the day",
+          "Greens",
+          "House sauce"
+        ],
+        "hu": [
+          "Kovászos kenyér",
+          "A nap lassú tölteléke",
+          "Zöldek",
+          "Házi szósz"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "One size"
+        ],
+        "hu": [
+          "Egy méret"
+        ]
+      },
+      "pairings": [
+        "americano",
+        "espresso-tonic"
+      ]
+    },
+    {
+      "id": "cinnamon-waffles",
+      "cat": "food",
+      "order": 9,
+      "price_huf": 2600,
+      "temp": "hot",
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=900&q=80",
+        "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900&q=80",
+        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "WAFFLES",
+        "hu": "GOFRI"
+      },
+      "desc": {
+        "en": "Crisp outside, soft inside, maple doing what maple does.",
+        "hu": "Kívül ropogós, belül puha, a juharszirup teszi a dolgát."
+      },
+      "tip": {
+        "en": "Weekend mornings were invented for this.",
+        "hu": "A hétvégi reggelek ezért lettek kitalálva."
+      },
+      "ingredients": {
+        "en": [
+          "Buttermilk batter",
+          "Butter",
+          "Maple syrup",
+          "Berries"
+        ],
+        "hu": [
+          "Írós tészta",
+          "Vaj",
+          "Juharszirup",
+          "Bogyós gyümölcsök"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Half",
+          "Full"
+        ],
+        "hu": [
+          "Fél adag",
+          "Egész"
+        ]
+      },
+      "pairings": [
+        "latte",
+        "cappuccino"
+      ]
+    },
+    {
+      "id": "croissant",
+      "cat": "sweet",
+      "order": 10,
+      "price_huf": 1200,
+      "temp": "hot",
+      "allergens": [
+        "Gluten",
+        "Milk"
+      ],
+      "flavor": {
+        "bitterSweet": 70,
+        "lightBold": 20,
+        "milkyCreamy": 60,
+        "hotIced": 70
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=900&q=80",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
+        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "BUTTER CROISSANT",
+        "hu": "VAJAS CROISSANT"
+      },
+      "desc": {
+        "en": "Laminated, golden, and gone by eleven most days.",
+        "hu": "Rétegzett, aranybarna, és a legtöbb nap tizenegyre elfogy."
+      },
+      "tip": {
+        "en": "Warm it up. Thank us later.",
+        "hu": "Melegítsd meg. Később megköszönöd."
+      },
+      "ingredients": {
+        "en": [
+          "Flour",
+          "A lot of butter",
+          "Time",
+          "Patience"
+        ],
+        "hu": [
+          "Liszt",
+          "Sok vaj",
+          "Idő",
+          "Türelem"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "One size"
+        ],
+        "hu": [
+          "Egy méret"
+        ]
+      },
+      "pairings": [
+        "cappuccino",
+        "espresso"
+      ]
+    },
+    {
+      "id": "banana-bread",
+      "cat": "sweet",
+      "order": 11,
+      "price_huf": 1400,
+      "temp": "hot",
+      "allergens": [
+        "Gluten",
+        "Egg",
+        "Nuts"
+      ],
+      "flavor": {
+        "bitterSweet": 78,
+        "lightBold": 30,
+        "milkyCreamy": 45,
+        "hotIced": 70
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=900&q=80",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "BANANA BREAD",
+        "hu": "BANÁNOS KENYÉR"
+      },
+      "desc": {
+        "en": "Dense, toasty, just sweet enough. A Bros classic.",
+        "hu": "Sűrű, pirítós, épp elég édes. Bros klasszikus."
+      },
+      "tip": {
+        "en": "Toasted with a little salted butter. Trust us.",
+        "hu": "Pirítva, egy kevés sózott vajjal. Bízz bennünk."
+      },
+      "ingredients": {
+        "en": [
+          "Overripe bananas",
+          "Brown butter",
+          "Walnuts"
+        ],
+        "hu": [
+          "Túlérett banán",
+          "Barna vaj",
+          "Dió"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Slice",
+          "Two slices (no judgment)"
+        ],
+        "hu": [
+          "Szelet",
+          "Két szelet (nem ítélkezünk)"
+        ]
+      },
+      "pairings": [
+        "cappuccino",
+        "cold-brew"
+      ]
+    },
+    {
+      "id": "brownie-sundae",
+      "cat": "sweet",
+      "order": 12,
+      "price_huf": 2400,
+      "temp": "both",
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "flavor": {
+        "bitterSweet": 85,
+        "lightBold": 75,
+        "milkyCreamy": 70,
+        "hotIced": 30
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900&q=80",
+        "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=900&q=80",
+        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "BROWNIE SUNDAY",
+        "hu": "BROWNIE SUNDAY"
+      },
+      "desc": {
+        "en": "Warm brownie, cold ice cream, chocolate everywhere.",
+        "hu": "Meleg brownie, hideg fagyi, csoki mindenhol."
+      },
+      "tip": {
+        "en": "Share it. Or don't. We're not watching.",
+        "hu": "Oszd meg. Vagy ne. Nem nézünk oda."
+      },
+      "ingredients": {
+        "en": [
+          "Double-choc brownie",
+          "Vanilla ice cream",
+          "Warm chocolate sauce"
+        ],
+        "hu": [
+          "Dupla csokis brownie",
+          "Vanílafagyi",
+          "Meleg csokiszósz"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "One size"
+        ],
+        "hu": [
+          "Egy méret"
+        ]
+      },
+      "pairings": [
+        "espresso",
+        "cold-brew"
+      ]
+    },
+    {
+      "id": "bros-tee",
+      "cat": "merch",
+      "order": 13,
+      "price_huf": 11200,
+      "images": [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=80",
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900&q=80",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "BROS TEE",
+        "hu": "BROS PÓLÓ"
+      },
+      "desc": {
+        "en": "Heavyweight cotton, small logo, cream on olive. Wears in beautifully.",
+        "hu": "Nehéz pamut, kis logó, krém olíva alapon. Gyönyörűen kopik."
+      },
+      "tip": {
+        "en": "Size up for the relaxed café fit.",
+        "hu": "Vegyél egy számmal nagyobbat a laza kávézós fazonhoz."
+      },
+      "sizes": {
+        "en": [
+          "S",
+          "M",
+          "L",
+          "XL"
+        ],
+        "hu": [
+          "S",
+          "M",
+          "L",
+          "XL"
+        ]
+      },
+      "material": {
+        "en": "100% organic heavyweight cotton, 240gsm",
+        "hu": "100% bio nehéz pamut, 240g/m²"
+      },
+      "pairings": [
+        "bros-hoodie",
+        "bros-beans"
+      ]
+    },
+    {
+      "id": "bros-hoodie",
+      "cat": "merch",
+      "order": 14,
+      "price_huf": 23200,
+      "images": [
+        "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900&q=80",
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=80",
+        "https://images.pexels.com/photos/17440526/pexels-photo-17440526.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "BROS HOODIE",
+        "hu": "BROS HOODIE"
+      },
+      "desc": {
+        "en": "The one the staff fight over. Brushed inside, boxy fit.",
+        "hu": "Ezért veszekszik a csapat. Belül bolyhozott, boxy fazon."
+      },
+      "tip": {
+        "en": "One of our favorites. It sells out every drop.",
+        "hu": "Az egyik kedvencünk. Minden dropból elfogy."
+      },
+      "sizes": {
+        "en": [
+          "S",
+          "M",
+          "L",
+          "XL"
+        ],
+        "hu": [
+          "S",
+          "M",
+          "L",
+          "XL"
+        ]
+      },
+      "material": {
+        "en": "Brushed fleece, 400gsm, embroidered logo",
+        "hu": "Bolyhozott polár, 400g/m², hímzett logó"
+      },
+      "pairings": [
+        "bros-tee",
+        "bros-mug"
+      ]
+    },
+    {
+      "id": "bros-mug",
+      "cat": "merch",
+      "order": 15,
+      "price_huf": 7200,
+      "images": [
+        "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=900&q=80",
+        "https://customer-assets-m6fa6gv7.emergentagent.net/job_premium-cafe-vision/artifacts/bcss9hu4_Gemini_Generated_Image_10kd0510kd0510kd.webp",
+        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ],
+      "name": {
+        "en": "BROS MUG",
+        "hu": "BROS BÖGRE"
+      },
+      "desc": {
+        "en": "Speckled stoneware, made for slow mornings at home.",
+        "hu": "Pöttyös kőedény, otthoni lassú reggelekre."
+      },
+      "tip": {
+        "en": "Pairs suspiciously well with our beans.",
+        "hu": "Gyanúsan jól passzol a kávébabunkhoz."
+      },
+      "sizes": {
+        "en": [
+          "350ml"
+        ],
+        "hu": [
+          "350ml"
+        ]
+      },
+      "material": {
+        "en": "Hand-glazed stoneware, dishwasher safe",
+        "hu": "Kézzel mázazott kőedény, mosogatógépben mosható"
+      },
+      "pairings": [
+        "bros-beans",
+        "latte"
+      ]
+    },
+    {
+      "id": "bros-beans",
+      "cat": "merch",
+      "order": 16,
+      "price_huf": 5600,
+      "flavor": {
+        "bitterSweet": 45,
+        "lightBold": 60,
+        "milkyCreamy": 20,
+        "hotIced": 50
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=900&q=80",
+        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwyfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "name": {
+        "en": "BROS BEANS — 250G",
+        "hu": "BROS KÁVÉBAB — 250G"
+      },
+      "desc": {
+        "en": "The exact blend we serve. Brazil + Ethiopia, roasted close by.",
+        "hu": "Pontosan az a keverék, amit mi is szervírozunk. Brazília + Etiópia, a közelben pörkölve."
+      },
+      "tip": {
+        "en": "Ask us to grind it for your machine. We'll dial it in together.",
+        "hu": "Kérd meg, hogy a gépedre őröljük. Együtt hangoljuk be."
+      },
+      "ingredients": {
+        "en": [
+          "70% Brazil",
+          "30% Ethiopia",
+          "Roasted weekly"
+        ],
+        "hu": [
+          "70% Brazília",
+          "30% Etiópia",
+          "Hetente pörkölve"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Whole bean",
+          "Ground for espresso",
+          "Ground for filter"
+        ],
+        "hu": [
+          "Egész bab",
+          "Espressóhoz őrölve",
+          "Filterhez őrölve"
+        ]
+      },
+      "pairings": [
+        "bros-mug",
+        "espresso"
+      ]
+    },
+    {
+      "id": "bros-tote",
+      "cat": "merch",
+      "order": 17,
+      "price_huf": 8800,
+      "images": [
+        "https://images.unsplash.com/photo-1630381260512-e3fe55c11973?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BROS CANVAS TOTE",
+        "hu": "BROS VÁSZONTÁSKA"
+      },
+      "desc": {
+        "en": "Heavyweight natural cotton tote with a minimal Bros mark. Everyday carry.",
+        "hu": "Vastag, natúr pamut táska diszkrét Bros jelzéssel. Mindennapos darab."
+      },
+      "tip": {
+        "en": "Fits a laptop, a book and a bag of beans. Ask us to fill it.",
+        "hu": "Belefér a laptop, egy könyv és egy csomag kávé. Szólj, és megtöltjük."
+      },
+      "sizes": {
+        "en": [
+          "One size"
+        ],
+        "hu": [
+          "Egy méret"
+        ]
+      },
+      "material": {
+        "en": "Heavyweight natural cotton canvas, 340gsm",
+        "hu": "Vastag natúr pamutvászon, 340 g/m²"
+      },
+      "pairings": [
+        "bros-beans",
+        "bros-tee"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "short_name": "Bros Cafe",
+  "name": "Bros Cafe — loyalty & menu",
+  "icons": [],
+  "start_url": "/loyalty",
+  "display": "standalone",
+  "theme_color": "#66734A",
+  "background_color": "#F5F0E6"
+}

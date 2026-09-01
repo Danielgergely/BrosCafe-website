@@ -83,6 +83,10 @@ android-sdk/
 .env
 .env.*
 *.env
+# ...but the documented template must be committed — it is the only record of
+# which variables the backend needs.
+!.env.example
+!**/.env.example
 credentials.json
 *.key
 .credentials

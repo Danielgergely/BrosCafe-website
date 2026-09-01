@@ -1,0 +1,129 @@
+"""Apple Wallet pass download plus the PassKit web service Apple calls back on."""
+import hmac
+import logging
+from datetime import datetime, timezone
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import Response
+
+from app import db
+from app.wallet import apple
+from app.services import wallet
+
+logger = logging.getLogger(__name__)
+router = APIRouter(tags=["wallet"])
+
+PKPASS_MEDIA_TYPE = "application/vnd.apple.pkpass"
+
+
+def _normalise_lang(value: str) -> str:
+    return "hu" if str(value).lower().startswith("hu") else "en"
+
+
+@router.get("/members/{code}/wallet/apple")
+async def download_pass(code: str, lang: str = "en"):
+    doc = await db.members.find_one({"code": code})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Loyalty card not found")
+
+    if not apple.is_configured():
+        return {
+            "configured": False,
+            "message": "Apple Wallet passes are not configured yet.",
+            "missing": apple.config_status()["missing"],
+        }
+
+    lang = _normalise_lang(lang)
+    await db.members.update_one({"code": code}, {"$set": {"wallet_lang": lang}})
+    doc["wallet_lang"] = lang
+
+    try:
+        pkpass = await wallet.build_pkpass(doc, lang)
+    except Exception:
+        logger.exception("Failed to build pkpass for %s", code)
+        await wallet.bump_stat("gen_failures")
+        raise HTTPException(
+            status_code=500,
+            detail="We're having trouble creating your Wallet card right now.")
+
+    await wallet.bump_stat("passes_issued")
+    filename = f'broscafe-{doc["wallet_serial"]}.pkpass'
+    return Response(content=pkpass, media_type=PKPASS_MEDIA_TYPE,
+                    headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+# ---- PassKit web service (Apple calls these; paths are fixed by the spec) ----
+def _authorise(request: Request, member: dict) -> None:
+    header = request.headers.get("Authorization", "")
+    prefix = "ApplePass "
+    token = header[len(prefix):] if header.startswith(prefix) else ""
+    if not token or not hmac.compare_digest(token, member.get("wallet_auth_token", "")):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+async def _member_by_serial(serial: str) -> dict:
+    member = await db.members.find_one({"wallet_serial": serial})
+    if not member:
+        raise HTTPException(status_code=404, detail="Not found")
+    return member
+
+
+@router.post("/wallet/v1/devices/{device_id}/registrations/{pass_type}/{serial}")
+async def register_device(device_id: str, pass_type: str, serial: str, request: Request):
+    member = await _member_by_serial(serial)
+    _authorise(request, member)
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    existing = await db.wallet_registrations.find_one({"device_id": device_id, "serial": serial})
+    await db.wallet_registrations.update_one(
+        {"device_id": device_id, "serial": serial},
+        {"$set": {"device_id": device_id, "serial": serial, "pass_type": pass_type,
+                  "push_token": body.get("pushToken"),
+                  "updated_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True)
+    return Response(status_code=200 if existing else 201)
+
+
+@router.delete("/wallet/v1/devices/{device_id}/registrations/{pass_type}/{serial}")
+async def unregister_device(device_id: str, pass_type: str, serial: str, request: Request):
+    member = await db.members.find_one({"wallet_serial": serial})
+    if member:
+        _authorise(request, member)
+    await db.wallet_registrations.delete_one({"device_id": device_id, "serial": serial})
+    return Response(status_code=200)
+
+
+@router.get("/wallet/v1/devices/{device_id}/registrations/{pass_type}")
+async def list_updated_serials(device_id: str, pass_type: str,
+                               passesUpdatedSince: Optional[str] = None):
+    registrations = await db.wallet_registrations.find(
+        {"device_id": device_id, "pass_type": pass_type}, {"_id": 0}).to_list(500)
+    serials = [r["serial"] for r in registrations]
+    if not serials:
+        return Response(status_code=204)
+    return {"lastUpdated": datetime.now(timezone.utc).isoformat(), "serialNumbers": serials}
+
+
+@router.get("/wallet/v1/passes/{pass_type}/{serial}")
+async def latest_pass(pass_type: str, serial: str, request: Request):
+    member = await _member_by_serial(serial)
+    _authorise(request, member)
+    if not apple.is_configured():
+        raise HTTPException(status_code=503, detail="Wallet not configured")
+    pkpass = await wallet.build_pkpass(member)
+    last_modified = member.get("wallet_updated_at", datetime.now(timezone.utc).isoformat())
+    return Response(content=pkpass, media_type=PKPASS_MEDIA_TYPE,
+                    headers={"Last-Modified": last_modified})
+
+
+@router.post("/wallet/v1/log")
+async def wallet_log(request: Request):
+    try:
+        logger.info("Apple Wallet log: %s", str(await request.json())[:500])
+    except Exception:
+        pass
+    return {"ok": True}

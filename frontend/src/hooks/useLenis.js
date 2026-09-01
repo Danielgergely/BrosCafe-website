@@ -1,32 +1,36 @@
-import Lenis from "lenis";
 import { useEffect } from "react";
+import Lenis from "lenis";
 
-let lenis;
+/**
+ * Smooth scrolling for the homepage. A module-level singleton so scrollToSection
+ * can reach the active instance from anywhere (nav, footer, hero).
+ */
+let instance;
 
 export function useLenis() {
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
-    lenis = new Lenis({ lerp: 0.09 });
-    let raf;
+    instance = new Lenis({ lerp: 0.09 });
+    let frame;
     const loop = (time) => {
-      lenis.raf(time);
-      raf = requestAnimationFrame(loop);
+      instance.raf(time);
+      frame = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(loop);
+    frame = requestAnimationFrame(loop);
     return () => {
-      cancelAnimationFrame(raf);
-      lenis.destroy();
-      lenis = undefined;
+      cancelAnimationFrame(frame);
+      instance.destroy();
+      instance = undefined;
     };
   }, []);
 }
 
 export function scrollToSection(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (lenis) {
-    lenis.scrollTo(el, { offset: -72, duration: 1.4 });
+  const element = document.getElementById(id);
+  if (!element) return;
+  if (instance) {
+    instance.scrollTo(element, { offset: -72, duration: 1.4 });
   } else {
-    el.scrollIntoView({ behavior: "smooth" });
+    element.scrollIntoView({ behavior: "smooth" });
   }
 }
