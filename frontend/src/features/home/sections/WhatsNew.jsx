@@ -31,7 +31,8 @@ function PostCard({ post, index, readLabel, onOpen }) {
           />
         </div>
         <div className="p-7">
-          <h3 className="font-display text-2xl font-medium leading-snug text-olive md:text-[1.7rem]">
+          <p className="text-[10px] font-semibold tracking-eyebrow text-olive/55">{post.tag}</p>
+          <h3 className="mt-3 font-display text-2xl font-medium leading-snug text-olive md:text-[1.7rem]">
             {post.title}
           </h3>
           <p className="mt-2 text-sm leading-relaxed text-olive/70">{post.blurb}</p>
@@ -101,6 +102,7 @@ export default function WhatsNew() {
             post={{
               id: post.id,
               image: post.image,
+              tag: t(`news.tags.${post.kind}`),
               title: post.title?.[lang] ?? post.title?.en,
               blurb: post.blurb?.[lang] ?? post.blurb?.en,
             }}

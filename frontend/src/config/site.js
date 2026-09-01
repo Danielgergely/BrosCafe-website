@@ -65,21 +65,23 @@ export const ROUTES = {
  */
 export const NAV_LINKS = [
   { key: "home", anchor: "home" },
-  { key: "menu", to: ROUTES.menu },
-  { key: "news", anchor: "news" },
-  { key: "opening", to: ROUTES.opening },
+  { key: "coffee", to: ROUTES.menu },
+  { key: "rotation", to: ROUTES.news },
+  { key: "story", anchor: "about" },
   { key: "loyalty", to: ROUTES.loyalty },
-  { key: "shop", to: ROUTES.shop },
+  { key: "visit", to: ROUTES.contact },
 ];
 
+/** The footer carries the full map, including pages the header has no room for. */
 export const FOOTER_LINKS = [
   { key: "home", anchor: "home" },
-  { key: "menu", to: ROUTES.menu },
-  { key: "about", anchor: "about" },
-  { key: "news", anchor: "news" },
-  { key: "opening", to: ROUTES.opening },
+  { key: "coffee", to: ROUTES.menu },
+  { key: "rotation", to: ROUTES.news },
+  { key: "story", anchor: "about" },
   { key: "loyalty", to: ROUTES.loyalty },
+  { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
+  { key: "visit", to: ROUTES.contact },
 ];
 
 /**

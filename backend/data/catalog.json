@@ -25,34 +25,34 @@
         "hu": "ESPRESSO"
       },
       "desc": {
-        "en": "Short, dark, honest. The way we judge a café — including our own.",
-        "hu": "Rövid, sötét, őszinte. Ezzel mérünk egy kávézót — magunkat is."
+        "en": "Our Brazilian house roast, undiluted. Cocoa, toasted hazelnut, a caramel finish — this is the shot every other drink is built on.",
+        "hu": "A brazil házi pörkölésünk, tisztán. Kakaó, pirított mogyoró, karamelles lecsengés — minden más ital erre a shotra épül."
       },
       "tip": {
-        "en": "Best enjoyed standing at the bar, Italian style.",
-        "hu": "A pultnál állva a legjobb, olasz módra."
+        "en": "Best standing at the bar, Italian style. Ask for the guest origin if you want brighter.",
+        "hu": "A pultnál állva a legjobb, olasz módra. Ha valami élénkebbet szeretnél, kérd a vendégkávét."
       },
       "ingredients": {
         "en": [
-          "18g Bros blend",
+          "18g Brazilian house roast",
           "Water, 93°C",
           "27 seconds"
         ],
         "hu": [
-          "18g Bros keverék",
+          "18g brazil házi pörkölés",
           "Víz, 93°C",
           "27 másodperc"
         ]
       },
       "behind": {
         "en": [
-          "Beans — our Brazil + Ethiopia blend",
+          "Origin — Brazil, our year-round house profile",
           "Grind — fine, 18g dose",
           "Extraction — 27 slow seconds",
           "Your cup — warmed, always"
         ],
         "hu": [
-          "Bab — brazil + etióp keverékünk",
+          "Származás — Brazília, az egész éves házi profilunk",
           "Őrlés — finom, 18g adag",
           "Extrakció — 27 lassú másodperc",
           "A csészéd — mindig előmelegítve"
@@ -98,8 +98,8 @@
         "hu": "CAPPUCCINO"
       },
       "desc": {
-        "en": "Rich espresso balanced with silky steamed milk and proper foam.",
-        "hu": "Karakteres espresso, selymesen gőzölt tejjel és rendes habbal."
+        "en": "The Brazilian roast at its most forgiving — cocoa and caramel carried by dense, silky microfoam.",
+        "hu": "A brazil pörkölés a legmegengedőbb formájában — kakaó és karamell, sűrű, selymes mikrohabbal."
       },
       "tip": {
         "en": "Best enjoyed slowly. Ask for oat if that's your thing.",
@@ -119,13 +119,13 @@
       },
       "behind": {
         "en": [
-          "Beans — Brazil + Ethiopia blend",
+          "Origin — Brazil house roast",
           "Espresso — double shot",
           "Milk — steamed to 60°C",
           "Foam — spooned, not poured"
         ],
         "hu": [
-          "Bab — brazil + etióp keverék",
+          "Származás — brazil házi pörkölés",
           "Espresso — dupla shot",
           "Tej — 60°C-ra gőzölve",
           "Hab — kanalazva, nem öntve"
@@ -172,8 +172,8 @@
         "hu": "LATTE"
       },
       "desc": {
-        "en": "Milk, done properly. Soft, warm, and gently caffeinated.",
-        "hu": "Tej, rendesen megcsinálva. Lágy, meleg, gyengéden koffeines."
+        "en": "Long, soft and milky. The house Brazilian keeps its chocolate note even under this much milk.",
+        "hu": "Hosszú, lágy, tejes. A házi brazil ennyi tej alatt is megtartja a csokoládés karakterét."
       },
       "tip": {
         "en": "Perfect for a slow morning and a window seat.",
@@ -193,13 +193,13 @@
       },
       "behind": {
         "en": [
-          "Beans — Brazil + Ethiopia blend",
+          "Origin — Brazil house roast",
           "Espresso — double shot",
           "Milk — silky, glossy steam",
           "The pour — where the art happens"
         ],
         "hu": [
-          "Bab — brazil + etióp keverék",
+          "Származás — brazil házi pörkölés",
           "Espresso — dupla shot",
           "Tej — selymes, fényes gőzölés",
           "Az öntés — itt történik a varázslat"
@@ -243,12 +243,12 @@
         "hu": "AMERICANO"
       },
       "desc": {
-        "en": "Clean and slow. Espresso lengthened, flavor intact.",
-        "hu": "Tiszta és lassú. Hosszított espresso, ép ízzel."
+        "en": "Espresso lengthened with hot water. The cleanest way to taste whichever origin is in the hopper today.",
+        "hu": "Espresso forró vízzel hosszabbítva. Így kóstolható a legtisztábban, bármelyik kávé van épp a gépben."
       },
       "tip": {
-        "en": "Great black. Even better with ten quiet minutes.",
-        "hu": "Feketén remek. Tíz csendes perccel még jobb."
+        "en": "Order it with the guest origin — long and black is where a bright coffee shows off.",
+        "hu": "Kérd a vendégkávéval — hosszan és feketén mutatja meg magát igazán egy élénkebb kávé."
       },
       "ingredients": {
         "en": [
@@ -262,13 +262,13 @@
       },
       "behind": {
         "en": [
-          "Beans — Brazil + Ethiopia blend",
+          "Origin — your choice: Brazil or this month's guest",
           "Espresso — double shot",
           "Water — hot, poured gently",
           "Crema — kept on top"
         ],
         "hu": [
-          "Bab — brazil + etióp keverék",
+          "Származás — te választasz: brazil vagy a hónap vendége",
           "Espresso — dupla shot",
           "Víz — forrón, óvatosan öntve",
           "Crema — a tetején marad"
@@ -290,9 +290,80 @@
       ]
     },
     {
+      "id": "guest-origin",
+      "cat": "coffee",
+      "order": 5,
+      "price_huf": 1800,
+      "temp": "hot",
+      "allergens": [],
+      "flavor": {
+        "bitterSweet": 62,
+        "lightBold": 38,
+        "milkyCreamy": 15,
+        "hotIced": 90
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=900&q=80",
+        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=900&q=80",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "GUEST ORIGIN",
+        "hu": "VENDÉGKÁVÉ"
+      },
+      "desc": {
+        "en": "A different roaster, a different country, every few weeks. Brighter and more acidic than the house Brazilian — this is the one to try if you already know what you like.",
+        "hu": "Néhány hetente másik pörkölő, másik ország. Élénkebb és savasabb, mint a házi brazil — ezt kérd, ha már tudod, mit szeretsz."
+      },
+      "tip": {
+        "en": "Ask what's in the hopper today. It changes, and we're always happy to talk about it.",
+        "hu": "Kérdezd meg, mi van ma a gépben. Változik, és mindig szívesen mesélünk róla."
+      },
+      "ingredients": {
+        "en": [
+          "This month's guest origin",
+          "Filter or espresso",
+          "Ask at the bar"
+        ],
+        "hu": [
+          "A hónap vendégkávéja",
+          "Filter vagy espresso",
+          "Kérdezd a pultnál"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Selection — one roaster at a time, chosen by the three of us",
+          "Rotation — a new origin every few weeks",
+          "Brew — filter by default, espresso on request",
+          "Notes — written on the board each morning"
+        ],
+        "hu": [
+          "Válogatás — egyszerre egy pörkölő, hárman választjuk ki",
+          "Rotáció — néhány hetente új származás",
+          "Elkészítés — alapból filter, kérésre espresso",
+          "Ízjegyek — minden reggel felírjuk a táblára"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "Filter",
+          "Espresso"
+        ],
+        "hu": [
+          "Filter",
+          "Espresso"
+        ]
+      },
+      "pairings": [
+        "croissant",
+        "bros-beans"
+      ]
+    },
+    {
       "id": "cold-brew",
       "cat": "cold",
-      "order": 5,
+      "order": 6,
       "price_huf": 1800,
       "temp": "iced",
       "allergens": [],
@@ -312,8 +383,8 @@
         "hu": "COLD BREW"
       },
       "desc": {
-        "en": "Steeped for 18 hours. Smooth, chocolatey, dangerously drinkable.",
-        "hu": "18 órát ázott. Sima, csokis, veszélyesen iható."
+        "en": "Eighteen hours in cold water. The Brazilian roast turns deep, smooth and dangerously drinkable.",
+        "hu": "Tizennyolc óra hideg vízben. A brazil pörkölés mélyre, simára és veszélyesen ihatóra vált."
       },
       "tip": {
         "en": "Ask for a slice of orange if you like it bright.",
@@ -349,7 +420,7 @@
     {
       "id": "iced-latte",
       "cat": "cold",
-      "order": 6,
+      "order": 7,
       "price_huf": 2000,
       "temp": "iced",
       "allergens": [
@@ -371,8 +442,8 @@
         "hu": "JEGES LATTE"
       },
       "desc": {
-        "en": "Espresso over ice, cold milk on top. Summer in a glass.",
-        "hu": "Espresso jégen, hideg tej a tetején. Nyár egy pohárban."
+        "en": "Double shot over ice, cold milk on top. Watch it marble before you stir.",
+        "hu": "Dupla shot jégre, tetején hideg tej. Nézd, ahogy márványosodik, mielőtt megkevered."
       },
       "tip": {
         "en": "Watch it marble before you stir. Half the fun.",
@@ -408,7 +479,7 @@
     {
       "id": "espresso-tonic",
       "cat": "cold",
-      "order": 7,
+      "order": 8,
       "price_huf": 2200,
       "temp": "iced",
       "allergens": [],
@@ -428,8 +499,8 @@
         "hu": "ESPRESSO TONIC"
       },
       "desc": {
-        "en": "Sounds wrong, tastes right. Double shot over tonic and ice.",
-        "hu": "Rossznak hangzik, finom. Dupla shot tonic és jég felett."
+        "en": "Sounds wrong, tastes right. We build it on the guest origin — the tonic wants the fruit.",
+        "hu": "Rossznak hangzik, jónak esik. A vendégkávéra építjük — a tonic a gyümölcsöset szereti."
       },
       "tip": {
         "en": "Our most argued-about drink. Try it before you judge it.",
@@ -464,7 +535,7 @@
     {
       "id": "bros-sandwich",
       "cat": "food",
-      "order": 8,
+      "order": 9,
       "price_huf": 3000,
       "temp": "hot",
       "allergens": [
@@ -518,7 +589,7 @@
     {
       "id": "cinnamon-waffles",
       "cat": "food",
-      "order": 9,
+      "order": 10,
       "price_huf": 2600,
       "temp": "hot",
       "allergens": [
@@ -575,7 +646,7 @@
     {
       "id": "croissant",
       "cat": "sweet",
-      "order": 10,
+      "order": 11,
       "price_huf": 1200,
       "temp": "hot",
       "allergens": [
@@ -635,7 +706,7 @@
     {
       "id": "banana-bread",
       "cat": "sweet",
-      "order": 11,
+      "order": 12,
       "price_huf": 1400,
       "temp": "hot",
       "allergens": [
@@ -696,7 +767,7 @@
     {
       "id": "brownie-sundae",
       "cat": "sweet",
-      "order": 12,
+      "order": 13,
       "price_huf": 2400,
       "temp": "both",
       "allergens": [
@@ -755,7 +826,7 @@
     {
       "id": "bros-tee",
       "cat": "merch",
-      "order": 13,
+      "order": 14,
       "price_huf": 11200,
       "images": [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=80",
@@ -800,7 +871,7 @@
     {
       "id": "bros-hoodie",
       "cat": "merch",
-      "order": 14,
+      "order": 15,
       "price_huf": 23200,
       "images": [
         "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900&q=80",
@@ -845,7 +916,7 @@
     {
       "id": "bros-mug",
       "cat": "merch",
-      "order": 15,
+      "order": 16,
       "price_huf": 7200,
       "images": [
         "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=900&q=80",
@@ -884,7 +955,7 @@
     {
       "id": "bros-beans",
       "cat": "merch",
-      "order": 16,
+      "order": 17,
       "price_huf": 5600,
       "flavor": {
         "bitterSweet": 45,
@@ -898,26 +969,26 @@
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
       ],
       "name": {
-        "en": "BROS BEANS — 250G",
-        "hu": "BROS KÁVÉBAB — 250G"
+        "en": "HOUSE ROAST — 250G",
+        "hu": "HÁZI PÖRKÖLÉS — 250G"
       },
       "desc": {
-        "en": "The exact blend we serve. Brazil + Ethiopia, roasted close by.",
-        "hu": "Pontosan az a keverék, amit mi is szervírozunk. Brazília + Etiópia, a közelben pörkölve."
+        "en": "The Brazilian we pour every day, bagged for home. Roasted locally, never more than a week old.",
+        "hu": "Az a brazil, amit minden nap kimérünk, otthonra csomagolva. Helyben pörkölve, sosem régebbi egy hétnél."
       },
       "tip": {
-        "en": "Ask us to grind it for your machine. We'll dial it in together.",
-        "hu": "Kérd meg, hogy a gépedre őröljük. Együtt hangoljuk be."
+        "en": "Tell us your machine and we'll grind it to match. Guest origins are bagged too, while they last.",
+        "hu": "Mondd meg, milyen géped van, és úgy őröljük. A vendégkávékat is csomagoljuk, amíg tart."
       },
       "ingredients": {
         "en": [
-          "70% Brazil",
-          "30% Ethiopia",
+          "100% Brazil, single origin",
+          "Medium roast",
           "Roasted weekly"
         ],
         "hu": [
-          "70% Brazília",
-          "30% Etiópia",
+          "100% brazil, single origin",
+          "Közepes pörkölés",
           "Hetente pörkölve"
         ]
       },
@@ -941,7 +1012,7 @@
     {
       "id": "bros-tote",
       "cat": "merch",
-      "order": 17,
+      "order": 18,
       "price_huf": 8800,
       "images": [
         "https://images.unsplash.com/photo-1630381260512-e3fe55c11973?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"

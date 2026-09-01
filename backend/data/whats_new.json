@@ -1,40 +1,58 @@
 {
-  "_comment": "Single source of truth for the What's New editorial feed. Seed with: python -m app.seed",
+  "_comment": "Single source of truth for the On Tap & In Rotation feed. The guest-origin post is the one to edit whenever the rotation changes. Seed with: python -m app.seed --content",
   "posts": [
     {
-      "id": "pistachio-latte",
+      "id": "guest-origin",
       "order": 1,
-      "kind": "drink",
-      "image": "https://images.unsplash.com/photo-1770282184778-f474bd3a379a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+      "kind": "guest",
+      "image": "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&q=85",
       "title": {
-        "en": "Pistachio Latte",
-        "hu": "Pisztácia Latte"
+        "en": "Meet this month's guest roast.",
+        "hu": "Itt a hónap vendégkávéja."
       },
       "blurb": {
-        "en": "Creamy espresso with pistachio and steamed milk.",
-        "hu": "Krémes eszpresszó pisztáciával és gőzölt tejjel."
+        "en": "Alongside our signature Brazilian espresso, we're currently pouring a vibrant, fruit-forward origin. Ask your barista about the flavour profile.",
+        "hu": "A jellegzetes brazil espressónk mellett most egy élénk, gyümölcsös kávét mérünk. Kérdezd a barista kollégát az ízjegyekről."
       },
       "body": {
-        "en": "Our newest seasonal pour: a smooth double shot balanced with house-made pistachio and silky steamed milk. Nutty, warm, and just sweet enough.",
-        "hu": "Legújabb szezonális kávénk: lágy dupla eszpresszó saját készítésű pisztáciakrémmel és selymes gőzölt tejjel. Diós, meleg és épp csak annyira édes."
+        "en": "Every few weeks we hand one side of the bar over to a different roaster. The house Brazilian stays exactly where it is — cocoa, hazelnut, caramel, the profile you can order without thinking. The guest slot is for the opposite: something bright, acidic and a little unfamiliar.\n\nRight now that means a fruit-forward washed lot, brewed as filter by default and pulled as espresso if you ask. The tasting notes go up on the board each morning, and whoever is on bar will happily talk you through it. If you like it, we bag it — while it lasts.",
+        "hu": "Néhány hetente átadjuk a pult egyik oldalát egy másik pörkölőnek. A házi brazil pontosan ott marad, ahol van: kakaó, mogyoró, karamell — az a profil, amit gondolkodás nélkül lehet rendelni. A vendéghely pont az ellenkezőjéről szól: valami élénk, savas és kicsit szokatlan.\n\nÉppen most egy gyümölcsös, mosott tétel van soron, alapból filterként főzve, kérésre espressóként. Az ízjegyeket minden reggel felírjuk a táblára, és aki a pultnál áll, szívesen mesél róla. Ha bejön, csomagoljuk is — amíg tart."
+      }
+    },
+    {
+      "id": "brazil-house",
+      "order": 2,
+      "kind": "house",
+      "image": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=1200&q=85",
+      "title": {
+        "en": "Why Brazil is the house roast.",
+        "hu": "Miért brazil a házi pörkölésünk?"
+      },
+      "blurb": {
+        "en": "Low acidity, heavy body, and a chocolate note that survives milk. The one coffee that never has a bad morning.",
+        "hu": "Alacsony savtartalom, testes karakter, és egy csokoládés jegy, ami a tejet is túléli. Az a kávé, aminek sosincs rossz reggele."
+      },
+      "body": {
+        "en": "A house roast has a harder job than a guest coffee. It has to work as a straight espresso at seven in the morning, hold its shape under a cappuccino's worth of milk, and taste the same on a Tuesday as it did on a Saturday.\n\nBrazil does all three. Naturally low in acidity, heavy in the cup, and reliably chocolatey — it is forgiving of a slightly long shot and generous with milk. We roast it medium, locally, and never serve it more than a week off the roaster. It is the baseline everything else on this bar is measured against.",
+        "hu": "Egy házi pörkölésnek nehezebb dolga van, mint egy vendégkávénak. Működnie kell tiszta espressóként reggel hétkor, meg kell tartania magát egy cappuccinónyi tej alatt, és kedden ugyanúgy kell szólnia, mint szombaton.\n\nA brazil mindhármat tudja. Természetesen alacsony savtartalmú, testes, és megbízhatóan csokoládés — megbocsátja a kicsit hosszabb shotot, és jól bírja a tejet. Közepesre pörköljük, helyben, és sosem adjuk ki egy hétnél régebben. Ez az a mérce, amihez a pulton minden mást mérünk."
       }
     },
     {
       "id": "almond-croissant",
-      "order": 2,
+      "order": 3,
       "kind": "pastry",
       "image": "https://images.unsplash.com/photo-1623334044303-241021148842?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
       "title": {
-        "en": "Almond Croissant",
-        "hu": "Mandulás Croissant"
+        "en": "Almond croissant, baked daily.",
+        "hu": "Mandulás croissant, minden nap frissen."
       },
       "blurb": {
-        "en": "Buttery, flaky, baked fresh every morning.",
-        "hu": "Vajas, leveles, minden reggel frissen sütve."
+        "en": "Buttery, flaky, and out of the oven before we open. The standing pairing for the house Brazilian.",
+        "hu": "Vajas, leveles, és még nyitás előtt kijön a sütőből. A házi brazil állandó párja."
       },
       "body": {
-        "en": "Layered by hand and filled with almond frangipane, then dusted with toasted flakes. Best enjoyed warm with a flat white.",
-        "hu": "Kézzel hajtogatva, mandulás frangipane töltelékkel, pirított mandulapehellyel megszórva. Melegen, egy flat white mellé a legjobb."
+        "en": "Layered by hand, filled with almond frangipane and dusted with toasted flakes. Best warm, and best with something milky — the caramel in the house roast and the almond do most of the work for you.\n\nThey come out early and they go fast. If the tray is empty by ten, that is not bad planning, that is just how many we can make.",
+        "hu": "Kézzel hajtogatva, mandulás frangipane töltelékkel, pirított mandulapehellyel megszórva. Melegen a legjobb, és valami tejessel — a házi pörkölés karamelles jegye és a mandula elvégzi helyetted a munkát.\n\nKorán jönnek ki, és gyorsan fogynak. Ha tízre üres a tálca, az nem rossz tervezés, csak ennyit tudunk sütni."
       }
     }
   ]

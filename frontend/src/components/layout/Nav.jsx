@@ -84,19 +84,21 @@ export default function Nav({ solid = false }) {
             data-testid="nav-logo"
             onClick={onLogoClick}
             aria-label={t("nav.backToTop")}
-            className={`relative font-display text-xl font-semibold tracking-wide transition-colors duration-500 ${textColour}`}
+            className={`relative whitespace-nowrap font-display text-xl font-semibold tracking-wide transition-colors duration-500 ${textColour}`}
           >
             {BRAND.name}
             {burst > 0 && <CoffeeBurst key={burst} />}
           </button>
 
-          <ul className="hidden items-center gap-6 lg:flex">
+          {/* Hungarian labels run long, so the full row only appears at xl;
+              below that the full-screen menu takes over. */}
+          <ul className="hidden items-center gap-5 xl:flex">
             {NAV_LINKS.map((link) => (
               <li key={link.key}>
                 <button
                   data-testid={`nav-link-${link.key}`}
                   onClick={() => onNavigate(link)}
-                  className={`link-underline text-[11px] font-medium tracking-label transition-colors duration-500 ${textColour}`}
+                  className={`link-underline whitespace-nowrap text-[11px] font-medium tracking-wide transition-colors duration-500 ${textColour}`}
                 >
                   {t(`nav.${link.key}`)}
                 </button>
@@ -128,7 +130,7 @@ export default function Nav({ solid = false }) {
             <Link
               data-testid="nav-loyalty-cta"
               to={ROUTES.loyalty}
-              className={`group hidden items-center gap-2 rounded-full px-6 py-2.5 text-[11px] font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(102,115,74,0.25)] sm:inline-flex ${
+              className={`group hidden items-center gap-2 whitespace-nowrap rounded-full px-5 py-2.5 text-[11px] font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(102,115,74,0.25)] sm:inline-flex ${
                 opaque ? "bg-olive text-cream" : "bg-cream text-olive"
               }`}
             >
@@ -143,7 +145,7 @@ export default function Nav({ solid = false }) {
               data-testid="mobile-menu-button"
               onClick={() => setMenuOpen(true)}
               aria-label={t("nav.openMenu")}
-              className={`transition-colors duration-500 lg:hidden ${textColour}`}
+              className={`transition-colors duration-500 xl:hidden ${textColour}`}
             >
               <Menu size={26} strokeWidth={1.5} />
             </button>

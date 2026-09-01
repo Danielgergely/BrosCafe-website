@@ -30,8 +30,8 @@ export default function WhatsNewPage() {
           >
             <img src={post.image} alt="" className="h-52 w-full object-cover" />
             <div className="p-6">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-olive">
-                {t(`product.cats.${post.kind === "pastry" ? "sweet" : "coffee"}`)}
+              <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
+                {t(`news.tags.${post.kind}`)}
               </p>
               <h2 className="mt-1 font-display text-2xl text-ink">
                 {post.title?.[lang] ?? post.title?.en}
