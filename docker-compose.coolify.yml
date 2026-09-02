@@ -45,15 +45,20 @@ services:
       MONGO_URL: mongodb://mongo:27017
 
       # ── Set these in Coolify → Environment Variables ──────────────────
-      # FRONTEND_URL must exactly match the domain assigned to `web` above.
-      # It is written into every Apple Wallet pass, so changing it later
-      # breaks every pass already on a customer's phone. Set it once.
-      DB_NAME: ${DB_NAME:?set DB_NAME, e.g. broscafe_prod}
-      JWT_SECRET: ${JWT_SECRET:?generate with openssl rand -hex 32}
-      FRONTEND_URL: ${FRONTEND_URL:?must equal the domain set on the web service}
+      # All five are REQUIRED. Coolify pre-populates keys by parsing this file,
+      # so they appear there empty; fill them in before the first deploy.
+      #   DB_NAME         e.g. broscafe_prod
+      #   JWT_SECRET      openssl rand -hex 32
+      #   FRONTEND_URL    must exactly match the domain assigned to `web`.
+      #                   It is written into every Apple Wallet pass, so
+      #                   changing it later breaks passes already on phones.
+      #   ADMIN_EMAIL / ADMIN_PASSWORD  the staff login at /login
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL}
       CORS_ORIGINS: ${FRONTEND_URL}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
 
       # true → every deploy re-seeds products and journal posts from
       # backend/data/*.json, so editing a price or image is a git push.
