@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 from app.config import settings
-from app.wallet import apple
+from app.wallet import apple, google
 
 router = APIRouter(tags=["meta"])
 
@@ -14,4 +14,8 @@ async def root():
 
 @router.get("/cafe")
 async def cafe_info():
-    return {**settings.cafe, "apple_wallet_configured": apple.is_configured()}
+    return {
+        **settings.cafe,
+        "apple_wallet_configured": apple.is_configured(),
+        "google_wallet_configured": google.is_configured(),
+    }

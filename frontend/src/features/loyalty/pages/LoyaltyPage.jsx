@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { Coffee, Gift, Mail, Smartphone } from "lucide-react";
+import { Coffee, Gift, Mail } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
+import WalletButtons from "@/components/loyalty/WalletButtons";
 import ProductRow from "@/components/product/ProductRow";
-import { API_BASE, BRAND, FEATURED, ROUTES } from "@/config/site";
+import { BRAND, FEATURED, ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { errorMessage } from "@/lib/api";
 import { useCustomer } from "@/state/CustomerAuth";
 
 function SignedInView() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { member } = useCustomer();
   const [params] = useSearchParams();
@@ -20,10 +21,6 @@ function SignedInView() {
   const required = member.stamps_required ?? BRAND.stampsRequired;
   const remaining = required - member.stamps;
   const justJoined = params.get("welcome") === "1";
-
-  const openApplePass = () => {
-    window.location.href = `${API_BASE}/members/${member.code}/wallet/apple?lang=${lang}`;
-  };
 
   return (
     <>
@@ -74,20 +71,7 @@ function SignedInView() {
         >
           <Coffee size={20} /> {t("loyalty.openWalletCard")}
         </button>
-        <button
-          data-testid="loyalty-add-apple"
-          onClick={openApplePass}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-card border border-olive bg-white font-semibold text-olive transition-colors hover:bg-cream"
-        >
-          <Smartphone size={18} /> {t("card.addApple")}
-        </button>
-        <button
-          data-testid="loyalty-add-google"
-          onClick={() => toast(t("card.googleSoon"))}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-card border border-line bg-white font-semibold text-muted"
-        >
-          <Smartphone size={18} /> {t("card.addGoogle")}
-        </button>
+        <WalletButtons code={member.code} />
       </div>
 
       <ProductRow

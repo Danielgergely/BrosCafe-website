@@ -1,11 +1,12 @@
-import { ArrowRight, Coffee, Gift, Heart, LogOut, Newspaper, Pencil, Smartphone } from "lucide-react";
+import { ArrowRight, Coffee, Gift, Heart, LogOut, Newspaper, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
 import OpeningCountdown from "@/components/loyalty/OpeningCountdown";
-import { API_BASE, BRAND, ROUTES } from "@/config/site";
+import WalletButtons from "@/components/loyalty/WalletButtons";
+import { BRAND, ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { errorMessage } from "@/lib/api";
 import { localize, useCatalog } from "@/lib/catalog";
@@ -141,22 +142,7 @@ export default function AccountPage() {
         </Panel>
 
         <Panel title={t("account.walletTitle")} testId="account-wallet">
-          <div className="space-y-3">
-            <button
-              onClick={() => {
-                window.location.href = `${API_BASE}/members/${member.code}/wallet/apple?lang=${lang}`;
-              }}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-card bg-olive font-semibold text-cream"
-            >
-              <Smartphone size={18} /> {t("card.addApple")}
-            </button>
-            <button
-              onClick={() => toast(t("card.googleSoon"))}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-card border border-olive bg-white font-semibold text-olive"
-            >
-              <Smartphone size={18} /> {t("card.addGoogle")}
-            </button>
-          </div>
+          <WalletButtons code={member.code} emphasis="solid" />
         </Panel>
 
         <Panel title={t("account.title")} testId="account-settings">

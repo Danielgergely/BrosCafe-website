@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import { Coffee, PartyPopper, RefreshCw, Smartphone } from "lucide-react";
+import { Coffee, PartyPopper, RefreshCw } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyCardVisual from "@/components/loyalty/LoyaltyCardVisual";
+import WalletButtons from "@/components/loyalty/WalletButtons";
 import OpeningCountdown from "@/components/loyalty/OpeningCountdown";
-import { API_BASE, ROUTES } from "@/config/site";
+import { ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
-import { api, errorMessage, track } from "@/lib/api";
+import { api, errorMessage } from "@/lib/api";
 
 /** How often to re-poll, so a stamp added at the counter appears on the phone. */
 const REFRESH_MS = 5000;
@@ -16,12 +16,11 @@ const CELEBRATION_MS = 3500;
 
 export default function LoyaltyCardPage() {
   const { code } = useParams();
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [member, setMember] = useState(null);
   const [error, setError] = useState("");
   const [celebrating, setCelebrating] = useState(false);
-  const [walletReady, setWalletReady] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -37,13 +36,6 @@ export default function LoyaltyCardPage() {
   }, [code, t]);
 
   useEffect(() => {
-    api
-      .get("/cafe")
-      .then(({ data }) => setWalletReady(Boolean(data.apple_wallet_configured)))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     load();
     const id = setInterval(load, REFRESH_MS);
     return () => clearInterval(id);
@@ -54,15 +46,6 @@ export default function LoyaltyCardPage() {
     const id = setTimeout(() => setCelebrating(false), CELEBRATION_MS);
     return () => clearTimeout(id);
   }, [celebrating]);
-
-  const addToWallet = () => {
-    track("wallet_added", { code });
-    if (walletReady) {
-      window.location.href = `${API_BASE}/members/${code}/wallet/apple?lang=${lang}`;
-      return;
-    }
-    toast(t("card.walletUnavailable"));
-  };
 
   if (error) {
     return (
@@ -122,21 +105,10 @@ export default function LoyaltyCardPage() {
         <LoyaltyCardVisual member={member} animateLast />
       </div>
 
-      <button
-        data-testid="add-to-wallet-btn"
-        onClick={addToWallet}
-        className="mt-8 flex h-14 w-full items-center justify-center gap-2 rounded-card bg-olive text-base font-semibold text-cream transition-colors hover:bg-olive-dark active:scale-[0.99]"
-      >
-        <Smartphone size={20} /> {t("card.addToWallet")}
-      </button>
+      <div className="mt-8">
+        <WalletButtons code={code} emphasis="solid" />
+      </div>
       <p className="mt-3 text-center text-xs text-muted">{t("card.walletHint")}</p>
-      <button
-        data-testid="add-google-wallet-btn"
-        onClick={() => toast(t("card.googleSoon"))}
-        className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-card border border-olive bg-white text-sm font-semibold text-olive transition-colors hover:bg-cream"
-      >
-        <Smartphone size={18} /> {t("card.addGoogle")}
-      </button>
 
       {member.opening_status !== "redeemed" && (
         <div

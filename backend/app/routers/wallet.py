@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
 from app import db
-from app.wallet import apple
+from app.wallet import apple, google
 from app.services import wallet
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,31 @@ async def download_pass(code: str, lang: str = "en"):
     filename = f'broscafe-{doc["wallet_serial"]}.pkpass'
     return Response(content=pkpass, media_type=PKPASS_MEDIA_TYPE,
                     headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.get("/members/{code}/wallet/google")
+async def google_save_url(code: str, lang: str = "en"):
+    """Returns the 'Save to Google Wallet' link for this member's pass."""
+    doc = await db.members.find_one({"code": code})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Loyalty card not found")
+
+    if not google.is_configured():
+        return {
+            "configured": False,
+            "message": "Google Wallet passes are not configured yet.",
+            "missing": google.config_status()["missing"],
+        }
+
+    lang = _normalise_lang(lang)
+    try:
+        return {"configured": True, "save_url": await wallet.google_save_link(doc, lang)}
+    except Exception:
+        logger.exception("Failed to build Google Wallet pass for %s", code)
+        await wallet.bump_stat("google_gen_failures")
+        raise HTTPException(
+            status_code=502,
+            detail="We're having trouble creating your Google Wallet card right now.")
 
 
 # ---- PassKit web service (Apple calls these; paths are fixed by the spec) ----

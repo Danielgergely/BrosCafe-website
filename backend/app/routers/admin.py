@@ -7,7 +7,7 @@ from app import db
 from app.models import ProductUpsert, SettingsUpdate
 from app.security import require_admin
 from app.services import analytics, app_settings, members
-from app.wallet import apple
+from app.wallet import apple, google
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)], tags=["admin"])
 
@@ -120,9 +120,14 @@ async def wallet_status():
         {"_id": 0, "wallet_updated_at": 1}).sort("wallet_updated_at", -1).to_list(1)
     return {
         "config": apple.config_status(),
+        "google_config": google.config_status(),
         "passes_issued": await db.members.count_documents({"wallet_serial": {"$exists": True}}),
+        "google_passes_issued": await db.members.count_documents(
+            {"google_object_id": {"$exists": True}}),
         "active_registrations": await db.wallet_registrations.count_documents({}),
         "last_update": last[0]["wallet_updated_at"] if last else None,
         "generation_failures": stats_doc.get("gen_failures", 0),
         "push_failures": stats_doc.get("push_failures", 0),
+        "google_generation_failures": stats_doc.get("google_gen_failures", 0),
+        "google_push_failures": stats_doc.get("google_push_failures", 0),
     }

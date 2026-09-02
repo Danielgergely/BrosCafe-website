@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from app import db
 from app.config import settings
 from app.services import app_settings, members
-from app.wallet import apple
+from app.wallet import apple, google
 
 logger = logging.getLogger(__name__)
 
@@ -45,30 +45,89 @@ async def build_pkpass(member: dict, lang: str | None = None) -> bytes:
     )
 
 
-async def notify_update(code: str) -> None:
-    """Best-effort: stamp the pass as changed and push to registered devices."""
-    if not apple.is_configured():
-        return
-    member = await db.members.find_one({"code": code})
-    serial = member.get("wallet_serial") if member else None
+def card_url(member_code: str) -> str:
+    return f"{settings.frontend_url}/card/{member_code}"
+
+
+def _origins() -> list[str]:
+    """Origins allowed to present the Save-to-Google-Wallet button."""
+    host = settings.frontend_url.split("://")[-1].rstrip("/")
+    return [host] if host else []
+
+
+async def google_save_link(member: dict, lang: str = "en") -> str:
+    """A 'Save to Google Wallet' URL for this member.
+
+    Creates the loyalty class and object first so the pass is immediately
+    updatable afterwards — the link alone would create it lazily, but then a
+    stamp added before the customer saves would have nothing to patch.
+    """
+    await ensure_identity(member)
+    cafe = settings.cafe
+    barcode = member["loyalty_token"]
+    url = card_url(member["code"])
+
+    await google.ensure_class(cafe, lang)
+    await google.upsert_object(member, cafe, barcode, url, lang)
+    await db.members.update_one(
+        {"code": member["code"]},
+        {"$set": {"google_object_id": google.object_id(member["code"]),
+                  "google_wallet_lang": lang}})
+
+    return google.save_link(member, cafe, barcode, url, _origins(), lang)
+
+
+async def _notify_apple(member: dict) -> None:
+    serial = member.get("wallet_serial")
     if not serial:
+        return
+    registrations = await db.wallet_registrations.find(
+        {"serial": serial}, {"_id": 0}).to_list(500)
+    tokens = [r["push_token"] for r in registrations if r.get("push_token")]
+    if not tokens:
+        return
+    try:
+        sent = await apple.push_to_devices(tokens)
+        logger.info("Apple Wallet push: %s/%s devices for %s", sent, len(tokens), serial)
+    except Exception as exc:
+        await bump_stat("push_failures")
+        logger.warning("Apple Wallet push failed for %s: %s", serial, exc)
+
+
+async def _notify_google(member: dict) -> None:
+    """Patch the member's LoyaltyObject; Google pushes it to the device."""
+    if not member.get("google_object_id"):
+        return  # never saved a Google pass
+    try:
+        updated = await google.push_update(
+            member, settings.cafe, member["loyalty_token"],
+            card_url(member["code"]), member.get("google_wallet_lang", "en"))
+        if updated:
+            logger.info("Google Wallet updated for %s", member["code"])
+    except Exception as exc:
+        await bump_stat("google_push_failures")
+        logger.warning("Google Wallet update failed for %s: %s", member["code"], exc)
+
+
+async def notify_update(code: str) -> None:
+    """Refresh both wallets after a balance change. Best-effort by design —
+    a wallet problem must never fail the barista's tap at the counter."""
+    apple_on, google_on = apple.is_configured(), google.is_configured()
+    if not (apple_on or google_on):
+        return
+
+    member = await db.members.find_one({"code": code})
+    if not member:
         return
 
     await db.members.update_one(
         {"code": code},
         {"$set": {"wallet_updated_at": datetime.now(timezone.utc).isoformat()}})
 
-    registrations = await db.wallet_registrations.find({"serial": serial}, {"_id": 0}).to_list(500)
-    tokens = [r["push_token"] for r in registrations if r.get("push_token")]
-    if not tokens:
-        return
-    try:
-        sent = await apple.push_to_devices(tokens)
-        logger.info("Wallet push: %s/%s devices for %s", sent, len(tokens), serial)
-    except Exception as exc:
-        await db.wallet_stats.update_one({"_id": "stats"}, {"$inc": {"push_failures": 1}},
-                                        upsert=True)
-        logger.warning("Wallet push failed for %s: %s", serial, exc)
+    if apple_on:
+        await _notify_apple(member)
+    if google_on:
+        await _notify_google(member)
 
 
 async def bump_stat(field: str) -> None:
