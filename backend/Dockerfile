@@ -18,6 +18,14 @@ COPY assets ./assets
 # Run as a non-root user. Apple Wallet private keys are mounted read-only at
 # runtime (see docker-compose.yml) rather than baked into the image.
 RUN useradd --create-home --uid 10001 bros && chown -R bros:bros /app
+
+# Uploaded photography mounts here. Create it in the image, owned by the app
+# user: Docker initialises an empty named volume from the image directory and
+# copies its ownership, so the volume arrives writable. Without this the
+# volume is created root-owned and every upload fails with a permission error
+# — which a bind mount in development does not reproduce.
+RUN mkdir -p /data/media && chown -R bros:bros /data/media
+
 USER bros
 
 EXPOSE 8001
