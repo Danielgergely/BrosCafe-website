@@ -1,0 +1,106 @@
+# Bros Cafe — Coolify deployment.
+#
+# Use this file instead of docker-compose.yml when deploying through Coolify
+# (Build Pack: "Docker Compose", Compose file: docker-compose.coolify.yml).
+#
+# The difference from docker-compose.yml is deliberate: no published ports.
+# Coolify's Traefik proxy joins this stack's network and reaches `web` on port
+# 80 directly. Publishing ports here would put the container on the host
+# outside the proxy's control, which is both redundant and a way to
+# accidentally expose the API or the database.
+#
+# Set the domain in Coolify: open the `web` service → Domains → enter
+#     https://broscafe.hu          (production application)
+#     https://stage.broscafe.hu    (staging application)
+# Coolify issues and renews the certificate.
+#
+# Everything secret comes from Coolify's Environment Variables tab, not from
+# this file. Nothing here is committed with a real value.
+
+services:
+  web:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    # No `ports:` — Coolify routes to port 80 on the internal network.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      # Mongo is reachable only inside this stack's network.
+      MONGO_URL: mongodb://mongo:27017
+
+      # ── Set these in Coolify → Environment Variables ──────────────────
+      # FRONTEND_URL must exactly match the domain assigned to `web` above.
+      # It is written into every Apple Wallet pass, so changing it later
+      # breaks every pass already on a customer's phone. Set it once.
+      DB_NAME: ${DB_NAME:?set DB_NAME, e.g. broscafe_prod}
+      JWT_SECRET: ${JWT_SECRET:?generate with openssl rand -hex 32}
+      FRONTEND_URL: ${FRONTEND_URL:?must equal the domain set on the web service}
+      CORS_ORIGINS: ${FRONTEND_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+
+      # true → every deploy re-seeds products and journal posts from
+      # backend/data/*.json, so editing a price or image is a git push.
+      # Set false once you edit products through /admin instead.
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+
+      STAMPS_REQUIRED: ${STAMPS_REQUIRED:-4}
+      OPENING_DATETIME: ${OPENING_DATETIME:-2026-09-16T08:00:00}
+      CAFE_TIMEZONE: ${CAFE_TIMEZONE:-Europe/Budapest}
+      CAFE_NAME: ${CAFE_NAME:-Bros Cafe}
+      CAFE_ADDRESS: ${CAFE_ADDRESS:-}
+      CAFE_INSTAGRAM: ${CAFE_INSTAGRAM:-}
+      CAFE_EMAIL: ${CAFE_EMAIL:-}
+      CAFE_HOURS_WEEKDAYS: ${CAFE_HOURS_WEEKDAYS:-}
+      CAFE_HOURS_WEEKEND: ${CAFE_HOURS_WEEKEND:-}
+
+      EMERGENT_EMAIL_KEY: ${EMERGENT_EMAIL_KEY:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Bros Cafe}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-https://integrations.emergentagent.com}
+
+      # Apple Wallet. Keep false on staging — a pass issued from staging points
+      # at the staging domain forever.
+      APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_PASS_TYPE_ID: ${APPLE_PASS_TYPE_ID:-}
+      APPLE_CERT_PEM_PATH: /run/certs/pass.pem
+      APPLE_KEY_PEM_PATH: /run/certs/ios-private-key.pem
+      APPLE_WWDR_CERT_PATH: /run/certs/wwdr.pem
+    volumes:
+      # Private keys live on the server, never in the image or in git.
+      # Create this directory before enabling Apple Wallet.
+      - /srv/broscafe/certs:/run/certs:ro
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["--bind_ip_all"]
+    volumes:
+      # Named volume — Coolify keeps it across deploys. This is the loyalty
+      # programme: members, stamps, transaction history. Back it up.
+      - broscafe-mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  broscafe-mongo-data:

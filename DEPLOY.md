@@ -32,7 +32,38 @@ across two hostnames breaks Wallet.
 
 ---
 
-## First deploy
+## Deploying with Coolify (the recommended path)
+
+Use `docker-compose.coolify.yml`, not `docker-compose.yml`. The only difference
+is that it publishes no ports: Coolify's proxy joins the stack's network and
+reaches `web` on port 80 directly, so published ports are redundant and a way
+to accidentally expose the API or database.
+
+| Setting                 | Staging                       | Production            |
+| ----------------------- | ----------------------------- | --------------------- |
+| Branch                  | `stage`                       | `main`                |
+| Build pack              | Docker Compose                | Docker Compose        |
+| Compose file            | `docker-compose.coolify.yml`  | same                  |
+| Domain (on `web`)       | `https://stage.broscafe.hu`   | `https://broscafe.hu` |
+| `DB_NAME`               | `broscafe_stage`              | `broscafe_prod`       |
+| `FRONTEND_URL`          | `https://stage.broscafe.hu`   | `https://broscafe.hu` |
+| `JWT_SECRET`            | one value                     | a *different* value   |
+| `APPLE_PASS_CONFIGURED` | `false` — always              | `true` once verified  |
+
+`FRONTEND_URL` must exactly match the domain assigned to `web`. Set secrets in
+Coolify's Environment Variables tab, never in the compose file. Put Basic
+Authentication on the staging application (Advanced → Basic Authentication).
+
+Apple Wallet keys go in `/srv/broscafe/certs` on the server — the compose file
+mounts that read-only. Create it before setting `APPLE_PASS_CONFIGURED=true`.
+
+The full click-through, including VPS ordering and server hardening, is in the
+server-setup document.
+
+---
+
+## First deploy without Coolify (plain Docker on a VPS)
+
 
 Assumes a Linux server with Docker, and DNS for broscafe.hu under your control.
 
