@@ -224,6 +224,47 @@ reaches the tens of thousands.
 
 ---
 
+## MongoDB and AVX
+
+MongoDB 5.0+ requires a CPU exposing the AVX instruction set. Some VPS hosts run
+KVM with the generic `qemu64` CPU model, which masks AVX (and SSE4.2) even when
+the physical host supports them. Mongo 5+ then crash-loops on boot with:
+
+```
+WARNING: MongoDB 5.0+ requires a CPU with AVX support,
+and your current system does not appear to have that!
+```
+
+Check with:
+
+```bash
+grep -w avx /proc/cpuinfo || echo "no AVX"
+lscpu | grep "Model name"     # "QEMU Virtual CPU version 2.5+" means masked
+```
+
+If AVX is missing, ask the provider to switch the VM's CPU model to
+`host-passthrough` (or a modern named model). It costs nothing and also
+restores SSE4.2 and AES-NI, which matter for TLS throughput.
+
+Until then, pin the last version that works:
+
+```
+MONGO_IMAGE=mongo:4.4
+```
+
+Verified: the full API suite passes on 4.4. It is end-of-life though, so treat
+it as temporary. When AVX becomes available, upgrade by dumping and restoring
+rather than in place — 4.4 to 7 needs stepwise binary upgrades, and the dataset
+is small enough that dump/restore is simpler:
+
+```bash
+docker compose -p broscafe-prod exec mongo mongodump --archive --gzip --db=broscafe_prod > pre-upgrade.gz
+# set MONGO_IMAGE=mongo:7, redeploy, then:
+docker compose -p broscafe-prod exec -T mongo mongorestore --archive --gzip --drop < pre-upgrade.gz
+```
+
+---
+
 ## Backups
 
 The database is the loyalty programme. Nightly, off the server:

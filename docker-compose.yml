@@ -68,7 +68,13 @@ services:
       - ${CERTS_DIR:-./backend/certs}:/run/certs:ro
 
   mongo:
-    image: mongo:7
+    # Pinned via env so the version can be changed without editing this file.
+    # MongoDB 5.0+ requires a CPU exposing AVX. Some VPS hosts run KVM with the
+    # generic `qemu64` CPU model, which masks AVX (and SSE4.2) even when the
+    # physical host has them — Mongo 5+ then crash-loops on startup. Check with
+    # `grep -w avx /proc/cpuinfo`; if it is missing, ask the provider to switch
+    # the VM to host-passthrough, and run MONGO_IMAGE=mongo:4.4 until they do.
+    image: ${MONGO_IMAGE:-mongo:7}
     restart: unless-stopped
     # Cap the WiredTiger cache. Left alone, MongoDB claims half of (RAM - 1GB) —
     # about 1.5 GB on a 4 GB server — which it does not need for a dataset this
@@ -80,7 +86,13 @@ services:
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      # mongosh only exists from Mongo 6; `mongo` is the shell before that.
+      # Try both so the healthcheck works whichever image is pinned.
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet --eval 'db.runCommand({ping:1}).ok' ||
+          mongo --quiet --eval 'db.runCommand({ping:1}).ok'
       interval: 10s
       timeout: 5s
       retries: 12
