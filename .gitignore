@@ -87,6 +87,10 @@ android-sdk/
 # which variables the backend needs.
 !.env.example
 !**/.env.example
+# Deployment env files hold real secrets; only the template is committed.
+.env.prod
+.env.stage
+!.env.deploy.example
 credentials.json
 *.key
 .credentials

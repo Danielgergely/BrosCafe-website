@@ -55,6 +55,11 @@ class Settings:
     stamps_required = _int("STAMPS_REQUIRED", 4)
     opening_datetime = _opening_datetime()
 
+    # --- content ---------------------------------------------------------
+    # Re-seed products and journal posts from data/*.json on every boot, so a
+    # deploy ships content changes. Disable once products are edited via /admin.
+    seed_on_startup = os.environ.get("SEED_ON_STARTUP", "false").lower() == "true"
+
     # --- email ----------------------------------------------------------
     email_base_url = os.environ.get("EMAIL_BASE_URL", "https://integrations.emergentagent.com")
     email_key = os.environ.get("EMERGENT_EMAIL_KEY", "")

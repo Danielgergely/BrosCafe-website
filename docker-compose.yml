@@ -1,0 +1,84 @@
+# Bros Cafe — the whole system: website, API, database.
+#
+# One file serves both environments. What differs between stage and production
+# is the .env file you point at it, never this file:
+#
+#   docker compose --env-file .env.stage -p broscafe-stage up -d --build
+#   docker compose --env-file .env.prod  -p broscafe-prod  up -d --build
+#
+# Separate project names (-p) keep the two sets of containers and volumes
+# apart, so stage can never touch production data.
+#
+# Only the `web` container publishes a port. The API and the database are
+# reachable only from inside the compose network — the API through nginx at
+# /api, the database not at all from outside.
+
+services:
+  web:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      # Bind to localhost so the platform's reverse proxy (which terminates
+      # TLS) is the only way in. Change HOST_PORT per environment.
+      - "127.0.0.1:${HOST_PORT:-8080}:80"
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      DB_NAME: ${DB_NAME:?set DB_NAME}
+      JWT_SECRET: ${JWT_SECRET:?generate with openssl rand -hex 32}
+      FRONTEND_URL: ${FRONTEND_URL:?the public https origin, e.g. https://broscafe.hu}
+      CORS_ORIGINS: ${FRONTEND_URL}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+      # Ship content changes with a deploy: re-seed products and journal posts
+      # from backend/data/*.json on boot. Turn off once you edit via /admin.
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+      STAMPS_REQUIRED: ${STAMPS_REQUIRED:-4}
+      OPENING_DATETIME: ${OPENING_DATETIME:-2026-09-16T08:00:00}
+      CAFE_TIMEZONE: ${CAFE_TIMEZONE:-Europe/Budapest}
+      CAFE_NAME: ${CAFE_NAME:-Bros Cafe}
+      CAFE_ADDRESS: ${CAFE_ADDRESS:-}
+      CAFE_INSTAGRAM: ${CAFE_INSTAGRAM:-}
+      CAFE_EMAIL: ${CAFE_EMAIL:-}
+      CAFE_HOURS_WEEKDAYS: ${CAFE_HOURS_WEEKDAYS:-}
+      CAFE_HOURS_WEEKEND: ${CAFE_HOURS_WEEKEND:-}
+      EMERGENT_EMAIL_KEY: ${EMERGENT_EMAIL_KEY:-}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Bros Cafe}
+      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-https://integrations.emergentagent.com}
+      # Apple Wallet. Leave APPLE_PASS_CONFIGURED unset and passes stay off.
+      APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_PASS_TYPE_ID: ${APPLE_PASS_TYPE_ID:-}
+      APPLE_CERT_PEM_PATH: /run/certs/pass.pem
+      APPLE_KEY_PEM_PATH: /run/certs/ios-private-key.pem
+      APPLE_WWDR_CERT_PATH: /run/certs/wwdr.pem
+    volumes:
+      # Private keys live on the host, never in the image or in git.
+      - ${CERTS_DIR:-./backend/certs}:/run/certs:ro
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ["--bind_ip_all"]
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ping:1}).ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  mongo-data:

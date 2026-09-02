@@ -54,10 +54,33 @@ async def _seed_admin() -> None:
         logger.info("Updated admin password for %s", settings.admin_email)
 
 
+def _seed_content_from_files() -> None:
+    """Load data/catalog.json and data/whats_new.json into the database.
+
+    Runs on boot when SEED_ON_STARTUP is true, which is what makes editing a
+    product's copy or image a `git push` rather than a manual step: the deploy
+    restarts the container and the new content lands with it.
+
+    The seeder upserts by id and archives what is no longer in the files, so it
+    is safe to run on every boot. Turn it off once you start editing products
+    through the admin UI, or a deploy will overwrite those edits.
+    """
+    if not settings.seed_on_startup:
+        return
+    from app import seed
+
+    try:
+        seed.main([])
+    except Exception:
+        # Never let a content problem stop the API from serving.
+        logger.exception("Seeding from data files failed; continuing without it")
+
+
 @app.on_event("startup")
 async def on_startup() -> None:
     await db.ensure_indexes()
     await _seed_admin()
+    _seed_content_from_files()
 
 
 @app.on_event("shutdown")
