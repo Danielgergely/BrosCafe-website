@@ -90,7 +90,13 @@ services:
   mongo:
     image: mongo:7
     restart: unless-stopped
-    command: ["--bind_ip_all"]
+    # Cap the WiredTiger cache. Left alone, MongoDB claims half of (RAM - 1GB) —
+    # about 1.5 GB on a 4 GB server — which it does not need for a dataset this
+    # size and which competes with the frontend build for memory.
+    command:
+      - "--bind_ip_all"
+      - "--wiredTigerCacheSizeGB"
+      - "${MONGO_CACHE_GB:-0.5}"
     volumes:
       # Named volume — Coolify keeps it across deploys. This is the loyalty
       # programme: members, stamps, transaction history. Back it up.

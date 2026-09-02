@@ -192,6 +192,38 @@ with whatever is in the JSON files. Pick one source of truth, not both.
 
 ---
 
+## Sizing
+
+Measured, not estimated — the whole stack with the Mongo cache capped:
+
+| Container | Memory |
+| --------- | ------ |
+| MongoDB   | ~89 MiB |
+| API       | ~51 MiB |
+| nginx     | ~10 MiB |
+| **Total per environment** | **~150 MiB** |
+
+The heaviest thing on the server is the frontend build, which peaks at
+**~1.5 GiB**. Coolify itself uses 750 MB–1.2 GB.
+
+- **4 GB is enough for production alone** (~500 MB–1.1 GB spare at peak).
+- **8 GB if you also run staging on the same box**, or if you'd rather not
+  think about it.
+
+On a 4 GB server, add swap so a build spike can never OOM-kill anything:
+
+```bash
+sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+`MONGO_CACHE_GB` (default `0.5`) caps MongoDB's cache. Without it Mongo claims
+half of (RAM − 1 GB) and competes with the build. Raise it if the member list
+reaches the tens of thousands.
+
+---
+
 ## Backups
 
 The database is the loyalty programme. Nightly, off the server:
