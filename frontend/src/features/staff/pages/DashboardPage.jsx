@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  ArrowsClockwise, ChartLine, Coffee, FunnelSimple, Gear, Gift, ListChecks, Plus,
-  ScanSmiley, SignOut, Users, UsersThree, Wallet,
+  ArrowsClockwise, ChartLine, Coffee, FunnelSimple, Gear, Gift, Image as ImageIcon, ListChecks,
+  Newspaper, Plus, ScanSmiley, SignOut, Storefront, Users, UsersThree, Wallet,
 } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,8 +13,11 @@ import { Modal, adminInputClass } from "@/features/staff/components/AdminPrimiti
 import CoffeePanel from "@/features/staff/panels/CoffeePanel";
 import CustomersPanel from "@/features/staff/panels/CustomersPanel";
 import FunnelPanel from "@/features/staff/panels/FunnelPanel";
+import JournalPanel from "@/features/staff/panels/JournalPanel";
+import MediaPanel from "@/features/staff/panels/MediaPanel";
 import MembersPanel from "@/features/staff/panels/MembersPanel";
 import OverviewPanel from "@/features/staff/panels/OverviewPanel";
+import ProductsPanel from "@/features/staff/panels/ProductsPanel";
 import RetentionPanel from "@/features/staff/panels/RetentionPanel";
 import RewardsPanel from "@/features/staff/panels/RewardsPanel";
 import SegmentsPanel from "@/features/staff/panels/SegmentsPanel";
@@ -24,8 +27,12 @@ import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
 import { useStaff } from "@/state/StaffAuth";
 
-/** Tab order, icon and panel. Adding an analytics view means one entry here. */
+/** Tab order, icon and panel. Adding a view means one entry here. */
 const TABS = [
+  // Content first: this is what gets edited weekly, unlike the analytics.
+  { id: "products", icon: Storefront, Panel: ProductsPanel },
+  { id: "journal", icon: Newspaper, Panel: JournalPanel },
+  { id: "photos", icon: ImageIcon, Panel: MediaPanel },
   { id: "overview", icon: ChartLine, Panel: OverviewPanel },
   { id: "funnel", icon: FunnelSimple, Panel: FunnelPanel },
   { id: "customers", icon: Users, Panel: CustomersPanel },
@@ -49,7 +56,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { signOut } = useStaff();
 
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("products");
   const [staffForm, setStaffForm] = useState(null);
   const [settings, setSettings] = useState(null);
 

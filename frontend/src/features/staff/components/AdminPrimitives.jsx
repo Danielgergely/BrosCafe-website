@@ -54,14 +54,14 @@ export function Loading() {
   );
 }
 
-export function Modal({ title, children, onClose }) {
+export function Modal({ title, children, onClose, width = "max-w-md" }) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-panel bg-white p-8"
+        className={`max-h-[90vh] w-full ${width} overflow-y-auto rounded-panel bg-white p-8`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-6 flex items-center justify-between">

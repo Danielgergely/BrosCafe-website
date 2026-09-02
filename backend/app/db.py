@@ -18,6 +18,7 @@ magic_tokens = db.magic_tokens
 app_settings = db.settings
 content = db.content
 products = db.products
+media = db.media
 wallet_registrations = db.wallet_registrations
 wallet_stats = db.wallet_stats
 
@@ -37,6 +38,8 @@ async def ensure_indexes() -> None:
     await magic_tokens.create_index("expires_at", expireAfterSeconds=0)
     await products.create_index("id", unique=True)
     await content.create_index("id", unique=True)
+    await media.create_index("id", unique=True)
+    await media.create_index("uploaded_at")
     await wallet_registrations.create_index([("device_id", 1), ("serial", 1)])
 
 

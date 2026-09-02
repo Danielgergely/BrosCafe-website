@@ -1,15 +1,43 @@
-"""Admin surface: stats, member list, transactions, thresholds, product editing."""
+"""Admin surface: stats, members, transactions, thresholds, and the content
+editor — catalog, journal posts and uploaded photography."""
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app import db
-from app.models import ProductUpsert, SettingsUpdate
+from app import db, seed
+from app.config import settings
+from app.models import PostUpsert, ProductUpsert, SettingsUpdate
 from app.security import require_admin
-from app.services import analytics, app_settings, members
+from app.services import analytics, app_settings, media, members
 from app.wallet import apple, google
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)], tags=["admin"])
+
+
+def _stamp(doc: dict, user: dict) -> dict:
+    """Mark a row as dashboard-owned.
+
+    `edited_at` is what stops the file seeder from overwriting this item on the
+    next deploy — see app/seed.py. Without it, saving a price here would last
+    only until the next git push.
+    """
+    return {**doc, "edited_at": datetime.now(timezone.utc),
+            "edited_by": user.get("email", "admin")}
+
+
+async def _revert_to_file(collection, section: str, doc_id: str) -> dict:
+    """Hand ownership of one item back to data/*.json."""
+    original = seed.file_document(section, doc_id)
+    if not original:
+        raise HTTPException(status_code=404,
+                            detail="This item only exists in the dashboard, "
+                                   "so there is no file version to restore")
+    await collection.update_one(
+        {"id": doc_id},
+        {"$set": {**original, "active": True},
+         "$unset": {"edited_at": "", "edited_by": ""}})
+    return original
 
 
 # ------------------------------------------------------------------ overview
@@ -96,19 +124,95 @@ async def admin_list_products():
 
 
 @router.post("/products")
-async def upsert_product(body: ProductUpsert):
-    doc = body.model_dump(exclude_none=True)
+async def upsert_product(body: ProductUpsert, user: dict = Depends(require_admin)):
+    doc = _stamp(body.model_dump(exclude_none=True), user)
     await db.products.update_one({"id": doc["id"]}, {"$set": doc}, upsert=True)
     return doc
+
+
+@router.post("/products/{product_id}/reset")
+async def reset_product(product_id: str):
+    """Discard dashboard edits and restore the version in data/catalog.json."""
+    return await _revert_to_file(db.products, "products", product_id)
 
 
 @router.delete("/products/{product_id}")
 async def archive_product(product_id: str):
     """Archives rather than deletes, so pairings pointing at it never dangle."""
-    result = await db.products.update_one({"id": product_id}, {"$set": {"active": False}})
+    result = await db.products.update_one(
+        {"id": product_id}, {"$set": {"active": False, "edited_at": datetime.now(timezone.utc)}})
     if not result.matched_count:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"id": product_id, "active": False}
+
+
+# ------------------------------------------------------------------ journal
+@router.get("/whats-new")
+async def admin_list_posts():
+    """Includes archived posts, which the public feed hides."""
+    return await db.content.find({}, {"_id": 0}).sort("order", 1).to_list(100)
+
+
+@router.post("/whats-new")
+async def upsert_post(body: PostUpsert, user: dict = Depends(require_admin)):
+    doc = _stamp(body.model_dump(exclude_none=True), user)
+    await db.content.update_one({"id": doc["id"]}, {"$set": doc}, upsert=True)
+    return doc
+
+
+@router.delete("/whats-new/{post_id}")
+async def archive_post(post_id: str):
+    result = await db.content.update_one(
+        {"id": post_id}, {"$set": {"active": False, "edited_at": datetime.now(timezone.utc)}})
+    if not result.matched_count:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return {"id": post_id, "active": False}
+
+
+@router.post("/whats-new/{post_id}/reset")
+async def reset_post(post_id: str):
+    """Discard dashboard edits and restore the version in data/whats_new.json."""
+    return await _revert_to_file(db.content, "content", post_id)
+
+
+# ------------------------------------------------------------------ media
+@router.get("/media")
+async def list_media():
+    return await media.listing()
+
+
+@router.post("/media")
+async def upload_media(file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    limit = settings.max_upload_mb * 1024 * 1024
+    # Read one byte past the limit: enough to know it was exceeded without
+    # pulling an arbitrarily large upload into memory.
+    data = await file.read(limit + 1)
+    if len(data) > limit:
+        raise HTTPException(status_code=413,
+                            detail=f"Keep files under {settings.max_upload_mb} MB")
+
+    kind = media.sniff(data[:media.SNIFF_BYTES])
+    if kind not in media.ALLOWED:
+        raise HTTPException(status_code=415,
+                            detail="Upload a JPEG, PNG, WebP, AVIF or MP4")
+    return await media.save(data, file.filename or "upload", kind,
+                            user.get("email", "admin"))
+
+
+@router.delete("/media/{filename}")
+async def delete_media(filename: str):
+    if not media.FILENAME.match(filename):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    # Deleting a file that is still on the site would leave a broken image with
+    # no clue where. Name the items using it instead.
+    used_by = await media.usage(media.public_url(filename))
+    if used_by:
+        raise HTTPException(status_code=409,
+                            detail=f"Still used by: {', '.join(used_by)}")
+    if not await media.delete(filename):
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"filename": filename, "deleted": True}
 
 
 # ------------------------------------------------------------------ wallet

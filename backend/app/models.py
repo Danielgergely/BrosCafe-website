@@ -1,5 +1,5 @@
 """Request/response schemas."""
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -65,10 +65,17 @@ class LocalizedList(BaseModel):
     hu: list[str]
 
 
+# The menu filters on these exactly, and the journal renders its tag through
+# i18n `news.tags.<kind>` — a free-text value in either would silently produce
+# a product nothing lists or a post with a missing label.
+CATEGORIES = Literal["coffee", "cold", "food", "sweet", "merch"]
+POST_KINDS = Literal["guest", "house", "pastry"]
+
+
 class ProductUpsert(BaseModel):
     """Mirrors data/catalog.json so admin-created products match seeded ones."""
     id: str = Field(pattern=r"^[a-z0-9-]{2,50}$")
-    cat: str
+    cat: CATEGORIES
     order: int = 99
     price_huf: int = Field(ge=0)
     name: Localized
@@ -84,4 +91,16 @@ class ProductUpsert(BaseModel):
     temp: Optional[str] = None
     video: Optional[str] = None
     pairings: list[str] = []
+    active: bool = True
+
+
+class PostUpsert(BaseModel):
+    """Mirrors data/whats_new.json so admin-written posts match seeded ones."""
+    id: str = Field(pattern=r"^[a-z0-9-]{2,50}$")
+    order: int = 99
+    kind: POST_KINDS = "house"
+    image: str = ""
+    title: Localized
+    blurb: Localized
+    body: Localized
     active: bool = True

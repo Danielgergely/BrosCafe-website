@@ -60,12 +60,19 @@ services:
       APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
       APPLE_PASS_TYPE_ID: ${APPLE_PASS_TYPE_ID:-}
+      # Uploaded photography. The volume below is the only copy of these files.
+      MEDIA_DIR: /data/media
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-20}
+
       APPLE_CERT_PEM_PATH: /run/certs/pass.pem
       APPLE_KEY_PEM_PATH: /run/certs/ios-private-key.pem
       APPLE_WWDR_CERT_PATH: /run/certs/wwdr.pem
     volumes:
       # Private keys live on the host, never in the image or in git.
       - ${CERTS_DIR:-./backend/certs}:/run/certs:ro
+      # Admin-uploaded images. Named volume so it survives
+      # redeploys — losing it means every uploaded photo is gone.
+      - media:/data/media
 
   mongo:
     # Pinned via env so the version can be changed without editing this file.
@@ -100,3 +107,4 @@ services:
 
 volumes:
   mongo-data:
+  media:

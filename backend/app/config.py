@@ -57,8 +57,16 @@ class Settings:
 
     # --- content ---------------------------------------------------------
     # Re-seed products and journal posts from data/*.json on every boot, so a
-    # deploy ships content changes. Disable once products are edited via /admin.
+    # deploy ships content changes. Items edited through /admin are skipped by
+    # the seeder, so this can stay on alongside in-browser editing.
     seed_on_startup = os.environ.get("SEED_ON_STARTUP", "false").lower() == "true"
+
+    # --- uploaded media --------------------------------------------------
+    # Photography uploaded through /admin. Must be a persistent volume: unlike
+    # data/*.json these files exist nowhere else, so a bare container path
+    # loses every image on redeploy.
+    media_dir = os.environ.get("MEDIA_DIR", str(BASE_DIR / "media"))
+    max_upload_mb = _int("MAX_UPLOAD_MB", 20)
 
     # --- email ----------------------------------------------------------
     email_base_url = os.environ.get("EMAIL_BASE_URL", "https://integrations.emergentagent.com")

@@ -24,5 +24,8 @@ email-validator==2.3.0
 # --- Apple Wallet pass signing ----------------------------------------
 cryptography==50.0.0
 
+# --- uploads -----------------------------------------------------------
+python-multipart==0.0.20   # required for multipart/form-data: admin image upload
+
 # --- configuration -----------------------------------------------------
 python-dotenv==1.2.3
