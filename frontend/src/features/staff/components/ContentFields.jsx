@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Trash2, Upload } from "lucide-react";
+import {
+  ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2, Upload,
+} from "lucide-react";
 
+import { FLAVOUR_KEYS } from "@/config/site";
 import { adminInputClass } from "@/features/staff/components/AdminPrimitives";
 import { useMediaLibrary } from "@/features/staff/panels/useMediaLibrary";
 import { useI18n } from "@/i18n";
@@ -141,6 +144,252 @@ export function ImagePicker({ label, value, onChange, testId }) {
                   <img src={item.url} alt="" className="h-full w-full object-cover" />
                 </button>
               ))}
+            </div>
+          ) : (
+            <p className="p-3 text-center text-sm text-muted">{t("content.libraryEmpty")}</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/**
+ * The four flavour axes shown on the product page.
+ *
+ * Optional by design: sandwiches, hoodies and mugs have no flavour profile, and
+ * the product page hides the block entirely when it is absent. Clearing the
+ * profile sends `null`, which the API turns into a $unset — setting it to an
+ * empty object instead would leave the page rendering four blank bars.
+ */
+export function FlavorSliders({ value, onChange, testId }) {
+  const { t } = useI18n();
+  const scales = t("product.scales");
+  const profile = value || null;
+
+  if (!profile) {
+    return (
+      <div>
+        <span className={labelClass}>{t("content.flavour")}</span>
+        <button
+          type="button"
+          data-testid={testId ? `${testId}-add` : undefined}
+          onClick={() => onChange(Object.fromEntries(FLAVOUR_KEYS.map((key) => [key, 50])))}
+          className="mt-1 flex items-center gap-1.5 rounded-card border border-olive px-3 py-2 text-sm font-medium text-olive hover:bg-cream"
+        >
+          <Plus size={14} /> {t("content.addFlavour")}
+        </button>
+        <p className="mt-1 text-xs text-muted">{t("content.flavourHint")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <span className={labelClass}>{t("content.flavour")}</span>
+        <button
+          type="button"
+          onClick={() => onChange(null)}
+          className="text-xs font-medium text-muted hover:text-alert"
+        >
+          {t("content.removeFlavour")}
+        </button>
+      </div>
+
+      <div className="mt-2 space-y-3 rounded-card border border-line bg-cream/50 p-4">
+        {FLAVOUR_KEYS.map((key, index) => (
+          <label key={key} className="block">
+            <span className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <span>{scales[index]?.[0]}</span>
+              <span className="tabular-nums text-olive">{profile[key] ?? 50}</span>
+              <span>{scales[index]?.[1]}</span>
+            </span>
+            <input
+              data-testid={testId ? `${testId}-${key}` : undefined}
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value={profile[key] ?? 50}
+              onChange={(event) =>
+                onChange({ ...profile, [key]: Number(event.target.value) })
+              }
+              className="mt-1 h-2 w-full cursor-pointer accent-olive"
+            />
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The product's photo gallery.
+ *
+ * The first image is the one the menu and cards show, so order matters and is
+ * editable — hence the arrows rather than a plain list.
+ */
+export function GalleryPicker({ label, value, onChange, testId }) {
+  const { t } = useI18n();
+  const { items, uploading, upload } = useMediaLibrary();
+  const [browsing, setBrowsing] = useState(false);
+  const [pasted, setPasted] = useState("");
+  const fileInput = useRef(null);
+  const images = value || [];
+
+  const add = (url) => {
+    if (!url || images.includes(url)) return;
+    onChange([...images, url]);
+  };
+
+  const move = (index, delta) => {
+    const next = [...images];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    onChange(next);
+  };
+
+  const choose = async (event) => {
+    const saved = await upload(event.target.files);
+    if (saved.length) onChange([...images, ...saved.map((item) => item.url)]);
+    event.target.value = "";
+  };
+
+  return (
+    <div>
+      <span className={labelClass}>{label}</span>
+
+      <div className="mt-1 space-y-2" data-testid={testId}>
+        {images.map((url, index) => (
+          <div
+            key={url}
+            data-testid={testId ? `${testId}-row-${index}` : undefined}
+            className="flex items-center gap-3 rounded-card border border-line bg-white p-2"
+          >
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded bg-cream">
+              <img src={url} alt="" className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-olive">
+                {index === 0 ? t("content.mainPhoto") : `${index + 1}.`}
+              </p>
+              <p className="truncate text-xs text-muted" title={url}>{url}</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => move(index, -1)}
+                disabled={index === 0}
+                aria-label={t("content.moveUp")}
+                title={t("content.moveUp")}
+                className="rounded p-1.5 text-muted hover:bg-cream hover:text-olive disabled:opacity-30"
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => move(index, 1)}
+                disabled={index === images.length - 1}
+                aria-label={t("content.moveDown")}
+                title={t("content.moveDown")}
+                className="rounded p-1.5 text-muted hover:bg-cream hover:text-olive disabled:opacity-30"
+              >
+                <ArrowDown size={14} />
+              </button>
+              <button
+                type="button"
+                data-testid={testId ? `${testId}-remove-${index}` : undefined}
+                onClick={() => onChange(images.filter((_, i) => i !== index))}
+                aria-label={t("content.clear")}
+                title={t("content.clear")}
+                className="rounded p-1.5 text-muted hover:bg-cream hover:text-alert"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {images.length === 0 && (
+          <p className="rounded-card border border-dashed border-line px-3 py-4 text-center text-sm text-muted">
+            {t("content.noPhotos")}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-2 text-sm">
+        <button
+          type="button"
+          data-testid={testId ? `${testId}-upload` : undefined}
+          onClick={() => fileInput.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1.5 rounded-card border border-olive px-3 py-1.5 font-medium text-olive hover:bg-cream disabled:opacity-60"
+        >
+          <Upload size={14} /> {uploading ? t("content.uploading") : t("content.upload")}
+        </button>
+        <button
+          type="button"
+          onClick={() => setBrowsing((open) => !open)}
+          className="rounded-card border border-line px-3 py-1.5 font-medium text-ink hover:border-olive"
+        >
+          {t("content.browse")}
+        </button>
+      </div>
+
+      <input
+        ref={fileInput}
+        type="file"
+        multiple
+        accept="image/jpeg,image/png,image/webp,image/avif"
+        onChange={choose}
+        className="hidden"
+      />
+
+      <div className="mt-2 flex gap-2">
+        <input
+          data-testid={testId ? `${testId}-url` : undefined}
+          value={pasted}
+          onChange={(event) => setPasted(event.target.value)}
+          placeholder={t("content.imageUrl")}
+          className={adminInputClass}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            add(pasted.trim());
+            setPasted("");
+          }}
+          disabled={!pasted.trim()}
+          className="shrink-0 rounded-card border border-line px-4 font-medium text-ink hover:border-olive disabled:opacity-40"
+        >
+          {t("content.addUrl")}
+        </button>
+      </div>
+
+      {browsing && (
+        <div className="mt-3 max-h-56 overflow-y-auto rounded-card border border-line bg-cream p-2">
+          {items?.length ? (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {items
+                .filter((item) => item.content_type !== "video/mp4")
+                .map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    title={item.original_name}
+                    onClick={() => add(item.url)}
+                    className={`aspect-square overflow-hidden rounded border-2 ${
+                      images.includes(item.url)
+                        ? "border-olive"
+                        : "border-transparent hover:border-olive/50"
+                    }`}
+                  >
+                    <img src={item.url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
             </div>
           ) : (
             <p className="p-3 text-center text-sm text-muted">{t("content.libraryEmpty")}</p>

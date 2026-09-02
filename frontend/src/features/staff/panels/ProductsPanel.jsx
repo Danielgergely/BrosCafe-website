@@ -6,7 +6,9 @@ import { CATEGORIES } from "@/config/site";
 import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
-import { ImagePicker, LocalizedField, labelClass } from "@/features/staff/components/ContentFields";
+import {
+  FlavorSliders, GalleryPicker, LocalizedField, labelClass,
+} from "@/features/staff/components/ContentFields";
 import { EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
@@ -43,9 +45,10 @@ export default function ProductsPanel() {
   /**
    * Save the whole record, not just the visible fields.
    *
-   * The editor exposes the fields that change day to day; flavour profiles,
-   * ingredients and pairings are edited in catalog.json. Spreading the original
-   * document underneath means saving a price here doesn't blank them.
+   * The editor exposes the fields that change day to day; ingredients, pairings
+   * and the "behind the cup" copy are still edited in catalog.json. Spreading
+   * the original document underneath means saving a price here doesn't blank
+   * them.
    */
   const save = async (event) => {
     event.preventDefault();
@@ -55,6 +58,8 @@ export default function ProductsPanel() {
         ...form,
         order: Number(form.order) || 99,
         price_huf: Number(form.price_huf) || 0,
+        // Explicit null, not omitted: the API reads it as "remove this field".
+        flavor: form.flavor ?? null,
       });
       toast.success(t("content.saved"));
       setForm(null);
@@ -226,13 +231,17 @@ export default function ProductsPanel() {
               onChange={(tip) => setForm({ ...form, tip })}
             />
 
-            <ImagePicker
-              label={t("content.mainPhoto")}
-              testId="product-image"
-              value={form.images?.[0] || ""}
-              onChange={(url) =>
-                setForm({ ...form, images: url ? [url, ...(form.images || []).slice(1)] : (form.images || []).slice(1) })
-              }
+            <GalleryPicker
+              label={t("content.gallery")}
+              testId="product-gallery"
+              value={form.images}
+              onChange={(images) => setForm({ ...form, images })}
+            />
+
+            <FlavorSliders
+              testId="product-flavor"
+              value={form.flavor}
+              onChange={(flavor) => setForm({ ...form, flavor })}
             />
 
             <div className="grid gap-3 sm:grid-cols-2">

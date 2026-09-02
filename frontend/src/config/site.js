@@ -141,3 +141,10 @@ export const FEATURED = {
 };
 
 export const CATEGORIES = ["all", "coffee", "cold", "food", "sweet", "merch"];
+
+/**
+ * The flavour axes, in the order their labels appear in i18n `product.scales`.
+ * Shared so the product page and the admin editor cannot drift apart — a
+ * reordering here has to stay in step with that label list.
+ */
+export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "milkyCreamy", "hotIced"];

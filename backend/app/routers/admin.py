@@ -116,6 +116,13 @@ async def analytics_segments():
     return await analytics.segments()
 
 
+# Fields a product may legitimately not have. Sent as null they mean "remove",
+# which $set cannot express — see upsert_product.
+OPTIONAL_PRODUCT_FIELDS = (
+    "flavor", "tip", "ingredients", "behind", "sizes", "material", "video", "temp",
+)
+
+
 # ------------------------------------------------------------------ catalog
 @router.get("/products")
 async def admin_list_products():
@@ -126,7 +133,20 @@ async def admin_list_products():
 @router.post("/products")
 async def upsert_product(body: ProductUpsert, user: dict = Depends(require_admin)):
     doc = _stamp(body.model_dump(exclude_none=True), user)
-    await db.products.update_one({"id": doc["id"]}, {"$set": doc}, upsert=True)
+
+    # Distinguish "field omitted" from "field explicitly cleared". Dropping a
+    # flavour profile has to $unset it: $set-ing null would leave the site
+    # rendering four empty bars, since the template only checks for presence.
+    update: dict = {"$set": doc}
+    cleared = {
+        field: ""
+        for field in OPTIONAL_PRODUCT_FIELDS
+        if field in body.model_fields_set and getattr(body, field) is None
+    }
+    if cleared:
+        update["$unset"] = cleared
+
+    await db.products.update_one({"id": doc["id"]}, update, upsert=True)
     return doc
 
 

@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronDown, Heart, Plus, X } from "lucide-react";
 
-import { MOTION } from "@/config/site";
+import { FLAVOUR_KEYS, MOTION } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { localize, useCatalog } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { useUi } from "@/state/UiStore";
 
-const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "milkyCreamy", "hotIced"];
 const SWIPE_THRESHOLD = 60;
 
 const fadeUp = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
