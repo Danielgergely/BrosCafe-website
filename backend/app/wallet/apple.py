@@ -111,15 +111,16 @@ def _sign_manifest(manifest_bytes: bytes) -> bytes:
 # rather than the cream-on-colour the earned tiers share.
 OLIVE = (102, 115, 74)
 
-# Every tier keeps the brand green. What changes is the band across the strip
-# image and the colour of the labels — enough to read the standing at a glance
-# without turning the card into a different product.
+# The earned tiers keep the brand green and differ by accent alone. Diamond is
+# the exception: it is never earned, so it gets its own dark platinum ground.
+# `fg` colours the member's name, the stamp row and the header value, so the
+# accent runs through the card instead of sitting in a single stripe.
 TIER_PALETTE = {
-    "base": {"bg": OLIVE, "fg": (245, 240, 230), "label": (214, 219, 196)},
-    "bronze": {"bg": OLIVE, "fg": (245, 240, 230), "label": (222, 158, 104)},
-    "silver": {"bg": OLIVE, "fg": (245, 240, 230), "label": (208, 216, 226)},
-    "gold": {"bg": OLIVE, "fg": (245, 240, 230), "label": (238, 198, 104)},
-    "diamond": {"bg": OLIVE, "fg": (245, 240, 230), "label": (168, 205, 232)},
+    "base": {"bg": OLIVE, "fg": (245, 240, 230), "label": (204, 211, 186)},
+    "bronze": {"bg": OLIVE, "fg": (226, 162, 108), "label": (206, 214, 188)},
+    "silver": {"bg": OLIVE, "fg": (214, 222, 232), "label": (206, 214, 188)},
+    "gold": {"bg": OLIVE, "fg": (242, 202, 108), "label": (206, 214, 188)},
+    "diamond": {"bg": (22, 25, 32), "fg": (176, 212, 238), "label": (140, 160, 182)},
 }
 
 
@@ -142,6 +143,7 @@ PASS_STRINGS = {
         "reward_relevant": "Your free coffee is ready at Bros Cafe!",
         "coffees": "Coffees", "free_coffees": "Free coffees",
         "left_label": "Coffees to go",
+        "since_label": "Member since",
         "reward_short": "\U0001F389",
         "always_free_short": "\U0001F48E",
         "tier_label": "Status",
@@ -161,6 +163,7 @@ PASS_STRINGS = {
         "reward_relevant": "Az ingyen kávéd készen áll a Bros Cafenál!",
         "coffees": "Kávék", "free_coffees": "Ingyen kávék",
         "left_label": "Még kell",
+        "since_label": "Csatlakozott",
         "reward_short": "\U0001F389",
         "always_free_short": "\U0001F48E",
         "tier_label": "Szint",
@@ -184,17 +187,18 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     reward = member.get("reward_ready", False)
     tier = member.get("tier", "base")
     palette = TIER_PALETTE.get(tier, TIER_PALETTE["base"])
+    since = str(member.get("created_at", ""))[:4] or ""
     # Filled and hollow circles rather than a coffee emoji: a secondary field
     # is a single line that Apple truncates, and ten emoji do not fit — the
     # strip was being cut off mid-card. Circles are about half the width and
     # ten of them sit comfortably.
-    dots = " ".join("\u25CF" if i < stamps else "\u25CB" for i in range(required))
+    dots = "\u2009".join("\u25CF" if i < stamps else "\u25CB" for i in range(required))
 
     if member.get("always_free"):
         # No card to fill — the standing itself is the message.
         secondary = [{"key": "progress", "label": L["tier_label"], "value": L["always_free"]}]
         relevant = L["always_free"]
-        header_label, header_value = L["tier_label"], L["always_free_short"]
+        header_label, header_value = L["tier_label"], L["tier_names"][tier]
     elif reward:
         secondary = [{"key": "progress", "label": L["reward_label"], "value": L["reward_value"]}]
         relevant = L["reward_relevant"]
@@ -203,7 +207,13 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         remaining = required - stamps
         relevant = L["one_more"] if remaining == 1 else L["many"].format(n=remaining)
         secondary = [{"key": "progress", "label": f"{stamps} / {required}", "value": dots}]
-        header_label, header_value = L["left_label"], str(remaining)
+        upcoming = member.get("next_tier")
+        if upcoming:
+            # "EZÜST / 35" — the next rung and how far away it is.
+            header_label = L["tier_names"].get(upcoming, upcoming)
+            header_value = str(member.get("coffees_to_next", 0))
+        else:
+            header_label, header_value = L["tier_label"], L["tier_names"][tier]
 
     pass_json = {
         "formatVersion": 1,
@@ -236,14 +246,17 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             # which is what was cutting the last stamps off. The running totals
             # moved to the back, where they are just as useful.
             "secondaryFields": secondary,
-            "auxiliaryFields": [],
+            "auxiliaryFields": [
+                {"key": "coffees", "label": L["coffees"],
+                 "value": str(member.get("total_coffees", 0))},
+                {"key": "rewards", "label": L["free_coffees"],
+                 "value": str(member.get("rewards_redeemed", 0))},
+                {"key": "since", "label": L["since_label"], "value": since},
+            ],
             "backFields": [
                 {"key": "status", "label": L["status_label"], "value": relevant},
                 {"key": "how", "label": L["how_label"],
                  "value": L["how_value"].format(n=required)},
-                {"key": "coffees", "label": L["coffees"], "value": str(member.get("total_coffees", 0))},
-                {"key": "rewards", "label": L["free_coffees"],
-                 "value": str(member.get("rewards_redeemed", 0))},
                 {"key": "tier", "label": L["tier_label"],
                  "value": _tier_line(L, member)},
                 {"key": "cafe", "label": L["cafe_label"], "value": cafe.get("address", "")},
@@ -268,17 +281,18 @@ def _collect_assets(tier: str = "base"):
     an imaging library in the runtime image.
     """
     files = {}
-    for name in ("icon.png", "icon@2x.png", "logo.png", "logo@2x.png"):
+    for name in ("icon.png", "icon@2x.png"):
         path = ASSETS_DIR / name
         if path.exists():
             files[name] = path.read_bytes()
 
-    for suffix in ("", "@2x"):
-        path = ASSETS_DIR / f"strip-{tier}{suffix}.png"
-        if not path.exists():
-            path = ASSETS_DIR / f"strip-base{suffix}.png"
-        if path.exists():
-            files[f"strip{suffix}.png"] = path.read_bytes()
+    for kind in ("logo", "strip"):
+        for suffix in ("", "@2x"):
+            path = ASSETS_DIR / f"{kind}-{tier}{suffix}.png"
+            if not path.exists():
+                path = ASSETS_DIR / f"{kind}-base{suffix}.png"
+            if path.exists():
+                files[f"{kind}{suffix}.png"] = path.read_bytes()
     return files
 
 
