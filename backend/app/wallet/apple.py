@@ -303,20 +303,20 @@ def _collect_assets(tier: str = "base", stamps: int = 0, required: int = 0):
     an imaging library in the runtime image.
     """
     files = {}
-    for name in ("icon.png", "icon@2x.png"):
+    for name in ("icon.png", "icon@2x.png", "icon@3x.png"):
         path = ASSETS_DIR / name
         if path.exists():
             files[name] = path.read_bytes()
 
-    for suffix in ("", "@2x"):
+    for suffix in ("", "@2x", "@3x"):
         path = ASSETS_DIR / f"logo-{tier}{suffix}.png"
         if not path.exists():
             path = ASSETS_DIR / f"logo-base{suffix}.png"
         if path.exists():
             files[f"logo{suffix}.png"] = path.read_bytes()
 
-    files["strip.png"] = artwork.strip(tier, stamps, required, 1)
-    files["strip@2x.png"] = artwork.strip(tier, stamps, required, 2)
+    for scale, suffix in ((1, ""), (2, "@2x"), (3, "@3x")):
+        files[f"strip{suffix}.png"] = artwork.strip(tier, stamps, required, scale)
     return files
 
 

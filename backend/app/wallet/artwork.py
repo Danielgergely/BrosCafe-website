@@ -26,41 +26,48 @@ TIERS = {
 
 WIDTH, HEIGHT = 375, 123
 
+# Pillow draws shapes with hard pixel edges — no antialiasing — so circles come
+# out visibly stepped. Drawing at this multiple and scaling back down with
+# Lanczos is the usual fix: the downsample does the smoothing.
+SUPERSAMPLE = 4
+
 
 def _draw(tier: str, stamps: int, required: int, scale: int) -> bytes:
     look = TIERS.get(tier, TIERS["base"])
-    w, h = WIDTH * scale, HEIGHT * scale
+    final = (WIDTH * scale, HEIGHT * scale)
+    w, h = final[0] * SUPERSAMPLE, final[1] * SUPERSAMPLE
     im = Image.new("RGB", (w, h), look["ground"])
     d = ImageDraw.Draw(im)
 
-    d.rectangle([0, 0, w, max(2, 4 * scale)], fill=look["band"])
+    d.rectangle([0, 0, w, max(2, 4 * scale * SUPERSAMPLE)], fill=look["band"])
 
     if required <= 0:
         # Diamond: no card to fill, so the strip stays clean and the name has
         # the whole panel to itself.
-        return _encode(im)
+        return _encode(im, final)
 
     # Sized to fit whatever the card length is, so a seven-stamp gold card and
     # a ten-stamp new card both sit on one line with even margins.
-    margin = 18 * scale
-    gap = max(4 * scale, int((w - margin * 2) * 0.018))
-    size = min(26 * scale, (w - margin * 2 - gap * (required - 1)) // required)
+    unit = scale * SUPERSAMPLE
+    margin = 18 * unit
+    gap = max(4 * unit, int((w - margin * 2) * 0.018))
+    size = min(26 * unit, (w - margin * 2 - gap * (required - 1)) // required)
     total = size * required + gap * (required - 1)
     x = (w - total) // 2
-    y = h - size - 18 * scale
+    y = h - size - 18 * unit
 
     for i in range(required):
         box = [x + i * (size + gap), y, x + i * (size + gap) + size, y + size]
         if i < stamps:
             d.ellipse(box, fill=look["accent"])
         else:
-            d.ellipse(box, outline=look["accent"], width=max(1, 2 * scale))
-    return _encode(im)
+            d.ellipse(box, outline=look["accent"], width=max(1, 2 * unit))
+    return _encode(im, final)
 
 
-def _encode(im: Image.Image) -> bytes:
+def _encode(im: Image.Image, size: tuple[int, int]) -> bytes:
     buf = io.BytesIO()
-    im.save(buf, format="PNG", optimize=True)
+    im.resize(size, Image.LANCZOS).save(buf, format="PNG", optimize=True)
     return buf.getvalue()
 
 
