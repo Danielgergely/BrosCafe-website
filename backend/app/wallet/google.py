@@ -166,7 +166,7 @@ STRINGS = {
         "one_more": "One more coffee and the next is free",
         "many": "{n} more coffees until your free one",
         "how_header": "How it works",
-        "how_body": "Buy 4 coffees and the 5th is on us. Show this pass at the counter.",
+        "how_body": "Collect 10 stamps and your next coffee is on us. Show this pass at the counter.",
         "card_link": "Open my loyalty card",
     },
     "hu": {
@@ -177,7 +177,7 @@ STRINGS = {
         "one_more": "Még egy kávé, és a következő ingyen van",
         "many": "Még {n} kávé az ingyenesig",
         "how_header": "Így működik",
-        "how_body": "Négy kávé, az ötödiket mi álljuk. Mutasd meg ezt a kártyát a pultnál.",
+        "how_body": "Tíz pecsét, és a következő kávé a miénk. Mutasd meg ezt a kártyát a pultnál.",
         "card_link": "Megnyitom a kártyám",
     },
 }
@@ -213,7 +213,7 @@ def build_class(cafe: dict, lang: str = "en") -> dict:
 def build_object(member: dict, cafe: dict, barcode_value: str,
                  card_url: str, lang: str = "en") -> dict:
     text = _strings(lang)
-    required = member.get("stamps_required", 4)
+    required = member.get("stamps_required", 10)
     stamps = member.get("stamps", 0)
     remaining = max(required - stamps, 0)
 

@@ -2,6 +2,7 @@ import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import AppRoutes from "@/app/AppRoutes";
+import ConsentBanner from "@/components/layout/ConsentBanner";
 import Lightbox from "@/components/ui/Lightbox";
 import ProductModal from "@/components/product/ProductModal";
 import { I18nProvider } from "@/i18n";
@@ -30,6 +31,7 @@ export default function App() {
                 <AppRoutes />
                 <ProductModal />
                 <Lightbox />
+                <ConsentBanner />
                 <Toaster position="top-center" richColors />
               </UiProvider>
             </StaffAuthProvider>

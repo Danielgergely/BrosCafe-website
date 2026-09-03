@@ -1,4 +1,4 @@
-"""Apple Wallet (.pkpass) generation + signing for BrosCafé loyalty passes.
+"""Apple Wallet (.pkpass) generation + signing for Bros Cafe loyalty passes.
 
 Credentials come ONLY from environment/secrets — never hard-coded, never committed.
 Supports either PEM strings (APPLE_CERTIFICATE + APPLE_PRIVATE_KEY) or a .p12 file path.
@@ -110,31 +110,31 @@ PASS_STRINGS = {
     "en": {
         "desc": "Bros Cafe Loyalty Card", "club": "Loyalty Club", "member": "Member",
         "reward_label": "Reward", "reward_value": "\U0001F389 FREE COFFEE AVAILABLE",
-        "reward_relevant": "Your free coffee is ready at BrosCafé!",
+        "reward_relevant": "Your free coffee is ready at Bros Cafe!",
         "coffees": "Coffees", "free_coffees": "Free coffees",
-        "how_label": "How it works", "how_value": "Buy 4 coffees, your next one is free.",
-        "status_label": "Status", "cafe_label": "BrosCafé",
+        "how_label": "How it works", "how_value": "Collect 10 stamps and your next coffee is free.",
+        "status_label": "Status", "cafe_label": "Bros Cafe",
         "one_more": "One more coffee \u2192 FREE COFFEE",
         "many": "{n} coffees until your free coffee",
-        "welcome": "Welcome to BrosCafé \u2615",
+        "welcome": "Welcome to Bros Cafe \u2615",
     },
     "hu": {
         "desc": "Bros Cafe Hűségkártya", "club": "Hűségklub", "member": "Tag",
         "reward_label": "Jutalom", "reward_value": "\U0001F389 INGYEN KÁVÉ ELÉRHETŐ",
-        "reward_relevant": "Az ingyen kávéd készen áll a BrosCafénál!",
+        "reward_relevant": "Az ingyen kávéd készen áll a Bros Cafenál!",
         "coffees": "Kávék", "free_coffees": "Ingyen kávék",
-        "how_label": "Hogyan működik", "how_value": "Igyál meg 4 kávét, a következő ingyenes.",
-        "status_label": "Állapot", "cafe_label": "BrosCafé",
+        "how_label": "Hogyan működik", "how_value": "Tíz pecsét, és a következő kávé a miénk.",
+        "status_label": "Állapot", "cafe_label": "Bros Cafe",
         "one_more": "Még egy kávé \u2192 INGYEN KÁVÉ",
         "many": "Még {n} kávé az ingyen kávéig",
-        "welcome": "Üdv a BrosCafénál \u2615",
+        "welcome": "Üdv a Bros Cafenál \u2615",
     },
 }
 
 
 def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web_service_url, lang="en"):
     L = PASS_STRINGS.get(lang, PASS_STRINGS["en"])
-    required = member.get("stamps_required", 4)
+    required = member.get("stamps_required", 10)
     stamps = member.get("stamps", 0)
     reward = member.get("reward_ready", False)
     dots = " ".join("\u2615" if i < stamps else "\u25CB" for i in range(required))
@@ -154,9 +154,9 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         "serialNumber": serial,
         "authenticationToken": auth_token,
         "webServiceURL": web_service_url,
-        "organizationName": cafe.get("name", "BrosCafé"),
+        "organizationName": cafe.get("name", "Bros Cafe"),
         "description": L["desc"],
-        "logoText": "BrosCafé",
+        "logoText": "Bros Cafe",
         "foregroundColor": "rgb(245, 240, 230)",
         "backgroundColor": "rgb(102, 115, 74)",
         "labelColor": "rgb(245, 240, 230)",
@@ -166,7 +166,7 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             "messageEncoding": "iso-8859-1",
         }],
         "storeCard": {
-            "headerFields": [{"key": "club", "label": "BrosCafé", "value": L["club"]}],
+            "headerFields": [{"key": "club", "label": "Bros Cafe", "value": L["club"]}],
             "primaryFields": [{"key": "member", "label": L["member"], "value": member.get("name", "")}],
             "secondaryFields": secondary,
             "auxiliaryFields": [

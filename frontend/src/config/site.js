@@ -8,8 +8,14 @@ export const API_BASE = `${process.env.REACT_APP_BACKEND_URL || ""}/api`;
 
 export const BRAND = {
   name: "BROS CAFE",
-  /** Fallback only. The live value comes from GET /api/cafe. */
-  stampsRequired: 4,
+  /**
+   * Fallbacks only — the live values come from GET /api/cafe, which reads
+   * STAMPS_REQUIRED and WELCOME_STAMPS. They also fill the {n} and {welcome}
+   * placeholders in the marketing copy, so change them here alongside the
+   * environment or the homepage will advertise the wrong numbers.
+   */
+  stampsRequired: 10,
+  welcomeStamps: 5,
 };
 
 export const CONTACT = {
@@ -53,6 +59,7 @@ export const ROUTES = {
   account: "/account",
   contact: "/contact",
   login: "/login",
+  privacy: "/privacy",
   staff: "/staff",
   admin: "/admin",
   card: (code) => `/card/${code}`,
@@ -82,6 +89,7 @@ export const FOOTER_LINKS = [
   { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
   { key: "visit", to: ROUTES.contact },
+  { key: "privacy", to: ROUTES.privacy },
 ];
 
 /**

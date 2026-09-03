@@ -1,6 +1,11 @@
 import axios from "axios";
 
 import { API_BASE } from "@/config/site";
+import { hasAnalyticsConsent } from "@/lib/consent";
+import { safeGet, safeRemove, safeSet } from "@/lib/storage";
+
+// Re-exported: plenty of modules already import these from here.
+export { safeGet, safeSet, safeRemove };
 
 export const api = axios.create({ baseURL: API_BASE });
 
@@ -16,30 +21,6 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
-
-export function safeGet(key) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
-export function safeSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    /* private browsing */
-  }
-}
-
-export function safeRemove(key) {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    /* private browsing */
-  }
-}
 
 export const customerAuth = () => {
   const token = safeGet(CUSTOMER_TOKEN_KEY);
@@ -71,9 +52,14 @@ function sessionId() {
   return id;
 }
 
-/** Fire-and-forget funnel tracking. Must never surface as an unhandled rejection. */
+/**
+ * Fire-and-forget funnel tracking. Must never surface as an unhandled
+ * rejection — and never runs at all without analytics consent, which is why
+ * the session id is created inside rather than at module load.
+ */
 export function track(type, extra = {}) {
   try {
+    if (!hasAnalyticsConsent()) return;
     api.post("/track", { type, session_id: sessionId(), ...extra }).catch(() => {});
   } catch {
     /* ignore */

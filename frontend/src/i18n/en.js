@@ -15,6 +15,7 @@ const en = {
     // Footer only — no room for these in the header.
     opening: "OPENING DAY",
     shop: "THE COLLECTION",
+    privacy: "PRIVACY",
     account: "My account",
     cta: "GET DIGITAL PASS",
     tagline: "SIGNATURE BRAZIL. CURATED ROTATIONS.",
@@ -124,8 +125,8 @@ const en = {
     },
     loyalty: {
       label: "THE DAILY RITUAL",
-      title1: "BUY 4 COFFEES.",
-      title2: "THE 5TH IS ON US",
+      title1: "{n} COFFEES —",
+      title2: "THE NEXT IS ON US",
       punct: ".",
       sub1: "One digital pass.",
       sub2: "No app to download.",
@@ -234,17 +235,18 @@ const en = {
 
   loyalty: {
     kicker: "THE DAILY RITUAL",
-    heroTitle: "Buy 4 coffees. The 5th is on us.",
-    memberTitle: "Buy 4 coffees. The 5th is on us.",
+    heroTitle: "{n} coffees. The next one is on us.",
+    memberTitle: "{n} coffees. The next one is on us.",
     howTitle: "HOW IT WORKS",
     steps: [
       "Get your digital pass — instant setup, no apps, passwords or paperwork.",
       "Add it to your wallet with a single tap, Apple or Google.",
       "Scan at the counter with any Brazilian or guest coffee.",
-      "Claim your reward — the 5th cup is completely on the house.",
+      "Claim your reward — once the card is full, the next cup is on the house.",
     ],
     formTitle: "Generate your pass",
     formSub: "Enter your name and email to generate your pass. No password, ever.",
+    formBonus: "We start you off with {welcome} stamps, so your first free coffee is only {left} away.",
     needName: "Nice to meet you",
     needNameSub: "Just a first name, so we know what to put on the pass.",
     send: "Generate my pass",
@@ -257,7 +259,8 @@ const en = {
     freeReadySub: "Show your card to our team to claim it.",
     openWalletCard: "Open my pass",
     welcomeNewTitle: "Welcome to Bros Cafe",
-    welcomeNewSub: "Your digital pass is ready.",
+    welcomeNewSub: "Your pass is ready — and we have already filled {welcome} of the {n} stamps.",
+    welcomeBonus: "{left} more coffees and the next one is on us.",
     checkInboxTitle: "Check your inbox",
     checkInboxBody: "We sent a sign-in link to {email}. It's valid for 20 minutes.",
     backToForm: "Use a different email",
@@ -537,6 +540,87 @@ const en = {
     copyLink: "Copy link",
     linkCopied: "Link copied",
     copyFailed: "Could not copy the link",
+  },
+  consent: {
+    title: "Can we count your visit?",
+    body: "We use our own basic analytics to see which pages people actually use. No advertising, no third-party trackers, and nothing that identifies you by name. Signing in and your language choice work either way.",
+    readMore: "Read our privacy statement",
+    accept: "Allow",
+    decline: "No thanks",
+  },
+
+  privacy: {
+    title: "Privacy statement",
+    updated: "Last updated: 3 September 2026",
+    intro:
+      "This statement explains what we do with your personal data when you use broscafe.hu or join the Bros Cafe loyalty programme. We have tried to write it in plain language rather than legal boilerplate.",
+    sections: [
+      {
+        h: "Who is responsible",
+        p: [
+          "HungBros Kft., 1132 Budapest, Csanády utca 4-B, Hungary, operates this website and the loyalty programme. We are the data controller for everything described here.",
+          "For any question about your data, write to hello@broscafe.hu and a person will answer.",
+        ],
+      },
+      {
+        h: "The loyalty programme",
+        p: [
+          "When you ask for a loyalty card we store your first name, your email address, the number of stamps on your card, and the history of stamps added and rewards claimed. We need this to run the programme — it is what a loyalty card is.",
+          "The legal basis is the performance of our agreement with you. Without this data there is no card.",
+          "We do not store a password. Signing in works by emailing you a one-time link, and those links expire after 20 minutes.",
+        ],
+      },
+      {
+        h: "Wallet passes",
+        p: [
+          "If you add your card to Apple Wallet or Google Wallet, the pass contains your first name, your card number and your stamp count. Apple and Google receive this so the card can appear on your phone and update itself when you earn a stamp.",
+          "Apple and Google process this data under their own privacy terms. You can delete the pass from your phone at any time.",
+        ],
+      },
+      {
+        h: "Website analytics",
+        p: [
+          "If you agree, we record which pages and buttons are used, along with a random identifier for your browser and whether you are on a phone or a computer. It is our own system on our own server — there is no Google Analytics, no advertising network and no profiling.",
+          "The legal basis is your consent, and you can withdraw it at any time using the buttons at the bottom of this page. If you decline, we do not create the identifier at all.",
+        ],
+      },
+      {
+        h: "Who else sees your data",
+        p: [
+          "Our server is hosted by RackForest Kft. in Hungary. Emails are sent through Resend, which processes your email address in order to deliver them. Wallet passes involve Apple and Google as described above.",
+          "We do not sell your data, and we do not share it with advertisers.",
+        ],
+      },
+      {
+        h: "How long we keep it",
+        p: [
+          "We keep your loyalty account for as long as you use it. If you have not visited for two years we delete the account and its history.",
+          "Analytics records are kept for 14 months. Sign-in links are deleted once used or expired.",
+        ],
+      },
+      {
+        h: "Your rights",
+        p: [
+          "You can ask us for a copy of your data, correct it, or have it deleted. You can also object to processing, ask us to restrict it, or ask for your data in a portable format.",
+          "Deletion is real: it removes your name, email, stamp count and visit history, and expires your wallet pass. Just email us and we will do it.",
+          "If you are unhappy with how we handle your data you can complain to the Hungarian National Authority for Data Protection and Freedom of Information (NAIH), Budapest, or to your local supervisory authority.",
+        ],
+      },
+      {
+        h: "What we store on your device",
+        p: [
+          "Signing in stores a session token in your browser so you stay signed in. Your language choice, saved favourites and planned drinks are also stored locally. None of these are shared with anyone and all are needed for the features you asked for.",
+          "The analytics identifier described above is the only item that depends on your consent.",
+        ],
+      },
+    ],
+    choiceTitle: "Your analytics choice",
+    choiceGranted: "You are currently allowing basic analytics. Thank you — it helps us see what is worth improving.",
+    choiceDenied: "Analytics are currently switched off for you. Nothing about your visits is recorded.",
+    choiceUnset: "You have not made a choice yet.",
+    allow: "Allow analytics",
+    withdraw: "Turn analytics off",
+    contactLine: "Questions about any of this?",
   },
 };
 

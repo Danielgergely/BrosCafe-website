@@ -102,9 +102,9 @@ export default function LoyaltyCTA() {
           <SectionLabel section="loyalty" title={t("home.loyalty.label")} light />
           <Reveal>
             <h2 className="font-display text-5xl font-medium leading-[1.02] tracking-tight text-cream md:text-7xl">
-              {t(member ? "home.loyalty.memberTitle1" : "home.loyalty.title1")}
+              {t(member ? "home.loyalty.memberTitle1" : "home.loyalty.title1", { n: required })}
               <br />
-              {t(member ? "home.loyalty.memberTitle2" : "home.loyalty.title2")}
+              {t(member ? "home.loyalty.memberTitle2" : "home.loyalty.title2", { n: required })}
               <span className="italic">{t("home.loyalty.punct")}</span>
             </h2>
           </Reveal>

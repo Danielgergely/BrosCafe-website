@@ -28,6 +28,7 @@ const hu = {
     backToTop: "Bros Cafe — vissza a tetejére",
     accountSignedIn: "A Bros Cafe fiókod",
     accountGuest: "Léptess be, vagy kérd a hűségkártyát",
+    privacy: "ADATKEZELÉS",
   },
 
   hero: {
@@ -127,8 +128,8 @@ const hu = {
     },
     loyalty: {
       label: "A NAPI RITUÁLÉ",
-      title1: "NÉGY KÁVÉ —",
-      title2: "AZ ÖTÖDIKET MI ÁLLJUK",
+      title1: "{n} KÁVÉ —",
+      title2: "A KÖVETKEZŐT MI ÁLLJUK",
       punct: ".",
       sub1: "Egy digitális kártya.",
       sub2: "Nincs letöltendő app.",
@@ -237,17 +238,18 @@ const hu = {
 
   loyalty: {
     kicker: "A NAPI RITUÁLÉ",
-    heroTitle: "Négy kávé. Az ötödiket mi álljuk.",
-    memberTitle: "Négy kávé. Az ötödiket mi álljuk.",
+    heroTitle: "{n} kávé. A következőt mi álljuk.",
+    memberTitle: "{n} kávé. A következőt mi álljuk.",
     howTitle: "ÍGY MŰKÖDIK",
     steps: [
       "Kérd a digitális kártyád — pár másodperc, app, jelszó és papírmunka nélkül.",
       "Tedd a pénztárcádba egyetlen koppintással, Apple vagy Google.",
       "Mutasd a pultnál — bármelyik brazil vagy vendégkávé mellé beszámít.",
-      "Vedd át a jutalmad — az ötödik csésze a ház ajándéka.",
+      "Vedd át a jutalmad — ha tele a kártya, a következő csésze a ház ajándéka.",
     ],
     formTitle: "Elkészítjük a kártyád",
     formSub: "Add meg a neved és az e-mail-címed, és elkészítjük a kártyád. Jelszó nem kell, soha.",
+    formBonus: "{welcome} pecsétet ajándékba adunk, így az első ingyen kávéd már csak {left} kávéra van.",
     needName: "Örülünk, hogy itt vagy",
     needNameSub: "Csak a keresztnevedet kérjük, hogy tudjuk, mi kerüljön a kártyára.",
     send: "Kérem a kártyám",
@@ -260,7 +262,8 @@ const hu = {
     freeReadySub: "Mutasd meg a kártyát a kollégáknak, és átveheted.",
     openWalletCard: "Megnyitom a kártyám",
     welcomeNewTitle: "Üdv a Bros Cafénál",
-    welcomeNewSub: "A digitális kártyád kész.",
+    welcomeNewSub: "Kész a kártyád — és a {n} pecsétből {welcome} már meg is van.",
+    welcomeBonus: "Még {left} kávé, és a következőt mi álljuk.",
     checkInboxTitle: "Nézd meg a postafiókod",
     checkInboxBody: "Elküldtük a belépő linket a {email} címre. Húsz percig érvényes.",
     backToForm: "Másik e-mail-címet adok meg",
@@ -540,6 +543,87 @@ const hu = {
     copyLink: "Link másolása",
     linkCopied: "Link kimásolva",
     copyFailed: "A link másolása nem sikerült",
+  },
+  consent: {
+    title: "Beleszámíthatjuk a látogatásod?",
+    body: "Saját, egyszerű statisztikát vezetünk arról, melyik oldalt használják valóban. Nincs reklám, nincs külső követő, és nem azonosítunk téged név szerint. A belépés és a nyelvválasztás ettől függetlenül működik.",
+    readMore: "Elolvasom az adatkezelési tájékoztatót",
+    accept: "Rendben",
+    decline: "Köszönöm, nem",
+  },
+
+  privacy: {
+    title: "Adatkezelési tájékoztató",
+    updated: "Utolsó módosítás: 2026. szeptember 3.",
+    intro:
+      "Ebben a tájékoztatóban leírjuk, mit teszünk a személyes adataiddal, ha a broscafe.hu oldalt használod, vagy belépsz a Bros Cafe hűségprogramjába. Igyekeztünk emberi nyelven írni, nem jogi szövegként.",
+    sections: [
+      {
+        h: "Ki az adatkezelő",
+        p: [
+          "Az oldalt és a hűségprogramot a HungBros Kft. (1132 Budapest, Csanády utca 4-B.) üzemelteti. Az itt leírtak tekintetében mi vagyunk az adatkezelő.",
+          "Ha bármi kérdésed van az adataiddal kapcsolatban, írj a hello@broscafe.hu címre — ember fog válaszolni.",
+        ],
+      },
+      {
+        h: "A hűségprogram",
+        p: [
+          "Amikor hűségkártyát kérsz, eltároljuk a keresztnevedet, az e-mail-címedet, a kártyán lévő pecsétek számát, valamint azt, mikor kaptál pecsétet és mikor vetted át a jutalmat. Erre a program működtetéséhez van szükség — ez maga a hűségkártya.",
+          "Az adatkezelés jogalapja a veled kötött megállapodás teljesítése. Ezek nélkül az adatok nélkül nincs kártya.",
+          "Jelszót nem tárolunk. A belépés úgy működik, hogy egyszer használatos linket küldünk e-mailben, ezek pedig 20 perc után lejárnak.",
+        ],
+      },
+      {
+        h: "Pénztárca-kártyák",
+        p: [
+          "Ha felveszed a kártyát az Apple Wallet vagy a Google Wallet alkalmazásba, a kártya tartalmazza a keresztnevedet, a kártyaszámodat és a pecsétek számát. Ezt az Apple, illetve a Google megkapja, hogy a kártya megjelenhessen a telefonodon, és frissülni tudjon, amikor új pecsétet kapsz.",
+          "Az Apple és a Google saját adatvédelmi feltételei szerint kezeli ezeket az adatokat. A kártyát bármikor törölheted a telefonodról.",
+        ],
+      },
+      {
+        h: "Statisztika az oldalról",
+        p: [
+          "Ha hozzájárulsz, rögzítjük, mely oldalakat és gombokat használják, ehhez pedig egy véletlen azonosítót a böngésződhöz, és azt, hogy telefonról vagy számítógépről nézed. Ez a saját rendszerünk, a saját szerverünkön — nincs Google Analytics, nincs reklámhálózat és nincs profilalkotás.",
+          "Az adatkezelés jogalapja a hozzájárulásod, amit bármikor visszavonhatsz az oldal alján lévő gombokkal. Ha nem járulsz hozzá, az azonosítót létre sem hozzuk.",
+        ],
+      },
+      {
+        h: "Ki lát még az adataidat",
+        p: [
+          "A szerverünket a RackForest Kft. üzemelteti Magyarországon. Az e-maileket a Resend szolgáltatásán keresztül küldjük, amely a kiküldés érdekében kezeli az e-mail-címedet. A pénztárca-kártyák esetében az Apple és a Google is érintett, ahogy fentebb írtuk.",
+          "Az adataidat nem adjuk el, és nem osztjuk meg reklámcégekkel.",
+        ],
+      },
+      {
+        h: "Meddig tároljuk",
+        p: [
+          "A hűségfiókodat addig tartjuk meg, amíg használod. Ha két éven belül nem járulsz nálunk, töröljük a fiókot és az előzményeket.",
+          "A statisztikai bejegyzéseket 14 hónapig tároljuk. A belépési linkeket felhasználás vagy lejárat után töröljük.",
+        ],
+      },
+      {
+        h: "A te jogaid",
+        p: [
+          "Kérheted az adataid másolatát, a javításukat vagy a törlésüket. Tiltakozhatsz az adatkezelés ellen, kérheted a korlátozását, és kérheted az adataidat átvihető formában is.",
+          "A törlés valódi: eltűnik a neved, az e-mail-címed, a pecsétjeid száma és a látogatási előzményed, a pénztárca-kártyád pedig lejárttá válik. Csak írj nekünk, és elvégezzük.",
+          "Ha nem vagy megelégedve azzal, ahogy az adataidat kezeljük, panaszt tehetsz a Nemzeti Adatvédelmi és Információszabadság Hatóságnál (NAIH, Budapest), vagy a lakóhelyed szerinti hatóságnál.",
+        ],
+      },
+      {
+        h: "Mit tárolunk a készülékeden",
+        p: [
+          "A belépéskor egy munkamenet-jelsort tárolunk a böngésződben, hogy bejelentkezve maradj. Helyben tároljuk a nyelvválasztásodat, a mentett kedvenceidet és a betervezett italaidat is. Ezeket senkivel nem osztjuk meg, és mind az általad kért funkciókhoz kell.",
+          "A fent leírt statisztikai azonosító az egyetlen, amihez a hozzájárulásod kell.",
+        ],
+      },
+    ],
+    choiceTitle: "A statisztikáról szóló döntésed",
+    choiceGranted: "Jelenleg engedélyezed az egyszerű statisztikát. Köszönjük — így látjuk, mit érdemes javítani.",
+    choiceDenied: "A statisztika jelenleg ki van kapcsolva nálad. A látogatásaidról semmit nem rögzítünk.",
+    choiceUnset: "Még nem döntöttél.",
+    allow: "Statisztika engedélyezése",
+    withdraw: "Statisztika kikapcsolása",
+    contactLine: "Kérdésed van bármelyikkel kapcsolatban?",
   },
 };
 

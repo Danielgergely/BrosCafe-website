@@ -52,7 +52,14 @@ class Settings:
     admin_password = os.environ.get("ADMIN_PASSWORD", "")
 
     # --- loyalty programme ----------------------------------------------
-    stamps_required = _int("STAMPS_REQUIRED", 4)
+    stamps_required = _int("STAMPS_REQUIRED", 10)
+
+    # Stamps a new member is given on sign-up, so the first free coffee is
+    # closer than a full card. Clamped below the target: a welcome bonus that
+    # met it would hand out a free coffee before anyone had bought anything.
+    @property
+    def welcome_stamps(self) -> int:
+        return max(0, min(_int("WELCOME_STAMPS", 5), self.stamps_required - 1))
     opening_datetime = _opening_datetime()
 
     # --- content ---------------------------------------------------------

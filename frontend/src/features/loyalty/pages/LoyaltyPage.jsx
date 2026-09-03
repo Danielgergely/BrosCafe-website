@@ -31,14 +31,19 @@ function SignedInView() {
         >
           <Gift size={34} className="mx-auto text-olive" />
           <h1 className="mt-3 font-display text-3xl text-ink">{t("loyalty.welcomeNewTitle")}</h1>
-          <p className="mt-1 text-sm text-muted">{t("loyalty.welcomeNewSub")}</p>
+          <p className="mt-1 text-sm text-muted">
+            {t("loyalty.welcomeNewSub", { welcome: BRAND.welcomeStamps, n: required })}
+          </p>
+          <p className="mt-1 text-sm font-medium text-olive">
+            {t("loyalty.welcomeBonus", { left: remaining })}
+          </p>
         </div>
       )}
 
       <p data-testid="loyalty-welcome-back" className="animate-fade-up font-display text-3xl text-ink">
         {t("loyalty.welcomeBack", { name: member.name })}
       </p>
-      <p className="mt-1 font-display text-2xl italic text-olive/80">{t("loyalty.memberTitle")}</p>
+      <p className="mt-1 font-display text-2xl italic text-olive/80">{t("loyalty.memberTitle", { n: required })}</p>
 
       <div className="mt-6 animate-fade-up rounded-panel border border-line bg-white p-7 text-center shadow-panel">
         <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
@@ -141,7 +146,7 @@ function SignUpForm() {
           {t("loyalty.kicker")}
         </p>
         <h1 className="mt-2 font-display text-4xl leading-[1.05] text-ink">
-          {t("loyalty.heroTitle")}
+          {t("loyalty.heroTitle", { n: BRAND.stampsRequired })}
         </h1>
       </section>
 
@@ -167,6 +172,12 @@ function SignUpForm() {
         </p>
         <p className="-mt-2 text-sm text-muted">
           {t(mode === "name" ? "loyalty.needNameSub" : "loyalty.formSub")}
+        </p>
+        <p className="mt-2 text-sm font-medium text-olive">
+          {t("loyalty.formBonus", {
+            welcome: BRAND.welcomeStamps,
+            left: BRAND.stampsRequired - BRAND.welcomeStamps,
+          })}
         </p>
 
         {mode === "name" && (

@@ -43,7 +43,9 @@ def new_document(name: str, email: str) -> dict:
         "code": uuid.uuid4().hex[:10],
         "name": name.strip() or "Friend",
         "email": email,
-        "stamps": 0,
+        # The welcome bonus counts towards the reward but is not a purchase,
+        # so total_coffees — which drives the sales analytics — stays at zero.
+        "stamps": settings.welcome_stamps,
         "total_coffees": 0,
         "rewards_redeemed": 0,
         "reward_ready": False,
@@ -55,7 +57,9 @@ def new_document(name: str, email: str) -> dict:
 async def create(name: str, email: str, lang: str = "hu") -> dict:
     doc = {**new_document(name, email), "lang": lang}
     await db.members.insert_one(dict(doc))
-    await log(doc["code"], doc["name"], "customer", REGISTRATION, 0, 0, False, False)
+    # Record the bonus in the history, so a card that starts at 5 is explained.
+    await log(doc["code"], doc["name"], "customer", REGISTRATION,
+              0, doc["stamps"], False, False)
     return doc
 
 

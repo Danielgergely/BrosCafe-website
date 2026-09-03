@@ -6,6 +6,7 @@ import { Route, Routes, useLocation, useParams } from "react-router-dom";
 import { MOTION, ROUTES } from "@/config/site";
 import { CustomerOnly, StaffOnly } from "@/app/RouteGuards";
 import HomePage from "@/features/home/HomePage";
+import PrivacyPage from "@/features/legal/pages/PrivacyPage";
 import AccountPage from "@/features/loyalty/pages/AccountPage";
 import ContactPage from "@/features/loyalty/pages/ContactPage";
 import LoyaltyCardPage from "@/features/loyalty/pages/LoyaltyCardPage";
@@ -71,6 +72,7 @@ export default function AppRoutes() {
         <Route path="/product/:id" element={<ProductDeepLink />} />
         <Route path={ROUTES.contact} element={<ContactPage />} />
         <Route path={ROUTES.opening} element={<OpeningPage />} />
+        <Route path={ROUTES.privacy} element={<PrivacyPage />} />
         <Route path="/auth/verify" element={<VerifyMagicPage />} />
         <Route path="/card/:code" element={<LoyaltyCardPage />} />
         <Route

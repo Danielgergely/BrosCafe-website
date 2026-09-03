@@ -44,7 +44,10 @@ services:
       # Ship content changes with a deploy: re-seed products and journal posts
       # from backend/data/*.json on boot. Turn off once you edit via /admin.
       SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
-      STAMPS_REQUIRED: ${STAMPS_REQUIRED:-4}
+      STAMPS_REQUIRED: ${STAMPS_REQUIRED:-10}
+      # Stamps granted at sign-up, so the first free coffee is five purchases
+      # away rather than ten. Must stay below STAMPS_REQUIRED.
+      WELCOME_STAMPS: ${WELCOME_STAMPS:-5}
       OPENING_DATETIME: ${OPENING_DATETIME:-2026-09-16T08:00:00}
       CAFE_TIMEZONE: ${CAFE_TIMEZONE:-Europe/Budapest}
       CAFE_NAME: ${CAFE_NAME:-Bros Cafe}
