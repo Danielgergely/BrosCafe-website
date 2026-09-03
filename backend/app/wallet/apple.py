@@ -109,13 +109,17 @@ def _sign_manifest(manifest_bytes: bytes) -> bytes:
 # A full palette per tier, not just a background: diamond is meant to look
 # unmistakably different, so it gets dark platinum with cool silver labels
 # rather than the cream-on-colour the earned tiers share.
+OLIVE = (102, 115, 74)
+
+# Every tier keeps the brand green. What changes is the band across the strip
+# image and the colour of the labels — enough to read the standing at a glance
+# without turning the card into a different product.
 TIER_PALETTE = {
-    "base": {"bg": (102, 115, 74), "fg": (245, 240, 230), "label": (245, 240, 230)},
-    "bronze": {"bg": (110, 68, 38), "fg": (247, 234, 222), "label": (223, 184, 152)},
-    "silver": {"bg": (84, 92, 102), "fg": (244, 246, 249), "label": (206, 214, 224)},
-    "gold": {"bg": (132, 96, 24), "fg": (253, 246, 227), "label": (238, 208, 138)},
-    # Near-black with a blue cast, the way platinum photographs in low light.
-    "diamond": {"bg": (24, 27, 34), "fg": (236, 240, 246), "label": (156, 176, 199)},
+    "base": {"bg": OLIVE, "fg": (245, 240, 230), "label": (214, 219, 196)},
+    "bronze": {"bg": OLIVE, "fg": (245, 240, 230), "label": (222, 158, 104)},
+    "silver": {"bg": OLIVE, "fg": (245, 240, 230), "label": (208, 216, 226)},
+    "gold": {"bg": OLIVE, "fg": (245, 240, 230), "label": (238, 198, 104)},
+    "diamond": {"bg": OLIVE, "fg": (245, 240, 230), "label": (168, 205, 232)},
 }
 
 
@@ -137,8 +141,11 @@ PASS_STRINGS = {
         "reward_label": "Reward", "reward_value": "\U0001F389 FREE COFFEE AVAILABLE",
         "reward_relevant": "Your free coffee is ready at Bros Cafe!",
         "coffees": "Coffees", "free_coffees": "Free coffees",
+        "left_label": "Coffees to go",
+        "reward_short": "\U0001F389",
+        "always_free_short": "\U0001F48E",
         "tier_label": "Status",
-        "tier_names": {"base": "Loyalty Club", "bronze": "Bronze", "silver": "Silver",
+        "tier_names": {"base": "Member", "bronze": "Bronze", "silver": "Silver",
                        "gold": "Gold", "diamond": "Diamond"},
         "tier_progress": "{tier} \u2014 {n} more coffees to {next}",
         "always_free": "\U0001F48E Every coffee on the house",
@@ -153,8 +160,11 @@ PASS_STRINGS = {
         "reward_label": "Jutalom", "reward_value": "\U0001F389 INGYEN KÁVÉ ELÉRHETŐ",
         "reward_relevant": "Az ingyen kávéd készen áll a Bros Cafenál!",
         "coffees": "Kávék", "free_coffees": "Ingyen kávék",
+        "left_label": "Még kell",
+        "reward_short": "\U0001F389",
+        "always_free_short": "\U0001F48E",
         "tier_label": "Szint",
-        "tier_names": {"base": "H\u0171s\u00e9gklub", "bronze": "Bronz", "silver": "Ez\u00fcst",
+        "tier_names": {"base": "Klubtag", "bronze": "Bronz", "silver": "Ez\u00fcst",
                        "gold": "Arany", "diamond": "Gy\u00e9m\u00e1nt"},
         "tier_progress": "{tier} \u2014 m\u00e9g {n} k\u00e1v\u00e9 a(z) {next} szintig",
         "always_free": "\U0001F48E Minden k\u00e1v\u00e9 a h\u00e1z aj\u00e1nd\u00e9ka",
@@ -184,13 +194,16 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         # No card to fill — the standing itself is the message.
         secondary = [{"key": "progress", "label": L["tier_label"], "value": L["always_free"]}]
         relevant = L["always_free"]
+        header_label, header_value = L["tier_label"], L["always_free_short"]
     elif reward:
         secondary = [{"key": "progress", "label": L["reward_label"], "value": L["reward_value"]}]
         relevant = L["reward_relevant"]
+        header_label, header_value = L["reward_label"], L["reward_short"]
     else:
         remaining = required - stamps
         relevant = L["one_more"] if remaining == 1 else L["many"].format(n=remaining)
         secondary = [{"key": "progress", "label": f"{stamps} / {required}", "value": dots}]
+        header_label, header_value = L["left_label"], str(remaining)
 
     pass_json = {
         "formatVersion": 1,
@@ -212,10 +225,11 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             "messageEncoding": "iso-8859-1",
         }],
         "storeCard": {
-            "headerFields": [
-                {"key": "club", "label": L["tier_names"].get(tier, L["club"]), "value": L["club"]},
+            "headerFields": [{"key": "left", "label": header_label, "value": header_value}],
+            "primaryFields": [
+                {"key": "member", "label": L["tier_names"].get(tier, L["club"]),
+                 "value": member.get("name", "")},
             ],
-            "primaryFields": [{"key": "member", "label": L["member"], "value": member.get("name", "")}],
             # The stamp strip is the only field on this row. Apple lays
             # secondary and auxiliary fields out as one row of columns, so any
             # companion field here costs the strip two thirds of its width —
@@ -246,12 +260,25 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     return pass_json
 
 
-def _collect_assets():
+def _collect_assets(tier: str = "base"):
+    """The images that go into the .pkpass.
+
+    Strips are pre-rendered per tier rather than drawn at request time: the
+    band is the only part that varies, and five small files are cheaper than
+    an imaging library in the runtime image.
+    """
     files = {}
     for name in ("icon.png", "icon@2x.png", "logo.png", "logo@2x.png"):
-        p = ASSETS_DIR / name
-        if p.exists():
-            files[name] = p.read_bytes()
+        path = ASSETS_DIR / name
+        if path.exists():
+            files[name] = path.read_bytes()
+
+    for suffix in ("", "@2x"):
+        path = ASSETS_DIR / f"strip-{tier}{suffix}.png"
+        if not path.exists():
+            path = ASSETS_DIR / f"strip-base{suffix}.png"
+        if path.exists():
+            files[f"strip{suffix}.png"] = path.read_bytes()
     return files
 
 
@@ -259,7 +286,7 @@ def build_pkpass(member, cafe, settings, serial, auth_token, barcode_msg, web_se
     pass_json = json.dumps(build_pass_dict(member, cafe, settings, serial, auth_token,
                                            barcode_msg, web_service_url, lang)).encode("utf-8")
     files = {"pass.json": pass_json}
-    files.update(_collect_assets())
+    files.update(_collect_assets(member.get("tier", "base")))
     manifest = {name: hashlib.sha1(data).hexdigest() for name, data in files.items()}
     manifest_bytes = json.dumps(manifest).encode("utf-8")
     signature = _sign_manifest(manifest_bytes)

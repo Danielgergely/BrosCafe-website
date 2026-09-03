@@ -5,13 +5,14 @@ import { useI18n } from "@/i18n";
 /** Hours read badly past two days; switch to whole days. */
 const humanDuration = (hours) => (hours >= 48 ? `${Math.round(hours / 24)}d` : `${hours}h`);
 
-export default function CustomersPanel() {
+export default function CustomersPanel({ onNavigate }) {
   const { t } = useI18n();
   const data = useAdminData("/admin/analytics/customers");
   if (!data) return <Loading />;
 
+  // The headline count is the obvious way in to the list behind it.
   const tiles = [
-    [data.total, "total"],
+    [data.total, "total", () => onNavigate?.("members")],
     [data.new, "new"],
     [data.returning, "returning"],
     [data.active, "active"],
@@ -28,8 +29,15 @@ export default function CustomersPanel() {
       className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
       data-testid="customers-panel"
     >
-      {tiles.map(([value, key]) => (
-        <StatTile key={key} value={value} label={t(`admin.stats.${key}`)} />
+      {tiles.map(([value, key, onClick]) => (
+        <StatTile
+          key={key}
+          testId={`stat-${key}`}
+          value={value}
+          label={t(`admin.stats.${key}`)}
+          onClick={onClick}
+          hint={onClick ? t("admin.viewMembers") : undefined}
+        />
       ))}
     </div>
   );

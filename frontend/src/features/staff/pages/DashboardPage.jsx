@@ -168,7 +168,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mt-6">
-          <Panel />
+          <Panel onNavigate={setActiveTab} />
         </div>
       </div>
 

@@ -28,12 +28,30 @@ export const chartTooltipProps = {
 
 export const axisProps = { tick: { fontSize: 11, fill: CHART.muted } };
 
-export function StatTile({ value, label, testId }) {
-  return (
-    <div data-testid={testId} className="rounded-card border border-line bg-white p-5 shadow-card">
+export function StatTile({ value, label, testId, onClick, hint }) {
+  const body = (
+    <>
       <p className="font-display text-4xl leading-none text-ink">{value}</p>
       <p className="mt-2 text-sm text-muted">{label}</p>
-    </div>
+      {hint && <p className="mt-1 text-xs font-medium text-olive">{hint}</p>}
+    </>
+  );
+  const shell = "rounded-card border border-line bg-white p-5 shadow-card";
+
+  // A tile that leads somewhere is a button, so it is reachable by keyboard
+  // and announces itself as interactive rather than looking like plain text.
+  if (!onClick) {
+    return <div data-testid={testId} className={shell}>{body}</div>;
+  }
+  return (
+    <button
+      type="button"
+      data-testid={testId}
+      onClick={onClick}
+      className={`${shell} w-full text-left transition-colors hover:border-olive`}
+    >
+      {body}
+    </button>
   );
 }
 

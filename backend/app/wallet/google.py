@@ -33,13 +33,10 @@ BRAND_BACKGROUND = "#66734A"
 # One colour per tier, so the card shows standing at a glance.
 # Google picks its own text colour from the background, so only the ground
 # needs setting. Diamond is near-black platinum, deliberately unlike the rest.
-TIER_BACKGROUND = {
-    "base": "#66734A",
-    "bronze": "#6E4426",
-    "silver": "#545C66",
-    "gold": "#846018",
-    "diamond": "#181B22",
-}
+# Google has no strip image, so the tier shows in the text modules and the
+# card keeps the brand green throughout — matching the Apple pass.
+TIER_BACKGROUND = {tier: "#66734A" for tier in
+                   ("base", "bronze", "silver", "gold", "diamond")}
 
 _token_cache: dict = {"value": None, "expires_at": 0.0}
 
@@ -180,7 +177,7 @@ STRINGS = {
         "how_body": "Collect {n} stamps and your next coffee is on us. Show this pass at the counter.",
         "card_link": "Open my loyalty card",
         "tier_header": "Status",
-        "tier_names": {"base": "Loyalty Club", "bronze": "Bronze", "silver": "Silver",
+        "tier_names": {"base": "Member", "bronze": "Bronze", "silver": "Silver",
                        "gold": "Gold", "diamond": "Diamond"},
         "tier_progress": "{tier} — {n} more coffees to {next}",
         "always_free": "Every coffee on the house",
@@ -196,7 +193,7 @@ STRINGS = {
         "how_body": "{n} pecsét, és a következő kávé a miénk. Mutasd meg ezt a kártyát a pultnál.",
         "card_link": "Megnyitom a kártyám",
         "tier_header": "Szint",
-        "tier_names": {"base": "Hűségklub", "bronze": "Bronz", "silver": "Ezüst",
+        "tier_names": {"base": "Klubtag", "bronze": "Bronz", "silver": "Ezüst",
                        "gold": "Arany", "diamond": "Gyémánt"},
         "tier_progress": "{tier} — még {n} kávé a(z) {next} szintig",
         "always_free": "Minden kávé a ház ajándéka",

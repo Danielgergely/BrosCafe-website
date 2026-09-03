@@ -24,6 +24,11 @@ module.exports = {
         ink: palette.ink,
         muted: palette.muted,
         line: palette.creamDark,
+        // Used for destructive actions and warnings in the admin UI as well as
+        // in charts — without these, `bg-alert` silently produces no CSS and
+        // a red button renders as invisible text.
+        alert: palette.alert,
+        warn: palette.warn,
       },
       fontFamily: {
         // `display` is the editorial serif, `sans` the body face.
