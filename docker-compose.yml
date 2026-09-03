@@ -63,6 +63,8 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-Bros Cafe <hello@broscafe.hu>}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Bros Cafe}
       EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
+      SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
+      CONTACT_PER_HOUR: ${CONTACT_PER_HOUR:-5}
       # Apple Wallet. Leave APPLE_PASS_CONFIGURED unset and passes stay off.
       APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}

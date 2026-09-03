@@ -9,8 +9,8 @@ from starlette.middleware.cors import CORSMiddleware
 from app import db
 from app.config import settings
 from app.routers import (
-    admin, content, customer_auth, media, members, meta, opening, scan, staff_auth,
-    track, wallet,
+    admin, contact, content, customer_auth, media, members, meta, opening, scan,
+    staff_auth, track, wallet,
 )
 from app.security import hash_password, verify_password
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 api = APIRouter(prefix="/api")
 for module in (meta, staff_auth, customer_auth, members, scan, opening,
-               track, content, media, wallet, admin):
+               track, content, contact, media, wallet, admin):
     api.include_router(module.router)
 
 app = FastAPI(title="Bros Cafe API", version="2.0.0")

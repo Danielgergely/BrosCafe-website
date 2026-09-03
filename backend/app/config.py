@@ -83,6 +83,11 @@ class Settings:
     email_from = os.environ.get("EMAIL_FROM", "Bros Cafe <hello@broscafe.hu>")
     email_from_name = os.environ.get("EMAIL_FROM_NAME", "Bros Cafe")
     email_reply_to = os.environ.get("EMAIL_REPLY_TO", "")
+    # Where the website's contact form delivers. Falls back to the café
+    # address so the form never silently posts into nowhere.
+    support_email = os.environ.get("SUPPORT_EMAIL", "") or os.environ.get(
+        "CAFE_EMAIL", "hello@broscafe.hu")
+    contact_per_hour = _int("CONTACT_PER_HOUR", 5)
 
     @property
     def email_configured(self) -> bool:

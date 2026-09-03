@@ -96,6 +96,20 @@ class ProductUpsert(BaseModel):
     active: bool = True
 
 
+class ContactMessage(BaseModel):
+    """A message from the website's contact form.
+
+    Lengths are capped because this endpoint sends email: without a ceiling it
+    is a relay for anyone who finds it.
+    """
+    name: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    message: str = Field(min_length=5, max_length=4000)
+    # Hidden in the form and never filled by a person. Bots fill every input
+    # they find, so anything here means the submission is automated.
+    website: str = ""
+
+
 class TierGrant(BaseModel):
     """`tier: null` hands the member back to the automatic ladder."""
     tier: Optional[Literal["base", "bronze", "silver", "gold", "diamond"]] = None

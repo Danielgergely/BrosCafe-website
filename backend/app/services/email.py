@@ -192,3 +192,57 @@ async def send_magic_link(email: str, link: str, is_new: bool,
     await send(email, text["new_subject"] if is_new else text["subject"],
                shell(text["title"], body, text["button"], link, lang=code),
                plain)
+
+
+CONTACT = {
+    "en": {"subject": "Website message from {name}",
+           "heading": "Message from the website",
+           "from_label": "From", "message_label": "Message"},
+    "hu": {"subject": "Weboldalas üzenet — {name}",
+           "heading": "Üzenet a weboldalról",
+           "from_label": "Feladó", "message_label": "Üzenet"},
+}
+
+
+async def send_contact_message(name: str, sender: str, message: str,
+                               lang: str = DEFAULT_LANG) -> None:
+    """Deliver a contact-form message to the café's support address.
+
+    Everything from the visitor is escaped before it goes near the HTML: the
+    body is attacker-controlled text, and the shell it lands in is a template
+    we render. Reply-To is set to the visitor so support can simply reply.
+    """
+    text = CONTACT[_lang(lang)]
+    safe_name, safe_sender = escape(name), escape(sender)
+    body = (
+        f'<p><strong>{escape(text["from_label"])}:</strong> {safe_name} '
+        f'&lt;{safe_sender}&gt;</p>'
+        f'<p><strong>{escape(text["message_label"])}:</strong></p>'
+        f'<p style="white-space:pre-wrap">{escape(message)}</p>'
+    )
+    plain = (f'{text["from_label"]}: {name} <{sender}>\n\n'
+             f'{text["message_label"]}:\n{message}\n')
+
+    if not settings.email_configured:
+        logger.warning("Email is not configured; contact message from %s dropped", sender)
+        return
+
+    payload = {
+        "from": settings.email_from,
+        "to": [settings.support_email],
+        "subject": text["subject"].format(name=name)[:160],
+        "html": shell(text["heading"], body, lang=_lang(lang)),
+        "text": plain,
+        # So a reply goes to the visitor, not to ourselves.
+        "reply_to": sender,
+    }
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.post(
+            API_URL,
+            headers={"Authorization": f"Bearer {settings.resend_api_key}"},
+            json=payload,
+        )
+    if response.status_code >= 400:
+        logger.error("Resend rejected the contact message: %s %s",
+                     response.status_code, response.text[:300])
+    response.raise_for_status()

@@ -28,6 +28,7 @@ const hu = {
     backToTop: "Bros Cafe — vissza a tetejére",
     accountSignedIn: "A Bros Cafe fiókod",
     accountGuest: "Léptess be, vagy kérd a hűségkártyát",
+    help: "SEGÍTSÉG",
     privacy: "ADATKEZELÉS",
   },
 
@@ -631,6 +632,18 @@ const hu = {
     allow: "Statisztika engedélyezése",
     withdraw: "Statisztika kikapcsolása",
     contactLine: "Kérdésed van bármelyikkel kapcsolatban?",
+  },
+  help: {
+    title: "Írj nekünk",
+    intro: "Kérdés a hűségkártyáról, egy rendelésről vagy bármi másról — írd meg itt, és válaszolunk. Mindent mi magunk olvasunk el.",
+    messageLabel: "Az üzeneted",
+    send: "Üzenet elküldése",
+    sending: "Küldés…",
+    sentTitle: "Köszönjük, elküldtük",
+    sentBody: "Megkaptuk, és a megadott címre válaszolunk — általában egy napon belül.",
+    tooMany: "Már küldtél néhány üzenetet — hagyj egy kis időt, hogy válaszolni tudjunk.",
+    notSent: "Ezt most nem sikerült elküldeni. Írj inkább közvetlenül e-mailben.",
+    orEmail: "Inkább e-mailben?",
   },
 };
 

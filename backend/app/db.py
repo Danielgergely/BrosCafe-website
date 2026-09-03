@@ -19,6 +19,7 @@ app_settings = db.settings
 content = db.content
 products = db.products
 media = db.media
+contact_log = db.contact_log
 wallet_registrations = db.wallet_registrations
 wallet_stats = db.wallet_stats
 
@@ -40,6 +41,9 @@ async def ensure_indexes() -> None:
     await content.create_index("id", unique=True)
     await media.create_index("id", unique=True)
     await media.create_index("uploaded_at")
+    # The contact-form rate limiter only looks back an hour, so let Mongo drop
+    # the rows rather than accumulating them forever.
+    await contact_log.create_index("at", expireAfterSeconds=7200)
     await wallet_registrations.create_index([("device_id", 1), ("serial", 1)])
 
 

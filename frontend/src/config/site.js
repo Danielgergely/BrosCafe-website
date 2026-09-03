@@ -60,6 +60,7 @@ export const ROUTES = {
   contact: "/contact",
   login: "/login",
   privacy: "/privacy",
+  help: "/help",
   staff: "/staff",
   admin: "/admin",
   card: (code) => `/card/${code}`,
@@ -89,6 +90,7 @@ export const FOOTER_LINKS = [
   { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
   { key: "visit", to: ROUTES.contact },
+  { key: "help", to: ROUTES.help },
   { key: "privacy", to: ROUTES.privacy },
 ];
 

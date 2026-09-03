@@ -15,6 +15,7 @@ const en = {
     // Footer only — no room for these in the header.
     opening: "OPENING DAY",
     shop: "THE COLLECTION",
+    help: "HELP",
     privacy: "PRIVACY",
     account: "My account",
     cta: "GET DIGITAL PASS",
@@ -628,6 +629,18 @@ const en = {
     allow: "Allow analytics",
     withdraw: "Turn analytics off",
     contactLine: "Questions about any of this?",
+  },
+  help: {
+    title: "Get in touch",
+    intro: "A question about your loyalty card, an order, or anything else — write to us here and one of us will reply. We read everything ourselves.",
+    messageLabel: "Your message",
+    send: "Send message",
+    sending: "Sending…",
+    sentTitle: "Thank you — message sent",
+    sentBody: "We have it, and one of us will reply to the address you gave. Usually within a day.",
+    tooMany: "You have sent us a few messages already — give us a little time to reply first.",
+    notSent: "That did not go through. Please email us directly instead.",
+    orEmail: "Prefer email?",
   },
 };
 

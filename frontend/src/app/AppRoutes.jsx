@@ -6,6 +6,7 @@ import { Route, Routes, useLocation, useParams } from "react-router-dom";
 import { MOTION, ROUTES } from "@/config/site";
 import { CustomerOnly, StaffOnly } from "@/app/RouteGuards";
 import HomePage from "@/features/home/HomePage";
+import HelpPage from "@/features/legal/pages/HelpPage";
 import PrivacyPage from "@/features/legal/pages/PrivacyPage";
 import AccountPage from "@/features/loyalty/pages/AccountPage";
 import ContactPage from "@/features/loyalty/pages/ContactPage";
@@ -73,6 +74,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.contact} element={<ContactPage />} />
         <Route path={ROUTES.opening} element={<OpeningPage />} />
         <Route path={ROUTES.privacy} element={<PrivacyPage />} />
+        <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path="/auth/verify" element={<VerifyMagicPage />} />
         <Route path="/card/:code" element={<LoyaltyCardPage />} />
         <Route
