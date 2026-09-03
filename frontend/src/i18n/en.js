@@ -632,7 +632,7 @@ const en = {
   },
   help: {
     title: "Get in touch",
-    intro: "A question about your loyalty card, an order, or anything else — write to us here and one of us will reply. We read everything ourselves.",
+    intro: "A question about your loyalty card, an order, or anything else — send it over and we will get back to you soon.",
     messageLabel: "Your message",
     send: "Send message",
     sending: "Sending…",

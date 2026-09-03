@@ -90,7 +90,6 @@ export const FOOTER_LINKS = [
   { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
   { key: "visit", to: ROUTES.contact },
-  { key: "help", to: ROUTES.help },
   { key: "privacy", to: ROUTES.privacy },
 ];
 

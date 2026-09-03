@@ -50,13 +50,16 @@ export default function Footer() {
           </nav>
 
           <div className="flex items-center gap-6">
-            <a
+            {/* Points at the contact form rather than opening a mail client:
+                a mailto assumes the visitor has one configured, and on a phone
+                it often opens nothing at all. */}
+            <Link
               data-testid="footer-contact-link"
-              href={`mailto:${CONTACT.email}`}
+              to={ROUTES.help}
               className="link-underline text-xs font-medium tracking-wide text-cream/85"
             >
               {t("footer.contact")}
-            </a>
+            </Link>
             <a
               data-testid="footer-instagram-link"
               href={CONTACT.instagramUrl}

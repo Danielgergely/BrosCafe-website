@@ -635,7 +635,7 @@ const hu = {
   },
   help: {
     title: "Írj nekünk",
-    intro: "Kérdés a hűségkártyáról, egy rendelésről vagy bármi másról — írd meg itt, és válaszolunk. Mindent mi magunk olvasunk el.",
+    intro: "Kérdés a hűségkártyáról, egy rendelésről vagy bármi másról — írd meg, és hamarosan válaszolunk.",
     messageLabel: "Az üzeneted",
     send: "Üzenet elküldése",
     sending: "Küldés…",
