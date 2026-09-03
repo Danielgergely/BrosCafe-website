@@ -53,17 +53,26 @@ function SignedInView() {
 
       <div
         data-testid="loyalty-card"
-        className="mt-6 animate-fade-up rounded-panel border-2 bg-white p-7 text-center shadow-panel"
+        className="mt-6 animate-fade-up rounded-panel border-2 p-7 text-center shadow-panel"
         style={{
           borderColor: tierStyle.ring,
           boxShadow: `0 0 0 6px ${tierStyle.glow}`,
+          background: tierStyle.surface || "#fff",
+          color: tierStyle.text || undefined,
         }}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
+        <p
+          className="text-[11px] font-semibold uppercase tracking-label"
+          style={{ color: tierStyle.muted || undefined }}
+        >
           {t("loyalty.yourLoyalty")}
         </p>
         {member.always_free ? (
-          <p data-testid="loyalty-stamps" className="mt-2 font-display text-3xl leading-tight text-ink">
+          <p
+            data-testid="loyalty-stamps"
+            className="mt-2 font-display text-3xl leading-tight"
+            style={{ color: tierStyle.text || undefined }}
+          >
             {t("loyalty.tierAlwaysFree")}
           </p>
         ) : (
@@ -88,8 +97,18 @@ function SignedInView() {
 
         {member.reward_ready ? (
           <div className="mt-5" data-testid="loyalty-free-ready">
-            <p className="font-display text-2xl text-olive">{t("loyalty.freeReady")}</p>
-            <p className="mt-1 text-sm text-muted">{t("loyalty.freeReadySub")}</p>
+            <p
+              className="font-display text-2xl text-olive"
+              style={{ color: tierStyle.text || undefined }}
+            >
+              {t("loyalty.freeReady")}
+            </p>
+            <p
+              className="mt-1 text-sm text-muted"
+              style={{ color: tierStyle.muted || undefined }}
+            >
+              {t("loyalty.freeReadySub")}
+            </p>
           </div>
         ) : member.always_free ? null : (
           <p className="mt-4 text-sm text-muted">

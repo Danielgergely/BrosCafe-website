@@ -19,8 +19,8 @@ DIAMOND = "diamond"
 EARNED = (
     {"key": "base", "at": 0, "shorter": 0},
     {"key": "bronze", "at": 50, "shorter": 1},
-    {"key": "silver", "at": 200, "shorter": 2},
-    {"key": "gold", "at": 500, "shorter": 3},
+    {"key": "silver", "at": 150, "shorter": 2},
+    {"key": "gold", "at": 300, "shorter": 3},
 )
 
 # Granted by an admin. Never reached by spending, and never lost by inactivity.

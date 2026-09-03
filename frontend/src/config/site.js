@@ -165,10 +165,22 @@ export const TIERS = ["base", "bronze", "silver", "gold", "diamond"];
 
 export const TIER_STYLE = {
   base: { ring: "#D8D2C2", ink: "#66734A", glow: "rgba(102,115,74,0.10)" },
-  bronze: { ring: "#7C5230", ink: "#7C5230", glow: "rgba(124,82,48,0.14)" },
-  silver: { ring: "#8A9099", ink: "#5C636B", glow: "rgba(92,99,107,0.14)" },
-  gold: { ring: "#C69A2E", ink: "#967021", glow: "rgba(198,154,46,0.18)" },
-  diamond: { ring: "#4E7E9B", ink: "#2E4A5C", glow: "rgba(78,126,155,0.18)" },
+  bronze: { ring: "#8A5A32", ink: "#6E4426", glow: "rgba(124,82,48,0.14)" },
+  silver: { ring: "#8A9099", ink: "#545C66", glow: "rgba(92,99,107,0.14)" },
+  gold: { ring: "#C69A2E", ink: "#846018", glow: "rgba(198,154,46,0.18)" },
+  /**
+   * Diamond turns the whole card over rather than only edging it: dark
+   * platinum with a cool sheen, so it reads as a different object on the
+   * shelf, not the same card with a smarter border.
+   */
+  diamond: {
+    ring: "#5C7C99",
+    ink: "#9CB0C7",
+    glow: "rgba(92,124,153,0.28)",
+    surface: "linear-gradient(155deg, #232833 0%, #181B22 48%, #20252F 100%)",
+    text: "#ECF0F6",
+    muted: "#9CB0C7",
+  },
 };
 
 export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "milkyCreamy", "hotIced"];

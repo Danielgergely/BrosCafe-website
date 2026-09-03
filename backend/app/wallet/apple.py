@@ -106,14 +106,16 @@ def _sign_manifest(manifest_bytes: bytes) -> bytes:
 
 
 
-# One colour per tier, so the card itself shows standing at a glance. All are
-# dark enough to keep the cream text readable.
-TIER_BACKGROUND = {
-    "base": (102, 115, 74),      # brand olive
-    "bronze": (124, 82, 48),
-    "silver": (92, 99, 107),
-    "gold": (150, 112, 33),
-    "diamond": (46, 74, 92),
+# A full palette per tier, not just a background: diamond is meant to look
+# unmistakably different, so it gets dark platinum with cool silver labels
+# rather than the cream-on-colour the earned tiers share.
+TIER_PALETTE = {
+    "base": {"bg": (102, 115, 74), "fg": (245, 240, 230), "label": (245, 240, 230)},
+    "bronze": {"bg": (110, 68, 38), "fg": (247, 234, 222), "label": (223, 184, 152)},
+    "silver": {"bg": (84, 92, 102), "fg": (244, 246, 249), "label": (206, 214, 224)},
+    "gold": {"bg": (132, 96, 24), "fg": (253, 246, 227), "label": (238, 208, 138)},
+    # Near-black with a blue cast, the way platinum photographs in low light.
+    "diamond": {"bg": (24, 27, 34), "fg": (236, 240, 246), "label": (156, 176, 199)},
 }
 
 
@@ -171,7 +173,7 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     stamps = member.get("stamps", 0)
     reward = member.get("reward_ready", False)
     tier = member.get("tier", "base")
-    red, green, blue = TIER_BACKGROUND.get(tier, TIER_BACKGROUND["base"])
+    palette = TIER_PALETTE.get(tier, TIER_PALETTE["base"])
     # Filled and hollow circles rather than a coffee emoji: a secondary field
     # is a single line that Apple truncates, and ten emoji do not fit — the
     # strip was being cut off mid-card. Circles are about half the width and
@@ -201,9 +203,9 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         "description": L["desc"],
         # No logoText: the header field already prints the café name, and with
         # both present Apple squeezes the logo text to "Bros C…".
-        "foregroundColor": "rgb(245, 240, 230)",
-        "backgroundColor": f"rgb({red}, {green}, {blue})",
-        "labelColor": "rgb(245, 240, 230)",
+        "foregroundColor": "rgb({}, {}, {})".format(*palette["fg"]),
+        "backgroundColor": "rgb({}, {}, {})".format(*palette["bg"]),
+        "labelColor": "rgb({}, {}, {})".format(*palette["label"]),
         "barcodes": [{
             "format": "PKBarcodeFormatQR",
             "message": barcode_msg,

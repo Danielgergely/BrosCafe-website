@@ -19,7 +19,11 @@ export default function TierBadge({ tier, nextTier, coffeesToNext, alwaysFree })
       {tier !== "base" && (
         <span
           className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-label"
-          style={{ borderColor: style.ring, color: style.ink, background: style.glow }}
+          style={{
+            borderColor: style.ring,
+            color: style.text || style.ink,
+            background: style.glow,
+          }}
         >
           {tier === "diamond" ? <Diamond size={13} /> : <Crown size={13} />}
           {t(`loyalty.tiers.${tier}`)}

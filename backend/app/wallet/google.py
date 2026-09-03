@@ -31,12 +31,14 @@ SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer"
 BRAND_BACKGROUND = "#66734A"
 
 # One colour per tier, so the card shows standing at a glance.
+# Google picks its own text colour from the background, so only the ground
+# needs setting. Diamond is near-black platinum, deliberately unlike the rest.
 TIER_BACKGROUND = {
     "base": "#66734A",
-    "bronze": "#7C5230",
-    "silver": "#5C636B",
-    "gold": "#967021",
-    "diamond": "#2E4A5C",
+    "bronze": "#6E4426",
+    "silver": "#545C66",
+    "gold": "#846018",
+    "diamond": "#181B22",
 }
 
 _token_cache: dict = {"value": None, "expires_at": 0.0}
@@ -250,6 +252,7 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
     return {
         "id": object_id(member["code"]),
         "classId": class_id(),
+        "accountIdLabel": text["tier_names"].get(tier, ""),
         "state": "ACTIVE",
         "accountId": member["code"],
         "accountName": member.get("name", ""),
