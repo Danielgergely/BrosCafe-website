@@ -23,7 +23,7 @@ const GROUND_Y = WORLD_H - 46;
  * stutter costs no distance and, more importantly, produces the same run the
  * server will replay.
  */
-export default function RunnerGame({ seed, onFinish, paused = false }) {
+export default function RunnerGame({ seed, onFinish, paused = false, jumpRef }) {
   const { t } = useI18n();
   const canvasRef = useRef(null);
   const runRef = useRef(null);
@@ -35,6 +35,16 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
   const jump = useCallback(() => {
     pendingJump.current = true;
   }, []);
+
+  // Handed upwards so the whole screen can be the tap target while the canvas
+  // stays where the player can see it — on a phone the thumb otherwise sits
+  // on top of the thing it is trying to steer.
+  useEffect(() => {
+    if (jumpRef) jumpRef.current = jump;
+    return () => {
+      if (jumpRef) jumpRef.current = null;
+    };
+  }, [jump, jumpRef]);
 
   useEffect(() => {
     if (!seed || paused) return undefined;
@@ -194,18 +204,9 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
       <canvas
         ref={canvasRef}
         data-testid="game-canvas"
-        onPointerDown={(event) => {
-          event.preventDefault();
-          jump();
-        }}
-        role="button"
-        tabIndex={0}
-        aria-label={t("game.jump")}
-        onKeyDown={(event) => {
-          if (event.key === " " || event.key === "Enter") jump();
-        }}
-        className="mt-2 w-full cursor-pointer rounded-card border border-line bg-cream"
-        style={{ aspectRatio: `${WORLD_W} / ${WORLD_H}`, touchAction: "manipulation" }}
+        aria-hidden="true"
+        className="mt-2 w-full rounded-card border border-line bg-cream"
+        style={{ aspectRatio: `${WORLD_W} / ${WORLD_H}` }}
       />
       <p className="mt-2 text-center text-xs text-muted">
         {over ? t("game.gameOver") : t("game.howTo")}

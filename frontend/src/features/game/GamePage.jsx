@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Coffee, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ export default function GamePage() {
   const [board, setBoard] = useState(null);
   const [best, setBest] = useState(null);
   const [busy, setBusy] = useState(false);
+  const jumpRef = useRef(null);
 
   const loadBoard = useCallback(async (which) => {
     try {
@@ -100,7 +101,18 @@ export default function GamePage() {
            */
           <div
             data-testid="game-overlay"
-            className="fixed inset-0 z-[70] flex flex-col justify-end bg-cream px-3 pb-6 pt-3 sm:justify-center sm:px-8"
+            role="button"
+            tabIndex={0}
+            aria-label={t("game.jump")}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              jumpRef.current?.();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === " " || event.key === "Enter") jumpRef.current?.();
+            }}
+            className="fixed inset-0 z-[70] flex select-none flex-col bg-cream px-3 pt-3 sm:px-8"
+            style={{ touchAction: "manipulation" }}
           >
             <div className="mx-auto flex w-full max-w-4xl items-center justify-between pb-2">
               <span className="text-[11px] font-semibold uppercase tracking-label text-olive">
@@ -108,6 +120,7 @@ export default function GamePage() {
               </span>
               <button
                 data-testid="game-quit"
+                onPointerDown={(event) => event.stopPropagation()}
                 onClick={() => setRun(null)}
                 aria-label={t("game.quit")}
                 className="rounded-full border border-line p-2 text-muted transition-colors hover:border-olive hover:text-olive"
@@ -115,8 +128,22 @@ export default function GamePage() {
                 <X size={16} />
               </button>
             </div>
-            <div className="mx-auto w-full max-w-4xl">
-              <RunnerGame seed={run.seed} onFinish={finish} />
+
+            {/* The canvas sits in the upper half, where a hand is not. */}
+            <div className="mx-auto flex w-full max-w-4xl flex-1 items-start pt-2 sm:items-center sm:pt-0">
+              <div className="w-full">
+                <RunnerGame seed={run.seed} onFinish={finish} jumpRef={jumpRef} />
+              </div>
+            </div>
+
+            {/* Everything below is tap surface, which is where the thumb rests. */}
+            <div
+              data-testid="game-tap-zone"
+              className="flex shrink-0 basis-1/3 items-center justify-center pb-6"
+            >
+              <span className="rounded-full border border-line px-5 py-2 text-xs font-medium text-muted">
+                {t("game.tapAnywhere")}
+              </span>
             </div>
           </div>
         ) : (
