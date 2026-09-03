@@ -96,6 +96,11 @@ class ProductUpsert(BaseModel):
     active: bool = True
 
 
+class TierGrant(BaseModel):
+    """`tier: null` hands the member back to the automatic ladder."""
+    tier: Optional[Literal["base", "bronze", "silver", "gold", "diamond"]] = None
+
+
 class PostUpsert(BaseModel):
     """Mirrors data/whats_new.json so admin-written posts match seeded ones."""
     id: str = Field(pattern=r"^[a-z0-9-]{2,50}$")

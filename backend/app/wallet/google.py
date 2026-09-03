@@ -30,6 +30,15 @@ SCOPE = "https://www.googleapis.com/auth/wallet_object.issuer"
 # Google's palette fields want plain hex; these match the site's tokens.
 BRAND_BACKGROUND = "#66734A"
 
+# One colour per tier, so the card shows standing at a glance.
+TIER_BACKGROUND = {
+    "base": "#66734A",
+    "bronze": "#7C5230",
+    "silver": "#5C636B",
+    "gold": "#967021",
+    "diamond": "#2E4A5C",
+}
+
 _token_cache: dict = {"value": None, "expires_at": 0.0}
 
 
@@ -166,8 +175,13 @@ STRINGS = {
         "one_more": "One more coffee and the next is free",
         "many": "{n} more coffees until your free one",
         "how_header": "How it works",
-        "how_body": "Collect 10 stamps and your next coffee is on us. Show this pass at the counter.",
+        "how_body": "Collect {n} stamps and your next coffee is on us. Show this pass at the counter.",
         "card_link": "Open my loyalty card",
+        "tier_header": "Status",
+        "tier_names": {"base": "Loyalty Club", "bronze": "Bronze", "silver": "Silver",
+                       "gold": "Gold", "diamond": "Diamond"},
+        "tier_progress": "{tier} — {n} more coffees to {next}",
+        "always_free": "Every coffee on the house",
     },
     "hu": {
         "program": "Bros Cafe Hűségklub",
@@ -177,8 +191,13 @@ STRINGS = {
         "one_more": "Még egy kávé, és a következő ingyen van",
         "many": "Még {n} kávé az ingyenesig",
         "how_header": "Így működik",
-        "how_body": "Tíz pecsét, és a következő kávé a miénk. Mutasd meg ezt a kártyát a pultnál.",
+        "how_body": "{n} pecsét, és a következő kávé a miénk. Mutasd meg ezt a kártyát a pultnál.",
         "card_link": "Megnyitom a kártyám",
+        "tier_header": "Szint",
+        "tier_names": {"base": "Hűségklub", "bronze": "Bronz", "silver": "Ezüst",
+                       "gold": "Arany", "diamond": "Gyémánt"},
+        "tier_progress": "{tier} — még {n} kávé a(z) {next} szintig",
+        "always_free": "Minden kávé a ház ajándéka",
     },
 }
 
@@ -216,8 +235,12 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
     required = member.get("stamps_required", 10)
     stamps = member.get("stamps", 0)
     remaining = max(required - stamps, 0)
+    tier = member.get("tier", "base")
+    tier_name = text["tier_names"].get(tier, tier)
 
-    if member.get("reward_ready"):
+    if member.get("always_free"):
+        status = text["always_free"]
+    elif member.get("reward_ready"):
         status = text["reward_ready"]
     elif remaining == 1:
         status = text["one_more"]
@@ -230,10 +253,11 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
         "state": "ACTIVE",
         "accountId": member["code"],
         "accountName": member.get("name", ""),
-        "hexBackgroundColor": BRAND_BACKGROUND,
+        "hexBackgroundColor": TIER_BACKGROUND.get(tier, BRAND_BACKGROUND),
         "loyaltyPoints": {
             "label": text["points"],
-            "balance": {"string": f"{stamps} / {required}"},
+            "balance": {"string": text["always_free"] if member.get("always_free")
+                        else f"{stamps} / {required}"},
         },
         "barcode": {
             "type": "QR_CODE",
@@ -242,7 +266,14 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
         },
         "textModulesData": [
             {"header": text["reward_header"], "body": status, "id": "status"},
-            {"header": text["how_header"], "body": text["how_body"], "id": "how"},
+            {"header": text["tier_header"],
+             "body": (text["tier_progress"].format(
+                 tier=tier_name, n=member.get("coffees_to_next", 0),
+                 next=text["tier_names"].get(member.get("next_tier"), ""))
+                 if member.get("next_tier") else tier_name),
+             "id": "tier"},
+            {"header": text["how_header"],
+             "body": text["how_body"].format(n=required), "id": "how"},
         ],
         "linksModuleData": {
             "uris": [{"uri": card_url, "description": text["card_link"], "id": "card"}]

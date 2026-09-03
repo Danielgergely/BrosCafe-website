@@ -155,4 +155,20 @@ export const CATEGORIES = ["all", "coffee", "cold", "food", "sweet", "merch"];
  * Shared so the product page and the admin editor cannot drift apart — a
  * reordering here has to stay in step with that label list.
  */
+/**
+ * How each tier looks. `ring` is the border that marks the card, `ink` the
+ * colour of the tier's own name. The thresholds and the maths live in the
+ * backend (app/services/tiers.py) and reach the app on the member object —
+ * these are presentation only.
+ */
+export const TIERS = ["base", "bronze", "silver", "gold", "diamond"];
+
+export const TIER_STYLE = {
+  base: { ring: "#D8D2C2", ink: "#66734A", glow: "rgba(102,115,74,0.10)" },
+  bronze: { ring: "#7C5230", ink: "#7C5230", glow: "rgba(124,82,48,0.14)" },
+  silver: { ring: "#8A9099", ink: "#5C636B", glow: "rgba(92,99,107,0.14)" },
+  gold: { ring: "#C69A2E", ink: "#967021", glow: "rgba(198,154,46,0.18)" },
+  diamond: { ring: "#4E7E9B", ink: "#2E4A5C", glow: "rgba(78,126,155,0.18)" },
+};
+
 export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "milkyCreamy", "hotIced"];

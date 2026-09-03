@@ -9,7 +9,7 @@ from app.config import settings
 from app.models import AdjustRequest
 from app.routers.opening import OFFER
 from app.security import get_current_user
-from app.services import email, members, wallet
+from app.services import email, members, tiers, wallet
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 
@@ -36,14 +36,28 @@ async def look_up(code: str, user: dict = Depends(get_current_user)):
 @router.post("/{code}/add-coffee")
 async def add_coffee(code: str, user: dict = Depends(get_current_user)):
     doc = await scanned_member(code)
+    code = doc["code"]
+    required = tiers.stamps_required(doc)
+
+    # Diamond members drink free, so there is no card to fill and nothing to
+    # redeem separately: serving one is the whole transaction. It still counts
+    # towards the sales figures, and towards the free coffees given away.
+    if required == 0:
+        changes = {"stamps": 0, "reward_ready": True,
+                   "total_coffees": doc["total_coffees"] + 1,
+                   "rewards_redeemed": doc["rewards_redeemed"] + 1}
+        result = await _apply(code, changes, doc)
+        await members.log(code, doc["name"], user["email"], members.REWARD_REDEEMED,
+                          0, 0, True, True)
+        return result
+
     if doc["reward_ready"]:
         raise HTTPException(status_code=400,
                             detail="Reward is ready — redeem the free coffee first")
 
-    code = doc["code"]
     previous = doc["stamps"]
     stamps = previous + 1
-    reward_ready = stamps >= settings.stamps_required
+    reward_ready = stamps >= required
     changes = {"stamps": stamps, "total_coffees": doc["total_coffees"] + 1,
                "reward_ready": reward_ready}
 
@@ -83,8 +97,9 @@ async def adjust(code: str, body: AdjustRequest, user: dict = Depends(get_curren
     doc = await scanned_member(code)
     code = doc["code"]
     previous, previous_reward = doc["stamps"], doc["reward_ready"]
-    stamps = max(0, min(settings.stamps_required, previous + body.delta))
-    reward_ready = stamps >= settings.stamps_required
+    required = tiers.stamps_required(doc) or settings.stamps_required
+    stamps = max(0, min(required, previous + body.delta))
+    reward_ready = stamps >= required
 
     result = await _apply(code, {"stamps": stamps, "reward_ready": reward_ready}, doc)
     await members.log(code, doc["name"], user["email"], members.MANUAL_ADJUSTMENT,

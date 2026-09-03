@@ -105,6 +105,29 @@ def _sign_manifest(manifest_bytes: bytes) -> bytes:
                                        pkcs7.PKCS7Options.Binary])
 
 
+
+# One colour per tier, so the card itself shows standing at a glance. All are
+# dark enough to keep the cream text readable.
+TIER_BACKGROUND = {
+    "base": (102, 115, 74),      # brand olive
+    "bronze": (124, 82, 48),
+    "silver": (92, 99, 107),
+    "gold": (150, 112, 33),
+    "diamond": (46, 74, 92),
+}
+
+
+def _tier_line(L: dict, member: dict) -> str:
+    """The member's standing, and what it would take to move up."""
+    name = L["tier_names"].get(member.get("tier", "base"), "")
+    upcoming = member.get("next_tier")
+    if not upcoming:
+        return name
+    return L["tier_progress"].format(
+        tier=name, n=member.get("coffees_to_next", 0),
+        next=L["tier_names"].get(upcoming, upcoming))
+
+
 # ---------------------------------------------------------------- pass.json
 PASS_STRINGS = {
     "en": {
@@ -112,7 +135,12 @@ PASS_STRINGS = {
         "reward_label": "Reward", "reward_value": "\U0001F389 FREE COFFEE AVAILABLE",
         "reward_relevant": "Your free coffee is ready at Bros Cafe!",
         "coffees": "Coffees", "free_coffees": "Free coffees",
-        "how_label": "How it works", "how_value": "Collect 10 stamps and your next coffee is free.",
+        "tier_label": "Status",
+        "tier_names": {"base": "Loyalty Club", "bronze": "Bronze", "silver": "Silver",
+                       "gold": "Gold", "diamond": "Diamond"},
+        "tier_progress": "{tier} \u2014 {n} more coffees to {next}",
+        "always_free": "\U0001F48E Every coffee on the house",
+        "how_label": "How it works", "how_value": "Collect {n} stamps and your next coffee is free.",
         "status_label": "Status", "cafe_label": "Bros Cafe",
         "one_more": "One more coffee \u2192 FREE COFFEE",
         "many": "{n} coffees until your free coffee",
@@ -123,7 +151,12 @@ PASS_STRINGS = {
         "reward_label": "Jutalom", "reward_value": "\U0001F389 INGYEN KÁVÉ ELÉRHETŐ",
         "reward_relevant": "Az ingyen kávéd készen áll a Bros Cafenál!",
         "coffees": "Kávék", "free_coffees": "Ingyen kávék",
-        "how_label": "Hogyan működik", "how_value": "Tíz pecsét, és a következő kávé a miénk.",
+        "tier_label": "Szint",
+        "tier_names": {"base": "H\u0171s\u00e9gklub", "bronze": "Bronz", "silver": "Ez\u00fcst",
+                       "gold": "Arany", "diamond": "Gy\u00e9m\u00e1nt"},
+        "tier_progress": "{tier} \u2014 m\u00e9g {n} k\u00e1v\u00e9 a(z) {next} szintig",
+        "always_free": "\U0001F48E Minden k\u00e1v\u00e9 a h\u00e1z aj\u00e1nd\u00e9ka",
+        "how_label": "Hogyan működik", "how_value": "{n} pecsét, és a következő kávé a miénk.",
         "status_label": "Állapot", "cafe_label": "Bros Cafe",
         "one_more": "Még egy kávé \u2192 INGYEN KÁVÉ",
         "many": "Még {n} kávé az ingyen kávéig",
@@ -137,13 +170,19 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     required = member.get("stamps_required", 10)
     stamps = member.get("stamps", 0)
     reward = member.get("reward_ready", False)
+    tier = member.get("tier", "base")
+    red, green, blue = TIER_BACKGROUND.get(tier, TIER_BACKGROUND["base"])
     # Filled and hollow circles rather than a coffee emoji: a secondary field
     # is a single line that Apple truncates, and ten emoji do not fit — the
     # strip was being cut off mid-card. Circles are about half the width and
     # ten of them sit comfortably.
     dots = " ".join("\u25CF" if i < stamps else "\u25CB" for i in range(required))
 
-    if reward:
+    if member.get("always_free"):
+        # No card to fill — the standing itself is the message.
+        secondary = [{"key": "progress", "label": L["tier_label"], "value": L["always_free"]}]
+        relevant = L["always_free"]
+    elif reward:
         secondary = [{"key": "progress", "label": L["reward_label"], "value": L["reward_value"]}]
         relevant = L["reward_relevant"]
     else:
@@ -163,7 +202,7 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         # No logoText: the header field already prints the café name, and with
         # both present Apple squeezes the logo text to "Bros C…".
         "foregroundColor": "rgb(245, 240, 230)",
-        "backgroundColor": "rgb(102, 115, 74)",
+        "backgroundColor": f"rgb({red}, {green}, {blue})",
         "labelColor": "rgb(245, 240, 230)",
         "barcodes": [{
             "format": "PKBarcodeFormatQR",
@@ -171,7 +210,9 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             "messageEncoding": "iso-8859-1",
         }],
         "storeCard": {
-            "headerFields": [{"key": "club", "label": "Bros Cafe", "value": L["club"]}],
+            "headerFields": [
+                {"key": "club", "label": L["tier_names"].get(tier, L["club"]), "value": L["club"]},
+            ],
             "primaryFields": [{"key": "member", "label": L["member"], "value": member.get("name", "")}],
             # The stamp strip is the only field on this row. Apple lays
             # secondary and auxiliary fields out as one row of columns, so any
@@ -182,10 +223,13 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             "auxiliaryFields": [],
             "backFields": [
                 {"key": "status", "label": L["status_label"], "value": relevant},
-                {"key": "how", "label": L["how_label"], "value": L["how_value"]},
+                {"key": "how", "label": L["how_label"],
+                 "value": L["how_value"].format(n=required)},
                 {"key": "coffees", "label": L["coffees"], "value": str(member.get("total_coffees", 0))},
                 {"key": "rewards", "label": L["free_coffees"],
                  "value": str(member.get("rewards_redeemed", 0))},
+                {"key": "tier", "label": L["tier_label"],
+                 "value": _tier_line(L, member)},
                 {"key": "cafe", "label": L["cafe_label"], "value": cafe.get("address", "")},
             ],
         },

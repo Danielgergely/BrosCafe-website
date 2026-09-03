@@ -63,7 +63,10 @@ export default function Nav({ solid = false }) {
     else go({ anchor: "home" });
   };
 
-  const stampLabel = member ? `${member.stamps}/${member.stamps_required ?? BRAND.stampsRequired}` : null;
+  // A diamond member has no card to fill, so a fraction would read "0/0".
+  const stampLabel = member
+    ? (member.always_free ? "\u221E" : `${member.stamps}/${member.stamps_required ?? BRAND.stampsRequired}`)
+    : null;
   const textColour = opaque ? "text-olive" : "text-cream";
 
   return (

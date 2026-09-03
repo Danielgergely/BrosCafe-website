@@ -1,5 +1,6 @@
 """Admin surface: stats, members, transactions, thresholds, and the content
 editor — catalog, journal posts and uploaded photography."""
+import logging
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -7,10 +8,12 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app import db, seed
 from app.config import settings
-from app.models import PostUpsert, ProductUpsert, SettingsUpdate
+from app.models import PostUpsert, ProductUpsert, SettingsUpdate, TierGrant
 from app.security import require_admin
-from app.services import analytics, app_settings, media, members
+from app.services import analytics, app_settings, media, members, tiers, wallet
 from app.wallet import apple, google
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", dependencies=[Depends(require_admin)], tags=["admin"])
 
@@ -60,6 +63,27 @@ async def stats():
 async def list_members():
     docs = await db.members.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     return [members.public(d) for d in docs]
+
+
+@router.put("/members/{code}/tier")
+async def grant_tier(code: str, body: TierGrant):
+    """Grant a member a tier by hand, or clear the grant.
+
+    A grant only ever promotes — see services/tiers. Diamond can only arrive
+    this way. The wallet pass is refreshed straight away, because the tier
+    changes how many stamps a free coffee costs and what colour the card is.
+    """
+    doc = await db.members.find_one({"code": code})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Member not found")
+
+    await db.members.update_one({"code": code}, {"$set": {"tier_override": body.tier}})
+    doc["tier_override"] = body.tier
+    try:
+        await wallet.notify_update(code)
+    except Exception:
+        logger.exception("Could not refresh the wallet pass for %s after a tier change", code)
+    return members.public(doc)
 
 
 @router.delete("/members/{code}")

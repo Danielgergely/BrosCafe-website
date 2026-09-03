@@ -5,9 +5,10 @@ import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
+import TierBadge from "@/components/loyalty/TierBadge";
 import WalletButtons from "@/components/loyalty/WalletButtons";
 import ProductRow from "@/components/product/ProductRow";
-import { BRAND, FEATURED, ROUTES } from "@/config/site";
+import { BRAND, FEATURED, ROUTES, TIER_STYLE } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { errorMessage } from "@/lib/api";
 import { useCustomer } from "@/state/CustomerAuth";
@@ -21,6 +22,7 @@ function SignedInView() {
   const required = member.stamps_required ?? BRAND.stampsRequired;
   const remaining = required - member.stamps;
   const justJoined = params.get("welcome") === "1";
+  const tierStyle = TIER_STYLE[member.tier] || TIER_STYLE.base;
 
   return (
     <>
@@ -43,17 +45,45 @@ function SignedInView() {
       <p data-testid="loyalty-welcome-back" className="animate-fade-up font-display text-3xl text-ink">
         {t("loyalty.welcomeBack", { name: member.name })}
       </p>
-      <p className="mt-1 font-display text-2xl italic text-olive/80">{t("loyalty.memberTitle", { n: required })}</p>
+      <p className="mt-1 font-display text-2xl italic text-olive/80">
+        {member.always_free
+          ? t("loyalty.tierAlwaysFree")
+          : t("loyalty.memberTitle", { n: required })}
+      </p>
 
-      <div className="mt-6 animate-fade-up rounded-panel border border-line bg-white p-7 text-center shadow-panel">
+      <div
+        data-testid="loyalty-card"
+        className="mt-6 animate-fade-up rounded-panel border-2 bg-white p-7 text-center shadow-panel"
+        style={{
+          borderColor: tierStyle.ring,
+          boxShadow: `0 0 0 6px ${tierStyle.glow}`,
+        }}
+      >
         <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
           {t("loyalty.yourLoyalty")}
         </p>
-        <p data-testid="loyalty-stamps" className="mt-2 font-display text-5xl text-ink">
-          {member.stamps} / {required}
-        </p>
+        {member.always_free ? (
+          <p data-testid="loyalty-stamps" className="mt-2 font-display text-3xl leading-tight text-ink">
+            {t("loyalty.tierAlwaysFree")}
+          </p>
+        ) : (
+          <>
+            <p data-testid="loyalty-stamps" className="mt-2 font-display text-5xl text-ink">
+              {member.stamps} / {required}
+            </p>
+            <div className="mt-5">
+              <LoyaltyProgress stamps={member.stamps} required={required} />
+            </div>
+          </>
+        )}
+
         <div className="mt-5">
-          <LoyaltyProgress stamps={member.stamps} required={required} />
+          <TierBadge
+            tier={member.tier}
+            nextTier={member.next_tier}
+            coffeesToNext={member.coffees_to_next}
+            alwaysFree={member.always_free}
+          />
         </div>
 
         {member.reward_ready ? (
@@ -61,7 +91,7 @@ function SignedInView() {
             <p className="font-display text-2xl text-olive">{t("loyalty.freeReady")}</p>
             <p className="mt-1 text-sm text-muted">{t("loyalty.freeReadySub")}</p>
           </div>
-        ) : (
+        ) : member.always_free ? null : (
           <p className="mt-4 text-sm text-muted">
             {remaining === 1 ? t("loyalty.oneMore") : t("loyalty.nMore", { n: remaining })}
           </p>

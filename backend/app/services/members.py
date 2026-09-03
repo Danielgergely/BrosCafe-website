@@ -6,6 +6,7 @@ import logging
 
 from app import db
 from app.config import settings
+from app.services import tiers
 from app.wallet import google
 
 logger = logging.getLogger(__name__)
@@ -29,12 +30,14 @@ def public(doc: dict) -> dict:
         "name": doc["name"],
         "email": doc["email"],
         "stamps": doc["stamps"],
-        "stamps_required": settings.stamps_required,
+        # Per member, not global: a tier shortens the card.
+        "stamps_required": tiers.stamps_required(doc),
         "total_coffees": doc["total_coffees"],
         "rewards_redeemed": doc["rewards_redeemed"],
         "reward_ready": doc["reward_ready"],
         "opening_status": doc.get("opening_status", "reserved"),
         "created_at": doc["created_at"],
+        **tiers.summary(doc),
     }
 
 

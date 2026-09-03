@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
+import { TIERS, TIER_STYLE } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
 
@@ -15,6 +16,21 @@ export default function MembersPanel() {
   // The member awaiting confirmation, and what has been typed to confirm it.
   const [pending, setPending] = useState(null);
   const [typed, setTyped] = useState("");
+
+  /**
+   * Grant a tier by hand, or hand the member back to the automatic ladder.
+   * A grant only ever promotes, so choosing a lower tier than someone has
+   * earned leaves them where they are — the backend decides, not this select.
+   */
+  const setTier = async (member, value) => {
+    try {
+      await api.put(`/admin/members/${member.code}/tier`, { tier: value || null });
+      toast.success(t("admin.tierSaved", { name: member.name }));
+      await load();
+    } catch (error) {
+      toast.error(errorMessage(error, t("common.somethingWrong")));
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -60,13 +76,14 @@ export default function MembersPanel() {
 
   if (!members) return <Loading />;
 
-  const headers = ["name", "email", "progress", "coffees", "rewards"];
+  const headers = ["name", "email", "progress", "coffees", "rewards", "tier"];
   const headerLabel = {
     name: t("admin.name"),
     email: t("admin.email"),
     progress: t("admin.table.progress"),
     coffees: t("admin.stats.coffees"),
     rewards: t("admin.table.rewards"),
+    tier: t("admin.tier"),
   };
 
   return (
@@ -105,6 +122,25 @@ export default function MembersPanel() {
                 </td>
                 <td className="py-3 pr-4 text-ink">{member.total_coffees}</td>
                 <td className="py-3 pr-4 text-ink">{member.rewards_redeemed}</td>
+                <td className="py-3 pr-4">
+                  <select
+                    data-testid={`tier-${member.code}`}
+                    value={member.tier_granted ? member.tier : ""}
+                    onChange={(event) => setTier(member, event.target.value)}
+                    aria-label={t("admin.tier")}
+                    className="rounded-card border border-line bg-white px-2 py-1 text-xs font-medium"
+                    style={{ color: (TIER_STYLE[member.tier] || TIER_STYLE.base).ink }}
+                  >
+                    <option value="">
+                      {t("admin.tierAuto", { tier: t(`loyalty.tiers.${member.tier}`) })}
+                    </option>
+                    {TIERS.map((tier) => (
+                      <option key={tier} value={tier}>
+                        {t(`loyalty.tiers.${tier}`)}
+                      </option>
+                    ))}
+                  </select>
+                </td>
                 <td className="py-3 text-right">
                   <button
                     data-testid={`erase-${member.code}`}
