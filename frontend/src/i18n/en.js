@@ -666,7 +666,7 @@ const en = {
     getCard: "Get my card",
     leaderboard: "Leaderboard",
     empty: "Nobody has run yet. Be first.",
-    prize: "The best run each week gets a free coffee. Scores are worked out on our side, so a run has to be really run.",
+    prize: "Only your best run counts. Whoever tops the week picks up their free coffee at the counter.",
     periods: { week: "Week", month: "Month", year: "Year", all: "All time" },
   },
 };

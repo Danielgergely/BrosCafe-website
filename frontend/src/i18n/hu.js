@@ -669,7 +669,7 @@ const hu = {
     getCard: "Kérem a kártyám",
     leaderboard: "Ranglista",
     empty: "Még senki sem futott. Legyél te az első.",
-    prize: "A hét legjobb futama egy ingyen kávét ér. A pontszámot mi számoljuk ki, szóval a futamot tényleg le kell futni.",
+    prize: "Mindenkinél a legjobb futam számít. A hét győztese a pultnál veheti át az ingyen kávét.",
     periods: { week: "Hét", month: "Hónap", year: "Év", all: "Mindenkori" },
   },
 };
