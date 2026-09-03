@@ -160,7 +160,8 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         "webServiceURL": web_service_url,
         "organizationName": cafe.get("name", "Bros Cafe"),
         "description": L["desc"],
-        "logoText": "Bros Cafe",
+        # No logoText: the header field already prints the café name, and with
+        # both present Apple squeezes the logo text to "Bros C…".
         "foregroundColor": "rgb(245, 240, 230)",
         "backgroundColor": "rgb(102, 115, 74)",
         "labelColor": "rgb(245, 240, 230)",
@@ -172,14 +173,19 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         "storeCard": {
             "headerFields": [{"key": "club", "label": "Bros Cafe", "value": L["club"]}],
             "primaryFields": [{"key": "member", "label": L["member"], "value": member.get("name", "")}],
+            # The stamp strip is the only field on this row. Apple lays
+            # secondary and auxiliary fields out as one row of columns, so any
+            # companion field here costs the strip two thirds of its width —
+            # which is what was cutting the last stamps off. The running totals
+            # moved to the back, where they are just as useful.
             "secondaryFields": secondary,
-            "auxiliaryFields": [
-                {"key": "coffees", "label": L["coffees"], "value": str(member.get("total_coffees", 0))},
-                {"key": "rewards", "label": L["free_coffees"], "value": str(member.get("rewards_redeemed", 0))},
-            ],
+            "auxiliaryFields": [],
             "backFields": [
-                {"key": "how", "label": L["how_label"], "value": L["how_value"]},
                 {"key": "status", "label": L["status_label"], "value": relevant},
+                {"key": "how", "label": L["how_label"], "value": L["how_value"]},
+                {"key": "coffees", "label": L["coffees"], "value": str(member.get("total_coffees", 0))},
+                {"key": "rewards", "label": L["free_coffees"],
+                 "value": str(member.get("rewards_redeemed", 0))},
                 {"key": "cafe", "label": L["cafe_label"], "value": cafe.get("address", "")},
             ],
         },

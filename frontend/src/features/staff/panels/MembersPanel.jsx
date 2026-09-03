@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { Trash } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-import { Loading, SectionCard } from "@/features/staff/components/AdminPrimitives";
+import {
+  Loading, Modal, SectionCard, adminInputClass,
+} from "@/features/staff/components/AdminPrimitives";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
 
@@ -10,6 +12,9 @@ export default function MembersPanel() {
   const { t } = useI18n();
   const [members, setMembers] = useState(null);
   const [erasing, setErasing] = useState(null);
+  // The member awaiting confirmation, and what has been typed to confirm it.
+  const [pending, setPending] = useState(null);
+  const [typed, setTyped] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -29,19 +34,22 @@ export default function MembersPanel() {
    * Erasing is permanent and takes the visit history with it, so the name has
    * to be typed rather than merely confirmed — a misclick on the wrong row
    * cannot be undone.
+   *
+   * An in-page dialog rather than window.prompt: browsers let a visitor
+   * suppress further prompts for a page, after which prompt() silently returns
+   * null and the button appears to do nothing at all.
    */
+  const matches = pending && typed.trim().toLowerCase()
+    === (pending.name || "").trim().toLowerCase();
+
   const erase = async (member) => {
-    const typed = window.prompt(t("admin.eraseConfirm", { name: member.name }));
-    if (typed === null) return;
-    if (typed.trim().toLowerCase() !== (member.name || "").trim().toLowerCase()) {
-      toast.error(t("admin.eraseMismatch"));
-      return;
-    }
     setErasing(member.code);
     try {
       const { data } = await api.delete(`/admin/members/${member.code}`);
       const gone = Object.values(data.removed || {}).reduce((a, b) => a + b, 0);
       toast.success(t("admin.erased", { name: member.name, n: gone }));
+      setPending(null);
+      setTyped("");
       await load();
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
@@ -100,7 +108,10 @@ export default function MembersPanel() {
                 <td className="py-3 text-right">
                   <button
                     data-testid={`erase-${member.code}`}
-                    onClick={() => erase(member)}
+                    onClick={() => {
+                      setTyped("");
+                      setPending(member);
+                    }}
                     disabled={erasing === member.code}
                     aria-label={t("admin.erase")}
                     title={t("admin.eraseHint")}
@@ -115,6 +126,53 @@ export default function MembersPanel() {
         </table>
       </div>
       <p className="mt-4 text-xs text-muted">{t("admin.eraseNote")}</p>
+
+      {pending && (
+        <Modal title={t("admin.erase")} onClose={() => setPending(null)}>
+          <form
+            data-testid="erase-dialog"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (matches) erase(pending);
+            }}
+            className="space-y-4"
+          >
+            <p className="text-sm leading-relaxed text-ink">
+              {t("admin.eraseWarning", { name: pending.name })}
+            </p>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {t("admin.eraseTypeName")}
+              </span>
+              <input
+                data-testid="erase-confirm-input"
+                value={typed}
+                onChange={(event) => setTyped(event.target.value)}
+                placeholder={pending.name}
+                autoFocus
+                className={`mt-1 ${adminInputClass}`}
+              />
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPending(null)}
+                className="h-12 flex-1 rounded-card border border-line font-semibold text-ink hover:border-olive"
+              >
+                {t("admin.eraseCancel")}
+              </button>
+              <button
+                type="submit"
+                data-testid="erase-confirm-btn"
+                disabled={!matches || erasing === pending.code}
+                className="h-12 flex-1 rounded-card bg-alert font-semibold text-white disabled:opacity-40"
+              >
+                {erasing === pending.code ? t("content.saving") : t("admin.erase")}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </SectionCard>
   );
 }
