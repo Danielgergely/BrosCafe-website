@@ -657,7 +657,7 @@ const hu = {
     playWhileYouWait: "Játssz, amíg vársz",
     play: "Játék",
     starting: "Indul…",
-    howTo: "Koppints, vagy nyomd meg a szóközt az ugráshoz.",
+    howTo: "Koppints vagy nyomd meg a szóközt az ugráshoz. Ugrás közben még egyszer, és magasabbra jutsz.",
     jump: "Ugrás",
     distance: "Táv",
     gameOver: "Ennyi volt — próbáld újra.",

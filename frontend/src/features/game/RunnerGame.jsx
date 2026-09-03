@@ -6,8 +6,10 @@ import {
 } from "@/features/game/runnerSim";
 import { useI18n } from "@/i18n";
 
-const WORLD_H = 220;
-const GROUND_Y = WORLD_H - 30;
+// Taller than the jump needs, so a boosted arc has headroom rather than
+// clipping the top of the frame.
+const WORLD_H = 300;
+const GROUND_Y = WORLD_H - 46;
 
 /**
  * The playable game.
@@ -66,13 +68,45 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
       ctx.lineTo(WORLD_W, GROUND_Y + 1);
       ctx.stroke();
 
-      // Obstacles: coffee beans on the ground, portafilters standing tall.
-      ctx.fillStyle = palette.olive;
-      for (const [ox, ow, oh] of state.obstacles) {
-        ctx.fillRect(ox, GROUND_Y - oh, ow, oh);
-        ctx.fillStyle = palette.oliveSoft;
-        ctx.fillRect(ox + 4, GROUND_Y - oh + 5, ow - 8, 3);
+      // Four things to jump: a bean, a portafilter, a sack, a grinder. The
+      // physics is the same box either way — the shapes are so a player can
+      // tell at a glance how much height they need.
+      for (const [ox, ow, oh, kind] of state.obstacles) {
+        const top = GROUND_Y - oh;
         ctx.fillStyle = palette.olive;
+        if (kind === 0) {
+          ctx.beginPath();
+          ctx.ellipse(ox + ow / 2, GROUND_Y - oh / 2, ow / 2, oh / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = palette.cream;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(ox + ow / 2, top + 3);
+          ctx.lineTo(ox + ow / 2, GROUND_Y - 3);
+          ctx.stroke();
+        } else if (kind === 1) {
+          ctx.fillRect(ox + ow / 2 - 3, top, 6, oh);
+          ctx.fillRect(ox, top, ow, 13);
+          ctx.fillStyle = palette.oliveSoft;
+          ctx.fillRect(ox + 3, top + 3, ow - 6, 4);
+        } else if (kind === 2) {
+          ctx.beginPath();
+          ctx.moveTo(ox, GROUND_Y);
+          ctx.lineTo(ox + 6, top + 4);
+          ctx.lineTo(ox + ow - 6, top + 4);
+          ctx.lineTo(ox + ow, GROUND_Y);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = palette.oliveSoft;
+          ctx.fillRect(ox + 10, top + 10, ow - 20, 4);
+        } else {
+          ctx.fillRect(ox + 4, top + 16, ow - 8, oh - 16);
+          ctx.fillRect(ox, top, ow, 14);
+          ctx.fillStyle = palette.oliveSoft;
+          ctx.fillRect(ox + 7, top + 22, ow - 14, 5);
+          ctx.fillStyle = palette.olive;
+          ctx.fillRect(ox + ow - 3, top + 20, 7, 10);
+        }
       }
 
       const py = GROUND_Y - PLAYER_H - Math.floor(state.y / UNITS);
@@ -82,6 +116,16 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
       ctx.fillRect(PLAYER_X + 5, py + 7, PLAYER_W - 10, 5);
       ctx.fillStyle = palette.ink;
       ctx.fillRect(PLAYER_X + PLAYER_W, py + 12, 7, 12);
+      // A wisp of steam while the boost is still available, so the player can
+      // see they have one in hand.
+      if (state.y > 0 && !state.boosted) {
+        ctx.strokeStyle = palette.oliveSoft;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(PLAYER_X + 10, py - 4);
+        ctx.quadraticCurveTo(PLAYER_X + 18, py - 12, PLAYER_X + 12, py - 20);
+        ctx.stroke();
+      }
     };
 
     const frame = (now) => {

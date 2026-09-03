@@ -654,7 +654,7 @@ const en = {
     playWhileYouWait: "Play while you wait",
     play: "Play",
     starting: "Starting…",
-    howTo: "Tap, or press space, to jump.",
+    howTo: "Tap or press space to jump. Tap again mid-air for a higher one.",
     jump: "Jump",
     distance: "Distance",
     gameOver: "That's it — have another go.",

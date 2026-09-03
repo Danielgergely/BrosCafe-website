@@ -72,7 +72,7 @@ export default function GamePage() {
   }, [run, period, loadBoard, t]);
 
   return (
-    <div className="mx-auto max-w-3xl px-5 pb-24 pt-10 sm:px-8">
+    <div className="mx-auto max-w-5xl px-4 pb-24 pt-10 sm:px-8">
       <Link to={ROUTES.home} className="text-sm font-medium text-olive hover:underline">
         ← {t("staff.backToSite")}
       </Link>
