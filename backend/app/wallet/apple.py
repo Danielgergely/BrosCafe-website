@@ -19,6 +19,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography import x509
 
 from app.config import ASSETS_DIR
+from app.wallet import artwork
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +144,9 @@ PASS_STRINGS = {
         "reward_relevant": "Your free coffee is ready at Bros Cafe!",
         "coffees": "Coffees", "free_coffees": "Free coffees",
         "left_label": "Coffees to go",
-        "since_label": "Member since",
+        "since_value": "since {year}",
+        "until_label": "To {tier}",
+        "until_value": "{n} coffees",
         "reward_short": "\U0001F389",
         "always_free_short": "\U0001F48E",
         "tier_label": "Status",
@@ -163,7 +166,9 @@ PASS_STRINGS = {
         "reward_relevant": "Az ingyen kávéd készen áll a Bros Cafenál!",
         "coffees": "Kávék", "free_coffees": "Ingyen kávék",
         "left_label": "Még kell",
-        "since_label": "Csatlakozott",
+        "since_value": "{year} óta",
+        "until_label": "{tier}ig",
+        "until_value": "{n} kávé",
         "reward_short": "\U0001F389",
         "always_free_short": "\U0001F48E",
         "tier_label": "Szint",
@@ -187,7 +192,28 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     reward = member.get("reward_ready", False)
     tier = member.get("tier", "base")
     palette = TIER_PALETTE.get(tier, TIER_PALETTE["base"])
+    tier_name = L["tier_names"].get(tier, L["club"])
     since = str(member.get("created_at", ""))[:4] or ""
+    # "ARANY TAG · 2026 óta". The base tier is already the word for member, so
+    # it does not get "TAG" appended to it.
+    name_line = tier_name.upper()
+    if tier != "base":
+        name_line += f" {L['member'].upper()}"
+    if since:
+        name_line += f" \u00b7 {L['since_value'].format(year=since)}"
+
+    upcoming = member.get("next_tier")
+    if member.get("always_free"):
+        next_field = {"key": "next", "label": L["tier_label"], "value": tier_name}
+    elif upcoming:
+        # "EZÜSTIG / 90 kávé" reads as a distance; "EZÜST / 90" did not.
+        next_field = {
+            "key": "next",
+            "label": L["until_label"].format(tier=L["tier_names"].get(upcoming, upcoming)),
+            "value": L["until_value"].format(n=member.get("coffees_to_next", 0)),
+        }
+    else:
+        next_field = {"key": "next", "label": L["tier_label"], "value": tier_name}
     # Filled and hollow circles rather than a coffee emoji: a secondary field
     # is a single line that Apple truncates, and ten emoji do not fit — the
     # strip was being cut off mid-card. Circles are about half the width and
@@ -198,22 +224,16 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         # No card to fill — the standing itself is the message.
         secondary = [{"key": "progress", "label": L["tier_label"], "value": L["always_free"]}]
         relevant = L["always_free"]
-        header_label, header_value = L["tier_label"], L["tier_names"][tier]
+        header_label, header_value = tier_name, L["always_free_short"]
     elif reward:
         secondary = [{"key": "progress", "label": L["reward_label"], "value": L["reward_value"]}]
         relevant = L["reward_relevant"]
-        header_label, header_value = L["reward_label"], L["reward_short"]
+        header_label, header_value = tier_name, L["reward_short"]
     else:
         remaining = required - stamps
         relevant = L["one_more"] if remaining == 1 else L["many"].format(n=remaining)
         secondary = [{"key": "progress", "label": f"{stamps} / {required}", "value": dots}]
-        upcoming = member.get("next_tier")
-        if upcoming:
-            # "EZÜST / 35" — the next rung and how far away it is.
-            header_label = L["tier_names"].get(upcoming, upcoming)
-            header_value = str(member.get("coffees_to_next", 0))
-        else:
-            header_label, header_value = L["tier_label"], L["tier_names"][tier]
+        header_label, header_value = tier_name, f"{stamps} / {required}"
 
     pass_json = {
         "formatVersion": 1,
@@ -237,22 +257,24 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
         "storeCard": {
             "headerFields": [{"key": "left", "label": header_label, "value": header_value}],
             "primaryFields": [
-                {"key": "member", "label": L["tier_names"].get(tier, L["club"]),
-                 "value": member.get("name", "")},
+                # "ARANY TAG · 2026 óta" — standing and standing-since in one
+                # quiet line, which frees a whole column below.
+                {"key": "member", "label": name_line, "value": member.get("name", "")},
             ],
             # The stamp strip is the only field on this row. Apple lays
             # secondary and auxiliary fields out as one row of columns, so any
             # companion field here costs the strip two thirds of its width —
             # which is what was cutting the last stamps off. The running totals
             # moved to the back, where they are just as useful.
-            "secondaryFields": secondary,
-            "auxiliaryFields": [
+            # The stamps live in the strip artwork now, so this row is free.
+            "secondaryFields": [
                 {"key": "coffees", "label": L["coffees"],
                  "value": str(member.get("total_coffees", 0))},
                 {"key": "rewards", "label": L["free_coffees"],
                  "value": str(member.get("rewards_redeemed", 0))},
-                {"key": "since", "label": L["since_label"], "value": since},
+                next_field,
             ],
+            "auxiliaryFields": [],
             "backFields": [
                 {"key": "status", "label": L["status_label"], "value": relevant},
                 {"key": "how", "label": L["how_label"],
@@ -273,7 +295,7 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     return pass_json
 
 
-def _collect_assets(tier: str = "base"):
+def _collect_assets(tier: str = "base", stamps: int = 0, required: int = 0):
     """The images that go into the .pkpass.
 
     Strips are pre-rendered per tier rather than drawn at request time: the
@@ -286,13 +308,15 @@ def _collect_assets(tier: str = "base"):
         if path.exists():
             files[name] = path.read_bytes()
 
-    for kind in ("logo", "strip"):
-        for suffix in ("", "@2x"):
-            path = ASSETS_DIR / f"{kind}-{tier}{suffix}.png"
-            if not path.exists():
-                path = ASSETS_DIR / f"{kind}-base{suffix}.png"
-            if path.exists():
-                files[f"{kind}{suffix}.png"] = path.read_bytes()
+    for suffix in ("", "@2x"):
+        path = ASSETS_DIR / f"logo-{tier}{suffix}.png"
+        if not path.exists():
+            path = ASSETS_DIR / f"logo-base{suffix}.png"
+        if path.exists():
+            files[f"logo{suffix}.png"] = path.read_bytes()
+
+    files["strip.png"] = artwork.strip(tier, stamps, required, 1)
+    files["strip@2x.png"] = artwork.strip(tier, stamps, required, 2)
     return files
 
 
@@ -300,7 +324,10 @@ def build_pkpass(member, cafe, settings, serial, auth_token, barcode_msg, web_se
     pass_json = json.dumps(build_pass_dict(member, cafe, settings, serial, auth_token,
                                            barcode_msg, web_service_url, lang)).encode("utf-8")
     files = {"pass.json": pass_json}
-    files.update(_collect_assets(member.get("tier", "base")))
+    files.update(_collect_assets(
+        member.get("tier", "base"),
+        member.get("stamps", 0),
+        0 if member.get("always_free") else member.get("stamps_required", 0)))
     manifest = {name: hashlib.sha1(data).hexdigest() for name, data in files.items()}
     manifest_bytes = json.dumps(manifest).encode("utf-8")
     signature = _sign_manifest(manifest_bytes)

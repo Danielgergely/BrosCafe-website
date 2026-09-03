@@ -24,6 +24,12 @@ email-validator==2.3.0
 # --- Apple Wallet pass signing ----------------------------------------
 cryptography==50.0.0
 
+# --- pass artwork ------------------------------------------------------
+# Draws the stamp row into the Apple pass strip image. Apple renders the
+# secondary and auxiliary field rows as one row, so stamps shown as fields get
+# truncated by anything beside them — as artwork they cannot be.
+Pillow==12.3.0
+
 # --- uploads -----------------------------------------------------------
 python-multipart==0.0.20   # required for multipart/form-data: admin image upload
 
