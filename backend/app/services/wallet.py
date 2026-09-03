@@ -50,9 +50,19 @@ def card_url(member_code: str) -> str:
 
 
 def _origins() -> list[str]:
-    """Origins allowed to present the Save-to-Google-Wallet button."""
-    host = settings.frontend_url.split("://")[-1].rstrip("/")
-    return [host] if host else []
+    """Origins allowed to present the Save-to-Google-Wallet button.
+
+    Google matches the full origin, scheme included, against the page holding
+    the link — a bare hostname is not an origin and the button then fails with
+    nothing in the console. www.broscafe.hu serves the same site, so a customer
+    who typed the www form is included too.
+    """
+    base = settings.frontend_url.rstrip("/")
+    if not base:
+        return []
+    host = base.split("://")[-1]
+    sibling = host[4:] if host.startswith("www.") else f"www.{host}"
+    return [base, f"https://{sibling}"]
 
 
 async def google_save_link(member: dict, lang: str = "en") -> str:

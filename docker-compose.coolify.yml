@@ -95,6 +95,15 @@ services:
       APPLE_CERT_PEM_PATH: /run/certs/pass.pem
       APPLE_KEY_PEM_PATH: /run/certs/ios-private-key.pem
       APPLE_WWDR_CERT_PATH: /run/certs/wwdr.pem
+
+      # Google Wallet. The service-account JSON is a file rather than an env
+      # var: it is multi-line with an embedded PEM key, which pasting into a
+      # dashboard mangles. Drop it next to the Apple certificates.
+      GOOGLE_WALLET_CONFIGURED: ${GOOGLE_WALLET_CONFIGURED:-false}
+      GOOGLE_ISSUER_ID: ${GOOGLE_ISSUER_ID:-}
+      GOOGLE_SERVICE_ACCOUNT_PATH: /run/certs/google-service-account.json
+      GOOGLE_WALLET_CLASS_SUFFIX: ${GOOGLE_WALLET_CLASS_SUFFIX:-broscafe_loyalty}
+      GOOGLE_WALLET_LOGO_URL: ${GOOGLE_WALLET_LOGO_URL:-}
     volumes:
       # Private keys live on the server, never in the image or in git.
       # Create this directory before enabling Apple Wallet.
