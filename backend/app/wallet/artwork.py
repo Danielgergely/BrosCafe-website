@@ -26,6 +26,11 @@ TIERS = {
 
 WIDTH, HEIGHT = 375, 123
 
+# Google fetches images from a URL rather than reading them out of the pass, so
+# the same stamp row is rendered again at the hero-image size it expects. 3:1,
+# and wider than Apple's strip, so the stamps get their own band across it.
+HERO_WIDTH, HERO_HEIGHT = 1032, 336
+
 # Pillow draws shapes with hard pixel edges — no antialiasing — so circles come
 # out visibly stepped. Drawing at this multiple and scaling back down with
 # Lanczos is the usual fix: the downsample does the smoothing.
@@ -75,3 +80,41 @@ def _encode(im: Image.Image, size: tuple[int, int]) -> bytes:
 def strip(tier: str, stamps: int, required: int, scale: int = 1) -> bytes:
     """Cached: there are only a few dozen distinct cards across all members."""
     return _draw(tier, max(0, stamps), max(0, required), scale)
+
+
+def _draw_hero(tier: str, stamps: int, required: int) -> bytes:
+    """The banner on the Google Wallet card.
+
+    Google owns the typography and layout, so this image is the only place the
+    tier band and the stamp row can appear at all — without it an Android
+    customer sees a plain coloured card with a number on it.
+    """
+    look = TIERS.get(tier, TIERS["base"])
+    w, h = HERO_WIDTH * 2, HERO_HEIGHT * 2      # drawn large, scaled down
+    im = Image.new("RGB", (w, h), look["ground"])
+    d = ImageDraw.Draw(im)
+
+    d.rectangle([0, 0, w, int(h * 0.045)], fill=look["band"])
+
+    if required > 0:
+        margin = int(w * 0.06)
+        gap = max(6, int((w - margin * 2) * 0.016))
+        size = min(int(h * 0.30), (w - margin * 2 - gap * (required - 1)) // required)
+        total = size * required + gap * (required - 1)
+        x = (w - total) // 2
+        y = (h - size) // 2 + int(h * 0.04)
+        for i in range(required):
+            box = [x + i * (size + gap), y, x + i * (size + gap) + size, y + size]
+            if i < stamps:
+                d.ellipse(box, fill=look["accent"])
+            else:
+                d.ellipse(box, outline=look["accent"], width=max(2, size // 12))
+
+    buf = io.BytesIO()
+    im.resize((HERO_WIDTH, HERO_HEIGHT), Image.LANCZOS).save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+@lru_cache(maxsize=128)
+def hero(tier: str, stamps: int, required: int) -> bytes:
+    return _draw_hero(tier, max(0, stamps), max(0, required))

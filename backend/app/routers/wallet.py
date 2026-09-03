@@ -8,13 +8,35 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 
 from app import db
-from app.wallet import apple, google
+from app.wallet import apple, artwork, google
 from app.services import wallet
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["wallet"])
 
 PKPASS_MEDIA_TYPE = "application/vnd.apple.pkpass"
+
+
+@router.get("/wallet/hero/{tier}/{stamps}-{required}.png")
+async def hero_image(tier: str, stamps: int, required: int):
+    """The banner Google Wallet fetches for a member's card.
+
+    Public and unauthenticated by necessity — Google's servers request it, not
+    the customer's browser, so there is nobody to authenticate. It reveals
+    nothing: the whole content is a tier name's colours and a count of filled
+    circles, with no name, code or contact detail anywhere in it.
+
+    The state is in the path rather than a query string, so each distinct card
+    has its own immutable URL that Google can cache indefinitely and that
+    changes by itself when a stamp is added.
+    """
+    if tier not in artwork.TIERS or not (0 <= stamps <= 50 and 0 <= required <= 50):
+        raise HTTPException(status_code=404, detail="Not found")
+    return Response(
+        content=artwork.hero(tier, stamps, required),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )
 
 
 def _normalise_lang(value: str) -> str:

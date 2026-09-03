@@ -35,8 +35,16 @@ BRAND_BACKGROUND = "#66734A"
 # needs setting. Diamond is near-black platinum, deliberately unlike the rest.
 # Google has no strip image, so the tier shows in the text modules and the
 # card keeps the brand green throughout — matching the Apple pass.
-TIER_BACKGROUND = {tier: "#66734A" for tier in
-                   ("base", "bronze", "silver", "gold", "diamond")}
+# Google gives us no strip to put a band on and picks its own text colour, so
+# the ground is where the tier has to show. Diamond keeps the dark platinum it
+# has on the Apple pass.
+TIER_BACKGROUND = {
+    "base": "#66734A",
+    "bronze": "#6B4A2C",
+    "silver": "#525A64",
+    "gold": "#7E5D18",
+    "diamond": "#161921",
+}
 
 _token_cache: dict = {"value": None, "expires_at": 0.0}
 
@@ -228,6 +236,18 @@ def build_class(cafe: dict, lang: str = "en") -> dict:
     return loyalty_class
 
 
+def hero_uri(tier: str, stamps: int, required: int) -> str:
+    """Where Google fetches the member's banner.
+
+    Absolute by necessity — Google's servers request it, so a site-relative
+    path would not resolve. It carries no personal data; see routers/wallet.
+    """
+    base = (os.environ.get("FRONTEND_URL") or "").rstrip("/")
+    if not base:
+        return ""
+    return f"{base}/api/wallet/hero/{tier}/{stamps}-{required}.png"
+
+
 def build_object(member: dict, cafe: dict, barcode_value: str,
                  card_url: str, lang: str = "en") -> dict:
     text = _strings(lang)
@@ -246,7 +266,7 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
     else:
         status = text["many"].format(n=remaining)
 
-    return {
+    obj = {
         "id": object_id(member["code"]),
         "classId": class_id(),
         "accountIdLabel": text["tier_names"].get(tier, ""),
@@ -279,6 +299,18 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
             "uris": [{"uri": card_url, "description": text["card_link"], "id": "card"}]
         },
     }
+    # The banner is the only surface Google gives us to design, so it carries
+    # the tier band and the stamp row the Apple pass draws into its strip.
+    banner = (hero_uri(tier, 0, 0) if member.get("always_free")
+              else hero_uri(tier, member.get("stamps", 0), required))
+    if banner:
+        obj["heroImage"] = {
+            "sourceUri": {"uri": banner},
+            "contentDescription": {
+                "defaultValue": {"language": lang, "value": text["points"]}
+            },
+        }
+    return obj
 
 
 # ---------------------------------------------------------------- operations
