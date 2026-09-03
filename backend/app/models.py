@@ -24,6 +24,8 @@ class MemberCreate(BaseModel):
 class LinkRequest(BaseModel):
     email: EmailStr
     first_name: Optional[str] = None
+    # Which language to write to them in, and what we remember for later mail.
+    lang: Optional[Literal["hu", "en"]] = None
 
 
 class VerifyRequest(BaseModel):

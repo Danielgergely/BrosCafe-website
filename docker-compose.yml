@@ -53,9 +53,13 @@ services:
       CAFE_EMAIL: ${CAFE_EMAIL:-}
       CAFE_HOURS_WEEKDAYS: ${CAFE_HOURS_WEEKDAYS:-}
       CAFE_HOURS_WEEKEND: ${CAFE_HOURS_WEEKEND:-}
-      EMERGENT_EMAIL_KEY: ${EMERGENT_EMAIL_KEY:-}
+      # Resend. Without a key nobody can sign in — magic links are the only
+      # way into a customer account. The sending domain must be verified and
+      # listed in broscafe.hu's single SPF record.
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Bros Cafe <hello@broscafe.hu>}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Bros Cafe}
-      EMAIL_BASE_URL: ${EMAIL_BASE_URL:-https://integrations.emergentagent.com}
+      EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
       # Apple Wallet. Leave APPLE_PASS_CONFIGURED unset and passes stay off.
       APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}

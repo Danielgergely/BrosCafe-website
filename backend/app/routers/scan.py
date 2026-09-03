@@ -54,7 +54,7 @@ async def add_coffee(code: str, user: dict = Depends(get_current_user)):
         await members.log(code, doc["name"], user["email"], members.REWARD_EARNED,
                           stamps, stamps, False, True)
         try:
-            await email.send_reward_ready(doc["email"])
+            await email.send_reward_ready(doc["email"], doc.get("lang", "hu"))
         except Exception as exc:  # a failed email must never block the counter
             import logging
             logging.getLogger(__name__).warning("Reward email failed: %s", exc)

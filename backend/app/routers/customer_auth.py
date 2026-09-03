@@ -24,6 +24,7 @@ async def request_link(body: LinkRequest):
     """
     email = body.email.lower().strip()
     first_name = (body.first_name or "").strip()
+    lang = body.lang or "hu"
     member = await db.members.find_one({"email": email})
     is_new = member is None
 
@@ -31,9 +32,14 @@ async def request_link(body: LinkRequest):
         return {"ok": True, "is_new": True, "needs_name": True}
 
     if is_new:
-        member = await members.create(first_name, email)
-    elif first_name and member.get("name") in (None, "", "Friend"):
-        await db.members.update_one({"email": email}, {"$set": {"name": first_name}})
+        member = await members.create(first_name, email, lang)
+    else:
+        # Remember the language they signed in with, so the reward email that
+        # arrives weeks later is in the same one.
+        changes = {"lang": lang}
+        if first_name and member.get("name") in (None, "", "Friend"):
+            changes["name"] = first_name
+        await db.members.update_one({"email": email}, {"$set": changes})
 
     raw = secrets.token_urlsafe(32)
     await db.magic_tokens.insert_one({
@@ -45,12 +51,12 @@ async def request_link(body: LinkRequest):
     })
 
     link = f"{settings.frontend_url}/auth/verify?token={raw}"
-    if not settings.email_key:
-        # Local development only: with no mail provider the link would be unreachable.
-        # Never reached in production, where EMERGENT_EMAIL_KEY is set.
+    if not settings.email_configured:
+        # Local development only: with no mail provider the link is unreachable,
+        # so log it rather than leaving the flow with no way through.
         logger.warning("DEV ONLY — magic link for %s: %s", email, link)
     try:
-        await email_service.send_magic_link(email, link, is_new)
+        await email_service.send_magic_link(email, link, is_new, lang)
     except Exception as exc:
         logger.error("Magic link email to %s failed: %s", email, exc)
     return {"ok": True, "is_new": is_new}

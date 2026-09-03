@@ -69,9 +69,17 @@ class Settings:
     max_upload_mb = _int("MAX_UPLOAD_MB", 20)
 
     # --- email ----------------------------------------------------------
-    email_base_url = os.environ.get("EMAIL_BASE_URL", "https://integrations.emergentagent.com")
-    email_key = os.environ.get("EMERGENT_EMAIL_KEY", "")
+    # Resend (https://resend.com). The magic-link sign-in is the only way a
+    # customer gets into their account, so an unconfigured mailer means nobody
+    # can log in at all.
+    resend_api_key = os.environ.get("RESEND_API_KEY", "")
+    email_from = os.environ.get("EMAIL_FROM", "Bros Cafe <hello@broscafe.hu>")
     email_from_name = os.environ.get("EMAIL_FROM_NAME", "Bros Cafe")
+    email_reply_to = os.environ.get("EMAIL_REPLY_TO", "")
+
+    @property
+    def email_configured(self) -> bool:
+        return bool(self.resend_api_key and self.email_from)
 
     # --- café details (surfaced at /api/cafe) ----------------------------
     @property

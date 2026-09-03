@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
+import { useI18n } from "@/i18n";
 import { CUSTOMER_TOKEN_KEY, api, customerAuth, safeGet, safeRemove, safeSet } from "@/lib/api";
 
 /**
@@ -12,6 +13,7 @@ import { CUSTOMER_TOKEN_KEY, api, customerAuth, safeGet, safeRemove, safeSet } f
 const CustomerContext = createContext(null);
 
 export function CustomerAuthProvider({ children }) {
+  const { lang } = useI18n();
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,8 +34,11 @@ export function CustomerAuthProvider({ children }) {
   }, []);
 
   const requestLink = useCallback(
-    (email, firstName) => api.post("/auth/request-link", { email, first_name: firstName }),
-    [],
+    (email, firstName) =>
+      // Send the current language so the sign-in email — and every later one —
+      // arrives in the language they are actually reading the site in.
+      api.post("/auth/request-link", { email, first_name: firstName, lang }),
+    [lang],
   );
 
   const verify = useCallback(async (token) => {

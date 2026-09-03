@@ -47,8 +47,8 @@ def new_document(name: str, email: str) -> dict:
     }
 
 
-async def create(name: str, email: str) -> dict:
-    doc = new_document(name, email)
+async def create(name: str, email: str, lang: str = "hu") -> dict:
+    doc = {**new_document(name, email), "lang": lang}
     await db.members.insert_one(dict(doc))
     await log(doc["code"], doc["name"], "customer", REGISTRATION, 0, 0, False, False)
     return doc
