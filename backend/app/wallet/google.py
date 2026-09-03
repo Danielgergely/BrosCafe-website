@@ -35,16 +35,10 @@ BRAND_BACKGROUND = "#66734A"
 # needs setting. Diamond is near-black platinum, deliberately unlike the rest.
 # Google has no strip image, so the tier shows in the text modules and the
 # card keeps the brand green throughout — matching the Apple pass.
-# Google gives us no strip to put a band on and picks its own text colour, so
-# the ground is where the tier has to show. Diamond keeps the dark platinum it
-# has on the Apple pass.
-TIER_BACKGROUND = {
-    "base": "#66734A",
-    "bronze": "#6B4A2C",
-    "silver": "#525A64",
-    "gold": "#7E5D18",
-    "diamond": "#161921",
-}
+# The card colour is a property of the class, and every member shares one
+# class, so Google cannot tint a card per tier the way the Apple pass does —
+# setting it on the object returns 200 and is then discarded. The tier shows in
+# the hero image and the text modules instead.
 
 _token_cache: dict = {"value": None, "expires_at": 0.0}
 
@@ -191,7 +185,7 @@ STRINGS = {
         "always_free": "Every coffee on the house",
     },
     "hu": {
-        "program": "Bros Cafe Hűségklub",
+        "program": "Bros Cafe Klubtag",
         "points": "Kávék",
         "reward_header": "A jutalmad",
         "reward_ready": "Megvan az ingyen kávéd — mutasd meg a pultnál",
@@ -273,7 +267,6 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
         "state": "ACTIVE",
         "accountId": member["code"],
         "accountName": member.get("name", ""),
-        "hexBackgroundColor": TIER_BACKGROUND.get(tier, BRAND_BACKGROUND),
         "loyaltyPoints": {
             "label": text["points"],
             "balance": {"string": text["always_free"] if member.get("always_free")
@@ -315,7 +308,20 @@ def build_object(member: dict, cafe: dict, barcode_value: str,
 
 # ---------------------------------------------------------------- operations
 async def ensure_class(cafe: dict, lang: str = "en") -> None:
-    """Create the loyalty class if it doesn't exist yet. Safe to call repeatedly."""
+    """Create the loyalty class if it does not exist. Never update it.
+
+    Updating is deliberately not done, and the reason is worth writing down:
+    Google refuses a class edit that keeps `reviewStatus: APPROVED` — it
+    answers 400 with "Use UNDER_REVIEW instead". So any change to the class,
+    even a wording tweak, sends it back into review, and while it is there
+    every customer's card carries Google's "only for testing" banner.
+
+    The class therefore holds only what will not change: the issuer name, the
+    programme name and the logo. Anything per-member or likely to be reworded
+    belongs on the object, which can be updated freely. To genuinely change
+    the class, set GOOGLE_WALLET_CLASS_SUFFIX to a new value — that creates a
+    fresh class and leaves existing cards on the old one.
+    """
     existing = await _request("GET", f"loyaltyClass/{class_id()}")
     if existing.status_code == 200:
         return
