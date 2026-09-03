@@ -37,9 +37,16 @@ export const OBSTACLES = [
 ];
 const UNLOCK_AT = [0, 0, 900, 2100];
 
-const GAP_SAFETY_NUM = 17;
-const GAP_SAFETY_DEN = 10;
-const GAP_SPREAD = 260;
+// Obstacles are never closer than a jump takes, so a run is always physically
+// survivable. What tightens is the margin on top: it decays, taking the time
+// on the ground between jumps from about half a second to a tenth.
+const SAFETY_START = 170;
+const SAFETY_FLOOR = 112;
+const SAFETY_DECAY_EVERY = 34;
+
+const SPREAD_START = 260;
+const SPREAD_FLOOR = 70;
+const SPREAD_DECAY_EVERY = 7;
 
 function xorshift(state) {
   state ^= (state << 13) >>> 0;
@@ -53,9 +60,17 @@ export function speedAt(tick) {
   return Math.min(MAX_SPEED, START_SPEED + Math.floor(tick / SPEED_EVERY) * SPEED_STEP);
 }
 
-/** Never closer than a full jump plus a quarter, whatever the speed. */
-export function minGapAt(speed) {
-  return Math.floor((AIRTIME * speed * GAP_SAFETY_NUM) / GAP_SAFETY_DEN);
+export function safetyAt(tick) {
+  return Math.max(SAFETY_FLOOR, SAFETY_START - Math.floor(tick / SAFETY_DECAY_EVERY));
+}
+
+export function spreadAt(tick) {
+  return Math.max(SPREAD_FLOOR, SPREAD_START - Math.floor(tick / SPREAD_DECAY_EVERY));
+}
+
+/** The closest two obstacles may be at this point in the run. */
+export function minGapAt(speed, tick) {
+  return Math.floor((AIRTIME * speed * safetyAt(tick)) / 100);
 }
 
 export function createRun(seed) {
@@ -70,7 +85,7 @@ export function createRun(seed) {
     distance: 0,
     speed: START_SPEED,
     obstacles: [],
-    nextGap: minGapAt(START_SPEED) + (rng % GAP_SPREAD),
+    nextGap: minGapAt(START_SPEED, 0) + (rng % spreadAt(0)),
     sinceSpawn: 0,
     passed: 0,
     dead: false,
@@ -111,7 +126,7 @@ export function createRun(seed) {
       for (let i = 0; i < UNLOCK_AT.length; i += 1) if (t >= UNLOCK_AT[i]) choices.push(i);
       const [width, height, kind] = OBSTACLES[choices[rng % choices.length]];
       rng = xorshift(rng);
-      state.nextGap = minGapAt(state.speed) + (rng % GAP_SPREAD);
+      state.nextGap = minGapAt(state.speed, t) + (rng % spreadAt(t));
       state.obstacles.push([WORLD_W, width, height, kind]);
     }
 

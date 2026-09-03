@@ -57,12 +57,20 @@ OBSTACLES = (
 # The taller shapes only start appearing once the player has found their feet.
 UNLOCK_AT = (0, 0, 900, 2100)
 
-# Obstacles are never placed closer together than a jump takes, plus a
-# margin. The previous version shrank the gap as speed rose, which made runs
-# genuinely impossible — see the note in the commit that fixed it.
-GAP_SAFETY_NUM = 17
-GAP_SAFETY_DEN = 10
-GAP_SPREAD = 260
+# Obstacles are never placed closer together than a jump takes, so a run is
+# always physically survivable. What tightens is the margin on top: it starts
+# generous and decays, taking the time spent on the ground between jumps from
+# about half a second down to a tenth. That is where the difficulty lives —
+# not in raw speed, which only removes the chance to see anything coming.
+SAFETY_START = 170      # percent of a jump's length
+SAFETY_FLOOR = 112      # never below 100, or the run becomes impossible
+SAFETY_DECAY_EVERY = 34 # lose a point of margin this often
+
+# The luck: how much slack the generator may add on top. It shrinks too, so
+# late runs are uniformly tight and an early one can be kind.
+SPREAD_START = 260
+SPREAD_FLOOR = 70
+SPREAD_DECAY_EVERY = 7
 
 
 def _xorshift(state: int) -> int:
@@ -78,9 +86,18 @@ def speed_at(tick: int) -> int:
     return min(MAX_SPEED, START_SPEED + (tick // SPEED_EVERY) * SPEED_STEP)
 
 
-def min_gap_at(speed: int) -> int:
-    """The closest two obstacles may ever be: a full jump, plus a quarter."""
-    return AIRTIME * speed * GAP_SAFETY_NUM // GAP_SAFETY_DEN
+def safety_at(tick: int) -> int:
+    """The margin over a bare jump, as a percentage, decaying with the run."""
+    return max(SAFETY_FLOOR, SAFETY_START - tick // SAFETY_DECAY_EVERY)
+
+
+def spread_at(tick: int) -> int:
+    return max(SPREAD_FLOOR, SPREAD_START - tick // SPREAD_DECAY_EVERY)
+
+
+def min_gap_at(speed: int, tick: int) -> int:
+    """The closest two obstacles may be at this point in the run."""
+    return AIRTIME * speed * safety_at(tick) // 100
 
 
 @dataclass
@@ -120,7 +137,7 @@ def simulate(seed: int, jumps: list[int]) -> Result:
 
     s = _State()
     rng = _xorshift(rng)
-    s.next_gap = min_gap_at(START_SPEED) + (rng % GAP_SPREAD)
+    s.next_gap = min_gap_at(START_SPEED, 0) + (rng % spread_at(0))
 
     for tick in range(MAX_TICKS):
         if tick in press_at:
@@ -149,7 +166,7 @@ def simulate(seed: int, jumps: list[int]) -> Result:
             choices = [i for i, unlock in enumerate(UNLOCK_AT) if tick >= unlock]
             width, height, kind = OBSTACLES[choices[rng % len(choices)]]
             rng = _xorshift(rng)
-            s.next_gap = min_gap_at(s.speed) + (rng % GAP_SPREAD)
+            s.next_gap = min_gap_at(s.speed, tick) + (rng % spread_at(tick))
             s.obstacles.append([WORLD_W, width, height, kind])
 
         player_y = s.y // UNITS
