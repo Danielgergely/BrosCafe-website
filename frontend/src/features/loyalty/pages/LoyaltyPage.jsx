@@ -140,7 +140,7 @@ function SignedInView() {
 
 function SignUpForm() {
   const { t } = useI18n();
-  const { requestLink } = useCustomer();
+  const { requestLink, expired, clearExpired } = useCustomer();
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -156,6 +156,7 @@ function SignUpForm() {
     setBusy(true);
     try {
       await requestLink(email.trim(), firstName.trim());
+      clearExpired();
       setSentTo(email.trim());
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
@@ -213,6 +214,16 @@ function SignUpForm() {
           ))}
         </ol>
       </section>
+
+      {expired && (
+        <div
+          data-testid="session-expired"
+          className="mt-8 rounded-panel border border-olive/30 bg-white p-5 text-sm leading-relaxed text-ink"
+        >
+          <p className="font-semibold">{t("loyalty.expiredTitle")}</p>
+          <p className="mt-1 text-muted">{t("loyalty.expiredBody")}</p>
+        </div>
+      )}
 
       <form onSubmit={submit} className="mt-8 space-y-4" data-testid="loyalty-form">
         <p className="font-display text-2xl text-ink">{t("loyalty.formTitle")}</p>

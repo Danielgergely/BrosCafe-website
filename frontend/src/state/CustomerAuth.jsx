@@ -16,6 +16,10 @@ export function CustomerAuthProvider({ children }) {
   const { lang } = useI18n();
   const [member, setMember] = useState(null);
   const [loading, setLoading] = useState(true);
+  // True when a stored session was rejected rather than absent. Without this
+  // an expired token drops the customer on the sign-in form with no
+  // explanation, which reads as the site having forgotten them for no reason.
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
     if (!safeGet(CUSTOMER_TOKEN_KEY)) {
@@ -26,9 +30,13 @@ export function CustomerAuthProvider({ children }) {
     api
       .get("/customer/me", customerAuth())
       .then(({ data }) => setMember(data))
-      .catch(() => {
+      .catch((error) => {
         safeRemove(CUSTOMER_TOKEN_KEY);
         setMember(false);
+        // A rejected token means the session ran out. A network failure does
+        // not, and telling someone their session expired when the café wifi
+        // dropped would just be wrong.
+        if (error?.response?.status) setExpired(true);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -64,11 +72,18 @@ export function CustomerAuthProvider({ children }) {
   const signOut = useCallback(() => {
     safeRemove(CUSTOMER_TOKEN_KEY);
     setMember(false);
+    // Leaving on purpose is not the same as being timed out.
+    setExpired(false);
   }, []);
 
+  /** Called once the notice has been shown, so it does not follow them about. */
+  const clearExpired = useCallback(() => setExpired(false), []);
+
   const value = useMemo(
-    () => ({ member, loading, requestLink, verify, refresh, changeEmail, signOut }),
-    [member, loading, requestLink, verify, refresh, changeEmail, signOut],
+    () => ({ member, loading, expired, clearExpired, requestLink, verify,
+             refresh, changeEmail, signOut }),
+    [member, loading, expired, clearExpired, requestLink, verify, refresh,
+     changeEmail, signOut],
   );
   return <CustomerContext.Provider value={value}>{children}</CustomerContext.Provider>;
 }

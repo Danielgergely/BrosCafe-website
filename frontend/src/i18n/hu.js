@@ -252,6 +252,8 @@ const hu = {
       "Mutasd a pultnál — bármelyik brazil vagy vendégkávé mellé beszámít.",
       "Vedd át a jutalmad — ha tele a kártya, a következő csésze a ház ajándéka.",
     ],
+    expiredTitle: "Lejárt a belépésed",
+    expiredBody: "A belépés 30 napig él, ezért kiléptettünk. A kártyád és minden pecsétje megvan — add meg az e-mail-címed, és küldünk egy új linket.",
     formTitle: "Elkészítjük a kártyád",
     formSub: "Add meg a neved és az e-mail-címed, és elkészítjük a kártyád. Jelszó nem kell, soha.",
     formBonus: "{welcome} pecsétet ajándékba adunk, így az első ingyen kávéd már csak {left} kávéra van.",

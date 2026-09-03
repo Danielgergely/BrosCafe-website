@@ -36,7 +36,7 @@ function CoffeeBurst() {
  */
 export default function Nav({ solid = false }) {
   const { t } = useI18n();
-  const { member } = useCustomer();
+  const { member, signOut } = useCustomer();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const go = useSectionNav();
@@ -215,6 +215,26 @@ export default function Nav({ solid = false }) {
                   {t("nav.account")}
                 </button>
               </motion.li>
+
+              {member && (
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45, duration: 0.5 }}
+                >
+                  <button
+                    data-testid="mobile-nav-sign-out"
+                    onClick={() => {
+                      signOut();
+                      setMenuOpen(false);
+                      navigate(ROUTES.home);
+                    }}
+                    className="font-display text-3xl font-medium italic text-olive/40 transition-opacity duration-300 hover:opacity-60"
+                  >
+                    {t("account.logOut")}
+                  </button>
+                </motion.li>
+              )}
 
               <motion.li
                 initial={{ opacity: 0, y: 24 }}

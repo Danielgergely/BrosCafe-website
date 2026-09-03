@@ -249,6 +249,8 @@ const en = {
       "Scan at the counter with any Brazilian or guest coffee.",
       "Claim your reward — once the card is full, the next cup is on the house.",
     ],
+    expiredTitle: "Your sign-in has expired",
+    expiredBody: "Sessions last 30 days, so we have signed you out. Your card and every stamp on it are safe — enter your email below and we will send a fresh link.",
     formTitle: "Generate your pass",
     formSub: "Enter your name and email to generate your pass. No password, ever.",
     formBonus: "We start you off with {welcome} stamps, so your first free coffee is only {left} away.",
