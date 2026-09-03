@@ -655,6 +655,7 @@ const hu = {
     title: "Kávéfutam",
     intro: "Ugorj át a babokon, kerüld ki a szűrőkart, és nézd meg, meddig jutsz. A hét legjobb futama egy ingyen kávét ér — a pultnál át is veheted.",
     playWhileYouWait: "Játssz, amíg vársz",
+    quit: "Bezárás",
     play: "Játék",
     starting: "Indul…",
     howTo: "Koppints vagy nyomd meg a szóközt az ugráshoz. Ugrás közben még egyszer, és magasabbra jutsz.",

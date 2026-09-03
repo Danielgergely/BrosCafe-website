@@ -28,21 +28,26 @@ const SPEED_EVERY = 900;
 export const MAX_SPEED = 17;
 export const MAX_TICKS = 60 * 60 * 10;
 
-/** width, height, kind — kind picks the drawing, the box is the physics. */
+/**
+ * width, height, base, kind. `base` is how far off the ground it floats, so a
+ * shelf is cleared by *not* jumping. Kind picks the drawing; the box is the
+ * physics.
+ */
 export const OBSTACLES = [
-  [24, 30, 0],
-  [26, 54, 1],
-  [62, 32, 2],
-  [34, 76, 3],
+  [24, 30, 0, 0],
+  [26, 54, 0, 1],
+  [62, 32, 0, 2],
+  [34, 76, 0, 3],
+  [54, 40, 58, 4],
 ];
-const UNLOCK_AT = [0, 0, 900, 2100];
+const UNLOCK_AT = [0, 0, 600, 1500, 1000];
 
 // Obstacles are never closer than a jump takes, so a run is always physically
 // survivable. What tightens is the margin on top: it decays, taking the time
 // on the ground between jumps from about half a second to a tenth.
-const SAFETY_START = 170;
-const SAFETY_FLOOR = 112;
-const SAFETY_DECAY_EVERY = 34;
+const SAFETY_START = 152;
+const SAFETY_FLOOR = 106;
+const SAFETY_DECAY_EVERY = 26;
 
 const SPREAD_START = 260;
 const SPREAD_FLOOR = 70;
@@ -124,23 +129,28 @@ export function createRun(seed) {
       rng = xorshift(rng);
       const choices = [];
       for (let i = 0; i < UNLOCK_AT.length; i += 1) if (t >= UNLOCK_AT[i]) choices.push(i);
-      const [width, height, kind] = OBSTACLES[choices[rng % choices.length]];
+      const [width, height, base, kind] = OBSTACLES[choices[rng % choices.length]];
       rng = xorshift(rng);
       state.nextGap = minGapAt(state.speed, t) + (rng % spreadAt(t));
-      state.obstacles.push([WORLD_W, width, height, kind]);
+      state.obstacles.push([WORLD_W, width, height, base, kind]);
     }
 
     const playerY = Math.floor(state.y / UNITS);
     const remaining = [];
     let hit = false;
-    for (const [ox0, ow, oh, kind] of state.obstacles) {
+    for (const [ox0, ow, oh, base, kind] of state.obstacles) {
       const ox = ox0 - state.speed;
       if (ox + ow < 0) {
         state.passed += 1;
         continue;
       }
-      remaining.push([ox, ow, oh, kind]);
-      if (ox < PLAYER_X + PLAYER_W && ox + ow > PLAYER_X && playerY < oh) hit = true;
+      remaining.push([ox, ow, oh, base, kind]);
+      // Both axes now, so something can hang overhead and be missed by
+      // staying on the ground.
+      if (ox < PLAYER_X + PLAYER_W && ox + ow > PLAYER_X
+          && playerY < base + oh && playerY + PLAYER_H > base) {
+        hit = true;
+      }
     }
     state.obstacles = remaining;
     state.dead = hit;

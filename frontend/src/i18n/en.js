@@ -652,6 +652,7 @@ const en = {
     title: "Coffee Runner",
     intro: "Hop the beans, dodge the portafilters, and see how far you get. The best run of the week earns a free coffee — come and claim it at the counter.",
     playWhileYouWait: "Play while you wait",
+    quit: "Close",
     play: "Play",
     starting: "Starting…",
     howTo: "Tap or press space to jump. Tap again mid-air for a higher one.",

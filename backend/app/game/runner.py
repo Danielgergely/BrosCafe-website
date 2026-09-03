@@ -43,28 +43,33 @@ MAX_SPEED = 17
 
 MAX_TICKS = 60 * 60 * 10
 
-# (width, height, kind). Kind is for drawing only — the physics is the box.
-#   0 bean       low and narrow, a hop
+# (width, height, base, kind). `base` is how far off the ground it floats, so
+# a shelf is cleared by *not* jumping — the first thing on the track that
+# punishes a nervous player rather than a slow one. Kind picks the drawing.
+#   0 bean         low and narrow, a hop
 #   1 portafilter  tall
-#   2 sack       wide and low, needs distance rather than height
-#   3 grinder    tall and wide, comfortable only with the boost
+#   2 sack         wide and low
+#   3 grinder      tall, comfortable only with the boost
+#   4 shelf        floats overhead: stay down, or lose the run to your own jump
 OBSTACLES = (
-    (24, 30, 0),
-    (26, 54, 1),
-    (62, 32, 2),
-    (34, 76, 3),
+    (24, 30, 0, 0),
+    (26, 54, 0, 1),
+    (62, 32, 0, 2),
+    (34, 76, 0, 3),
+    (54, 40, 58, 4),
 )
-# The taller shapes only start appearing once the player has found their feet.
-UNLOCK_AT = (0, 0, 900, 2100)
+# Each shape waits its turn, so the opening is readable and the later run is
+# the part that sorts people out.
+UNLOCK_AT = (0, 0, 600, 1500, 1000)
 
 # Obstacles are never placed closer together than a jump takes, so a run is
 # always physically survivable. What tightens is the margin on top: it starts
 # generous and decays, taking the time spent on the ground between jumps from
 # about half a second down to a tenth. That is where the difficulty lives —
 # not in raw speed, which only removes the chance to see anything coming.
-SAFETY_START = 170      # percent of a jump's length
-SAFETY_FLOOR = 112      # never below 100, or the run becomes impossible
-SAFETY_DECAY_EVERY = 34 # lose a point of margin this often
+SAFETY_START = 152      # percent of a jump's length
+SAFETY_FLOOR = 106      # never below 100, or the run becomes impossible
+SAFETY_DECAY_EVERY = 26 # lose a point of margin this often
 
 # The luck: how much slack the generator may add on top. It shrinks too, so
 # late runs are uniformly tight and an early one can be kind.
@@ -164,20 +169,23 @@ def simulate(seed: int, jumps: list[int]) -> Result:
             s.since_spawn = 0
             rng = _xorshift(rng)
             choices = [i for i, unlock in enumerate(UNLOCK_AT) if tick >= unlock]
-            width, height, kind = OBSTACLES[choices[rng % len(choices)]]
+            width, height, base, kind = OBSTACLES[choices[rng % len(choices)]]
             rng = _xorshift(rng)
             s.next_gap = min_gap_at(s.speed, tick) + (rng % spread_at(tick))
-            s.obstacles.append([WORLD_W, width, height, kind])
+            s.obstacles.append([WORLD_W, width, height, base, kind])
 
         player_y = s.y // UNITS
         remaining = []
-        for ox, ow, oh, kind in s.obstacles:
+        for ox, ow, oh, base, kind in s.obstacles:
             ox -= s.speed
             if ox + ow < 0:
                 s.passed += 1
                 continue
-            remaining.append([ox, ow, oh, kind])
-            if ox < PLAYER_X + PLAYER_W and ox + ow > PLAYER_X and player_y < oh:
+            remaining.append([ox, ow, oh, base, kind])
+            # Boxes overlap on both axes now, so something can hang overhead
+            # and be missed by staying on the ground.
+            if (ox < PLAYER_X + PLAYER_W and ox + ow > PLAYER_X
+                    and player_y < base + oh and player_y + PLAYER_H > base):
                 s.obstacles = remaining
                 return Result(s.distance, tick, True, "hit", s.passed)
         s.obstacles = remaining

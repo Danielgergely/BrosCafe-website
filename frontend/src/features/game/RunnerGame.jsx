@@ -71,8 +71,8 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
       // Four things to jump: a bean, a portafilter, a sack, a grinder. The
       // physics is the same box either way — the shapes are so a player can
       // tell at a glance how much height they need.
-      for (const [ox, ow, oh, kind] of state.obstacles) {
-        const top = GROUND_Y - oh;
+      for (const [ox, ow, oh, base, kind] of state.obstacles) {
+        const top = GROUND_Y - base - oh;
         ctx.fillStyle = palette.olive;
         if (kind === 0) {
           ctx.beginPath();
@@ -99,13 +99,24 @@ export default function RunnerGame({ seed, onFinish, paused = false }) {
           ctx.fill();
           ctx.fillStyle = palette.oliveSoft;
           ctx.fillRect(ox + 10, top + 10, ow - 20, 4);
-        } else {
+        } else if (kind === 3) {
           ctx.fillRect(ox + 4, top + 16, ow - 8, oh - 16);
           ctx.fillRect(ox, top, ow, 14);
           ctx.fillStyle = palette.oliveSoft;
           ctx.fillRect(ox + 7, top + 22, ow - 14, 5);
           ctx.fillStyle = palette.olive;
           ctx.fillRect(ox + ow - 3, top + 20, 7, 10);
+        } else {
+          // A shelf of cups hanging overhead. Deliberately drawn with legs
+          // that stop short of the ground, so it reads as something to run
+          // under rather than something to jump.
+          ctx.fillRect(ox, top, ow, 10);
+          for (let i = 0; i < 3; i += 1) {
+            const cx = ox + 10 + i * ((ow - 20) / 2);
+            ctx.fillRect(cx - 6, top + 10, 12, 13);
+          }
+          ctx.fillStyle = palette.oliveSoft;
+          ctx.fillRect(ox + 2, top + 2, ow - 4, 3);
         }
       }
 

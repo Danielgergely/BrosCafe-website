@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Coffee, Trophy } from "lucide-react";
+import { Coffee, Trophy, X } from "lucide-react";
 import { toast } from "sonner";
 
 import RunnerGame from "@/features/game/RunnerGame";
@@ -92,7 +92,33 @@ export default function GamePage() {
             </Link>
           </div>
         ) : run ? (
-          <RunnerGame seed={run.seed} onFinish={finish} />
+          /*
+           * Played full-screen. On a phone the canvas otherwise sits high up
+           * the page under the header and the intro text, which is both small
+           * and awkward to reach with a thumb — the two things a tap game can
+           * least afford.
+           */
+          <div
+            data-testid="game-overlay"
+            className="fixed inset-0 z-[70] flex flex-col justify-end bg-cream px-3 pb-6 pt-3 sm:justify-center sm:px-8"
+          >
+            <div className="mx-auto flex w-full max-w-4xl items-center justify-between pb-2">
+              <span className="text-[11px] font-semibold uppercase tracking-label text-olive">
+                {t("game.title")}
+              </span>
+              <button
+                data-testid="game-quit"
+                onClick={() => setRun(null)}
+                aria-label={t("game.quit")}
+                className="rounded-full border border-line p-2 text-muted transition-colors hover:border-olive hover:text-olive"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="mx-auto w-full max-w-4xl">
+              <RunnerGame seed={run.seed} onFinish={finish} />
+            </div>
+          </div>
         ) : (
           <div className="py-10 text-center">
             <button
