@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Coffee, PartyPopper, RefreshCw } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Coffee, Gamepad2, PartyPopper, RefreshCw } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyCardVisual from "@/components/loyalty/LoyaltyCardVisual";
@@ -109,6 +109,16 @@ export default function LoyaltyCardPage() {
         <WalletButtons code={code} emphasis="solid" />
       </div>
       <p className="mt-3 text-center text-xs text-muted">{t("card.walletHint")}</p>
+
+      {/* Something to do while the coffee is being made — which is exactly
+          where this page is usually open. */}
+      <Link
+        data-testid="card-play-game"
+        to={ROUTES.game}
+        className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-card border border-olive bg-white text-sm font-semibold text-olive transition-colors hover:bg-cream"
+      >
+        <Gamepad2 size={17} /> {t("game.playWhileYouWait")}
+      </Link>
 
       {member.opening_status !== "redeemed" && (
         <div

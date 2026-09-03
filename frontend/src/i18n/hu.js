@@ -29,6 +29,7 @@ const hu = {
     accountSignedIn: "A Bros Cafe fiókod",
     accountGuest: "Léptess be, vagy kérd a hűségkártyát",
     help: "SEGÍTSÉG",
+    game: "A JÁTÉK",
     privacy: "ADATKEZELÉS",
   },
 
@@ -653,6 +654,7 @@ const hu = {
   game: {
     title: "Kávéfutam",
     intro: "Ugorj át a babokon, kerüld ki a szűrőkart, és nézd meg, meddig jutsz. A hét legjobb futama egy ingyen kávét ér — a pultnál át is veheted.",
+    playWhileYouWait: "Játssz, amíg vársz",
     play: "Játék",
     starting: "Indul…",
     howTo: "Koppints, vagy nyomd meg a szóközt az ugráshoz.",

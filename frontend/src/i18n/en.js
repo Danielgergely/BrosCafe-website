@@ -16,6 +16,7 @@ const en = {
     opening: "OPENING DAY",
     shop: "THE COLLECTION",
     help: "HELP",
+    game: "THE GAME",
     privacy: "PRIVACY",
     account: "My account",
     cta: "GET DIGITAL PASS",
@@ -650,6 +651,7 @@ const en = {
   game: {
     title: "Coffee Runner",
     intro: "Hop the beans, dodge the portafilters, and see how far you get. The best run of the week earns a free coffee — come and claim it at the counter.",
+    playWhileYouWait: "Play while you wait",
     play: "Play",
     starting: "Starting…",
     howTo: "Tap, or press space, to jump.",

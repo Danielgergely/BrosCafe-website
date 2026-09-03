@@ -91,6 +91,7 @@ export const FOOTER_LINKS = [
   { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
   { key: "visit", to: ROUTES.contact },
+  { key: "game", to: ROUTES.game },
   { key: "privacy", to: ROUTES.privacy },
 ];
 

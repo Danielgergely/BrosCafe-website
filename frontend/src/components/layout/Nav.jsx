@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { ArrowUpRight, Coffee, Menu, User, X } from "lucide-react";
+import { ArrowUpRight, Coffee, Gamepad2, Menu, User, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import LanguageToggle from "@/components/layout/LanguageToggle";
@@ -110,6 +110,24 @@ export default function Nav({ solid = false }) {
           </ul>
 
           <div className="flex items-center gap-3">
+            {/* Sits beside the card because it belongs to the same errand:
+                something to do while the coffee is being made. Hidden from
+                signed-out visitors, who have no leaderboard to appear on and
+                already have plenty competing for their attention up here. */}
+            {member && (
+              <Link
+                data-testid="nav-game"
+                to={ROUTES.game}
+                aria-label={t("game.title")}
+                title={t("game.title")}
+                className={`flex items-center rounded-full border p-2 transition-all duration-300 hover:-translate-y-0.5 ${
+                  opaque ? "border-olive/30 text-olive" : "border-cream/40 text-cream"
+                }`}
+              >
+                <Gamepad2 size={15} strokeWidth={1.8} />
+              </Link>
+            )}
+
             <button
               data-testid="nav-account"
               onClick={() => navigate(member ? ROUTES.account : ROUTES.loyalty)}

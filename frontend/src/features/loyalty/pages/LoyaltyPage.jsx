@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Coffee, Gift, Mail } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Coffee, Gamepad2, Gift, Mail } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
@@ -126,6 +126,13 @@ function SignedInView() {
           <Coffee size={20} /> {t("loyalty.openWalletCard")}
         </button>
         <WalletButtons code={member.code} />
+        <Link
+          data-testid="loyalty-play-game"
+          to={ROUTES.game}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-card border border-line bg-white text-sm font-semibold text-ink transition-colors hover:border-olive"
+        >
+          <Gamepad2 size={17} /> {t("game.playWhileYouWait")}
+        </Link>
       </div>
 
       <ProductRow
