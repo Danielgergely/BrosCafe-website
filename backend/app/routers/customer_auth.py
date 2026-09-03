@@ -82,7 +82,16 @@ async def verify_link(body: VerifyRequest):
 
 @router.get("/customer/me")
 async def customer_me(member: dict = Depends(get_current_customer)):
-    return members.public(member)
+    """The signed-in customer, and a freshly minted session alongside them.
+
+    Sliding rather than fixed: every visit resets the clock, so a customer who
+    comes in even once a year is never signed out. Only someone who has not
+    opened the site at all in that time has to ask for a new link.
+    """
+    return {
+        **members.public(member),
+        "session_token": create_customer_token(member["code"], member["email"]),
+    }
 
 
 @router.post("/customer/change-email")

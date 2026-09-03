@@ -12,6 +12,21 @@ import { CUSTOMER_TOKEN_KEY, api, customerAuth, safeGet, safeRemove, safeSet } f
  */
 const CustomerContext = createContext(null);
 
+/**
+ * Save the renewed session and hand back the member without it.
+ *
+ * The API returns a fresh token on every /customer/me, which is what makes the
+ * session sliding: someone who opens the site at all never expires. Keeping it
+ * out of the member object stops a credential ending up in component state.
+ */
+export const LAST_EMAIL_KEY = "bros-last-email";
+
+function storeSession(data) {
+  const { session_token: token, ...member } = data || {};
+  if (token) safeSet(CUSTOMER_TOKEN_KEY, token);
+  return member;
+}
+
 export function CustomerAuthProvider({ children }) {
   const { lang } = useI18n();
   const [member, setMember] = useState(null);
@@ -29,7 +44,7 @@ export function CustomerAuthProvider({ children }) {
     }
     api
       .get("/customer/me", customerAuth())
-      .then(({ data }) => setMember(data))
+      .then(({ data }) => setMember(storeSession(data)))
       .catch((error) => {
         safeRemove(CUSTOMER_TOKEN_KEY);
         setMember(false);
@@ -45,7 +60,10 @@ export function CustomerAuthProvider({ children }) {
     (email, firstName) =>
       // Send the current language so the sign-in email — and every later one —
       // arrives in the language they are actually reading the site in.
-      api.post("/auth/request-link", { email, first_name: firstName, lang }),
+      // Remembered so a returning customer does not retype it. Their own
+      // address on their own device — no more revealing than the card itself.
+      (safeSet(LAST_EMAIL_KEY, email),
+       api.post("/auth/request-link", { email, first_name: firstName, lang })),
     [lang],
   );
 
@@ -59,8 +77,9 @@ export function CustomerAuthProvider({ children }) {
   const refresh = useCallback(async () => {
     if (!safeGet(CUSTOMER_TOKEN_KEY)) return null;
     const { data } = await api.get("/customer/me", customerAuth());
-    setMember(data);
-    return data;
+    const next = storeSession(data);
+    setMember(next);
+    return next;
   }, []);
 
   const changeEmail = useCallback(async (email) => {

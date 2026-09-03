@@ -10,8 +10,8 @@ import WalletButtons from "@/components/loyalty/WalletButtons";
 import ProductRow from "@/components/product/ProductRow";
 import { BRAND, FEATURED, ROUTES, TIER_STYLE } from "@/config/site";
 import { useI18n } from "@/i18n";
-import { errorMessage } from "@/lib/api";
-import { useCustomer } from "@/state/CustomerAuth";
+import { errorMessage, safeGet } from "@/lib/api";
+import { LAST_EMAIL_KEY, useCustomer } from "@/state/CustomerAuth";
 
 function SignedInView() {
   const { t } = useI18n();
@@ -141,7 +141,9 @@ function SignedInView() {
 function SignUpForm() {
   const { t } = useI18n();
   const { requestLink, expired, clearExpired } = useCustomer();
-  const [email, setEmail] = useState("");
+  // Prefilled from the last sign-in, so coming back is a tap rather than
+  // typing an address on a phone.
+  const [email, setEmail] = useState(() => safeGet(LAST_EMAIL_KEY) || "");
   const [firstName, setFirstName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState("");

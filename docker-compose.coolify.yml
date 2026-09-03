@@ -65,6 +65,9 @@ services:
       # Set false once you edit products through /admin instead.
       SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
 
+      # A year, renewed on every visit, so a returning customer is never
+      # signed out. See app/routers/customer_auth.py.
+      CUSTOMER_TOKEN_DAYS: ${CUSTOMER_TOKEN_DAYS:-365}
       STAMPS_REQUIRED: ${STAMPS_REQUIRED:-10}
       # Stamps granted at sign-up, so the first free coffee is five purchases
       # away rather than ten. Must stay below STAMPS_REQUIRED.

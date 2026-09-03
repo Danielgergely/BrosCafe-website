@@ -46,7 +46,10 @@ class Settings:
     # --- auth -----------------------------------------------------------
     jwt_algorithm = "HS256"
     staff_token_days = _int("STAFF_TOKEN_DAYS", 7)
-    customer_token_days = _int("CUSTOMER_TOKEN_DAYS", 30)
+    # A year, and renewed on every visit (see /customer/me), so anyone who
+    # uses the café at all never meets a sign-in screen again. The card is
+    # worth one free coffee, which is the right weight for this trade.
+    customer_token_days = _int("CUSTOMER_TOKEN_DAYS", 365)
     magic_link_minutes = _int("MAGIC_LINK_MINUTES", 20)
     admin_email = os.environ.get("ADMIN_EMAIL", "").lower().strip()
     admin_password = os.environ.get("ADMIN_PASSWORD", "")
