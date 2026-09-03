@@ -40,7 +40,13 @@ def _assert_safe(html: str) -> None:
         raise ValueError(f"Email links must be absolute https: {url}")
 
 
-async def send(to: str, subject: str, html: str) -> str | None:
+async def send(to: str, subject: str, html: str, text: str | None = None) -> str | None:
+    """Send one message.
+
+    `text` is not optional in practice: spam filters mark HTML-only mail down,
+    and a magic link that lands in spam is a customer who cannot sign in. Every
+    caller here supplies one.
+    """
     _assert_safe(html)
     if not settings.email_configured:
         logger.warning("Email is not configured; message to %s was not sent", to)
@@ -52,6 +58,8 @@ async def send(to: str, subject: str, html: str) -> str | None:
         "subject": subject,
         "html": html,
     }
+    if text:
+        payload["text"] = text
     if settings.email_reply_to:
         payload["reply_to"] = settings.email_reply_to
 
@@ -144,16 +152,43 @@ MAGIC = {
 }
 
 
+PLAIN_REWARD = {
+    "en": ("You have earned a free coffee at Bros Cafe.\n\n"
+           "Open your loyalty card and show it at the counter on your next visit.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanady utca 4-B"),
+    "hu": ("Összegyűlt egy ingyen kávé a Bros Cafében.\n\n"
+           "Nyisd meg a hűségkártyád, és mutasd meg a pultnál, amikor legközelebb bejössz.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanády utca 4-B"),
+}
+
+PLAIN_MAGIC = {
+    "en": ("{intro}\n\nOpen your Bros Cafe account and loyalty card here:\n{link}\n\n"
+           "No password needed — the link works for {minutes} minutes.\n\n"
+           "If you did not ask for this, you can ignore this email.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanady utca 4-B"),
+    "hu": ("{intro}\n\nItt nyílik meg a fiókod és a hűségkártyád:\n{link}\n\n"
+           "Jelszó nem kell — a link {minutes} percig él.\n\n"
+           "Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanády utca 4-B"),
+}
+
+
 async def send_reward_ready(email: str, lang: str = DEFAULT_LANG) -> None:
-    text = REWARD[_lang(lang)]
+    code = _lang(lang)
+    text = REWARD[code]
     await send(email, text["subject"],
-               shell(text["title"], text["body"], lang=_lang(lang)))
+               shell(text["title"], text["body"], lang=code),
+               PLAIN_REWARD[code])
 
 
 async def send_magic_link(email: str, link: str, is_new: bool,
                           lang: str = DEFAULT_LANG) -> None:
-    text = MAGIC[_lang(lang)]
+    code = _lang(lang)
+    text = MAGIC[code]
     intro = text["new_intro"] if is_new else text["intro"]
     body = f'<p>{intro}</p>' + text["body"].format(minutes=settings.magic_link_minutes)
+    plain = PLAIN_MAGIC[code].format(
+        intro=intro, link=link, minutes=settings.magic_link_minutes)
     await send(email, text["new_subject"] if is_new else text["subject"],
-               shell(text["title"], body, text["button"], link, lang=_lang(lang)))
+               shell(text["title"], body, text["button"], link, lang=code),
+               plain)

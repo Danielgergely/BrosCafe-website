@@ -137,7 +137,11 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
     required = member.get("stamps_required", 10)
     stamps = member.get("stamps", 0)
     reward = member.get("reward_ready", False)
-    dots = " ".join("\u2615" if i < stamps else "\u25CB" for i in range(required))
+    # Filled and hollow circles rather than a coffee emoji: a secondary field
+    # is a single line that Apple truncates, and ten emoji do not fit — the
+    # strip was being cut off mid-card. Circles are about half the width and
+    # ten of them sit comfortably.
+    dots = " ".join("\u25CF" if i < stamps else "\u25CB" for i in range(required))
 
     if reward:
         secondary = [{"key": "progress", "label": L["reward_label"], "value": L["reward_value"]}]

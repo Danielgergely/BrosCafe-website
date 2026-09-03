@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Coffee, Gift, Mail } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -92,23 +92,22 @@ function SignedInView() {
 function SignUpForm() {
   const { t } = useI18n();
   const { requestLink } = useCustomer();
-  const [mode, setMode] = useState("email"); // email | name
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState("");
+
+  useEffect(() => {
+    if (sentTo) window.scrollTo({ top: 0, behavior: "auto" });
+  }, [sentTo]);
 
   const submit = async (event) => {
     event.preventDefault();
     if (!email.trim()) return;
     setBusy(true);
     try {
-      const { data } = await requestLink(
-        email.trim(),
-        mode === "name" ? firstName.trim() : undefined,
-      );
-      if (data?.needs_name) setMode("name");
-      else setSentTo(email.trim());
+      await requestLink(email.trim(), firstName.trim());
+      setSentTo(email.trim());
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
     } finally {
@@ -167,12 +166,8 @@ function SignUpForm() {
       </section>
 
       <form onSubmit={submit} className="mt-8 space-y-4" data-testid="loyalty-form">
-        <p className="font-display text-2xl text-ink">
-          {t(mode === "name" ? "loyalty.needName" : "loyalty.formTitle")}
-        </p>
-        <p className="-mt-2 text-sm text-muted">
-          {t(mode === "name" ? "loyalty.needNameSub" : "loyalty.formSub")}
-        </p>
+        <p className="font-display text-2xl text-ink">{t("loyalty.formTitle")}</p>
+        <p className="-mt-2 text-sm text-muted">{t("loyalty.formSub")}</p>
         <p className="mt-2 text-sm font-medium text-olive">
           {t("loyalty.formBonus", {
             welcome: BRAND.welcomeStamps,
@@ -180,22 +175,21 @@ function SignUpForm() {
           })}
         </p>
 
-        {mode === "name" && (
-          <div>
-            <label htmlFor="first-name" className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {t("auth.firstNameLabel")}
-            </label>
-            <input
-              id="first-name"
-              data-testid="loyalty-firstname"
-              value={firstName}
-              onChange={(event) => setFirstName(event.target.value)}
-              placeholder={t("auth.firstNamePlaceholder")}
-              required
-              className={inputClass}
-            />
-          </div>
-        )}
+        <div>
+          <label htmlFor="first-name" className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {t("auth.firstNameLabel")}
+          </label>
+          <input
+            id="first-name"
+            data-testid="loyalty-firstname"
+            value={firstName}
+            onChange={(event) => setFirstName(event.target.value)}
+            placeholder={t("auth.firstNamePlaceholder")}
+            autoComplete="given-name"
+            required
+            className={inputClass}
+          />
+        </div>
 
         <div>
           <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -219,7 +213,7 @@ function SignUpForm() {
           data-testid="loyalty-submit"
           className="flex h-14 w-full items-center justify-center gap-2 rounded-card bg-olive text-base font-semibold text-cream transition-colors hover:bg-olive-dark disabled:opacity-60"
         >
-          <Coffee size={20} /> {t(mode === "name" ? "loyalty.createCta" : "loyalty.send")}
+          <Coffee size={20} /> {t("loyalty.send")}
         </button>
       </form>
 
