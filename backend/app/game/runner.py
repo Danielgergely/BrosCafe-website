@@ -36,10 +36,14 @@ PLAYER_H = 40
 
 START_SPEED = 6
 SPEED_STEP = 1
-SPEED_EVERY = 900       # +1 every 15 seconds
-# Capped, because past this the player cannot see an obstacle in time to
-# react. Difficulty keeps rising through what is on the track, not raw pace.
-MAX_SPEED = 17
+SPEED_EVERY = 900       # +1 every 15 seconds while the player settles in
+
+# Past this the pace picks up and never stops. Uncapped on purpose: the run
+# has to end somewhere, and the honest ending is the point where an obstacle
+# cannot be seen in time to jump. That arrives around speed 30, where there is
+# a sixth of a second between an obstacle appearing and the jump being due.
+LATE_FROM = 1800        # 30 seconds
+LATE_SPEED_EVERY = 220
 
 MAX_TICKS = 60 * 60 * 10
 
@@ -88,7 +92,10 @@ def _xorshift(state: int) -> int:
 
 
 def speed_at(tick: int) -> int:
-    return min(MAX_SPEED, START_SPEED + (tick // SPEED_EVERY) * SPEED_STEP)
+    if tick < LATE_FROM:
+        return START_SPEED + (tick // SPEED_EVERY) * SPEED_STEP
+    settled = START_SPEED + (LATE_FROM // SPEED_EVERY) * SPEED_STEP
+    return settled + ((tick - LATE_FROM) // LATE_SPEED_EVERY) * SPEED_STEP
 
 
 def safety_at(tick: int) -> int:

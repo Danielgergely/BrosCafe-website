@@ -25,7 +25,12 @@ export const PLAYER_H = 40;
 export const START_SPEED = 6;
 const SPEED_STEP = 1;
 const SPEED_EVERY = 900;
-export const MAX_SPEED = 17;
+
+// Past this the pace picks up and never stops. Uncapped on purpose: the run
+// has to end somewhere, and the honest ending is the point where an obstacle
+// cannot be seen in time to jump.
+const LATE_FROM = 1800;
+const LATE_SPEED_EVERY = 220;
 export const MAX_TICKS = 60 * 60 * 10;
 
 /**
@@ -62,7 +67,11 @@ function xorshift(state) {
 }
 
 export function speedAt(tick) {
-  return Math.min(MAX_SPEED, START_SPEED + Math.floor(tick / SPEED_EVERY) * SPEED_STEP);
+  if (tick < LATE_FROM) {
+    return START_SPEED + Math.floor(tick / SPEED_EVERY) * SPEED_STEP;
+  }
+  const settled = START_SPEED + Math.floor(LATE_FROM / SPEED_EVERY) * SPEED_STEP;
+  return settled + Math.floor((tick - LATE_FROM) / LATE_SPEED_EVERY) * SPEED_STEP;
 }
 
 export function safetyAt(tick) {
