@@ -96,6 +96,17 @@ class ProductUpsert(BaseModel):
     active: bool = True
 
 
+class RunFinish(BaseModel):
+    """A finished Coffee Runner run: the seed's id, and when the player jumped.
+
+    No score field — the server works that out. The cap on `jumps` is not a
+    game rule but a request-size limit; ten minutes of frantic pressing is
+    nowhere near it.
+    """
+    run_id: str = Field(min_length=8, max_length=64)
+    jumps: list[int] = Field(default_factory=list, max_length=4000)
+
+
 class ContactMessage(BaseModel):
     """A message from the website's contact form.
 

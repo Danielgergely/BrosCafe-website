@@ -647,6 +647,24 @@ const en = {
     notSent: "That did not go through. Please email us directly instead.",
     orEmail: "Prefer email?",
   },
+  game: {
+    title: "Coffee Runner",
+    intro: "Hop the beans, dodge the portafilters, and see how far you get. The best run of the week earns a free coffee — come and claim it at the counter.",
+    play: "Play",
+    starting: "Starting…",
+    howTo: "Tap, or press space, to jump.",
+    jump: "Jump",
+    distance: "Distance",
+    gameOver: "That's it — have another go.",
+    scored: "{n} — nice run.",
+    notCounted: "That run could not be counted. Try again.",
+    needAccount: "The leaderboard is for cardholders, so we know who to give the coffee to.",
+    getCard: "Get my card",
+    leaderboard: "Leaderboard",
+    empty: "Nobody has run yet. Be first.",
+    prize: "The best run each week gets a free coffee. Scores are worked out on our side, so a run has to be really run.",
+    periods: { week: "Week", month: "Month", year: "Year", all: "All time" },
+  },
 };
 
 export default en;

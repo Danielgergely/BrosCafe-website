@@ -61,6 +61,7 @@ export const ROUTES = {
   login: "/login",
   privacy: "/privacy",
   help: "/help",
+  game: "/game",
   staff: "/staff",
   admin: "/admin",
   card: (code) => `/card/${code}`,

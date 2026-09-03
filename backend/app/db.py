@@ -20,6 +20,7 @@ content = db.content
 products = db.products
 media = db.media
 contact_log = db.contact_log
+game_runs = db.game_runs
 wallet_registrations = db.wallet_registrations
 wallet_stats = db.wallet_stats
 
@@ -44,6 +45,10 @@ async def ensure_indexes() -> None:
     # The contact-form rate limiter only looks back an hour, so let Mongo drop
     # the rows rather than accumulating them forever.
     await contact_log.create_index("at", expireAfterSeconds=7200)
+    await game_runs.create_index("run_id", unique=True)
+    # The leaderboard sorts finished runs by score within a time window.
+    await game_runs.create_index([("finished", 1), ("finished_at", -1), ("score", -1)])
+    await game_runs.create_index([("code", 1), ("started_at", -1)])
     await wallet_registrations.create_index([("device_id", 1), ("serial", 1)])
 
 

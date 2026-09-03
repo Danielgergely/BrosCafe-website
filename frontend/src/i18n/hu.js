@@ -650,6 +650,24 @@ const hu = {
     notSent: "Ezt most nem sikerült elküldeni. Írj inkább közvetlenül e-mailben.",
     orEmail: "Inkább e-mailben?",
   },
+  game: {
+    title: "Kávéfutam",
+    intro: "Ugorj át a babokon, kerüld ki a szűrőkart, és nézd meg, meddig jutsz. A hét legjobb futama egy ingyen kávét ér — a pultnál át is veheted.",
+    play: "Játék",
+    starting: "Indul…",
+    howTo: "Koppints, vagy nyomd meg a szóközt az ugráshoz.",
+    jump: "Ugrás",
+    distance: "Táv",
+    gameOver: "Ennyi volt — próbáld újra.",
+    scored: "{n} — szép futam.",
+    notCounted: "Ezt a futamot nem tudtuk beszámítani. Próbáld újra.",
+    needAccount: "A ranglista a kártyatulajdonosoké, hogy tudjuk, kinek jár a kávé.",
+    getCard: "Kérem a kártyám",
+    leaderboard: "Ranglista",
+    empty: "Még senki sem futott. Legyél te az első.",
+    prize: "A hét legjobb futama egy ingyen kávét ér. A pontszámot mi számoljuk ki, szóval a futamot tényleg le kell futni.",
+    periods: { week: "Hét", month: "Hónap", year: "Év", all: "Mindenkori" },
+  },
 };
 
 export default hu;
