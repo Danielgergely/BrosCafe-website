@@ -294,6 +294,22 @@ async def push_update(member: dict, cafe: dict, barcode_value: str,
     return True
 
 
+async def expire_object(member_code: str) -> bool:
+    """Mark an issued pass expired. False if the customer never saved one.
+
+    A pass already on someone's phone cannot be recalled. EXPIRED is the
+    closest thing: Google greys it out and stops presenting it as a live card,
+    which is what we want when the member behind it has been erased.
+    """
+    oid = object_id(member_code)
+    response = await _request("PATCH", f"loyaltyObject/{oid}",
+                              json={"id": oid, "state": "EXPIRED"})
+    if response.status_code == 404:
+        return False
+    response.raise_for_status()
+    return True
+
+
 def save_link(member: dict, cafe: dict, barcode_value: str,
               card_url: str, origins: list[str], lang: str = "en") -> str:
     """The 'Save to Google Wallet' URL.

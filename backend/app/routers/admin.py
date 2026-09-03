@@ -62,6 +62,15 @@ async def list_members():
     return [members.public(d) for d in docs]
 
 
+@router.delete("/members/{code}")
+async def erase_member(code: str):
+    """Delete a member and all their personal data. Not reversible."""
+    result = await members.erase(code)
+    if not result:
+        raise HTTPException(status_code=404, detail="Member not found")
+    return result
+
+
 @router.get("/transactions")
 async def list_transactions(limit: int = 200, type: Optional[str] = None,
                             code: Optional[str] = None):
