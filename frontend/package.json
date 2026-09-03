@@ -21,7 +21,8 @@
     "start": "craco start",
     "build": "craco build",
     "lint": "eslint src scripts",
-    "i18n:check": "node scripts/check-i18n.mjs"
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "runner:check": "node scripts/check-runner-parity.mjs"
   },
   "browserslist": {
     "production": [
