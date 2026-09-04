@@ -96,6 +96,7 @@ class ProductUpsert(BaseModel):
     material: Optional[Localized] = None
     flavor: Optional[dict] = None
     allergens: list[str] = []
+    milks: list[str] = []
     temp: Optional[str] = None
     video: Optional[str] = None
     pairings: list[str] = []

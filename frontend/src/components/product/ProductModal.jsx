@@ -194,6 +194,7 @@ function ModalBody({ product }) {
   const isFavourite = favourites.includes(product.id);
   const inDay = day.includes(product.id) || justAdded;
   const scales = t("product.scales");
+  const milkMap = t("product.milkMap");
   const allergenMap = t("product.allergenMap");
 
   return (
@@ -249,7 +250,7 @@ function ModalBody({ product }) {
                   testId={`flavor-${key}`}
                   left={scales[i][0]}
                   right={scales[i][1]}
-                  value={product.flavor[key]}
+                  value={product.flavor[key] ?? 50}
                 />
               ))}
             </motion.div>
@@ -268,6 +269,24 @@ function ModalBody({ product }) {
                       className="rounded-full border border-olive/25 px-4 py-1.5 text-xs text-olive"
                     >
                       {size}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {product.milks?.length > 0 && (
+              <div data-testid="product-milks">
+                <p className="text-[10px] font-semibold tracking-label text-olive/50">
+                  {t("product.milk")}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {product.milks.map((milk) => (
+                    <span
+                      key={milk}
+                      className="rounded-full border border-olive/25 px-4 py-1.5 text-xs text-olive"
+                    >
+                      {milkMap[milk] ?? milk}
                     </span>
                   ))}
                 </div>

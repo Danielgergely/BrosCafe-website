@@ -7,7 +7,7 @@ import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
 import {
-  FlavorSliders, GalleryPicker, LocalizedField, labelClass,
+  FlavorSliders, GalleryPicker, LocalizedField, MilkPicker, labelClass,
 } from "@/features/staff/components/ContentFields";
 import { ArchivedBadge, EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
@@ -19,7 +19,7 @@ const CATS = CATEGORIES.filter((cat) => cat !== "all");
 const BLANK = {
   id: "", cat: "coffee", order: 99, price_huf: 0,
   name: { en: "", hu: "" }, desc: { en: "", hu: "" },
-  images: [], allergens: [], active: true,
+  images: [], allergens: [], milks: [], active: true,
 };
 
 export default function ProductsPanel() {
@@ -57,6 +57,7 @@ export default function ProductsPanel() {
       await api.post("/admin/products", {
         ...form,
         order: Number(form.order) || 99,
+        milks: form.milks ?? [],
         price_huf: Number(form.price_huf) || 0,
         // Explicit null, not omitted: the API reads it as "remove this field".
         flavor: form.flavor ?? null,
@@ -243,6 +244,12 @@ export default function ProductsPanel() {
               testId="product-flavor"
               value={form.flavor}
               onChange={(flavor) => setForm({ ...form, flavor })}
+            />
+
+            <MilkPicker
+              testId="product-milks"
+              value={form.milks}
+              onChange={(milks) => setForm({ ...form, milks })}
             />
 
             <div className="grid gap-3 sm:grid-cols-2">

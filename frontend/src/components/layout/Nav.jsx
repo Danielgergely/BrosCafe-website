@@ -109,18 +109,20 @@ export default function Nav({ solid = false }) {
             ))}
           </ul>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Sits beside the card because it belongs to the same errand:
                 something to do while the coffee is being made. Hidden from
                 signed-out visitors, who have no leaderboard to appear on and
-                already have plenty competing for their attention up here. */}
+                already have plenty competing for their attention up here.
+                On a narrow phone it would crowd out the menu button, so below
+                sm it moves into the menu instead. */}
             {member && (
               <Link
                 data-testid="nav-game"
                 to={ROUTES.game}
                 aria-label={t("game.title")}
                 title={t("game.title")}
-                className={`flex items-center rounded-full border p-2 transition-all duration-300 hover:-translate-y-0.5 ${
+                className={`hidden items-center rounded-full border p-2 transition-all duration-300 hover:-translate-y-0.5 sm:flex ${
                   opaque ? "border-olive/30 text-olive" : "border-cream/40 text-cream"
                 }`}
               >
@@ -132,7 +134,7 @@ export default function Nav({ solid = false }) {
               data-testid="nav-account"
               onClick={() => navigate(member ? ROUTES.account : ROUTES.loyalty)}
               aria-label={t(member ? "nav.accountSignedIn" : "nav.accountGuest")}
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[11px] font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5 ${
+              className={`flex items-center gap-1.5 rounded-full border px-3 py-2 text-[11px] font-semibold tracking-wide transition-all duration-300 hover:-translate-y-0.5 sm:px-3.5 ${
                 opaque ? "border-olive/30 text-olive" : "border-cream/40 text-cream"
               }`}
             >
@@ -238,7 +240,25 @@ export default function Nav({ solid = false }) {
                 <motion.li
                   initial={{ opacity: 0, y: 24 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45, duration: 0.5 }}
+                  transition={{ delay: 0.44, duration: 0.5 }}
+                >
+                  <Link
+                    data-testid="mobile-nav-game"
+                    to={ROUTES.game}
+                    onClick={() => setMenuOpen(false)}
+                    className="inline-flex items-center gap-2 font-display text-3xl font-medium italic text-olive/70 transition-opacity duration-300 hover:opacity-60"
+                  >
+                    <Gamepad2 size={22} strokeWidth={1.8} />
+                    {t("game.title")}
+                  </Link>
+                </motion.li>
+              )}
+
+              {member && (
+                <motion.li
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.48, duration: 0.5 }}
                 >
                   <button
                     data-testid="mobile-nav-sign-out"

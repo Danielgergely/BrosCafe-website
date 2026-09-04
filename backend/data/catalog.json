@@ -11,8 +11,8 @@
       "flavor": {
         "bitterSweet": 28,
         "lightBold": 82,
-        "milkyCreamy": 12,
-        "hotIced": 95
+        "mildIntense": 90,
+        "milkyCreamy": 12
       },
       "video": "https://assets.mixkit.co/videos/47954/47954-720.mp4",
       "images": [
@@ -85,8 +85,8 @@
       "flavor": {
         "bitterSweet": 45,
         "lightBold": 60,
-        "milkyCreamy": 70,
-        "hotIced": 95
+        "mildIntense": 55,
+        "milkyCreamy": 70
       },
       "images": [
         "https://images.pexels.com/photos/11201494/pexels-photo-11201494.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
@@ -145,6 +145,11 @@
         "croissant",
         "banana-bread",
         "bros-mug"
+      ],
+      "milks": [
+        "Oat",
+        "Soy",
+        "LactoseFree"
       ]
     },
     {
@@ -159,8 +164,8 @@
       "flavor": {
         "bitterSweet": 55,
         "lightBold": 35,
-        "milkyCreamy": 88,
-        "hotIced": 90
+        "mildIntense": 35,
+        "milkyCreamy": 88
       },
       "images": [
         "https://images.pexels.com/photos/32590864/pexels-photo-32590864.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
@@ -218,6 +223,12 @@
       "pairings": [
         "cinnamon-waffles",
         "bros-mug"
+      ],
+      "milks": [
+        "Oat",
+        "Soy",
+        "LactoseFree",
+        "Almond"
       ]
     },
     {
@@ -230,8 +241,8 @@
       "flavor": {
         "bitterSweet": 35,
         "lightBold": 55,
-        "milkyCreamy": 5,
-        "hotIced": 85
+        "mildIntense": 45,
+        "milkyCreamy": 5
       },
       "images": [
         "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
@@ -299,8 +310,8 @@
       "flavor": {
         "bitterSweet": 62,
         "lightBold": 38,
-        "milkyCreamy": 15,
-        "hotIced": 90
+        "mildIntense": 60,
+        "milkyCreamy": 15
       },
       "images": [
         "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=900&q=80",
@@ -370,8 +381,8 @@
       "flavor": {
         "bitterSweet": 40,
         "lightBold": 65,
-        "milkyCreamy": 10,
-        "hotIced": 5
+        "mildIntense": 65,
+        "milkyCreamy": 10
       },
       "images": [
         "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=900&q=80",
@@ -429,8 +440,8 @@
       "flavor": {
         "bitterSweet": 50,
         "lightBold": 40,
-        "milkyCreamy": 80,
-        "hotIced": 5
+        "mildIntense": 35,
+        "milkyCreamy": 80
       },
       "images": [
         "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=900&q=80",
@@ -474,6 +485,11 @@
       "pairings": [
         "croissant",
         "brownie-sundae"
+      ],
+      "milks": [
+        "Oat",
+        "Soy",
+        "LactoseFree"
       ]
     },
     {
@@ -486,8 +502,8 @@
       "flavor": {
         "bitterSweet": 60,
         "lightBold": 30,
-        "milkyCreamy": 0,
-        "hotIced": 5
+        "mildIntense": 70,
+        "milkyCreamy": 0
       },
       "images": [
         "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
@@ -656,8 +672,8 @@
       "flavor": {
         "bitterSweet": 70,
         "lightBold": 20,
-        "milkyCreamy": 60,
-        "hotIced": 70
+        "mildIntense": 25,
+        "milkyCreamy": 60
       },
       "images": [
         "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=900&q=80",
@@ -717,8 +733,8 @@
       "flavor": {
         "bitterSweet": 78,
         "lightBold": 30,
-        "milkyCreamy": 45,
-        "hotIced": 70
+        "mildIntense": 35,
+        "milkyCreamy": 45
       },
       "images": [
         "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
@@ -778,8 +794,8 @@
       "flavor": {
         "bitterSweet": 85,
         "lightBold": 75,
-        "milkyCreamy": 70,
-        "hotIced": 30
+        "mildIntense": 70,
+        "milkyCreamy": 70
       },
       "images": [
         "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900&q=80",
@@ -960,8 +976,8 @@
       "flavor": {
         "bitterSweet": 45,
         "lightBold": 60,
-        "milkyCreamy": 20,
-        "hotIced": 50
+        "mildIntense": 60,
+        "milkyCreamy": 20
       },
       "images": [
         "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=900&q=80",

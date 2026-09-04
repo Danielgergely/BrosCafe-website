@@ -3,7 +3,7 @@ import {
   ArrowDown, ArrowUp, Image as ImageIcon, Plus, Trash2, Upload,
 } from "lucide-react";
 
-import { FLAVOUR_KEYS } from "@/config/site";
+import { FLAVOUR_KEYS, MILK_TYPES } from "@/config/site";
 import { adminInputClass } from "@/features/staff/components/AdminPrimitives";
 import { useMediaLibrary } from "@/features/staff/panels/useMediaLibrary";
 import { useI18n } from "@/i18n";
@@ -396,6 +396,49 @@ export function GalleryPicker({ label, value, onChange, testId }) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Which alternative milks a drink can be made with.
+ *
+ * Per product rather than global: an espresso takes none, a latte takes all of
+ * them, and a guest filter usually sits somewhere in between.
+ */
+export function MilkPicker({ value, onChange, testId }) {
+  const { t } = useI18n();
+  const map = t("product.milkMap");
+  const chosen = value || [];
+
+  const toggle = (milk) =>
+    onChange(chosen.includes(milk) ? chosen.filter((m) => m !== milk) : [...chosen, milk]);
+
+  return (
+    <div>
+      <span className={labelClass}>{t("content.milks")}</span>
+      <div className="mt-2 flex flex-wrap gap-2" data-testid={testId}>
+        {MILK_TYPES.map((milk) => (
+          <label
+            key={milk}
+            data-testid={testId ? `${testId}-${milk}` : undefined}
+            className={`flex cursor-pointer items-center gap-2 rounded-card border px-3 py-2 text-sm transition-colors ${
+              chosen.includes(milk)
+                ? "border-olive bg-olive/10 text-olive"
+                : "border-line bg-white text-muted hover:border-olive/50"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={chosen.includes(milk)}
+              onChange={() => toggle(milk)}
+              className="h-4 w-4 accent-olive"
+            />
+            {map[milk] ?? milk}
+          </label>
+        ))}
+      </div>
+      <p className="mt-1 text-xs text-muted">{t("content.milksHint")}</p>
     </div>
   );
 }

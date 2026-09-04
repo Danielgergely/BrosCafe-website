@@ -123,6 +123,10 @@ export const MEDIA = {
       "https://images.pexels.com/photos/17440526/pexels-photo-17440526.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
     interior:
       "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1600",
+    // Placeholder for the "at work" shot in the story section — swap the URL
+    // once the brothers' own photo is ready.
+    aboutWork:
+      "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1600",
     flatlay:
       "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
     magazine:
@@ -186,4 +190,16 @@ export const TIER_STYLE = {
   },
 };
 
-export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "milkyCreamy", "hotIced"];
+// Order here is the order the bars appear. `lightBold` keeps its original key
+// though its label now reads light/strong: renaming it would reset the slider
+// on every product already edited in the dashboard, and only the label shows.
+export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "mildIntense", "milkyCreamy"];
+
+/**
+ * Alternative milks a drink can be made with, per product.
+ *
+ * Canonical keys, translated through `product.milkMap` — the same shape as
+ * allergens. A drink with none set simply doesn't show the section, so this
+ * stays off espresso and everything that isn't milk-based.
+ */
+export const MILK_TYPES = ["Oat", "Soy", "LactoseFree", "Almond", "Coconut"];
