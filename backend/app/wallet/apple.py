@@ -341,6 +341,73 @@ def build_pkpass(member, cafe, settings, serial, auth_token, barcode_msg, web_se
     return buf.getvalue()
 
 
+VOIDED_TEXT = {
+    "en": {"desc": "Bros Cafe loyalty card",
+           "title": "CARD CLOSED",
+           "body": "This loyalty card is no longer active. You can delete it from Wallet."},
+    "hu": {"desc": "Bros Cafe hűségkártya",
+           "title": "LEZÁRT KÁRTYA",
+           "body": "Ez a hűségkártya már nem aktív. Nyugodtan törölheted a Pénztárcából."},
+}
+
+
+def build_voided_pkpass(serial: str, auth_token: str, web_service_url: str,
+                        lang: str = "hu") -> bytes:
+    """A pass that says it is finished.
+
+    Apple has no API for deleting a pass off someone's phone, so the closest
+    thing is `voided`: Wallet greys the card out and marks it void. It is the
+    last version of the pass a device will ever be served, which is why it
+    carries no name, no stamp count and no barcode — nothing that outlives the
+    account it belonged to.
+    """
+    text = VOIDED_TEXT.get(lang, VOIDED_TEXT["hu"])
+    pass_json = json.dumps({
+        "formatVersion": 1,
+        "passTypeIdentifier": os.environ["APPLE_PASS_TYPE_ID"],
+        "teamIdentifier": os.environ["APPLE_TEAM_ID"],
+        "serialNumber": serial,
+        "authenticationToken": auth_token,
+        "webServiceURL": web_service_url,
+        "organizationName": "Bros Cafe",
+        "description": text["desc"],
+        "voided": True,
+        "foregroundColor": "rgb(120, 120, 120)",
+        "backgroundColor": "rgb(232, 232, 232)",
+        "labelColor": "rgb(150, 150, 150)",
+        "storeCard": {
+            "headerFields": [],
+            "primaryFields": [{"key": "closed", "label": text["title"], "value": ""}],
+            "secondaryFields": [],
+            "auxiliaryFields": [],
+            "backFields": [{"key": "info", "label": text["title"], "value": text["body"]}],
+        },
+    }).encode("utf-8")
+
+    files = {"pass.json": pass_json}
+    # Icons only: no strip, so the greyed card carries no stamp artwork.
+    for name in ("icon.png", "icon@2x.png", "icon@3x.png"):
+        path = ASSETS_DIR / name
+        if path.exists():
+            files[name] = path.read_bytes()
+    for suffix in ("", "@2x", "@3x"):
+        path = ASSETS_DIR / f"logo-base{suffix}.png"
+        if path.exists():
+            files[f"logo{suffix}.png"] = path.read_bytes()
+
+    manifest = {name: hashlib.sha1(data).hexdigest() for name, data in files.items()}
+    manifest_bytes = json.dumps(manifest).encode("utf-8")
+    signature = _sign_manifest(manifest_bytes)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for name, data in files.items():
+            z.writestr(name, data)
+        z.writestr("manifest.json", manifest_bytes)
+        z.writestr("signature", signature)
+    buf.seek(0)
+    return buf.getvalue()
+
+
 # ---------------------------------------------------------------- APNs push (best-effort)
 def _apns_identity():
     """Return (cert_path, key_path, temporary) for APNs mutual TLS, or (None, None, False).

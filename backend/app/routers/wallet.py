@@ -101,25 +101,38 @@ async def google_save_url(code: str, lang: str = "en"):
 
 
 # ---- PassKit web service (Apple calls these; paths are fixed by the spec) ----
-def _authorise(request: Request, member: dict) -> None:
+def _authorise(request: Request, expected_token: str) -> None:
     header = request.headers.get("Authorization", "")
     prefix = "ApplePass "
     token = header[len(prefix):] if header.startswith(prefix) else ""
-    if not token or not hmac.compare_digest(token, member.get("wallet_auth_token", "")):
+    if not token or not hmac.compare_digest(token, expected_token or ""):
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
-async def _member_by_serial(serial: str) -> dict:
+async def _pass_by_serial(serial: str) -> tuple[dict | None, dict | None]:
+    """Resolve a serial to a live member, or to a voided pass.
+
+    A card whose account has been erased keeps answering here: the tombstone
+    outlives the member so the phone can still be handed the closed version of
+    its pass instead of getting a 404 and sitting on stale stamps forever.
+    """
     member = await db.members.find_one({"wallet_serial": serial})
-    if not member:
-        raise HTTPException(status_code=404, detail="Not found")
-    return member
+    if member:
+        return member, None
+    tombstone = await wallet.voided_pass(serial)
+    if tombstone:
+        return None, tombstone
+    raise HTTPException(status_code=404, detail="Not found")
+
+
+def _auth_token(member: dict | None, tombstone: dict | None) -> str:
+    return (member or {}).get("wallet_auth_token") or (tombstone or {}).get("auth_token", "")
 
 
 @router.post("/wallet/v1/devices/{device_id}/registrations/{pass_type}/{serial}")
 async def register_device(device_id: str, pass_type: str, serial: str, request: Request):
-    member = await _member_by_serial(serial)
-    _authorise(request, member)
+    member, tombstone = await _pass_by_serial(serial)
+    _authorise(request, _auth_token(member, tombstone))
     try:
         body = await request.json()
     except Exception:
@@ -138,9 +151,13 @@ async def register_device(device_id: str, pass_type: str, serial: str, request: 
 @router.delete("/wallet/v1/devices/{device_id}/registrations/{pass_type}/{serial}")
 async def unregister_device(device_id: str, pass_type: str, serial: str, request: Request):
     member = await db.members.find_one({"wallet_serial": serial})
-    if member:
-        _authorise(request, member)
+    tombstone = None if member else await wallet.voided_pass(serial)
+    if member or tombstone:
+        _authorise(request, _auth_token(member, tombstone))
     await db.wallet_registrations.delete_one({"device_id": device_id, "serial": serial})
+    # The card is off the phone, so the tombstone has nothing left to answer.
+    if tombstone and not await db.wallet_registrations.count_documents({"serial": serial}):
+        await db.voided_passes.delete_one({"serial": serial})
     return Response(status_code=200)
 
 
@@ -157,10 +174,18 @@ async def list_updated_serials(device_id: str, pass_type: str,
 
 @router.get("/wallet/v1/passes/{pass_type}/{serial}")
 async def latest_pass(pass_type: str, serial: str, request: Request):
-    member = await _member_by_serial(serial)
-    _authorise(request, member)
+    member, tombstone = await _pass_by_serial(serial)
+    _authorise(request, _auth_token(member, tombstone))
     if not apple.is_configured():
         raise HTTPException(status_code=503, detail="Wallet not configured")
+
+    if tombstone:
+        pkpass = apple.build_voided_pkpass(serial, tombstone.get("auth_token", ""),
+                                           wallet.web_service_url(),
+                                           tombstone.get("lang", "hu"))
+        return Response(content=pkpass, media_type=PKPASS_MEDIA_TYPE,
+                        headers={"Last-Modified": tombstone["voided_at"]})
+
     pkpass = await wallet.build_pkpass(member)
     last_modified = member.get("wallet_updated_at", datetime.now(timezone.utc).isoformat())
     return Response(content=pkpass, media_type=PKPASS_MEDIA_TYPE,

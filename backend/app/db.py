@@ -22,6 +22,7 @@ media = db.media
 contact_log = db.contact_log
 game_runs = db.game_runs
 wallet_registrations = db.wallet_registrations
+voided_passes = db.voided_passes
 wallet_stats = db.wallet_stats
 
 
@@ -50,6 +51,7 @@ async def ensure_indexes() -> None:
     await game_runs.create_index([("finished", 1), ("finished_at", -1), ("score", -1)])
     await game_runs.create_index([("code", 1), ("started_at", -1)])
     await wallet_registrations.create_index([("device_id", 1), ("serial", 1)])
+    await voided_passes.create_index("serial", unique=True)
 
 
 def close() -> None:

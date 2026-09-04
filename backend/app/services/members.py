@@ -87,10 +87,13 @@ async def erase(code: str) -> dict | None:
     GDPR they can ask for all of it back. Doing that by hand in the database
     is not a process a café can rely on.
 
-    An Apple pass already on a phone cannot be recalled — removing the device
-    registrations stops us pushing to it, and its serial stops resolving, so it
-    quietly goes stale. Google passes can at least be marked expired.
+    An Apple pass already on a phone cannot be recalled: PassKit has no API for
+    it. The next best thing is to leave it voided — Wallet greys the card out
+    and marks it closed — which is what void_apple_pass sets up before the
+    record goes. Google passes are marked expired outright.
     """
+    # Local import: app.services.wallet imports this module.
+    from app.services import wallet as wallet_service
     doc = await db.members.find_one({"code": code})
     if not doc:
         return None
@@ -103,20 +106,34 @@ async def erase(code: str) -> dict | None:
             # Never let a wallet hiccup block the erasure itself.
             logger.exception("Could not expire the Google pass for %s", code)
 
+    # Must happen before the record goes: the push needs the registrations, and
+    # the tombstone needs the pass's own auth token.
+    pass_voided = False
+    try:
+        pass_voided = await wallet_service.void_apple_pass(doc)
+    except Exception:
+        logger.exception("Could not void the Apple pass for %s", code)
+
     removed = {
         "transactions": (await db.transactions.delete_many({"code": code})).deleted_count,
         "magic_tokens": (await db.magic_tokens.delete_many(
             {"email": doc["email"]})).deleted_count,
         "analytics_events": (await db.analytics_events.delete_many(
             {"code": code})).deleted_count,
-        "wallet_registrations": (await db.wallet_registrations.delete_many(
-            {"serial": doc["wallet_serial"]})).deleted_count
+        # Kept when the pass was voided, so the phone can still be told and can
+        # still fetch the closed version. iOS deletes them itself when someone
+        # removes the greyed-out card.
+        "wallet_registrations": 0 if pass_voided else (
+            await db.wallet_registrations.delete_many(
+                {"serial": doc["wallet_serial"]})).deleted_count
         if doc.get("wallet_serial") else 0,
     }
     await db.members.delete_one({"code": code})
-    logger.info("Erased member %s (%s): %s", code, doc["email"], removed)
+    logger.info("Erased member %s (%s): voided=%s %s", code, doc["email"],
+                pass_voided, removed)
     return {"code": code, "email": doc["email"],
-            "google_pass_expired": pass_expired, "removed": removed}
+            "google_pass_expired": pass_expired,
+            "apple_pass_voided": pass_voided, "removed": removed}
 
 
 async def find_by_scan(value: str) -> dict | None:

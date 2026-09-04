@@ -142,3 +142,40 @@ async def notify_update(code: str) -> None:
 
 async def bump_stat(field: str) -> None:
     await db.wallet_stats.update_one({"_id": "stats"}, {"$inc": {field: 1}}, upsert=True)
+
+
+async def void_apple_pass(member: dict) -> bool:
+    """Leave a pass that can only ever say "closed", then tell the phone.
+
+    Apple has no delete-a-pass API, so a card whose account is gone would
+    otherwise sit in Wallet forever showing its last stamp count. The tombstone
+    holds the serial and its auth token and nothing else — no name, no email,
+    no history — so the pass can keep being served as void long after the
+    member record has been erased.
+
+    The device registrations are deliberately left in place: without them there
+    is nobody to push to and no way for the phone to ask for the final version.
+    iOS removes them itself, through the unregister endpoint, when someone
+    finally deletes the greyed-out card.
+    """
+    serial = member.get("wallet_serial")
+    if not serial:
+        return False
+
+    await db.voided_passes.update_one(
+        {"serial": serial},
+        {"$set": {"serial": serial,
+                  "auth_token": member.get("wallet_auth_token", ""),
+                  "lang": member.get("lang", "hu"),
+                  "voided_at": datetime.now(timezone.utc).isoformat()}},
+        upsert=True)
+
+    # Push while the registrations are still there. Best-effort: a phone that
+    # is off just collects the void next time it checks in.
+    await _notify_apple(member)
+    logger.info("Apple pass %s voided", serial)
+    return True
+
+
+async def voided_pass(serial: str) -> dict | None:
+    return await db.voided_passes.find_one({"serial": serial}, {"_id": 0})
