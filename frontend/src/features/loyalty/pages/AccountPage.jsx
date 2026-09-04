@@ -1,10 +1,11 @@
-import { ArrowRight, Coffee, Gift, Heart, LogOut, Newspaper, Pencil, Share2 } from "lucide-react";
+import { ArrowRight, Coffee, Gift, Heart, LogOut, Newspaper, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
 import OpeningCountdown from "@/components/loyalty/OpeningCountdown";
+import InviteFriend from "@/components/loyalty/InviteFriend";
 import WalletButtons from "@/components/loyalty/WalletButtons";
 import { BRAND, ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
@@ -32,23 +33,6 @@ export default function AccountPage() {
   const { favourites, openProduct } = useUi();
   const { get } = useCatalog();
 
-  // Their own signup link. Whoever uses it earns them a coffee once that
-  // friend is actually served at the counter.
-  const inviteUrl = `${window.location.origin}${ROUTES.loyalty}?ref=${member?.code ?? ""}`;
-
-  const shareInvite = async () => {
-    const text = t("account.inviteMessage");
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: BRAND.name, text, url: inviteUrl });
-        return;
-      }
-      await navigator.clipboard.writeText(inviteUrl);
-      toast.success(t("account.inviteCopied"));
-    } catch {
-      // A cancelled share sheet is not an error worth showing.
-    }
-  };
 
   if (!member) return null;
 
@@ -128,6 +112,10 @@ export default function AccountPage() {
           </p>
         </Panel>
 
+        <Panel title={t("account.inviteTitle")} testId="account-invite">
+          <InviteFriend member={member} compact />
+        </Panel>
+
         {picks.length > 0 && (
           <Panel title={t("account.picks")} testId="account-picks">
             <div className="flex flex-wrap gap-2.5">
@@ -162,25 +150,6 @@ export default function AccountPage() {
 
         <Panel title={t("account.walletTitle")} testId="account-wallet">
           <WalletButtons code={member.code} emphasis="solid" />
-        </Panel>
-
-        {/* A printed card can't carry a per-member code, so the invite lives
-            here, on the phone the member already has in their hand. */}
-        <Panel title={t("account.inviteTitle")} testId="account-invite">
-          {member.free_coffees > 0 && (
-            <p className="mb-3 flex items-center gap-2 rounded-card bg-olive/10 px-3 py-2 text-sm font-semibold text-olive">
-              <Gift size={16} /> {t("account.bankedFree", { n: member.free_coffees })}
-            </p>
-          )}
-          <p className="text-sm leading-relaxed text-muted">{t("account.inviteBody")}</p>
-          <button
-            data-testid="invite-share-btn"
-            onClick={shareInvite}
-            className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-card bg-olive font-semibold text-cream transition-colors hover:bg-olive-dark"
-          >
-            <Share2 size={17} /> {t("account.inviteShare")}
-          </button>
-          <p className="mt-2 break-all text-center text-xs text-muted">{inviteUrl}</p>
         </Panel>
 
         <Panel title={t("account.title")} testId="account-settings">

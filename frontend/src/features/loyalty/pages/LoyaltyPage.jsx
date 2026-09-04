@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
 import TierBadge from "@/components/loyalty/TierBadge";
+import InviteFriend from "@/components/loyalty/InviteFriend";
 import WalletButtons from "@/components/loyalty/WalletButtons";
 import ProductRow from "@/components/product/ProductRow";
 import { BRAND, FEATURED, ROUTES, TIER_STYLE } from "@/config/site";
@@ -133,6 +134,12 @@ function SignedInView() {
         >
           <Gamepad2 size={17} /> {t("game.playWhileYouWait")}
         </Link>
+      </div>
+
+      {/* Directly under the card: this is where someone lands the moment they
+          join, and the invite is worthless if nobody finds it. */}
+      <div className="mt-6 rounded-panel border border-line bg-white p-6">
+        <InviteFriend member={member} />
       </div>
 
       <ProductRow
