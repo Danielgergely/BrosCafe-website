@@ -94,7 +94,10 @@ export default function Coffee() {
           </h2>
         </Reveal>
         <Reveal delay={0.1}>
-          <p className="max-w-sm text-base leading-relaxed text-olive/75">{t("home.coffee.body")}</p>
+          <div className="max-w-sm space-y-4">
+            <p className="text-base leading-relaxed text-olive/75">{t("home.coffee.body")}</p>
+            <p className="text-base leading-relaxed text-olive/75">{t("home.coffee.body2")}</p>
+          </div>
         </Reveal>
       </div>
 

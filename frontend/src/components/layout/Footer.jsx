@@ -76,7 +76,17 @@ export default function Footer() {
         <div className="flex flex-col justify-between gap-3 border-t border-cream/15 pt-8 text-[10px] tracking-label text-cream/50 md:flex-row">
           <p>{t("footer.copy")}</p>
           <p>{t("opening.footer")}</p>
-          <p>{t("footer.made")}</p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            {/* Quiet by design: it is for the three of us, not for guests. */}
+            <Link
+              data-testid="footer-staff-link"
+              to={ROUTES.login}
+              className="link-underline transition-colors hover:text-cream"
+            >
+              {t("footer.staff")}
+            </Link>
+            <p>{t("footer.made")}</p>
+          </div>
         </div>
       </div>
     </footer>

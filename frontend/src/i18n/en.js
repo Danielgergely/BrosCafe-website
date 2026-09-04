@@ -52,10 +52,11 @@ const en = {
   home: {
     coffee: {
       label: "THE ESPRESSO BAR",
-      title1: "BUILT ON THE",
-      title2: "BRAZILIAN BASE",
+      title1: "THE HEART OF",
+      title2: "EVERY CUP",
       punct: ".",
-      body: "Every drink here starts with our signature Brazilian roast — chocolatey, low in acidity, and steady enough to hold its own in milk. Want to explore instead? Ask for the guest origin. Tap a drink to see what's in it.",
+      body: "Our Brazilian house blend brings notes of cocoa, roasted hazelnut and caramel to every classic. Smooth, full-bodied and low in acidity — it's beautifully balanced black or with milk.",
+      body2: "Feeling adventurous? Ask for our guest coffee. Tap any drink to discover its character.",
     },
     collection: {
       label: "THE COLLECTION",
@@ -179,6 +180,7 @@ const en = {
   footer: {
     tagline: "Signature Brazil. Curated rotations.",
     cta: "GET DIGITAL PASS",
+    staff: "Staff sign-in",
     contact: "CONTACT",
     copy: "© 2026 BROS CAFE",
     made: "MADE WITH GOOD COFFEE",
@@ -289,6 +291,7 @@ const en = {
     welcomeBonus: "{left} more coffees and the next one is on us.",
     checkInboxTitle: "Check your inbox",
     checkInboxBody: "We sent a sign-in link to {email}. It's valid for 20 minutes.",
+    checkSpam: "Can't see it? Please check your spam or promotions folder — our first email often lands there.",
     backToForm: "Use a different email",
     privacy: "We store only your name and email, purely to run the loyalty programme. No payment details, no location tracking.",
     club: "LOYALTY CLUB",
@@ -345,6 +348,7 @@ const en = {
   },
 
   menuPage: {
+    tapHint: "Tap any item to see what's in it",
     title: "The coffee program",
     sub: "Our classic Brazilian roast or the seasonal guest bean, extracted with precision and paired with fresh bakes. Tap anything to see what's in it.",
   },

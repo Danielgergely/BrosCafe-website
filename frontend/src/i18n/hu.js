@@ -55,10 +55,11 @@ const hu = {
   home: {
     coffee: {
       label: "AZ ESPRESSO BÁR",
-      title1: "MIND A BRAZIL",
-      title2: "ALAPRA ÉPÜL",
+      title1: "MINDEN CSÉSZE",
+      title2: "SZÍVE",
       punct: ".",
-      body: "Itt minden ital a saját brazil pörkölésünkkel indul: csokoládés, alacsony savtartalmú, és tejjel is tartja magát. Ha inkább felfedeznél, kérd a vendégkávét. Koppints rá bármelyikre, és megtudod, mi van benne.",
+      body: "A brazil házi keverékünk kakaós, pirított mogyorós és karamelles jegyeket ad minden klasszikusnak. Selymes, testes és alacsony savtartalmú — feketén és tejjel is gyönyörűen kiegyensúlyozott.",
+      body2: "Kalandvágyó vagy? Kérd a vendégkávénkat. Koppints bármelyik italra, és megismered a karakterét.",
     },
     collection: {
       label: "A KÍNÁLAT",
@@ -182,6 +183,7 @@ const hu = {
   footer: {
     tagline: "Állandó brazil. Válogatott rotáció.",
     cta: "KÉREM A KÁRTYÁM",
+    staff: "Munkatársi belépés",
     contact: "KAPCSOLAT",
     copy: "© 2026 BROS CAFE",
     made: "JÓ KÁVÉVAL KÉSZÜLT",
@@ -292,6 +294,7 @@ const hu = {
     welcomeBonus: "Még {left} kávé, és a következőt mi álljuk.",
     checkInboxTitle: "Nézd meg a postafiókod",
     checkInboxBody: "Elküldtük a belépő linket a {email} címre. Húsz percig érvényes.",
+    checkSpam: "Nem látod? Nézd meg a spam vagy a levélszemét mappát is — az első levelünk sajnos gyakran oda kerül.",
     backToForm: "Másik e-mail-címet adok meg",
     privacy: "Csak a nevedet és az e-mail-címedet tároljuk, kizárólag a hűségprogram miatt. Se bankkártyaadat, se helymeghatározás.",
     club: "HŰSÉGKLUB",
@@ -348,6 +351,7 @@ const hu = {
   },
 
   menuPage: {
+    tapHint: "Koppints bármelyikre a részletekért",
     title: "A kávéprogramunk",
     sub: "A klasszikus brazil pörkölésünk vagy az aktuális vendégkávé, precízen lefőzve, friss péksüteménnyel. Koppints rá bármire, és megtudod, mi van benne.",
   },

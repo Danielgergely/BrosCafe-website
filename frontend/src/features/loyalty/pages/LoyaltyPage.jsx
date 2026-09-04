@@ -184,6 +184,14 @@ function SignUpForm() {
         <p data-testid="loyalty-check-inbox" className="mt-3 text-sm leading-relaxed text-muted">
           {t("loyalty.checkInboxBody", { email: sentTo })}
         </p>
+        {/* A brand-new sending domain lands in spam more often than not, and
+            someone who never finds the link never becomes a member. */}
+        <p
+          data-testid="loyalty-check-spam"
+          className="mt-4 rounded-card border border-olive/25 bg-olive/[0.07] px-4 py-3 text-sm leading-relaxed text-olive"
+        >
+          {t("loyalty.checkSpam")}
+        </p>
         <button
           onClick={() => setSentTo("")}
           className="mt-8 text-sm font-medium text-olive hover:underline"
