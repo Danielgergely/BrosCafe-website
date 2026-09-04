@@ -22,6 +22,23 @@ export function EditedBadge({ item }) {
   );
 }
 
+/**
+ * Marks an item that has been taken off the site.
+ *
+ * Archived rather than deleted: pairings and past orders still point at it, and
+ * a seasonal drink usually comes back. Dimming the row alone was too quiet to
+ * notice on a phone.
+ */
+export function ArchivedBadge({ item }) {
+  const { t } = useI18n();
+  if (item.active !== false) return null;
+  return (
+    <span className="ml-2 rounded-full bg-ink/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink/70">
+      {t("content.archived")}
+    </span>
+  );
+}
+
 export function RowActions({ item, onEdit, onToggle, onRevert }) {
   const { t } = useI18n();
   const hidden = item.active === false;
@@ -42,7 +59,7 @@ export function RowActions({ item, onEdit, onToggle, onRevert }) {
         title={hidden ? t("content.show") : t("content.hide")}
         className="rounded p-1.5 text-muted transition-colors hover:bg-cream hover:text-olive"
       >
-        {hidden ? <EyeSlash size={16} /> : <Eye size={16} />}
+        {hidden ? <Eye size={16} /> : <EyeSlash size={16} />}
       </button>
       {item.edited_at && (
         <button

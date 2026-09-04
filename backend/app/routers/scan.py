@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app import db
 from app.config import settings
-from app.models import AdjustRequest
+from app.models import AdjustRequest, DrinkChoice
 from app.routers.opening import OFFER
 from app.security import get_current_user
-from app.services import email, members, tiers, wallet
+from app.services import drinks, email, members, tiers, wallet
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 
@@ -21,22 +21,40 @@ async def scanned_member(code: str) -> dict:
     return doc
 
 
-async def _apply(code: str, changes: dict, doc: dict) -> dict:
+async def _apply(code: str, changes: dict, doc: dict) -> None:
     await db.members.update_one({"code": code}, {"$set": changes})
     doc.update(changes)
     await wallet.notify_update(code)
-    return members.public(doc)
+
+
+async def _card(doc: dict) -> dict:
+    """What the counter sees: the member, plus the drink to offer them."""
+    return {**members.public(doc), "usual": await drinks.usual(doc["code"])}
+
+
+async def _chosen(body: DrinkChoice | None) -> str | None:
+    drink = body.drink if body else None
+    if not await drinks.known(drink):
+        raise HTTPException(status_code=400, detail="Unknown drink")
+    return drink
+
+
+@router.get("/drinks")
+async def drink_choices(user: dict = Depends(get_current_user)):
+    return await drinks.choices()
 
 
 @router.get("/{code}")
 async def look_up(code: str, user: dict = Depends(get_current_user)):
-    return members.public(await scanned_member(code))
+    return await _card(await scanned_member(code))
 
 
 @router.post("/{code}/add-coffee")
-async def add_coffee(code: str, user: dict = Depends(get_current_user)):
+async def add_coffee(code: str, body: DrinkChoice | None = None,
+                     user: dict = Depends(get_current_user)):
     doc = await scanned_member(code)
     code = doc["code"]
+    drink = await _chosen(body)
     required = tiers.stamps_required(doc)
 
     # Diamond members drink free, so there is no card to fill and nothing to
@@ -46,10 +64,10 @@ async def add_coffee(code: str, user: dict = Depends(get_current_user)):
         changes = {"stamps": 0, "reward_ready": True,
                    "total_coffees": doc["total_coffees"] + 1,
                    "rewards_redeemed": doc["rewards_redeemed"] + 1}
-        result = await _apply(code, changes, doc)
+        await _apply(code, changes, doc)
         await members.log(code, doc["name"], user["email"], members.REWARD_REDEEMED,
-                          0, 0, True, True)
-        return result
+                          0, 0, True, True, drink)
+        return await _card(doc)
 
     if doc["reward_ready"]:
         raise HTTPException(status_code=400,
@@ -61,9 +79,9 @@ async def add_coffee(code: str, user: dict = Depends(get_current_user)):
     changes = {"stamps": stamps, "total_coffees": doc["total_coffees"] + 1,
                "reward_ready": reward_ready}
 
-    result = await _apply(code, changes, doc)
+    await _apply(code, changes, doc)
     await members.log(code, doc["name"], user["email"], members.COFFEE_ADDED,
-                      previous, stamps, False, reward_ready)
+                      previous, stamps, False, reward_ready, drink)
     if reward_ready:
         await members.log(code, doc["name"], user["email"], members.REWARD_EARNED,
                           stamps, stamps, False, True)
@@ -72,24 +90,26 @@ async def add_coffee(code: str, user: dict = Depends(get_current_user)):
         except Exception as exc:  # a failed email must never block the counter
             import logging
             logging.getLogger(__name__).warning("Reward email failed: %s", exc)
-    return result
+    return await _card(doc)
 
 
 @router.post("/{code}/redeem")
-async def redeem_reward(code: str, user: dict = Depends(get_current_user)):
+async def redeem_reward(code: str, body: DrinkChoice | None = None,
+                        user: dict = Depends(get_current_user)):
     doc = await scanned_member(code)
     if not doc["reward_ready"]:
         raise HTTPException(status_code=400, detail="No reward available to redeem")
 
     code = doc["code"]
+    drink = await _chosen(body)
     previous = doc["stamps"]
     changes = {"stamps": 0, "reward_ready": False,
                "rewards_redeemed": doc["rewards_redeemed"] + 1}
 
-    result = await _apply(code, changes, doc)
+    await _apply(code, changes, doc)
     await members.log(code, doc["name"], user["email"], members.REWARD_REDEEMED,
-                      previous, 0, True, False)
-    return result
+                      previous, 0, True, False, drink)
+    return await _card(doc)
 
 
 @router.post("/{code}/adjust")
@@ -101,10 +121,10 @@ async def adjust(code: str, body: AdjustRequest, user: dict = Depends(get_curren
     stamps = max(0, min(required, previous + body.delta))
     reward_ready = stamps >= required
 
-    result = await _apply(code, {"stamps": stamps, "reward_ready": reward_ready}, doc)
+    await _apply(code, {"stamps": stamps, "reward_ready": reward_ready}, doc)
     await members.log(code, doc["name"], user["email"], members.MANUAL_ADJUSTMENT,
                       previous, stamps, previous_reward, reward_ready)
-    return result
+    return await _card(doc)
 
 
 @router.post("/{code}/opening/reveal")

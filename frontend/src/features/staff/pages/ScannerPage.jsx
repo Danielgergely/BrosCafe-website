@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
-import { ArrowLeft, Camera, Gift, Keyboard, LogOut, Plus } from "lucide-react";
+import { ArrowLeft, Camera, Gift, Keyboard, LogOut, Plus, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -17,7 +17,7 @@ const READER_ID = "bros-qr-reader";
 const MOUNT_DELAY_MS = 150;
 
 export default function ScannerPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const navigate = useNavigate();
   const { user, signOut } = useStaff();
   const scannerRef = useRef(null);
@@ -27,6 +27,13 @@ export default function ScannerPage() {
   const [busy, setBusy] = useState(false);
   const [manualCode, setManualCode] = useState("");
   const [revealedOffer, setRevealedOffer] = useState(null);
+  const [drinks, setDrinks] = useState([]);
+
+  // Straight from the menu, so archiving a seasonal drink in the dashboard
+  // takes it off the counter too.
+  useEffect(() => {
+    api.get("/scan/drinks").then(({ data }) => setDrinks(data)).catch(() => {});
+  }, []);
 
   const stopScanner = useCallback(async () => {
     if (scannerRef.current) {
@@ -79,13 +86,25 @@ export default function ScannerPage() {
     }, MOUNT_DELAY_MS);
   };
 
-  /** Every counter action is the same shape: POST, replace the member, toast. */
-  const action = (path, successKey, transform) => async () => {
+  /**
+   * One tap does the whole job: picking the drink is what pours it.
+   *
+   * A free coffee is redeemed the same way, so the cup given away is recorded
+   * alongside the ones sold — leaving it out would bias the mix against
+   * whatever people choose to spend their reward on.
+   */
+  const pour = async (drink) => {
+    const redeeming = member.reward_ready;
     setBusy(true);
     try {
-      const { data } = await api.post(`/scan/${member.code}/${path}`);
-      setMember((current) => (transform ? transform(current, data) : data));
-      toast.success(t(typeof successKey === "function" ? successKey(data) : successKey));
+      const { data } = await api.post(
+        `/scan/${member.code}/${redeeming ? "redeem" : "add-coffee"}`, { drink });
+      setMember(data);
+      toast.success(
+        redeeming
+          ? t("staff.freeRedeemed")
+          : t(data.reward_ready ? "staff.rewardUnlocked" : "staff.coffeeAdded"),
+      );
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
     } finally {
@@ -93,10 +112,6 @@ export default function ScannerPage() {
     }
   };
 
-  const addCoffee = action("add-coffee", (data) =>
-    data.reward_ready ? "staff.rewardUnlocked" : "staff.coffeeAdded",
-  );
-  const redeemReward = action("redeem", "staff.freeRedeemed");
   const correctMistake = async () => {
     setBusy(true);
     try {
@@ -138,6 +153,45 @@ export default function ScannerPage() {
 
   const primaryButton =
     "flex h-14 w-full items-center justify-center gap-2 rounded-card bg-olive font-semibold text-cream transition-colors hover:bg-olive-dark disabled:opacity-60";
+
+  const usualId = member?.usual?.drink;
+  const drinkName = (id) => drinks.find((d) => d.id === id)?.name?.[lang] ?? id;
+  // Their usual leads, so the common case is the first thing under the thumb.
+  const ordered = useMemo(
+    () => [...drinks].sort((a, b) => (b.id === usualId) - (a.id === usualId)),
+    [drinks, usualId],
+  );
+
+  const drinkGrid = (
+    <>
+      <div className="mt-5 grid grid-cols-2 gap-2" data-testid="drink-grid">
+        {ordered.map((drink) => (
+          <button
+            key={drink.id}
+            data-testid={`drink-${drink.id}`}
+            onClick={() => pour(drink.id)}
+            disabled={busy}
+            className={`flex h-16 items-center justify-center gap-1.5 rounded-card px-2 text-center text-sm font-semibold leading-tight transition-colors disabled:opacity-60 ${
+              drink.id === usualId
+                ? "bg-olive text-cream hover:bg-olive-dark"
+                : "border border-line bg-cream text-ink hover:border-olive hover:text-olive"
+            }`}
+          >
+            {drink.id === usualId && <Star size={13} fill="currentColor" className="shrink-0" />}
+            {drink.name?.[lang]}
+          </button>
+        ))}
+      </div>
+      <button
+        data-testid="drink-skip-btn"
+        onClick={() => pour(null)}
+        disabled={busy}
+        className="mt-3 text-xs font-medium text-muted underline-offset-2 hover:text-olive hover:underline disabled:opacity-60"
+      >
+        {t("staff.notRecorded")}
+      </button>
+    </>
+  );
 
   return (
     <div className="min-h-screen bg-ink">
@@ -236,23 +290,45 @@ export default function ScannerPage() {
                 <LoyaltyProgress stamps={member.stamps} required={member.stamps_required} />
               </div>
 
-              {member.reward_ready ? (
-                <>
-                  <div className="mt-6 rounded-card bg-olive/10 px-4 py-3">
-                    <p className="flex items-center justify-center gap-2 font-semibold text-olive">
-                      <Gift size={18} /> {t("staff.freeCoffeeReady")}
-                    </p>
-                  </div>
-                  <button data-testid="redeem-btn" onClick={redeemReward} disabled={busy}
-                    className={`mt-4 ${primaryButton}`}>
-                    <Gift size={20} /> {t("staff.redeemFree")}
-                  </button>
-                </>
-              ) : (
-                <button data-testid="add-coffee-btn" onClick={addCoffee} disabled={busy}
-                  className={`mt-6 h-16 text-lg ${primaryButton} active:scale-[0.99]`}>
-                  <Plus size={24} strokeWidth={2.5} /> {t("staff.addCoffee")}
+              {member.usual && (
+                <p data-testid="scanned-member-usual" className="mt-4 text-sm text-muted">
+                  {t("staff.usually")}{" "}
+                  <span className="font-semibold text-ink">{drinkName(member.usual.drink)}</span>{" "}
+                  <span className="tabular-nums">
+                    ({member.usual.count}/{member.usual.of})
+                  </span>
+                </p>
+              )}
+
+              {member.reward_ready && (
+                <div className="mt-5 rounded-card bg-olive/10 px-4 py-3">
+                  <p className="flex items-center justify-center gap-2 font-semibold text-olive">
+                    <Gift size={18} /> {t("staff.freeCoffeeReady")}
+                  </p>
+                </div>
+              )}
+
+              {/* If the menu could not be loaded, the counter still works. */}
+              {drinks.length === 0 ? (
+                <button
+                  data-testid={member.reward_ready ? "redeem-btn" : "add-coffee-btn"}
+                  onClick={() => pour(null)}
+                  disabled={busy}
+                  className={`mt-6 h-16 text-lg ${primaryButton} active:scale-[0.99]`}
+                >
+                  {member.reward_ready ? (
+                    <><Gift size={22} /> {t("staff.redeemFree")}</>
+                  ) : (
+                    <><Plus size={24} strokeWidth={2.5} /> {t("staff.addCoffee")}</>
+                  )}
                 </button>
+              ) : (
+                <>
+                  <p className="mt-6 text-[11px] font-semibold uppercase tracking-label text-muted">
+                    {t(member.reward_ready ? "staff.pickFreeDrink" : "staff.pickDrink")}
+                  </p>
+                  {drinkGrid}
+                </>
               )}
 
               {member.stamps > 0 && !member.reward_ready && (

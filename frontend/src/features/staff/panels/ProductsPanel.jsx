@@ -9,7 +9,7 @@ import {
 import {
   FlavorSliders, GalleryPicker, LocalizedField, labelClass,
 } from "@/features/staff/components/ContentFields";
-import { EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
+import { ArchivedBadge, EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
@@ -139,6 +139,7 @@ export default function ProductsPanel() {
                   <td className="py-2 pr-3">
                     <span className="font-medium text-ink">{product.name?.[lang]}</span>
                     <EditedBadge item={product} />
+                    <ArchivedBadge item={product} />
                   </td>
                   <td className="py-2 pr-3 text-muted">{t(`product.cats.${product.cat}`)}</td>
                   <td className="py-2 pr-3 text-right tabular-nums text-ink">

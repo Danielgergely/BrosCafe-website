@@ -113,11 +113,13 @@ async def find_by_scan(value: str) -> dict | None:
         {"code": value}, {"wallet_serial": value}, {"loyalty_token": value}]})
 
 
-async def log(code, name, employee, kind, prev_stamps, new_stamps, prev_reward, new_reward) -> None:
+async def log(code, name, employee, kind, prev_stamps, new_stamps, prev_reward,
+              new_reward, drink=None) -> None:
     await db.transactions.insert_one({
         "id": str(uuid.uuid4()),
         "code": code, "customer_name": name, "employee": employee, "type": kind,
         "prev_stamps": prev_stamps, "new_stamps": new_stamps,
         "prev_reward": prev_reward, "new_reward": new_reward,
+        "drink": drink,
         "at": _now(),
     })

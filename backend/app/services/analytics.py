@@ -1,6 +1,6 @@
 """Analytics aggregation. Pure computation over loaded documents, so each
 endpoint is one small wrapper around a function that is easy to reason about."""
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
 
 from app import db
@@ -190,6 +190,22 @@ async def coffee() -> dict:
     # Include the code: two customers can share a name, so the front end needs
     # a unique key.
     top = sorted(members, key=lambda m: m["total_coffees"], reverse=True)[:5]
+
+    # Archived drinks are still named here, so last summer's seasonal special
+    # doesn't turn into a bare id in the history.
+    names = {p["id"]: p["name"] for p in
+             await db.products.find({}, {"_id": 0, "id": 1, "name": 1}).to_list(500)}
+
+    def mix(rows) -> list[dict]:
+        counts = Counter(r.get("drink") for r in rows)
+        total = sum(counts.values())
+        return [{"id": drink or "unrecorded", "name": names.get(drink),
+                 "count": n, "share": pct(n, total)}
+                for drink, n in counts.most_common()]
+
+    def poured_since(cutoff):
+        return [t for t in poured if (d := parse_ts(t.get("at"))) and d >= cutoff]
+
     return {
         "total": len(poured),
         "today": sum(1 for d in dates if d >= today_start()),
@@ -201,6 +217,13 @@ async def coffee() -> dict:
                         for m in top if m["total_coffees"] > 0],
         "trend_daily": daily,
         "trend_hourly": hourly,
+        # What people actually order. "unrecorded" is kept as its own row: a
+        # mix is only worth reading next to how much of it was captured.
+        "drink_mix": {"week": mix(poured_since(since(7))),
+                      "month": mix(poured_since(since(30))),
+                      "all": mix(poured)},
+        # The free cups, which is what the loyalty scheme costs to run.
+        "free_mix": mix([t for t in txs if t["type"] == "reward_redeemed"]),
     }
 
 

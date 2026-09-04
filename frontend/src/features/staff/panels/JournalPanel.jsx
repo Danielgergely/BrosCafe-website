@@ -6,7 +6,7 @@ import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
 import { ImagePicker, LocalizedField, labelClass } from "@/features/staff/components/ContentFields";
-import { EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
+import { ArchivedBadge, EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
 
@@ -109,6 +109,7 @@ export default function JournalPanel() {
               <h4 className="mt-1 font-display text-lg leading-tight text-ink">
                 {post.title?.[lang]}
                 <EditedBadge item={post} />
+                    <ArchivedBadge item={post} />
               </h4>
               <p className="mt-2 line-clamp-3 text-sm text-muted">{post.blurb?.[lang]}</p>
               <div className="mt-3 border-t border-line pt-2">

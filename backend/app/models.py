@@ -36,6 +36,12 @@ class ChangeEmail(BaseModel):
     email: EmailStr
 
 
+class DrinkChoice(BaseModel):
+    """Which drink the stamp was for. None means staff didn't record it."""
+
+    drink: Optional[str] = Field(default=None, max_length=50)
+
+
 class AdjustRequest(BaseModel):
     delta: int
 

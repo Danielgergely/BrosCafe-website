@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
@@ -8,8 +9,51 @@ import {
 import { useAdminData } from "@/features/staff/panels/useAdminData";
 import { useI18n } from "@/i18n";
 
+const MIX_PERIODS = ["week", "month", "all"];
+
+/**
+ * Share of cups by drink.
+ *
+ * A plain bar list rather than a chart: eight rows read faster than a pie, and
+ * the unrecorded row has to sit in the same scale as the rest — a mix is only
+ * worth reading next to how much of it was actually captured.
+ */
+function DrinkMix({ rows }) {
+  const { t, lang } = useI18n();
+  if (!rows?.length) return <p className="text-sm text-muted">{t("admin.noDrinkData")}</p>;
+
+  const top = rows[0].count || 1;
+  return (
+    <div className="space-y-2" data-testid="drink-mix">
+      {rows.map((row) => (
+        <div key={row.id} className="flex items-center gap-3">
+          <span
+            className={`w-32 shrink-0 truncate text-sm ${
+              row.id === "unrecorded" ? "italic text-muted" : "text-ink"
+            }`}
+          >
+            {row.name?.[lang] ?? t("admin.unrecorded")}
+          </span>
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-cream">
+            <div
+              className={`h-full rounded-full ${
+                row.id === "unrecorded" ? "bg-line" : "bg-olive"
+              }`}
+              style={{ width: `${(row.count / top) * 100}%` }}
+            />
+          </div>
+          <span className="w-20 shrink-0 text-right text-sm tabular-nums text-muted">
+            {row.count} · {row.share}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CoffeePanel() {
   const { t } = useI18n();
+  const [period, setPeriod] = useState("month");
   const data = useAdminData("/admin/analytics/coffee");
   if (!data) return <Loading />;
 
@@ -57,6 +101,28 @@ export default function CoffeePanel() {
             <Bar dataKey="count" fill={CHART.olive} radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
+      </SectionCard>
+
+      <SectionCard title={t("admin.drinkMix")}>
+        <div className="mb-4 flex gap-1">
+          {MIX_PERIODS.map((key) => (
+            <button
+              key={key}
+              data-testid={`mix-period-${key}`}
+              onClick={() => setPeriod(key)}
+              className={`rounded-card px-3 py-1 text-xs font-semibold transition-colors ${
+                period === key ? "bg-olive text-cream" : "bg-cream text-muted hover:text-olive"
+              }`}
+            >
+              {t(key === "all" ? "admin.stats.allTime" : `admin.periods.${key}`)}
+            </button>
+          ))}
+        </div>
+        <DrinkMix rows={data.drink_mix?.[period]} />
+      </SectionCard>
+
+      <SectionCard title={t("admin.freeMix")}>
+        <DrinkMix rows={data.free_mix} />
       </SectionCard>
 
       <SectionCard title={t("admin.mostActive")}>
