@@ -634,7 +634,7 @@ const en = {
 
   privacy: {
     title: "Privacy statement",
-    updated: "Last updated: 3 September 2026",
+    updated: "Last updated: 4 September 2026",
     intro:
       "This statement explains what we do with your personal data when you use broscafe.hu or join the Bros Cafe loyalty programme. We have tried to write it in plain language rather than legal boilerplate.",
     sections: [
@@ -654,10 +654,27 @@ const en = {
         ],
       },
       {
+        h: "Invitations and free coffees",
+        p: [
+          "If someone signs up through your invitation link, we record on their account that you invited them. Without it we could not credit you the free coffee when they first drink with us.",
+          "We tell you your friend's first name in the email that says a coffee is due to you. You never see their email address. If your friend deletes their account, that connection goes with it.",
+        ],
+      },
+      {
+        h: "The game and the leaderboard",
+        p: [
+          "Scores from the game on the website are worked out and stored on our server: the score, how long the run lasted, your card identifier and your first name.",
+          "On the leaderboard your first name and score are visible to anyone who opens the page. If you would rather they were not, don't start a run — or tell us and we will delete your scores.",
+          "Deleting your account deletes your scores too, so nothing of your name is left on the leaderboard.",
+        ],
+      },
+      {
         h: "Wallet passes",
         p: [
           "If you add your card to Apple Wallet or Google Wallet, the pass contains your first name, your card number and your stamp count. Apple and Google receive this so the card can appear on your phone and update itself when you earn a stamp.",
           "Apple and Google process this data under their own privacy terms. You can delete the pass from your phone at any time.",
+          "If you add it to Apple Wallet, your phone registers with our server so we can tell it when the card changes. For that we store a device identifier and a notification key issued by Apple. Neither is linked to your name, and we use them for nothing else. When you delete the card from your phone, they are removed here straight away.",
+          "When an account is deleted, the Google pass is expired and the Apple pass is marked closed: it greys out on your phone and you can then delete it. Apple provides no way for us to remove a pass from your device remotely, which is why we close it instead. So that the closure still reaches a phone that is switched off, we keep the device identifier for at most 30 days, after which it is deleted automatically.",
         ],
       },
       {
@@ -685,7 +702,7 @@ const en = {
         h: "Your rights",
         p: [
           "You can ask us for a copy of your data, correct it, or have it deleted. You can also object to processing, ask us to restrict it, or ask for your data in a portable format.",
-          "Deletion is real: it removes your name, email, stamp count and visit history, and expires your wallet pass. Just email us and we will do it.",
+          "Deletion is real: it removes your name, email, stamp count, visit history and game scores, expires your Google pass and closes your Apple one. Just email us and we will do it.",
           "If you are unhappy with how we handle your data you can complain to the Hungarian National Authority for Data Protection and Freedom of Information (NAIH), Budapest, or to your local supervisory authority.",
         ],
       },

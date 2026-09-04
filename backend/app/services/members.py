@@ -120,6 +120,10 @@ async def erase(code: str) -> dict | None:
             {"email": doc["email"]})).deleted_count,
         "analytics_events": (await db.analytics_events.delete_many(
             {"code": code})).deleted_count,
+        # Runs carry the player's first name and the leaderboard reads it from
+        # there, so leaving them behind would keep an erased person on a public
+        # page for good.
+        "game_runs": (await db.game_runs.delete_many({"code": code})).deleted_count,
         # Kept when the pass was voided, so the phone can still be told and can
         # still fetch the closed version. iOS deletes them itself when someone
         # removes the greyed-out card.

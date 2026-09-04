@@ -637,7 +637,7 @@ const hu = {
 
   privacy: {
     title: "Adatkezelési tájékoztató",
-    updated: "Utolsó módosítás: 2026. szeptember 3.",
+    updated: "Utolsó módosítás: 2026. szeptember 4.",
     intro:
       "Ebben a tájékoztatóban leírjuk, mit teszünk a személyes adataiddal, ha a broscafe.hu oldalt használod, vagy belépsz a Bros Cafe hűségprogramjába. Igyekeztünk emberi nyelven írni, nem jogi szövegként.",
     sections: [
@@ -657,10 +657,27 @@ const hu = {
         ],
       },
       {
+        h: "Meghívás és ingyen kávé",
+        p: [
+          "Ha valaki a te meghívó linkeddel iratkozik fel, eltároljuk a fiókjában, hogy őt te hívtad. Enélkül nem tudnánk jóváírni neked az ingyen kávét, amikor először nálunk kávézik.",
+          "A barátod keresztnevét megírjuk neked abban az e-mailben, amelyben jelezzük, hogy jár az ingyen kávé. Az e-mail-címét soha nem látod. Ha a barátod törli a fiókját, ez a kapcsolat is eltűnik.",
+        ],
+      },
+      {
+        h: "A játék és a ranglista",
+        p: [
+          "A weboldalon lévő játék eredményeit a szerverünkön számoljuk ki és tároljuk: a pontszámot, a futam hosszát, a kártyád azonosítóját és a keresztnevedet.",
+          "A ranglistán a keresztneved és a pontszámod nyilvánosan látszik mindenkinek, aki megnyitja az oldalt. Ha ezt nem szeretnéd, ne indíts futamot — vagy szólj nekünk, és töröljük az eredményeidet.",
+          "A fiókod törlésekor a játékeredményeid is törlődnek, így a nevedről a ranglistán sem marad nyom.",
+        ],
+      },
+      {
         h: "Pénztárca-kártyák",
         p: [
           "Ha felveszed a kártyát az Apple Wallet vagy a Google Wallet alkalmazásba, a kártya tartalmazza a keresztnevedet, a kártyaszámodat és a pecsétek számát. Ezt az Apple, illetve a Google megkapja, hogy a kártya megjelenhessen a telefonodon, és frissülni tudjon, amikor új pecsétet kapsz.",
           "Az Apple és a Google saját adatvédelmi feltételei szerint kezeli ezeket az adatokat. A kártyát bármikor törölheted a telefonodról.",
+          "Ha az Apple Wallethez adod hozzá, a telefonod regisztrál a szerverünkön, hogy szólni tudjunk neki, amikor a kártya változik. Ehhez eltároljuk a készülék azonosítóját és egy Apple által kiadott értesítési kulcsot. Ezek nincsenek a nevedhez kötve, és semmi másra nem használjuk őket. Amikor törlöd a kártyát a telefonodról, nálunk is azonnal törlődnek.",
+          "Ha egy fiók törlődik, a Google-kártya lejárttá válik, az Apple-kártya pedig „lezárt” állapotba kerül: kiszürkül a telefonodon, és nyugodtan törölheted. Az Apple nem teszi lehetővé, hogy egy kártyát távolról eltávolítsunk a készülékedről — ezért zárjuk le helyette. Hogy a lezárás akkor is megérkezzen, ha a telefon éppen ki van kapcsolva, a készülékazonosítót még legfeljebb 30 napig megőrizzük, utána automatikusan törlődik.",
         ],
       },
       {
@@ -688,7 +705,7 @@ const hu = {
         h: "A te jogaid",
         p: [
           "Kérheted az adataid másolatát, a javításukat vagy a törlésüket. Tiltakozhatsz az adatkezelés ellen, kérheted a korlátozását, és kérheted az adataidat átvihető formában is.",
-          "A törlés valódi: eltűnik a neved, az e-mail-címed, a pecsétjeid száma és a látogatási előzményed, a pénztárca-kártyád pedig lejárttá válik. Csak írj nekünk, és elvégezzük.",
+          "A törlés valódi: eltűnik a neved, az e-mail-címed, a pecsétjeid száma, a látogatási előzményed és a játékeredményeid, a Google-kártyád lejár, az Apple-kártyád pedig lezárul. Csak írj nekünk, és elvégezzük.",
           "Ha nem vagy megelégedve azzal, ahogy az adataidat kezeljük, panaszt tehetsz a Nemzeti Adatvédelmi és Információszabadság Hatóságnál (NAIH, Budapest), vagy a lakóhelyed szerinti hatóságnál.",
         ],
       },

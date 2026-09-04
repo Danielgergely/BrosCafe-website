@@ -51,6 +51,10 @@ async def ensure_indexes() -> None:
     await game_runs.create_index([("finished", 1), ("finished_at", -1), ("score", -1)])
     await game_runs.create_index([("code", 1), ("started_at", -1)])
     await wallet_registrations.create_index([("device_id", 1), ("serial", 1)])
+    await wallet_registrations.create_index("serial")
+    # Only registrations for a closed card carry expire_at, so live members are
+    # untouched — Mongo drops a device token once its void has had time to land.
+    await wallet_registrations.create_index("expire_at", expireAfterSeconds=0)
     await voided_passes.create_index("serial", unique=True)
 
 

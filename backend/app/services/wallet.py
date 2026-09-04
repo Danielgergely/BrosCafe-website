@@ -2,7 +2,7 @@
 import logging
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app import db
 from app.config import settings
@@ -144,6 +144,11 @@ async def bump_stat(field: str) -> None:
     await db.wallet_stats.update_one({"_id": "stats"}, {"$inc": {field: 1}}, upsert=True)
 
 
+#: How long a device token outlives a closed card, so the void can reach a
+#: phone that is switched off. Nothing personal survives past this.
+VOID_KEEP_DAYS = 30
+
+
 async def void_apple_pass(member: dict) -> bool:
     """Leave a pass that can only ever say "closed", then tell the phone.
 
@@ -156,7 +161,9 @@ async def void_apple_pass(member: dict) -> bool:
     The device registrations are deliberately left in place: without them there
     is nobody to push to and no way for the phone to ask for the final version.
     iOS removes them itself, through the unregister endpoint, when someone
-    finally deletes the greyed-out card.
+    finally deletes the greyed-out card — but a card nobody ever deletes would
+    otherwise keep a push token alive for good, long after it had any purpose.
+    So they also get an expiry, and Mongo clears them itself.
     """
     serial = member.get("wallet_serial")
     if not serial:
@@ -173,7 +180,16 @@ async def void_apple_pass(member: dict) -> bool:
     # Push while the registrations are still there. Best-effort: a phone that
     # is off just collects the void next time it checks in.
     await _notify_apple(member)
-    logger.info("Apple pass %s voided", serial)
+
+    # A push token has no purpose once the closure has had time to arrive. Long
+    # enough for a phone that spends a month in a drawer, short enough that the
+    # identifier does not outlive the account indefinitely.
+    await db.wallet_registrations.update_many(
+        {"serial": serial},
+        {"$set": {"expire_at": datetime.now(timezone.utc) + timedelta(days=VOID_KEEP_DAYS)}})
+
+    logger.info("Apple pass %s voided; device tokens expire in %s days",
+                serial, VOID_KEEP_DAYS)
     return True
 
 
