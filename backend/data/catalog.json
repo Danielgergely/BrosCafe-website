@@ -148,8 +148,9 @@
       ],
       "milks": [
         "Oat",
-        "Soy",
-        "LactoseFree"
+        "Coconut",
+        "Rice",
+        "Pea"
       ]
     },
     {
@@ -226,9 +227,9 @@
       ],
       "milks": [
         "Oat",
-        "Soy",
-        "LactoseFree",
-        "Almond"
+        "Coconut",
+        "Rice",
+        "Pea"
       ]
     },
     {
@@ -488,8 +489,9 @@
       ],
       "milks": [
         "Oat",
-        "Soy",
-        "LactoseFree"
+        "Coconut",
+        "Rice",
+        "Pea"
       ]
     },
     {

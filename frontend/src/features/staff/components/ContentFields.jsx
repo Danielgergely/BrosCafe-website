@@ -48,6 +48,43 @@ export function LocalizedField({ label, value, onChange, rows = 0, testId }) {
 }
 
 /**
+ * A list of short lines, both languages — the "behind the cup" steps and
+ * anything else stored as one string per bullet.
+ *
+ * One line per item, and empty lines are kept while typing: filtering them on
+ * every keystroke would swallow the Enter that starts a new step. The caller
+ * strips them on save.
+ */
+export function LocalizedListField({ label, value, onChange, rows = 5, hint, testId }) {
+  const { t } = useI18n();
+  const pair = value || { en: [], hu: [] };
+
+  return (
+    <div>
+      <span className={labelClass}>{label}</span>
+      <div className="mt-1 grid gap-2 sm:grid-cols-2">
+        {["hu", "en"].map((code) => (
+          <label key={code} className="block">
+            <span className="sr-only">{t(`content.lang.${code}`)}</span>
+            <textarea
+              data-testid={testId ? `${testId}-${code}` : undefined}
+              rows={rows}
+              value={(pair[code] || []).join("\n")}
+              onChange={(event) =>
+                onChange({ ...pair, [code]: event.target.value.split("\n") })
+              }
+              placeholder={t(`content.lang.${code}`)}
+              className={`${adminInputClass} h-auto py-3 leading-relaxed`}
+            />
+          </label>
+        ))}
+      </div>
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  );
+}
+
+/**
  * Pick an image: upload a new one, or reuse something already in the library.
  *
  * External URLs stay editable by hand — most of the site's current photography

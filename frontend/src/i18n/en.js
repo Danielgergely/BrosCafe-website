@@ -1,6 +1,8 @@
 // English copy. Mirror every key in hu.js — `yarn i18n:check` enforces it.
 const en = {
   common: {
+    staleBuild: "The site was updated. Reload to get the latest version.",
+    reload: "Reload",
     comingSoon: "COMING SOON",
     somethingWrong: "Something went wrong. Please try again.",
   },
@@ -202,10 +204,7 @@ const en = {
     cats: { all: "ALL", coffee: "COFFEE", cold: "COLD", food: "FOOD", sweet: "SWEET", merch: "MERCH" },
     allergenMap: { Milk: "Milk", Gluten: "Gluten", Egg: "Egg", Nuts: "Nuts" },
     milk: "ALTERNATIVE MILKS",
-    milkMap: {
-      Oat: "Oat", Soy: "Soy", LactoseFree: "Lactose-free",
-      Almond: "Almond", Coconut: "Coconut",
-    },
+    milkMap: { Oat: "Oat", Coconut: "Coconut", Rice: "Rice", Pea: "Pea" },
     favAdd: "Save as favorite",
     favRemove: "Remove from favorites",
     closeProduct: "Close product",
@@ -526,6 +525,8 @@ const en = {
     show: "Show on the site",
     hide: "Hide from the site",
     archived: "Archived",
+    behind: "Behind the cup",
+    behindHint: "One step per line. Leave both empty to hide the section.",
     milks: "Alternative milks",
     milksHint: "Tick the milks this drink can be made with. Leave all unticked to hide the section.",
     id: "ID",

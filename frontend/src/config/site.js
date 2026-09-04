@@ -202,4 +202,4 @@ export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "mildIntense", "milkyCr
  * allergens. A drink with none set simply doesn't show the section, so this
  * stays off espresso and everything that isn't milk-based.
  */
-export const MILK_TYPES = ["Oat", "Soy", "LactoseFree", "Almond", "Coconut"];
+export const MILK_TYPES = ["Oat", "Coconut", "Rice", "Pea"];

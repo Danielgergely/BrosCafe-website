@@ -4,6 +4,8 @@
 // ("kártya létrehozása" helyett "létrehozom a kártyám") és a tükörfordítást.
 const hu = {
   common: {
+    staleBuild: "Az oldal frissült. Töltsd újra a legfrissebb verzióért.",
+    reload: "Újratöltés",
     comingSoon: "HAMAROSAN",
     somethingWrong: "Valami félrement. Próbáld meg újra.",
   },
@@ -205,10 +207,7 @@ const hu = {
     cats: { all: "ÖSSZES", coffee: "KÁVÉ", cold: "HIDEG", food: "ÉTEL", sweet: "ÉDESSÉG", merch: "MERCH" },
     allergenMap: { Milk: "Tej", Gluten: "Glutén", Egg: "Tojás", Nuts: "Diófélék" },
     milk: "ALTERNATÍV TEJEK",
-    milkMap: {
-      Oat: "Zabtej", Soy: "Szójatej", LactoseFree: "Laktózmentes",
-      Almond: "Mandulatej", Coconut: "Kókusztej",
-    },
+    milkMap: { Oat: "Zabtej", Coconut: "Kókusztej", Rice: "Rizstej", Pea: "Borsótej" },
     favAdd: "Mentés a kedvencek közé",
     favRemove: "Törlés a kedvencek közül",
     closeProduct: "Termék bezárása",
@@ -529,6 +528,8 @@ const hu = {
     show: "Megjelenítés az oldalon",
     hide: "Elrejtés az oldalról",
     archived: "Archiválva",
+    behind: "A csésze mögött",
+    behindHint: "Soronként egy lépés. Ha mindkettőt üresen hagyod, a rész nem jelenik meg.",
     milks: "Alternatív tejek",
     milksHint: "Pipáld ki, milyen tejjel kérhető ez az ital. Ha egyiket sem jelölöd, a rész nem jelenik meg.",
     id: "Azonosító",

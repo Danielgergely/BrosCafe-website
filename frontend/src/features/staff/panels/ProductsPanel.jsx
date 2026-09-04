@@ -7,7 +7,7 @@ import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
 import {
-  FlavorSliders, GalleryPicker, LocalizedField, MilkPicker, labelClass,
+  FlavorSliders, GalleryPicker, LocalizedField, LocalizedListField, MilkPicker, labelClass,
 } from "@/features/staff/components/ContentFields";
 import { ArchivedBadge, EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
@@ -15,6 +15,13 @@ import { api, errorMessage } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 
 const CATS = CATEGORIES.filter((cat) => cat !== "all");
+
+/** Blank lines are how you type a new step; they shouldn't survive the save. */
+const lines = (pair) => {
+  const hu = (pair?.hu || []).map((l) => l.trim()).filter(Boolean);
+  const en = (pair?.en || []).map((l) => l.trim()).filter(Boolean);
+  return hu.length || en.length ? { hu, en } : null;
+};
 
 const BLANK = {
   id: "", cat: "coffee", order: 99, price_huf: 0,
@@ -61,15 +68,22 @@ export default function ProductsPanel() {
         price_huf: Number(form.price_huf) || 0,
         // Explicit null, not omitted: the API reads it as "remove this field".
         flavor: form.flavor ?? null,
+        behind: lines(form.behind),
       });
-      toast.success(t("content.saved"));
-      setForm(null);
-      await load();
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
-    } finally {
       setSaving(false);
+      return;
     }
+
+    // Past this point the record is written. Closing the editor and refreshing
+    // the table are housekeeping, and a hiccup in either must not tell someone
+    // their save failed — that is what sent an editor back to re-save work that
+    // was already stored.
+    setSaving(false);
+    setForm(null);
+    toast.success(t("content.saved"));
+    await load();
   };
 
   const setActive = async (product, active) => {
@@ -244,6 +258,14 @@ export default function ProductsPanel() {
               testId="product-flavor"
               value={form.flavor}
               onChange={(flavor) => setForm({ ...form, flavor })}
+            />
+
+            <LocalizedListField
+              label={t("content.behind")}
+              hint={t("content.behindHint")}
+              testId="product-behind"
+              value={form.behind}
+              onChange={(behind) => setForm({ ...form, behind })}
             />
 
             <MilkPicker

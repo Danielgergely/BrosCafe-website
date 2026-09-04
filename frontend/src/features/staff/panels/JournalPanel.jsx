@@ -45,14 +45,17 @@ export default function JournalPanel() {
     setSaving(true);
     try {
       await api.post("/admin/whats-new", { ...form, order: Number(form.order) || 99 });
-      toast.success(t("content.saved"));
-      setForm(null);
-      await load();
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
-    } finally {
       setSaving(false);
+      return;
     }
+
+    // The post is written; closing up afterwards must not report a failure.
+    setSaving(false);
+    setForm(null);
+    toast.success(t("content.saved"));
+    await load();
   };
 
   const setActive = async (post, active) => {
