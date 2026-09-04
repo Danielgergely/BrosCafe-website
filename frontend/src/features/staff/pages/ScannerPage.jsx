@@ -28,6 +28,8 @@ export default function ScannerPage() {
   const [manualCode, setManualCode] = useState("");
   const [revealedOffer, setRevealedOffer] = useState(null);
   const [drinks, setDrinks] = useState([]);
+  // Spending a banked drink instead of adding a stamp.
+  const [freeMode, setFreeMode] = useState(false);
 
   // Straight from the menu, so archiving a seasonal drink in the dashboard
   // takes it off the counter too.
@@ -55,6 +57,7 @@ export default function ScannerPage() {
       try {
         const { data } = await api.get(`/scan/${code.trim()}`);
         setMember(data);
+        setFreeMode(false);
         setRevealedOffer(null);
       } catch (error) {
         toast.error(errorMessage(error, t("common.somethingWrong")));
@@ -94,16 +97,18 @@ export default function ScannerPage() {
    * whatever people choose to spend their reward on.
    */
   const pour = async (drink) => {
-    const redeeming = member.reward_ready;
+    const path = freeMode ? "redeem-free" : member.reward_ready ? "redeem" : "add-coffee";
     setBusy(true);
     try {
-      const { data } = await api.post(
-        `/scan/${member.code}/${redeeming ? "redeem" : "add-coffee"}`, { drink });
+      const { data } = await api.post(`/scan/${member.code}/${path}`, { drink });
       setMember(data);
+      setFreeMode(false);
       toast.success(
-        redeeming
-          ? t("staff.freeRedeemed")
-          : t(data.reward_ready ? "staff.rewardUnlocked" : "staff.coffeeAdded"),
+        path === "redeem-free"
+          ? t("staff.bankedRedeemed")
+          : path === "redeem"
+            ? t("staff.freeRedeemed")
+            : t(data.reward_ready ? "staff.rewardUnlocked" : "staff.coffeeAdded"),
       );
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
@@ -300,7 +305,29 @@ export default function ScannerPage() {
                 </p>
               )}
 
-              {member.reward_ready && (
+              {member.free_coffees > 0 && (
+                <div
+                  data-testid="banked-free-panel"
+                  className="mt-5 rounded-card border border-olive/30 bg-olive/[0.07] px-4 py-3"
+                >
+                  <p className="flex items-center justify-center gap-2 text-sm font-semibold text-olive">
+                    <Gift size={16} />
+                    {t("staff.bankedFree", { n: member.free_coffees })}
+                  </p>
+                  {!freeMode && (
+                    <button
+                      data-testid="use-banked-btn"
+                      onClick={() => setFreeMode(true)}
+                      disabled={busy}
+                      className="mt-2 text-xs font-semibold text-olive underline underline-offset-2 disabled:opacity-60"
+                    >
+                      {t("staff.useBanked")}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {member.reward_ready && !freeMode && (
                 <div className="mt-5 rounded-card bg-olive/10 px-4 py-3">
                   <p className="flex items-center justify-center gap-2 font-semibold text-olive">
                     <Gift size={18} /> {t("staff.freeCoffeeReady")}
@@ -325,8 +352,21 @@ export default function ScannerPage() {
               ) : (
                 <>
                   <p className="mt-6 text-[11px] font-semibold uppercase tracking-label text-muted">
-                    {t(member.reward_ready ? "staff.pickFreeDrink" : "staff.pickDrink")}
+                    {t(
+                      freeMode || member.reward_ready
+                        ? "staff.pickFreeDrink"
+                        : "staff.pickDrink",
+                    )}
                   </p>
+                  {freeMode && (
+                    <button
+                      data-testid="cancel-banked-btn"
+                      onClick={() => setFreeMode(false)}
+                      className="mt-1 text-xs text-muted underline underline-offset-2 hover:text-olive"
+                    >
+                      {t("staff.cancelBanked")}
+                    </button>
+                  )}
                   {drinkGrid}
                 </>
               )}

@@ -57,13 +57,13 @@ export function CustomerAuthProvider({ children }) {
   }, []);
 
   const requestLink = useCallback(
-    (email, firstName) =>
+    (email, firstName, ref) =>
       // Send the current language so the sign-in email — and every later one —
       // arrives in the language they are actually reading the site in.
       // Remembered so a returning customer does not retype it. Their own
       // address on their own device — no more revealing than the card itself.
       (safeSet(LAST_EMAIL_KEY, email),
-       api.post("/auth/request-link", { email, first_name: firstName, lang })),
+       api.post("/auth/request-link", { email, first_name: firstName, lang, ref })),
     [lang],
   );
 

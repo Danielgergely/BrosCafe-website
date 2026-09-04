@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app import db, seed
 from app.config import settings
-from app.models import PostUpsert, ProductUpsert, SettingsUpdate, TierGrant
+from app.models import FreeCoffeeGrant, PostUpsert, ProductUpsert, SettingsUpdate, TierGrant
 from app.security import require_admin
 from app.services import analytics, app_settings, media, members, tiers, wallet
 from app.wallet import apple, google
@@ -83,6 +83,15 @@ async def grant_tier(code: str, body: TierGrant):
         await wallet.notify_update(code)
     except Exception:
         logger.exception("Could not refresh the wallet pass for %s after a tier change", code)
+    return members.public(doc)
+
+
+@router.put("/members/{code}/free-coffees")
+async def grant_free_coffees(code: str, body: FreeCoffeeGrant,
+                             user: dict = Depends(require_admin)):
+    doc = await members.grant_free_coffees(code, body.delta, "admin grant", user["email"])
+    if not doc:
+        raise HTTPException(status_code=404, detail="Customer not found")
     return members.public(doc)
 
 

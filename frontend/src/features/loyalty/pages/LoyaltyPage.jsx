@@ -148,6 +148,7 @@ function SignedInView() {
 function SignUpForm() {
   const { t } = useI18n();
   const { requestLink, expired, clearExpired } = useCustomer();
+  const [signUpParams] = useSearchParams();
   // Prefilled from the last sign-in, so coming back is a tap rather than
   // typing an address on a phone.
   const [email, setEmail] = useState(() => safeGet(LAST_EMAIL_KEY) || "");
@@ -164,7 +165,7 @@ function SignUpForm() {
     if (!email.trim()) return;
     setBusy(true);
     try {
-      await requestLink(email.trim(), firstName.trim());
+      await requestLink(email.trim(), firstName.trim(), signUpParams.get("ref") || undefined);
       clearExpired();
       setSentTo(email.trim());
     } catch (error) {

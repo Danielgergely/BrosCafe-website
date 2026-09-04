@@ -32,6 +32,17 @@ export default function MembersPanel() {
     }
   };
 
+  /** Bank or remove a free drink — the weekly game winner comes through here. */
+  const setFreeCoffees = async (member, delta) => {
+    try {
+      await api.put(`/admin/members/${member.code}/free-coffees`, { delta });
+      toast.success(t("admin.freeSaved", { name: member.name }));
+      await load();
+    } catch (error) {
+      toast.error(errorMessage(error, t("common.somethingWrong")));
+    }
+  };
+
   const load = useCallback(async () => {
     try {
       const { data } = await api.get("/admin/members");
@@ -76,13 +87,14 @@ export default function MembersPanel() {
 
   if (!members) return <Loading />;
 
-  const headers = ["name", "email", "progress", "coffees", "rewards", "tier"];
+  const headers = ["name", "email", "progress", "coffees", "rewards", "free", "tier"];
   const headerLabel = {
     name: t("admin.name"),
     email: t("admin.email"),
     progress: t("admin.table.progress"),
     coffees: t("admin.stats.coffees"),
     rewards: t("admin.table.rewards"),
+    free: t("admin.freeCoffees"),
     tier: t("admin.tier"),
   };
 
@@ -122,6 +134,35 @@ export default function MembersPanel() {
                 </td>
                 <td className="py-3 pr-4 text-ink">{member.total_coffees}</td>
                 <td className="py-3 pr-4 text-ink">{member.rewards_redeemed}</td>
+                <td className="py-3 pr-4">
+                  <div className="flex items-center gap-1">
+                    <button
+                      data-testid={`free-minus-${member.code}`}
+                      onClick={() => setFreeCoffees(member, -1)}
+                      disabled={!member.free_coffees}
+                      aria-label={t("admin.freeRemove")}
+                      className="rounded px-1.5 text-muted transition-colors hover:bg-cream hover:text-olive disabled:opacity-30"
+                    >
+                      −
+                    </button>
+                    <span
+                      data-testid={`free-${member.code}`}
+                      className={`w-4 text-center tabular-nums ${
+                        member.free_coffees ? "font-semibold text-olive" : "text-muted"
+                      }`}
+                    >
+                      {member.free_coffees ?? 0}
+                    </span>
+                    <button
+                      data-testid={`free-plus-${member.code}`}
+                      onClick={() => setFreeCoffees(member, 1)}
+                      aria-label={t("admin.freeGrant")}
+                      className="rounded px-1.5 text-muted transition-colors hover:bg-cream hover:text-olive"
+                    >
+                      +
+                    </button>
+                  </div>
+                </td>
                 <td className="py-3 pr-4">
                   <select
                     data-testid={`tier-${member.code}`}

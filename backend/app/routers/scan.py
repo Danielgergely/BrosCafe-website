@@ -82,6 +82,17 @@ async def add_coffee(code: str, body: DrinkChoice | None = None,
     await _apply(code, changes, doc)
     await members.log(code, doc["name"], user["email"], members.COFFEE_ADDED,
                       previous, stamps, False, reward_ready, drink)
+
+    # The friend has now actually been served, so the card they were handed
+    # pays out. Failing here must never block the counter.
+    try:
+        referrer = await members.credit_referrer(doc, user["email"])
+        if referrer:
+            await email.send_referral_earned(referrer["email"], doc["name"],
+                                             referrer.get("lang", "hu"))
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Referral credit failed: %s", exc)
     if reward_ready:
         await members.log(code, doc["name"], user["email"], members.REWARD_EARNED,
                           stamps, stamps, False, True)
@@ -109,6 +120,27 @@ async def redeem_reward(code: str, body: DrinkChoice | None = None,
     await _apply(code, changes, doc)
     await members.log(code, doc["name"], user["email"], members.REWARD_REDEEMED,
                       previous, 0, True, False, drink)
+    return await _card(doc)
+
+
+@router.post("/{code}/redeem-free")
+async def redeem_free_coffee(code: str, body: DrinkChoice | None = None,
+                             user: dict = Depends(get_current_user)):
+    """Spend a banked free drink. Separate from the stamp card, which is
+    untouched: these are earned by referring someone or by winning the week."""
+    doc = await scanned_member(code)
+    if doc.get("free_coffees", 0) < 1:
+        raise HTTPException(status_code=400, detail="No free coffee banked")
+
+    drink = await _chosen(body)
+    code = doc["code"]
+    remaining = doc["free_coffees"] - 1
+    await db.members.update_one({"code": code}, {"$set": {"free_coffees": remaining}})
+    doc["free_coffees"] = remaining
+    await wallet.notify_update(code)
+    await members.log(code, doc["name"], user["email"], members.FREE_COFFEE_REDEEMED,
+                      doc["stamps"], doc["stamps"], doc["reward_ready"],
+                      doc["reward_ready"], drink)
     return await _card(doc)
 
 

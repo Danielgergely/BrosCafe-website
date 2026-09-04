@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 REGISTRATION = "registration"
 COFFEE_ADDED = "coffee_added"
+FREE_COFFEE_EARNED = "free_coffee_earned"
+FREE_COFFEE_REDEEMED = "free_coffee_redeemed"
 REWARD_EARNED = "reward_earned"
 REWARD_REDEEMED = "reward_redeemed"
 MANUAL_ADJUSTMENT = "manual_adjustment"
@@ -35,6 +37,9 @@ def public(doc: dict) -> dict:
         "total_coffees": doc["total_coffees"],
         "rewards_redeemed": doc["rewards_redeemed"],
         "reward_ready": doc["reward_ready"],
+        # Banked drinks that don't come off the stamp card: referrals, and
+        # whoever tops the game leaderboard that week.
+        "free_coffees": doc.get("free_coffees", 0),
         "opening_status": doc.get("opening_status", "reserved"),
         "created_at": doc["created_at"],
         **tiers.summary(doc),
@@ -52,13 +57,21 @@ def new_document(name: str, email: str) -> dict:
         "total_coffees": 0,
         "rewards_redeemed": 0,
         "reward_ready": False,
+        "free_coffees": 0,
         "opening_status": "reserved",
         "created_at": _now(),
     }
 
 
-async def create(name: str, email: str, lang: str = "hu") -> dict:
+async def create(name: str, email: str, lang: str = "hu",
+                 referred_by: str | None = None) -> dict:
     doc = {**new_document(name, email), "lang": lang}
+    if referred_by:
+        # Credited only when this member is actually served — see
+        # credit_referrer(). A signup on its own earns the referrer nothing,
+        # which is what stops invented addresses being worth anything.
+        doc["referred_by"] = referred_by
+        doc["referral_credited"] = False
     await db.members.insert_one(dict(doc))
     # Record the bonus in the history, so a card that starts at 5 is explained.
     await log(doc["code"], doc["name"], "customer", REGISTRATION,
@@ -123,3 +136,35 @@ async def log(code, name, employee, kind, prev_stamps, new_stamps, prev_reward,
         "drink": drink,
         "at": _now(),
     })
+
+
+async def grant_free_coffees(code: str, count: int, reason: str,
+                             employee: str = "system") -> dict | None:
+    """Bank a free drink for someone. Never goes below zero."""
+    doc = await db.members.find_one({"code": code})
+    if not doc:
+        return None
+    total = max(0, doc.get("free_coffees", 0) + count)
+    await db.members.update_one({"code": code}, {"$set": {"free_coffees": total}})
+    doc["free_coffees"] = total
+    await log(code, doc["name"], employee,
+              FREE_COFFEE_EARNED if count > 0 else FREE_COFFEE_REDEEMED,
+              doc["stamps"], doc["stamps"], doc["reward_ready"], doc["reward_ready"])
+    logger.info("Free coffees for %s: %+d (%s) -> %d", code, count, reason, total)
+    return doc
+
+
+async def credit_referrer(member: dict, employee: str) -> dict | None:
+    """Pay out a referral the first time the referred member is served.
+
+    Returns the referrer if they were credited, so the caller can tell them.
+    """
+    referrer_code = member.get("referred_by")
+    if not referrer_code or member.get("referral_credited"):
+        return None
+
+    # Mark first: a failure past this point must not pay twice.
+    await db.members.update_one({"code": member["code"]},
+                                {"$set": {"referral_credited": True}})
+    member["referral_credited"] = True
+    return await grant_free_coffees(referrer_code, 1, f"referred {member['code']}", employee)

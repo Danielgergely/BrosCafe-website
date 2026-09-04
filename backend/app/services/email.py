@@ -152,6 +152,38 @@ MAGIC = {
 }
 
 
+REFERRAL = {
+    "en": {
+        "subject": "{name} came in — your coffee is on us",
+        "title": "Thank you for the introduction",
+        "body": ("<p><strong>{name}</strong> used your invitation and has just had "
+                 "their first coffee with us.</p>"
+                 "<p>That earns you a <strong>free coffee</strong>. Show your loyalty "
+                 "card at the counter whenever you like — it is waiting on your "
+                 "account, separate from your stamps.</p>"),
+    },
+    "hu": {
+        "subject": "{name} beváltotta a meghívásod — a kávé a miénk",
+        "title": "Köszönjük az ajánlást",
+        "body": ("<p><strong>{name}</strong> a te meghívásoddal jött be, és most itta "
+                 "meg nálunk az első kávéját.</p>"
+                 "<p>Ezért jár neked egy <strong>ingyen kávé</strong>. Mutasd meg a "
+                 "hűségkártyád a pultnál, amikor szeretnéd — a fiókodban vár, "
+                 "a pecsétjeidtől függetlenül.</p>"),
+    },
+}
+
+PLAIN_REFERRAL = {
+    "en": ("{name} used your invitation and has just had their first coffee with us.\n\n"
+           "That earns you a free coffee. Show your loyalty card at the counter "
+           "whenever you like.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanady utca 4-B"),
+    "hu": ("{name} a te meghívásoddal jött be, és most itta meg nálunk az első kávéját.\n\n"
+           "Ezért jár neked egy ingyen kávé. Mutasd meg a hűségkártyád a pultnál, "
+           "amikor szeretnéd.\n\n"
+           "Bros Cafe, 1132 Budapest, Csanády utca 4-B"),
+}
+
 PLAIN_REWARD = {
     "en": ("You have earned a free coffee at Bros Cafe.\n\n"
            "Open your loyalty card and show it at the counter on your next visit.\n\n"
@@ -179,6 +211,15 @@ async def send_reward_ready(email: str, lang: str = DEFAULT_LANG) -> None:
     await send(email, text["subject"],
                shell(text["title"], text["body"], lang=code),
                PLAIN_REWARD[code])
+
+
+async def send_referral_earned(email: str, friend_name: str,
+                               lang: str = DEFAULT_LANG) -> None:
+    code = _lang(lang)
+    text = REFERRAL[code]
+    await send(email, text["subject"].format(name=friend_name),
+               shell(text["title"], text["body"].format(name=friend_name), lang=code),
+               PLAIN_REFERRAL[code].format(name=friend_name))
 
 
 async def send_magic_link(email: str, link: str, is_new: bool,

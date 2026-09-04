@@ -16,6 +16,16 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["customer-auth"])
 
 
+async def _referrer_code(ref: str | None, email: str) -> str | None:
+    """Resolve a referral code, ignoring anything that isn't a real other member."""
+    if not ref:
+        return None
+    referrer = await db.members.find_one({"code": ref.strip()}, {"code": 1, "email": 1})
+    if not referrer or referrer["email"] == email:
+        return None
+    return referrer["code"]
+
+
 @router.post("/auth/request-link")
 async def request_link(body: LinkRequest):
     """One smart form: a known email just gets a link; a new one needs a first name first.
@@ -32,7 +42,8 @@ async def request_link(body: LinkRequest):
         return {"ok": True, "is_new": True, "needs_name": True}
 
     if is_new:
-        member = await members.create(first_name, email, lang)
+        member = await members.create(first_name, email, lang,
+                                      referred_by=await _referrer_code(body.ref, email))
     else:
         # Remember the language they signed in with, so the reward email that
         # arrives weeks later is in the same one.

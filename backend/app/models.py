@@ -24,6 +24,8 @@ class MemberCreate(BaseModel):
 class LinkRequest(BaseModel):
     email: EmailStr
     first_name: Optional[str] = None
+    # Whoever's link they arrived through, from /loyalty?ref=<code>.
+    ref: Optional[str] = Field(default=None, max_length=64)
     # Which language to write to them in, and what we remember for later mail.
     lang: Optional[Literal["hu", "en"]] = None
 
@@ -126,6 +128,12 @@ class ContactMessage(BaseModel):
     # Hidden in the form and never filled by a person. Bots fill every input
     # they find, so anything here means the submission is automated.
     website: str = ""
+
+
+class FreeCoffeeGrant(BaseModel):
+    """Bank or remove free drinks by hand — the weekly game winner, or a fix."""
+
+    delta: int = Field(ge=-10, le=10)
 
 
 class TierGrant(BaseModel):
