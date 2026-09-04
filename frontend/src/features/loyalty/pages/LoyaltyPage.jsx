@@ -155,6 +155,10 @@ function SignUpForm() {
   const [firstName, setFirstName] = useState("");
   const [busy, setBusy] = useState(false);
   const [sentTo, setSentTo] = useState("");
+  // The backend answers "is this address new?" — only then do we ask for a
+  // name. Demanding one up front made returning members think the form would
+  // create them a second account.
+  const [needsName, setNeedsName] = useState(false);
 
   useEffect(() => {
     if (sentTo) window.scrollTo({ top: 0, behavior: "auto" });
@@ -165,7 +169,15 @@ function SignUpForm() {
     if (!email.trim()) return;
     setBusy(true);
     try {
-      await requestLink(email.trim(), firstName.trim(), signUpParams.get("ref") || undefined);
+      const { data } = await requestLink(
+        email.trim(), firstName.trim(), signUpParams.get("ref") || undefined);
+      // Nothing was created and no email was sent — ask for the name and let
+      // them submit again, rather than claiming an inbox they'd wait on.
+      if (data?.needs_name) {
+        setNeedsName(true);
+        setBusy(false);
+        return;
+      }
       clearExpired();
       setSentTo(email.trim());
     } catch (error) {
@@ -270,21 +282,6 @@ function SignUpForm() {
           </p>
         </div>
 
-        <div>
-          <label htmlFor="first-name" className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {t("auth.firstNameLabel")}
-          </label>
-          <input
-            id="first-name"
-            data-testid="loyalty-firstname"
-            value={firstName}
-            onChange={(event) => setFirstName(event.target.value)}
-            placeholder={t("auth.firstNamePlaceholder")}
-            autoComplete="given-name"
-            required
-            className={inputClass}
-          />
-        </div>
 
         <div>
           <label htmlFor="email" className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -297,10 +294,34 @@ function SignUpForm() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder={t("auth.emailPlaceholder")}
+            autoComplete="email"
             required
             className={inputClass}
           />
         </div>
+
+        {needsName && (
+          <div data-testid="loyalty-new-here" className="animate-fade-up">
+            <p className="font-display text-lg text-ink">{t("loyalty.newHereTitle")}</p>
+            <label
+              htmlFor="first-name"
+              className="mt-3 block text-xs font-semibold uppercase tracking-wide text-muted"
+            >
+              {t("auth.firstNameLabel")}
+            </label>
+            <input
+              id="first-name"
+              data-testid="loyalty-firstname"
+              value={firstName}
+              onChange={(event) => setFirstName(event.target.value)}
+              placeholder={t("auth.firstNamePlaceholder")}
+              autoComplete="given-name"
+              autoFocus
+              required
+              className={inputClass}
+            />
+          </div>
+        )}
 
         <button
           type="submit"

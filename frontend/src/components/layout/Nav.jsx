@@ -232,7 +232,7 @@ export default function Nav({ solid = false }) {
                   }}
                   className="font-display text-3xl font-medium italic text-olive/70 transition-opacity duration-300 hover:opacity-60"
                 >
-                  {t("nav.account")}
+                  {t(member ? "nav.account" : "nav.signIn")}
                 </button>
               </motion.li>
 
