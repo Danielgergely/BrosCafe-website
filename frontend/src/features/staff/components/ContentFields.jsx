@@ -438,6 +438,47 @@ export function GalleryPicker({ label, value, onChange, testId }) {
 }
 
 /**
+ * Tick any number of options from a fixed list.
+ *
+ * Used for the milks a drink can be made with, the tags on a journal entry and
+ * the coffees an entry is about — all the same shape: canonical ids stored,
+ * translated labels shown.
+ */
+export function CheckboxGroup({ label, options, value, onChange, hint, testId }) {
+  const chosen = value || [];
+  const toggle = (id) =>
+    onChange(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id]);
+
+  return (
+    <div>
+      <span className={labelClass}>{label}</span>
+      <div className="mt-2 flex flex-wrap gap-2" data-testid={testId}>
+        {options.map((option) => (
+          <label
+            key={option.id}
+            data-testid={testId ? `${testId}-${option.id}` : undefined}
+            className={`flex cursor-pointer items-center gap-2 rounded-card border px-3 py-2 text-sm transition-colors ${
+              chosen.includes(option.id)
+                ? "border-olive bg-olive/10 text-olive"
+                : "border-line bg-white text-muted hover:border-olive/50"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={chosen.includes(option.id)}
+              onChange={() => toggle(option.id)}
+              className="h-4 w-4 accent-olive"
+            />
+            {option.label}
+          </label>
+        ))}
+      </div>
+      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
+    </div>
+  );
+}
+
+/**
  * Which alternative milks a drink can be made with.
  *
  * Per product rather than global: an espresso takes none, a latte takes all of
@@ -446,36 +487,15 @@ export function GalleryPicker({ label, value, onChange, testId }) {
 export function MilkPicker({ value, onChange, testId }) {
   const { t } = useI18n();
   const map = t("product.milkMap");
-  const chosen = value || [];
-
-  const toggle = (milk) =>
-    onChange(chosen.includes(milk) ? chosen.filter((m) => m !== milk) : [...chosen, milk]);
 
   return (
-    <div>
-      <span className={labelClass}>{t("content.milks")}</span>
-      <div className="mt-2 flex flex-wrap gap-2" data-testid={testId}>
-        {MILK_TYPES.map((milk) => (
-          <label
-            key={milk}
-            data-testid={testId ? `${testId}-${milk}` : undefined}
-            className={`flex cursor-pointer items-center gap-2 rounded-card border px-3 py-2 text-sm transition-colors ${
-              chosen.includes(milk)
-                ? "border-olive bg-olive/10 text-olive"
-                : "border-line bg-white text-muted hover:border-olive/50"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={chosen.includes(milk)}
-              onChange={() => toggle(milk)}
-              className="h-4 w-4 accent-olive"
-            />
-            {map[milk] ?? milk}
-          </label>
-        ))}
-      </div>
-      <p className="mt-1 text-xs text-muted">{t("content.milksHint")}</p>
-    </div>
+    <CheckboxGroup
+      label={t("content.milks")}
+      hint={t("content.milksHint")}
+      testId={testId}
+      options={MILK_TYPES.map((milk) => ({ id: milk, label: map[milk] ?? milk }))}
+      value={value}
+      onChange={onChange}
+    />
   );
 }

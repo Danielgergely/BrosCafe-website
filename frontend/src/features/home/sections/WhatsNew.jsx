@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import Reveal from "@/components/ui/Reveal";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { MOTION, ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
-import { api } from "@/lib/api";
+import { postTags, useJournal } from "@/lib/journal";
+import { useUi } from "@/state/UiStore";
+
+/** The homepage teases the newest few; the journal page holds everything. */
+const ON_HOMEPAGE = 3;
 
 /** The first post gets the wide tile. */
 const isWide = (index) => index === 0;
@@ -55,21 +58,11 @@ function PostCard({ post, index, readLabel, onOpen }) {
  */
 export default function WhatsNew() {
   const { t, lang } = useI18n();
-  const navigate = useNavigate();
-  const [posts, setPosts] = useState([]);
-
-  useEffect(() => {
-    let active = true;
-    api
-      .get("/whats-new")
-      .then(({ data }) => active && setPosts(Array.isArray(data) ? data : []))
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, []);
+  const { posts } = useJournal();
+  const { openPost } = useUi();
 
   if (posts.length === 0) return null;
+  const latest = posts.slice(0, ON_HOMEPAGE);
 
   return (
     <section
@@ -93,22 +86,36 @@ export default function WhatsNew() {
       </div>
 
       <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {posts.map((post, i) => (
+        {latest.map((post, i) => (
           <PostCard
             key={post.id}
             index={i}
             readLabel={t("home.news.read")}
-            onOpen={() => navigate(ROUTES.news)}
+            onOpen={() => openPost(post.id)}
             post={{
               id: post.id,
               image: post.image,
-              tag: t(`news.tags.${post.kind}`),
+              tag: postTags(post).map((key) => t(`news.tags.${key}`)).join(" · "),
               title: post.title?.[lang] ?? post.title?.en,
               blurb: post.blurb?.[lang] ?? post.blurb?.en,
             }}
           />
         ))}
       </div>
+
+      <Reveal delay={0.2}>
+        <Link
+          data-testid="news-read-more"
+          to={ROUTES.news}
+          className="group mt-12 inline-flex items-center gap-2 rounded-full border border-olive px-6 py-3 text-[11px] font-semibold tracking-wide text-olive transition-all duration-300 hover:-translate-y-0.5 hover:bg-olive hover:text-cream"
+        >
+          {t("news.readMore")}
+          <ArrowUpRight
+            size={14}
+            className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+          />
+        </Link>
+      </Reveal>
     </section>
   );
 }

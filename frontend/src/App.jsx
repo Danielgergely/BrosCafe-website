@@ -4,10 +4,12 @@ import { Toaster } from "sonner";
 
 import AppRoutes from "@/app/AppRoutes";
 import ConsentBanner from "@/components/layout/ConsentBanner";
+import JournalModal from "@/components/journal/JournalModal";
 import Lightbox from "@/components/ui/Lightbox";
 import ProductModal from "@/components/product/ProductModal";
 import { I18nProvider, useI18n } from "@/i18n";
 import { CatalogProvider } from "@/lib/catalog";
+import { JournalProvider } from "@/lib/journal";
 import { watchForStaleBuild } from "@/lib/staleBuild";
 import { CustomerAuthProvider } from "@/state/CustomerAuth";
 import { StaffAuthProvider } from "@/state/StaffAuth";
@@ -33,18 +35,21 @@ export default function App() {
     <BrowserRouter>
       <I18nProvider>
         <CatalogProvider>
-          <CustomerAuthProvider>
-            <StaffAuthProvider>
-              <UiProvider>
-                <AppRoutes />
-                <ProductModal />
-                <Lightbox />
-                <ConsentBanner />
-                <Toaster position="top-center" richColors />
-                <StaleBuildWatch />
-              </UiProvider>
-            </StaffAuthProvider>
-          </CustomerAuthProvider>
+          <JournalProvider>
+            <CustomerAuthProvider>
+              <StaffAuthProvider>
+                <UiProvider>
+                  <AppRoutes />
+                  <ProductModal />
+                  <JournalModal />
+                  <Lightbox />
+                  <ConsentBanner />
+                  <Toaster position="top-center" richColors />
+                  <StaleBuildWatch />
+                </UiProvider>
+              </StaffAuthProvider>
+            </CustomerAuthProvider>
+          </JournalProvider>
         </CatalogProvider>
       </I18nProvider>
     </BrowserRouter>

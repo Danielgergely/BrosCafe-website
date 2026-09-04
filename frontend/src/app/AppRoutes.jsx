@@ -49,6 +49,18 @@ function ProductDeepLink() {
   return <ShopPage />;
 }
 
+/** /journal/:id opens the entry over the journal page, so posts stay shareable. */
+function JournalDeepLink() {
+  const { id } = useParams();
+  const { openPost } = useUi();
+
+  useEffect(() => {
+    openPost(id);
+  }, [id, openPost]);
+
+  return <WhatsNewPage />;
+}
+
 export default function AppRoutes() {
   const location = useLocation();
 
@@ -72,6 +84,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.news} element={<WhatsNewPage />} />
         <Route path={ROUTES.shop} element={<ShopPage />} />
         <Route path="/product/:id" element={<ProductDeepLink />} />
+        <Route path="/journal/:id" element={<JournalDeepLink />} />
         <Route path={ROUTES.contact} element={<ContactPage />} />
         <Route path={ROUTES.opening} element={<OpeningPage />} />
         <Route path={ROUTES.privacy} element={<PrivacyPage />} />

@@ -36,6 +36,7 @@ export function UiProvider({ children }) {
   const [day, setDay] = useStoredList(DAY_KEY);
   const [activeProductId, setActiveProductId] = useState(null);
   const [closingProductId, setClosingProductId] = useState(null);
+  const [activePostId, setActivePostId] = useState(null);
   const [lightbox, setLightbox] = useState(null); // { images, index }
   const [dayOpen, setDayOpen] = useState(false);
 
@@ -78,6 +79,9 @@ export function UiProvider({ children }) {
     });
   }, []);
 
+  const openPost = useCallback((id) => setActivePostId(id), []);
+  const closePost = useCallback(() => setActivePostId(null), []);
+
   const openLightbox = useCallback((images, index = 0) => setLightbox({ images, index }), []);
   const closeLightbox = useCallback(() => setLightbox(null), []);
   const moveLightbox = useCallback(
@@ -95,10 +99,12 @@ export function UiProvider({ children }) {
       favourites, toggleFavourite,
       day, addToDay, removeFromDay, clearDay, dayOpen, setDayOpen,
       activeProductId, closingProductId, openProduct, closeProduct,
+      activePostId, openPost, closePost,
       lightbox, openLightbox, closeLightbox, moveLightbox,
     }),
     [favourites, toggleFavourite, day, addToDay, removeFromDay, clearDay, dayOpen,
      activeProductId, closingProductId, openProduct, closeProduct,
+     activePostId, openPost, closePost,
      lightbox, openLightbox, closeLightbox, moveLightbox],
   );
 

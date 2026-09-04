@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Check, ChevronDown, Heart, Plus, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Heart, Plus, X } from "lucide-react";
 
 import { FLAVOUR_KEYS, MOTION } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { localize, useCatalog } from "@/lib/catalog";
+import { useJournal } from "@/lib/journal";
 import { formatPrice } from "@/lib/format";
 import { useUi } from "@/state/UiStore";
 
@@ -186,7 +187,8 @@ function Gallery({ product }) {
 function ModalBody({ product }) {
   const { t } = useI18n();
   const { related } = useCatalog();
-  const { favourites, toggleFavourite, day, addToDay } = useUi();
+  const { postsFor } = useJournal();
+  const { favourites, toggleFavourite, day, addToDay, closeProduct, openPost } = useUi();
   const [justAdded, setJustAdded] = useState(false);
 
   useEffect(() => setJustAdded(false), [product.id]);
@@ -195,6 +197,7 @@ function ModalBody({ product }) {
   const inDay = day.includes(product.id) || justAdded;
   const scales = t("product.scales");
   const milkMap = t("product.milkMap");
+  const linkedPost = postsFor(product?.id ?? "")[0] ?? null;
   const allergenMap = t("product.allergenMap");
 
   return (
@@ -233,6 +236,25 @@ function ModalBody({ product }) {
               </div>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-olive/75">{product.desc}</p>
+
+            {/* The entry written about this coffee. Derived from the journal
+                side, so there is nothing to keep in step here. */}
+            {linkedPost && (
+              <button
+                data-testid="product-journal-link"
+                onClick={() => {
+                  closeProduct();
+                  openPost(linkedPost.id);
+                }}
+                className="group mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-olive underline underline-offset-4 transition-colors hover:text-olive-dark"
+              >
+                {t("news.aboutThis")}
+                <ArrowRight
+                  size={15}
+                  className="transition-transform duration-300 group-hover:translate-x-0.5"
+                />
+              </button>
+            )}
           </motion.div>
 
           {product.flavor && (

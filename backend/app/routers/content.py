@@ -11,8 +11,8 @@ router = APIRouter(tags=["content"])
 async def whats_new():
     """Archived posts stay in the database but drop out of the feed, matching
     how the catalog endpoint treats archived products."""
-    return await db.content.find(
-        {"active": {"$ne": False}}, {"_id": 0}).sort("order", 1).to_list(50)
+    return await db.content.find({"active": {"$ne": False}}, {"_id": 0}).sort(
+        [("date", -1), ("order", 1)]).to_list(200)
 
 
 @router.get("/products")

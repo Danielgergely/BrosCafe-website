@@ -237,12 +237,29 @@ function SignUpForm() {
       <form onSubmit={submit} className="mt-8 space-y-4" data-testid="loyalty-form">
         <p className="font-display text-2xl text-ink">{t("loyalty.formTitle")}</p>
         <p className="-mt-2 text-sm text-muted">{t("loyalty.formSub")}</p>
-        <p className="mt-2 text-sm font-medium text-olive">
-          {t("loyalty.formBonus", {
-            welcome: BRAND.welcomeStamps,
-            left: BRAND.stampsRequired - BRAND.welcomeStamps,
-          })}
-        </p>
+        {/* Showing the half-filled card persuades far better than a sentence
+            about it — the head start was previously one small line here and
+            went unnoticed. */}
+        <div
+          data-testid="loyalty-welcome-bonus"
+          className="!mt-6 rounded-panel border border-olive/25 bg-olive/[0.07] p-5 text-center"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-label text-olive/70">
+            {t("loyalty.bonusLabel")}
+          </p>
+          <p className="mt-1 font-display text-2xl text-olive">
+            {t("loyalty.bonusHeadline", { welcome: BRAND.welcomeStamps })}
+          </p>
+          <div className="mt-4 flex justify-center">
+            <LoyaltyProgress stamps={BRAND.welcomeStamps} required={BRAND.stampsRequired} size={24} />
+          </div>
+          <p className="mt-3 text-sm text-olive/80">
+            {t("loyalty.formBonus", {
+              welcome: BRAND.welcomeStamps,
+              left: BRAND.stampsRequired - BRAND.welcomeStamps,
+            })}
+          </p>
+        </div>
 
         <div>
           <label htmlFor="first-name" className="text-xs font-semibold uppercase tracking-wide text-muted">

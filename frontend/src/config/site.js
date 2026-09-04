@@ -66,6 +66,7 @@ export const ROUTES = {
   admin: "/admin",
   card: (code) => `/card/${code}`,
   product: (id) => `/product/${id}`,
+  journal: (id) => `/journal/${id}`,
 };
 
 /**
@@ -193,6 +194,15 @@ export const TIER_STYLE = {
 // Order here is the order the bars appear. `lightBold` keeps its original key
 // though its label now reads light/strong: renaming it would reset the slider
 // on every product already edited in the dashboard, and only the label shows.
+/**
+ * Journal tags. Canonical keys translated through `news.tags`, ticked per post
+ * and used as the filter chips on the journal page. Adding one is this list
+ * plus its two labels.
+ */
+export const JOURNAL_TAGS = [
+  "guest", "house", "pastry", "brewing", "origin", "event", "team",
+];
+
 export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "mildIntense", "milkyCreamy"];
 
 /**
@@ -202,4 +212,4 @@ export const FLAVOUR_KEYS = ["bitterSweet", "lightBold", "mildIntense", "milkyCr
  * allergens. A drink with none set simply doesn't show the section, so this
  * stays off espresso and everything that isn't milk-based.
  */
-export const MILK_TYPES = ["Oat", "Coconut", "Rice", "Pea"];
+export const MILK_TYPES = ["Oat", "CoconutRice", "Pea"];

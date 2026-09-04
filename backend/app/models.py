@@ -137,7 +137,12 @@ class PostUpsert(BaseModel):
     """Mirrors data/whats_new.json so admin-written posts match seeded ones."""
     id: str = Field(pattern=r"^[a-z0-9-]{2,50}$")
     order: int = 99
+    # `kind` predates tags and is kept so existing rows still validate; the
+    # site reads `tags`, falling back to the old single kind when empty.
     kind: POST_KINDS = "house"
+    tags: list[str] = []
+    date: Optional[str] = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+    product_ids: list[str] = []
     image: str = ""
     title: Localized
     blurb: Localized

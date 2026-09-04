@@ -2,26 +2,30 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowCounterClockwise, Plus } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
+import { JOURNAL_TAGS } from "@/config/site";
 import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
-import { ImagePicker, LocalizedField, labelClass } from "@/features/staff/components/ContentFields";
+import {
+  CheckboxGroup, ImagePicker, LocalizedField, labelClass,
+} from "@/features/staff/components/ContentFields";
 import { ArchivedBadge, EditedBadge, RowActions } from "@/features/staff/components/ContentRow";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
+import { useCatalog } from "@/lib/catalog";
+import { postTags } from "@/lib/journal";
 
-// Each kind renders its own eyebrow on the site ("CURRENT GUEST ORIGIN"), so
-// the choice is a label, not decoration.
-const KINDS = ["guest", "house", "pastry"];
+const today = () => new Date().toISOString().slice(0, 10);
 
 const BLANK = {
-  id: "", order: 99, kind: "guest", image: "",
+  id: "", order: 99, tags: [], date: today(), product_ids: [], image: "",
   title: { en: "", hu: "" }, blurb: { en: "", hu: "" }, body: { en: "", hu: "" },
   active: true,
 };
 
 export default function JournalPanel() {
   const { t, lang } = useI18n();
+  const { products } = useCatalog();
   const [posts, setPosts] = useState(null);
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -44,7 +48,11 @@ export default function JournalPanel() {
     event.preventDefault();
     setSaving(true);
     try {
-      await api.post("/admin/whats-new", { ...form, order: Number(form.order) || 99 });
+      await api.post("/admin/whats-new", {
+        ...form,
+        order: Number(form.order) || 99,
+        date: form.date || null,
+      });
     } catch (error) {
       toast.error(errorMessage(error, t("common.somethingWrong")));
       setSaving(false);
@@ -107,7 +115,7 @@ export default function JournalPanel() {
                 )}
               </div>
               <p className="text-[10px] font-semibold uppercase tracking-wide text-olive">
-                {t(`news.tags.${post.kind}`)}
+                {postTags(post).map((key) => t(`news.tags.${key}`)).join(" · ")}
               </p>
               <h4 className="mt-1 font-display text-lg leading-tight text-ink">
                 {post.title?.[lang]}
@@ -150,17 +158,14 @@ export default function JournalPanel() {
                 />
               </label>
               <label className="block">
-                <span className={labelClass}>{t("content.kind")}</span>
-                <select
-                  data-testid="post-kind-select"
-                  value={form.kind}
-                  onChange={(event) => setForm({ ...form, kind: event.target.value })}
+                <span className={labelClass}>{t("content.date")}</span>
+                <input
+                  data-testid="post-date-input"
+                  type="date"
+                  value={form.date || ""}
+                  onChange={(event) => setForm({ ...form, date: event.target.value })}
                   className={`mt-1 ${adminInputClass}`}
-                >
-                  {KINDS.map((kind) => (
-                    <option key={kind} value={kind}>{t(`news.tags.${kind}`)}</option>
-                  ))}
-                </select>
+                />
               </label>
               <label className="block">
                 <span className={labelClass}>{t("content.order")}</span>
@@ -196,6 +201,27 @@ export default function JournalPanel() {
               onChange={(body) => setForm({ ...form, body })}
             />
             <p className="text-xs text-muted">{t("content.bodyHint")}</p>
+
+            <CheckboxGroup
+              label={t("content.tags")}
+              hint={t("content.tagsHint")}
+              testId="post-tags"
+              options={JOURNAL_TAGS.map((key) => ({ id: key, label: t(`news.tags.${key}`) }))}
+              value={form.tags}
+              onChange={(tags) => setForm({ ...form, tags })}
+            />
+
+            <CheckboxGroup
+              label={t("content.linkedCoffees")}
+              hint={t("content.linkedCoffeesHint")}
+              testId="post-products"
+              options={products.map((product) => ({
+                id: product.id,
+                label: product.name?.[lang] ?? product.name?.en ?? product.id,
+              }))}
+              value={form.product_ids}
+              onChange={(product_ids) => setForm({ ...form, product_ids })}
+            />
 
             <ImagePicker
               label={t("content.photo")}
