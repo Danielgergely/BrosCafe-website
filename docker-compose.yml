@@ -51,7 +51,7 @@ services:
       # Stamps granted at sign-up, so the first free coffee is five purchases
       # away rather than ten. Must stay below STAMPS_REQUIRED.
       WELCOME_STAMPS: ${WELCOME_STAMPS:-5}
-      OPENING_DATETIME: ${OPENING_DATETIME:-2026-09-16T08:00:00}
+      OPENING_DATETIME: ${OPENING_DATETIME:-2026-09-24T07:30:00}
       CAFE_TIMEZONE: ${CAFE_TIMEZONE:-Europe/Budapest}
       CAFE_NAME: ${CAFE_NAME:-Bros Cafe}
       CAFE_ADDRESS: ${CAFE_ADDRESS:-}

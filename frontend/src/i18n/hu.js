@@ -256,8 +256,8 @@ const hu = {
     joinTitle: "Iratkozz fel a nyitásra",
     joinSub: "Foglald le a helyed a nyitónapra.",
     showPass: "A belépőm",
-    footer: "NAGY NYITÁS — 2026. SZEPTEMBER 16. · 8:00",
-    dateLine: "2026. szeptember 16. · 8:00",
+    footer: "NAGY NYITÁS — 2026. SZEPTEMBER 24., CSÜTÖRTÖK · 7:30",
+    dateLine: "2026. szeptember 24., csütörtök · 7:30",
   },
 
   loyalty: {

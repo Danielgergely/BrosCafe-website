@@ -36,7 +36,7 @@ export const CONTACT = {
  * Keep it in sync with OPENING_DATETIME in the backend .env.
  */
 export const OPENING = {
-  fallbackISO: "2026-09-16T08:00:00+02:00",
+  fallbackISO: "2026-09-24T07:30:00+02:00",
   get fallbackTime() {
     return new Date(this.fallbackISO).getTime();
   },

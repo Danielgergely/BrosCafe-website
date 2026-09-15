@@ -253,8 +253,8 @@ const en = {
     joinTitle: "Join the opening list",
     joinSub: "Reserve your spot for opening day.",
     showPass: "Show my opening pass",
-    footer: "GRAND OPENING — SEPTEMBER 16, 2026 · 8:00",
-    dateLine: "September 16, 2026 · 8:00",
+    footer: "GRAND OPENING — THURSDAY, SEPTEMBER 24, 2026 · 7:30",
+    dateLine: "Thursday, September 24, 2026 · 7:30",
   },
 
   loyalty: {

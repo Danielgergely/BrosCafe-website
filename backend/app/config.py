@@ -29,11 +29,11 @@ def _int(key: str, default: int) -> int:
 
 def _opening_datetime() -> datetime:
     """Grand-opening moment, café-local. Single source for API, countdowns and copy."""
-    raw = os.environ.get("OPENING_DATETIME", "2026-09-16T08:00:00")
+    raw = os.environ.get("OPENING_DATETIME", "2026-09-24T07:30:00")
     try:
         return datetime.fromisoformat(raw).replace(tzinfo=CAFE_TZ)
     except ValueError:
-        return datetime(2026, 9, 16, 8, 0, tzinfo=CAFE_TZ)
+        return datetime(2026, 9, 24, 7, 30, tzinfo=CAFE_TZ)
 
 
 class Settings:
