@@ -1,16 +1,17 @@
 """Which drink a stamp was for.
 
-A stamp is always for something drinkable, and cold brew or an iced latte is
-as much a coffee as a cappuccino — leaving the cold category out would make the
-mix look wrong every summer. The list comes from the live menu, so a drink
-added there shows up at the counter without a deploy.
+A stamp is always for something the bar made: the coffees, the matcha and chai
+specialities, the teas and the smoothies. Bottled drinks are left out on
+purpose — handing over a can of Coca-Cola is not the thing the card rewards.
+The list comes from the live menu, so a drink added there shows up at the
+counter without a deploy.
 """
 from collections import Counter
 
 from app import db
 from app.services.members import COFFEE_ADDED, REWARD_REDEEMED
 
-DRINK_CATEGORIES = ["coffee", "cold"]
+DRINK_CATEGORIES = ["coffee", "specialty", "tea", "smoothie"]
 
 
 async def choices() -> list[dict]:

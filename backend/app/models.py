@@ -78,7 +78,14 @@ class LocalizedList(BaseModel):
 # The menu filters on these exactly, and the journal renders its tag through
 # i18n `news.tags.<kind>` — a free-text value in either would silently produce
 # a product nothing lists or a post with a missing label.
-CATEGORIES = Literal["coffee", "cold", "food", "sweet", "merch"]
+#
+# One category per group on the printed menu, rather than a handful of broad
+# buckets: with seventy-odd products, "sweet" alone would have run to three
+# separate counters' worth of cakes, cookies and pastries in one flat list.
+CATEGORIES = Literal[
+    "coffee", "specialty", "tea", "smoothie",
+    "sandwich", "pastry", "cake", "dessert", "bottled", "merch",
+]
 POST_KINDS = Literal["guest", "house", "pastry"]
 
 
@@ -103,6 +110,10 @@ class ProductUpsert(BaseModel):
     video: Optional[str] = None
     pairings: list[str] = []
     active: bool = True
+    # Marks the gallery as placeholder stock photography, which the site says
+    # out loud on the image. Untick it in /admin once a product has been shot
+    # properly, and the note disappears for that product alone.
+    stock_photos: bool = False
 
 
 class RunFinish(BaseModel):

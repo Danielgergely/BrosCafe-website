@@ -26,7 +26,7 @@ const lines = (pair) => {
 const BLANK = {
   id: "", cat: "coffee", order: 99, price_huf: 0,
   name: { en: "", hu: "" }, desc: { en: "", hu: "" },
-  images: [], allergens: [], milks: [], active: true,
+  images: [], allergens: [], milks: [], active: true, stock_photos: false,
 };
 
 export default function ProductsPanel() {
@@ -65,6 +65,7 @@ export default function ProductsPanel() {
         ...form,
         order: Number(form.order) || 99,
         milks: form.milks ?? [],
+        stock_photos: form.stock_photos === true,
         price_huf: Number(form.price_huf) || 0,
         // Explicit null, not omitted: the API reads it as "remove this field".
         flavor: form.flavor ?? null,
@@ -253,6 +254,22 @@ export default function ProductsPanel() {
               value={form.images}
               onChange={(images) => setForm({ ...form, images })}
             />
+
+            <label className="flex items-start gap-2 text-sm text-ink">
+              <input
+                data-testid="product-stock-photos-checkbox"
+                type="checkbox"
+                checked={form.stock_photos === true}
+                onChange={(event) => setForm({ ...form, stock_photos: event.target.checked })}
+                className="mt-0.5 h-4 w-4 accent-olive"
+              />
+              <span>
+                {t("content.stockPhotos")}
+                <span className="mt-0.5 block text-xs text-muted">
+                  {t("content.stockPhotosHint")}
+                </span>
+              </span>
+            </label>
 
             <FlavorSliders
               testId="product-flavor"

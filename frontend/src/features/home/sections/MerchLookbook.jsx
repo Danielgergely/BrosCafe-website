@@ -25,6 +25,10 @@ export default function MerchLookbook() {
 
   const looks = featured("merchLookbook").map((p) => localize(p, lang));
 
+  // The merch is archived while there is nothing to sell. Without this the
+  // homepage kept the headline and dropped an empty grid underneath it.
+  if (looks.length === 0) return null;
+
   return (
     <section
       id="merch"

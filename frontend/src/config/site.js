@@ -101,8 +101,11 @@ export const FOOTER_LINKS = [
  * from this list, so reordering sections renumbers them automatically instead of
  * leaving hardcoded numbers wrong.
  */
+// "merch" is deliberately absent: the lookbook renders nothing while the merch
+// is archived, and leaving it here would number the sections 05, 07, 08 with a
+// visible gap. Put it back between "discover" and "loyalty" when merch returns.
 export const HOME_SECTIONS = [
-  "coffee", "collection", "about", "menu", "discover", "merch", "loyalty", "news", "community",
+  "coffee", "collection", "about", "menu", "discover", "loyalty", "news", "community",
 ];
 
 /** Media placeholders. Swap for real Bros Cafe footage and photography. */
@@ -150,13 +153,25 @@ export const MOTION = {
 
 /** Which products the homepage coffee row and the loyalty discover row feature. */
 export const FEATURED = {
-  coffeeRow: ["espresso", "cappuccino", "latte", "americano"],
+  coffeeRow: ["espresso", "cappuccino", "flat-white", "latte"],
   discoverRow: ["cappuccino", "croissant", "bros-mug"],
   merchLookbook: ["bros-hoodie", "bros-tee", "bros-mug", "bros-beans"],
-  menuGroups: ["coffee", "cold", "food", "sweet"],
+  menuGroups: [
+    "coffee", "specialty", "tea", "smoothie",
+    "sandwich", "pastry", "cake", "dessert", "bottled",
+  ],
 };
 
-export const CATEGORIES = ["all", "coffee", "cold", "food", "sweet", "merch"];
+/**
+ * Menu categories, in menu order. `all` is the filter chip, not a category any
+ * product carries; the rest mirror `CATEGORIES` in backend/app/models.py and
+ * the labels in i18n `product.cats`. Merch sits last and stays off
+ * `FEATURED.menuGroups`, because it belongs on the shop page, not the menu.
+ */
+export const CATEGORIES = [
+  "all", "coffee", "specialty", "tea", "smoothie",
+  "sandwich", "pastry", "cake", "dessert", "bottled", "merch",
+];
 
 /**
  * The flavour axes, in the order their labels appear in i18n `product.scales`.

@@ -5,32 +5,30 @@
       "id": "espresso",
       "cat": "coffee",
       "order": 1,
-      "price_huf": 1400,
+      "price_huf": 790,
       "temp": "hot",
-      "allergens": [],
       "flavor": {
         "bitterSweet": 28,
         "lightBold": 82,
         "mildIntense": 90,
         "milkyCreamy": 12
       },
-      "video": "https://assets.mixkit.co/videos/47954/47954-720.mp4",
       "images": [
-        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwyfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
         "en": "ESPRESSO",
         "hu": "ESPRESSO"
       },
       "desc": {
-        "en": "Our Brazilian house roast, undiluted. Cocoa, toasted hazelnut, a caramel finish — this is the shot every other drink is built on.",
-        "hu": "A brazil házi pörkölésünk, tisztán. Kakaó, pirított mogyoró, karamelles lecsengés — minden más ital erre a shotra épül."
+        "en": "Our Brazilian house roast, undiluted. Cocoa, toasted hazelnut, a caramel finish — the shot every other drink is built on.",
+        "hu": "A brazil házi pörkölésünk tisztán, egyetlen shotban. Kakaó, pirított mogyoró, karamelles lecsengés — minden más italunk erre épül."
       },
       "tip": {
-        "en": "Best standing at the bar, Italian style. Ask for the guest origin if you want brighter.",
-        "hu": "A pultnál állva a legjobb, olasz módra. Ha valami élénkebbet szeretnél, kérd a vendégkávét."
+        "en": "Best standing at the bar, Italian style. Ask about the guest origin if you want something brighter.",
+        "hu": "A pultnál állva a legjobb, olasz módra. Ha élénkebbet szeretnél, kérdezz rá a vendégkávéra."
       },
       "ingredients": {
         "en": [
@@ -39,8 +37,8 @@
           "27 seconds"
         ],
         "hu": [
-          "18g brazil házi pörkölés",
-          "Víz, 93°C",
+          "18 g brazil házi pörkölés",
+          "Víz, 93 °C",
           "27 másodperc"
         ]
       },
@@ -53,45 +51,331 @@
         ],
         "hu": [
           "Származás — Brazília, az egész éves házi profilunk",
-          "Őrlés — finom, 18g adag",
+          "Őrlés — finom, 18 g adag",
           "Extrakció — 27 lassú másodperc",
           "A csészéd — mindig előmelegítve"
         ]
       },
-      "sizes": {
+      "pairings": [
+        "croissant",
+        "chocolate-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "double-espresso",
+      "cat": "coffee",
+      "order": 2,
+      "price_huf": 1090,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 24,
+        "lightBold": 92,
+        "mildIntense": 96,
+        "milkyCreamy": 12
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "DOUBLE ESPRESSO",
+        "hu": "DUPLA ESPRESSO"
+      },
+      "desc": {
+        "en": "The same shot, twice over. Denser crema, a longer finish — for when a single is just the warm-up.",
+        "hu": "Ugyanaz a shot, kétszeres adagban. Sűrűbb crema, hosszabb lecsengés — annak, akinek a szimpla csak bemelegítés."
+      },
+      "tip": {
+        "en": "Ask for a glass of soda water alongside — every layer reads cleaner between sips.",
+        "hu": "Kérd egy pohár szódával mellé: két korty víz között tisztábban jön az összes réteg."
+      },
+      "ingredients": {
         "en": [
-          "Single",
-          "Double"
+          "36g Brazilian house roast",
+          "Water, 93°C",
+          "28 seconds"
         ],
         "hu": [
-          "Szimpla",
-          "Dupla"
+          "36 g brazil házi pörkölés",
+          "Víz, 93 °C",
+          "28 másodperc"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Double basket — 36g, the same grind",
+          "Ratio — 1:2, never stretched",
+          "Why — more body, the same profile"
+        ],
+        "hu": [
+          "Dupla kosár — 36 g, ugyanaz az őrlés",
+          "Arány — 1:2, semmi hosszabbítás",
+          "Miért — több test, ugyanaz a profil"
         ]
       },
       "pairings": [
-        "croissant",
-        "bros-beans"
-      ]
+        "cinnamon-roll"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "cappuccino",
+      "id": "espresso-macchiato",
       "cat": "coffee",
-      "order": 2,
-      "price_huf": 1800,
+      "order": 3,
+      "price_huf": 890,
       "temp": "hot",
       "allergens": [
         "Milk"
       ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
       "flavor": {
-        "bitterSweet": 45,
-        "lightBold": 60,
-        "mildIntense": 55,
-        "milkyCreamy": 70
+        "bitterSweet": 38,
+        "lightBold": 78,
+        "mildIntense": 80,
+        "milkyCreamy": 28
       },
       "images": [
-        "https://images.pexels.com/photos/11201494/pexels-photo-11201494.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-        "https://customer-assets-m6fa6gv7.emergentagent.net/job_premium-cafe-vision/artifacts/bcss9hu4_Gemini_Generated_Image_10kd0510kd0510kd.webp",
-        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "ESPRESSO MACCHIATO",
+        "hu": "ESPRESSO MACCHIATO"
+      },
+      "desc": {
+        "en": "An espresso, marked with a spoon of dense foam. Just enough milk to take the edge off, and no more.",
+        "hu": "Egy espresso, megjelölve egy kanál sűrű tejhabbal. Annyi tej, amennyi elveszi az élt — több nem."
+      },
+      "tip": {
+        "en": "If cappuccino is too milky but espresso too raw, this is the right answer in between.",
+        "hu": "Ha a cappuccino túl tejes, de az espresso túl nyers — ez a kettő között a helyes válasz."
+      },
+      "ingredients": {
+        "en": [
+          "18g house roast",
+          "A spoon of dense microfoam"
+        ],
+        "hu": [
+          "18 g házi pörkölés",
+          "Egy kanál sűrű tejhab"
+        ]
+      },
+      "pairings": [
+        "croissant",
+        "cheese-scone"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "americano",
+      "cat": "coffee",
+      "order": 4,
+      "price_huf": 890,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 30,
+        "lightBold": 62,
+        "mildIntense": 58,
+        "milkyCreamy": 8
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1521302080334-4bebac2763a6?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "AMERICANO",
+        "hu": "AMERICANO"
+      },
+      "desc": {
+        "en": "A double shot lengthened with hot water. It keeps the roast's cocoa backbone, you just get longer with it.",
+        "hu": "Dupla shot, forró vízzel hosszabbítva. Megtartja a pörkölés kakaós gerincét, csak több időd van vele."
+      },
+      "tip": {
+        "en": "We pour the water under the shot, not over it, so the crema stays where it belongs.",
+        "hu": "Nálunk a víz megy a shot alá, nem fordítva — így a crema a helyén marad."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Hot water, 1:3"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Forró víz, 1:3"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Order — water first, then the shot",
+          "Ratio — 1:3, never thinner",
+          "Heat — 80°C water so nothing scorches"
+        ],
+        "hu": [
+          "Sorrend — előbb a víz, utána a shot",
+          "Arány — 1:3, nem hígabb",
+          "Hőfok — 80 °C-os víz, hogy ne égesse meg"
+        ]
+      },
+      "pairings": [
+        "broscafe-sandwich",
+        "chocolate-muffin"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cortado",
+      "cat": "coffee",
+      "order": 5,
+      "price_huf": 990,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 46,
+        "lightBold": 66,
+        "mildIntense": 62,
+        "milkyCreamy": 52
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509042239860-f550ce710b93?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CORTADO",
+        "hu": "CORTADO"
+      },
+      "desc": {
+        "en": "Half espresso, half warm milk, served in glass. The shortest route to balance between coffee and milk.",
+        "hu": "Fele espresso, fele meleg tej, üvegben. A legrövidebb út a kávé és a tej egyensúlyához."
+      },
+      "tip": {
+        "en": "Served in glass so you can see the layers — and because it wants drinking quickly.",
+        "hu": "Üvegben adjuk, mert így látod a rétegeket — és mert gyorsan kell meginni."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "An equal measure of warm milk, barely foamed"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Ugyanannyi meleg tej, kevés habbal"
+        ]
+      },
+      "pairings": [
+        "pistachio-croissant",
+        "chocolate-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "flat-white",
+      "cat": "coffee",
+      "order": 6,
+      "price_huf": 1290,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 44,
+        "lightBold": 74,
+        "mildIntense": 72,
+        "milkyCreamy": 66
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1572442388796-11668a67e53d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "FLAT WHITE",
+        "hu": "FLAT WHITE"
+      },
+      "desc": {
+        "en": "A double ristretto under silky microfoam. Stronger than a latte, smoother than a cappuccino.",
+        "hu": "Dupla ristretto selymes mikrohabban. Erősebb, mint a latte, simább, mint a cappuccino."
+      },
+      "tip": {
+        "en": "Oat is the alternative milk that works best here; it holds the texture.",
+        "hu": "A zabtej ezzel működik a legjobban a kínálatunkból — megtartja a textúrát."
+      },
+      "ingredients": {
+        "en": [
+          "Double ristretto",
+          "Steamed milk, 150ml",
+          "Microfoam, glossy"
+        ],
+        "hu": [
+          "Dupla ristretto",
+          "Gőzölt tej, 150 ml",
+          "Mikrohab, fényes"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Ristretto — shorter extraction, sweeter core",
+          "Milk — 60°C, never boiled",
+          "Foam — glossy, never bubbled",
+          "Pour — one continuous motion"
+        ],
+        "hu": [
+          "Ristretto — rövidebb extrakció, édesebb mag",
+          "Tej — 60 °C, soha nem forralva",
+          "Hab — fényes, nem buborékos",
+          "Kiöntés — egy folyamatos mozdulat"
+        ]
+      },
+      "pairings": [
+        "ham-eggs-croissant",
+        "cinnamon-roll"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cappuccino",
+      "cat": "coffee",
+      "order": 7,
+      "price_huf": 1190,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 52,
+        "lightBold": 58,
+        "mildIntense": 54,
+        "milkyCreamy": 74
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1572442388796-11668a67e53d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1459755486867-b55449bb39ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
         "en": "CAPPUCCINO",
@@ -99,752 +383,2508 @@
       },
       "desc": {
         "en": "The Brazilian roast at its most forgiving — cocoa and caramel carried by dense, silky microfoam.",
-        "hu": "A brazil pörkölés a legmegengedőbb formájában — kakaó és karamell, sűrű, selymes mikrohabbal."
+        "hu": "A brazil pörkölés a legmegengedőbb formájában — kakaó és karamell, sűrű, selymes habbal."
       },
       "tip": {
-        "en": "Best enjoyed slowly. Ask for oat if that's your thing.",
-        "hu": "Lassan a legjobb. Ha úgy szereted, kérd zabbal."
+        "en": "We don't dust it unless you ask; the foam is sweet enough on its own.",
+        "hu": "Fahéjat vagy kakaót nem szórunk rá kérés nélkül — a hab önmagában is édes."
       },
       "ingredients": {
         "en": [
           "Double espresso",
-          "Steamed milk",
-          "Dense microfoam"
+          "Steamed milk, 120ml",
+          "One third foam"
         ],
         "hu": [
           "Dupla espresso",
-          "Gőzölt tej",
-          "Sűrű mikrohab"
+          "Gőzölt tej, 120 ml",
+          "Egyharmad hab"
         ]
       },
       "behind": {
         "en": [
-          "Origin — Brazil house roast",
-          "Espresso — double shot",
-          "Milk — steamed to 60°C",
-          "Foam — spooned, not poured"
+          "Ratio — a third coffee, a third milk, a third foam",
+          "Milk — 60°C, silky, never soapy",
+          "Cup — 180ml, thick walled"
         ],
         "hu": [
-          "Származás — brazil házi pörkölés",
-          "Espresso — dupla shot",
-          "Tej — 60°C-ra gőzölve",
-          "Hab — kanalazva, nem öntve"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Regular",
-          "Large"
-        ],
-        "hu": [
-          "Normál",
-          "Nagy"
+          "Arány — egyharmad kávé, egyharmad tej, egyharmad hab",
+          "Tej — 60 °C, selymes, nem szappanos",
+          "Csésze — 180 ml, vastag falú"
         ]
       },
       "pairings": [
         "croissant",
-        "banana-bread",
-        "bros-mug"
+        "chocolate-muffin"
       ],
-      "milks": [
-        "Oat",
-        "Coconut",
-        "Rice",
-        "Pea"
-      ]
+      "stock_photos": true
     },
     {
       "id": "latte",
       "cat": "coffee",
-      "order": 3,
-      "price_huf": 1800,
+      "order": 8,
+      "price_huf": 1290,
       "temp": "hot",
       "allergens": [
         "Milk"
       ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
       "flavor": {
-        "bitterSweet": 55,
-        "lightBold": 35,
-        "mildIntense": 35,
-        "milkyCreamy": 88
+        "bitterSweet": 60,
+        "lightBold": 46,
+        "mildIntense": 40,
+        "milkyCreamy": 86
       },
       "images": [
-        "https://images.pexels.com/photos/32590864/pexels-photo-32590864.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-        "https://customer-assets-m6fa6gv7.emergentagent.net/job_premium-cafe-vision/artifacts/bcss9hu4_Gemini_Generated_Image_10kd0510kd0510kd.webp",
-        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509042239860-f550ce710b93?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
         "en": "LATTE",
         "hu": "LATTE"
       },
       "desc": {
-        "en": "Long, soft and milky. The house Brazilian keeps its chocolate note even under this much milk.",
-        "hu": "Hosszú, lágy, tejes. A házi brazil ennyi tej alatt is megtartja a csokoládés karakterét."
+        "en": "Our longest, milkiest coffee. Soft, warm, and it will carry a whole morning.",
+        "hu": "A leghosszabb, legtejesebb kávénk. Puha, meleg, és elvisel egy egész délelőttöt."
       },
       "tip": {
-        "en": "Perfect for a slow morning and a window seat.",
-        "hu": "Tökéletes egy lassú reggelhez és egy ablak melletti helyhez."
+        "en": "You can have it with caramel or pistachio — those live under Specialties.",
+        "hu": "Kérheted karamellel vagy pisztáciával is — azok a Különlegességek között laknak."
       },
       "ingredients": {
         "en": [
           "Double espresso",
-          "Lots of steamed milk",
-          "Latte art, if we're not slammed"
+          "Steamed milk, 220ml"
         ],
         "hu": [
           "Dupla espresso",
-          "Sok gőzölt tej",
-          "Latte art, ha nincs rohanás"
-        ]
-      },
-      "behind": {
-        "en": [
-          "Origin — Brazil house roast",
-          "Espresso — double shot",
-          "Milk — silky, glossy steam",
-          "The pour — where the art happens"
-        ],
-        "hu": [
-          "Származás — brazil házi pörkölés",
-          "Espresso — dupla shot",
-          "Tej — selymes, fényes gőzölés",
-          "Az öntés — itt történik a varázslat"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Regular",
-          "Large"
-        ],
-        "hu": [
-          "Normál",
-          "Nagy"
+          "Gőzölt tej, 220 ml"
         ]
       },
       "pairings": [
-        "cinnamon-waffles",
-        "bros-mug"
+        "cinnamon-roll",
+        "blueberry-muffin"
       ],
-      "milks": [
-        "Oat",
-        "Coconut",
-        "Rice",
-        "Pea"
-      ]
-    },
-    {
-      "id": "americano",
-      "cat": "coffee",
-      "order": 4,
-      "price_huf": 1600,
-      "temp": "both",
-      "allergens": [],
-      "flavor": {
-        "bitterSweet": 35,
-        "lightBold": 55,
-        "mildIntense": 45,
-        "milkyCreamy": 5
-      },
-      "images": [
-        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1616388761741-a5936c6f61f6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwxfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
-      ],
-      "name": {
-        "en": "AMERICANO",
-        "hu": "AMERICANO"
-      },
-      "desc": {
-        "en": "Espresso lengthened with hot water. The cleanest way to taste whichever origin is in the hopper today.",
-        "hu": "Espresso forró vízzel hosszabbítva. Így kóstolható a legtisztábban, bármelyik kávé van épp a gépben."
-      },
-      "tip": {
-        "en": "Order it with the guest origin — long and black is where a bright coffee shows off.",
-        "hu": "Kérd a vendégkávéval — hosszan és feketén mutatja meg magát igazán egy élénkebb kávé."
-      },
-      "ingredients": {
-        "en": [
-          "Double espresso",
-          "Hot water"
-        ],
-        "hu": [
-          "Dupla espresso",
-          "Forró víz"
-        ]
-      },
-      "behind": {
-        "en": [
-          "Origin — your choice: Brazil or this month's guest",
-          "Espresso — double shot",
-          "Water — hot, poured gently",
-          "Crema — kept on top"
-        ],
-        "hu": [
-          "Származás — te választasz: brazil vagy a hónap vendége",
-          "Espresso — dupla shot",
-          "Víz — forrón, óvatosan öntve",
-          "Crema — a tetején marad"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Regular",
-          "Large"
-        ],
-        "hu": [
-          "Normál",
-          "Nagy"
-        ]
-      },
-      "pairings": [
-        "bros-sandwich",
-        "bros-beans"
-      ]
-    },
-    {
-      "id": "guest-origin",
-      "cat": "coffee",
-      "order": 5,
-      "price_huf": 1800,
-      "temp": "hot",
-      "allergens": [],
-      "flavor": {
-        "bitterSweet": 62,
-        "lightBold": 38,
-        "mildIntense": 60,
-        "milkyCreamy": 15
-      },
-      "images": [
-        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=900&q=80",
-        "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=900&q=80",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
-      ],
-      "name": {
-        "en": "GUEST ORIGIN",
-        "hu": "VENDÉGKÁVÉ"
-      },
-      "desc": {
-        "en": "A different roaster, a different country, every few weeks. Brighter and more acidic than the house Brazilian — this is the one to try if you already know what you like.",
-        "hu": "Néhány hetente másik pörkölő, másik ország. Élénkebb és savasabb, mint a házi brazil — ezt kérd, ha már tudod, mit szeretsz."
-      },
-      "tip": {
-        "en": "Ask what's in the hopper today. It changes, and we're always happy to talk about it.",
-        "hu": "Kérdezd meg, mi van ma a gépben. Változik, és mindig szívesen mesélünk róla."
-      },
-      "ingredients": {
-        "en": [
-          "This month's guest origin",
-          "Filter or espresso",
-          "Ask at the bar"
-        ],
-        "hu": [
-          "A hónap vendégkávéja",
-          "Filter vagy espresso",
-          "Kérdezd a pultnál"
-        ]
-      },
-      "behind": {
-        "en": [
-          "Selection — one roaster at a time, chosen by the three of us",
-          "Rotation — a new origin every few weeks",
-          "Brew — filter by default, espresso on request",
-          "Notes — written on the board each morning"
-        ],
-        "hu": [
-          "Válogatás — egyszerre egy pörkölő, hárman választjuk ki",
-          "Rotáció — néhány hetente új származás",
-          "Elkészítés — alapból filter, kérésre espresso",
-          "Ízjegyek — minden reggel felírjuk a táblára"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Filter",
-          "Espresso"
-        ],
-        "hu": [
-          "Filter",
-          "Espresso"
-        ]
-      },
-      "pairings": [
-        "croissant",
-        "bros-beans"
-      ]
+      "stock_photos": true
     },
     {
       "id": "cold-brew",
-      "cat": "cold",
-      "order": 6,
-      "price_huf": 1800,
+      "cat": "coffee",
+      "order": 9,
+      "price_huf": 1190,
       "temp": "iced",
-      "allergens": [],
       "flavor": {
-        "bitterSweet": 40,
-        "lightBold": 65,
-        "mildIntense": 65,
-        "milkyCreamy": 10
+        "bitterSweet": 56,
+        "lightBold": 70,
+        "mildIntense": 66,
+        "milkyCreamy": 6
       },
       "images": [
-        "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?w=900&q=80",
-        "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=900&q=80",
-        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        "https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1461023058943-07fcbe16d735?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
         "en": "COLD BREW",
         "hu": "COLD BREW"
       },
       "desc": {
-        "en": "Eighteen hours in cold water. The Brazilian roast turns deep, smooth and dangerously drinkable.",
-        "hu": "Tizennyolc óra hideg vízben. A brazil pörkölés mélyre, simára és veszélyesen ihatóra vált."
+        "en": "Sixteen hours of cold steeping, zero bitterness. Clean, faintly sweet, and stronger than it lets on.",
+        "hu": "Tizenhat óra hideg áztatás, nulla keserűség. Tiszta, édeskés, és úgy üt, ahogy nem várnád."
       },
       "tip": {
-        "en": "Ask for a slice of orange if you like it bright.",
-        "hu": "Kérj hozzá egy szelet narancsot, ha frissen szereted."
+        "en": "Served over ice, no milk. If you want it softer, ask for a splash of oat on the side.",
+        "hu": "Jéggel adjuk, tej nélkül. Ha lágyítanád, kérj mellé egy kevés zabtejet."
       },
       "ingredients": {
         "en": [
-          "Coarse-ground Bros blend",
-          "Cold water",
-          "Time — 18 hours"
+          "Coarse-ground house roast",
+          "Cold water, 16 hours",
+          "Ice"
         ],
         "hu": [
-          "Durvára őrölt Bros keverék",
-          "Hideg víz",
-          "Idő — 18 óra"
+          "Durvára őrölt házi pörkölés",
+          "Hideg víz, 16 óra",
+          "Jég"
         ]
       },
-      "sizes": {
+      "behind": {
         "en": [
-          "Regular",
-          "Large"
+          "Steep — 16 hours, refrigerated",
+          "Ratio — 1:8, then filtered",
+          "Shelf life — 48 hours, then we start a fresh batch"
         ],
         "hu": [
-          "Normál",
-          "Nagy"
+          "Áztatás — 16 óra, hűtőben",
+          "Arány — 1:8, utána szűrve",
+          "Eltarthatóság — 48 óra, aztán újat indítunk"
         ]
       },
       "pairings": [
-        "brownie-sundae",
-        "bros-tee"
-      ]
+        "broscafe-sandwich"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "iced-latte",
-      "cat": "cold",
-      "order": 7,
-      "price_huf": 2000,
-      "temp": "iced",
-      "allergens": [
-        "Milk"
-      ],
+      "id": "v60",
+      "cat": "coffee",
+      "order": 10,
+      "price_huf": 1190,
+      "temp": "hot",
       "flavor": {
-        "bitterSweet": 50,
-        "lightBold": 40,
-        "mildIntense": 35,
-        "milkyCreamy": 80
+        "bitterSweet": 48,
+        "lightBold": 38,
+        "mildIntense": 44,
+        "milkyCreamy": 4
       },
       "images": [
-        "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=900&q=80",
-        "https://images.pexels.com/photos/32590864/pexels-photo-32590864.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1442512595331-e89e73853f31?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1447933601403-0c6688de566e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1524350876685-274059332603?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "ICED LATTE",
-        "hu": "JEGES LATTE"
+        "en": "V60",
+        "hu": "V60"
       },
       "desc": {
-        "en": "Double shot over ice, cold milk on top. Watch it marble before you stir.",
-        "hu": "Dupla shot jégre, tetején hideg tej. Nézd, ahogy márványosodik, mielőtt megkevered."
+        "en": "Hand-poured filter. The clearest cup we make, and the one with nowhere for the bean to hide.",
+        "hu": "Kézzel leöntött filterkávé. A legtisztább csésze, amit adunk — itt nincs hova bújnia a babnak."
       },
       "tip": {
-        "en": "Watch it marble before you stir. Half the fun.",
-        "hu": "Nézd, ahogy márványosodik, mielőtt megkevered. Ez a fele élmény."
+        "en": "Ask what's in the grinder today — the V60 always gets the most interesting lot.",
+        "hu": "Kérdezd meg, mi van ma a malomban — a V60-hoz mindig a legérdekesebb tételt tesszük."
       },
       "ingredients": {
         "en": [
-          "Double espresso",
-          "Ice",
-          "Cold milk"
+          "22g coffee, medium grind",
+          "360g water, 94°C",
+          "Three pours, 3 minutes"
         ],
         "hu": [
-          "Dupla espresso",
-          "Jég",
-          "Hideg tej"
+          "22 g kávé, közepes őrlés",
+          "360 g víz, 94 °C",
+          "Három öntés, 3 perc"
         ]
       },
-      "sizes": {
+      "behind": {
         "en": [
-          "Regular",
-          "Large"
+          "Bloom — 50g water, 40 seconds",
+          "Pours — three, in an even spiral",
+          "Time — 3 minutes, no more, no less",
+          "Scale — always, never by eye"
         ],
         "hu": [
-          "Normál",
-          "Nagy"
+          "Virágoztatás — 50 g víz, 40 másodperc",
+          "Öntések — három, egyenletes körben",
+          "Idő — 3 perc, se több, se kevesebb",
+          "Mérleg — mindig, sosem szemre"
         ]
       },
       "pairings": [
-        "croissant",
-        "brownie-sundae"
+        "bros-beans",
+        "cranberry-oat-cookie"
       ],
-      "milks": [
-        "Oat",
-        "Coconut",
-        "Rice",
-        "Pea"
-      ]
+      "stock_photos": true
     },
     {
       "id": "espresso-tonic",
-      "cat": "cold",
-      "order": 8,
-      "price_huf": 2200,
+      "cat": "specialty",
+      "order": 11,
+      "price_huf": 1690,
       "temp": "iced",
-      "allergens": [],
       "flavor": {
-        "bitterSweet": 60,
-        "lightBold": 30,
-        "mildIntense": 70,
-        "milkyCreamy": 0
+        "bitterSweet": 34,
+        "lightBold": 72,
+        "mildIntense": 78,
+        "milkyCreamy": 4
       },
       "images": [
-        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwzfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1475296204602-08d15839e95f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1NzZ8MHwxfHNlYXJjaHwyfHxzcGVjaWFsdHklMjBjb2ZmZWUlMjBlc3ByZXNzbyUyMHBvdXJpbmd8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1551024709-8f23befc6f87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
         "en": "ESPRESSO TONIC",
         "hu": "ESPRESSO TONIC"
       },
       "desc": {
-        "en": "Sounds wrong, tastes right. We build it on the guest origin — the tonic wants the fruit.",
-        "hu": "Rossznak hangzik, jónak esik. A vendégkávéra építjük — a tonic a gyümölcsöset szereti."
+        "en": "Tonic, ice, and a shot poured over the top. Bitter, fizzy, citric — our best seller all summer.",
+        "hu": "Tonik, jég, és egy shot a tetején. Keserű, pezsgő, citrusos — nyáron ez fogy a legjobban."
       },
       "tip": {
-        "en": "Our most argued-about drink. Try it before you judge it.",
-        "hu": "A legtöbbet vitatott italunk. Kóstold meg, mielőtt ítélkezel."
+        "en": "Don't stir it. The layers are best kept apart, and it looks like something that way.",
+        "hu": "Ne keverd meg. A rétegek szétválva a legjobbak, és úgy is néz ki valahogy."
       },
       "ingredients": {
         "en": [
           "Double espresso",
-          "Tonic water",
-          "Ice",
-          "Orange peel"
+          "Tonic, 150ml",
+          "Ice, a wheel of lemon"
         ],
         "hu": [
           "Dupla espresso",
-          "Tonic",
-          "Jég",
-          "Narancshéj"
+          "Tonik, 150 ml",
+          "Jég, citromkarika"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Order — ice, tonic, then the shot",
+          "Why it works — quinine lifts the coffee's acidity",
+          "Glass — tall, so the layers have room"
+        ],
+        "hu": [
+          "Sorrend — jég, tonik, aztán a shot",
+          "Miért működik — a kinin kiemeli a kávé savait",
+          "Pohár — magas, hogy legyen hely a rétegeknek"
+        ]
+      },
+      "pairings": [
+        "pesto-sandwich",
+        "chocolate-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "caramel-latte",
+      "cat": "specialty",
+      "order": 12,
+      "price_huf": 1690,
+      "temp": "both",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 80,
+        "lightBold": 46,
+        "mildIntense": 40,
+        "milkyCreamy": 84
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CARAMEL LATTE",
+        "hu": "KARAMELL LATTE"
+      },
+      "desc": {
+        "en": "A latte with cooked caramel. Sweet without being sugary; we cook the caramel ourselves, with salted butter.",
+        "hu": "Latte főtt karamellel. Édes, de nem cukros — a karamellt magunk főzzük, sós vajjal."
+      },
+      "tip": {
+        "en": "Ask for it iced; the caramel settles at the bottom of the glass and you get it at the end.",
+        "hu": "Jegesen is kérheted — a karamell hidegen jobban megül a pohár alján."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Steamed milk",
+          "House salted caramel"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Gőzölt tej",
+          "Házi sós karamell"
+        ]
+      },
+      "pairings": [
+        "chocolate-muffin"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pistachio-latte",
+      "cat": "specialty",
+      "order": 13,
+      "price_huf": 1690,
+      "temp": "both",
+      "allergens": [
+        "Milk",
+        "Nuts"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 70,
+        "lightBold": 50,
+        "mildIntense": 46,
+        "milkyCreamy": 82
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1572442388796-11668a67e53d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509042239860-f550ce710b93?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PISTACHIO LATTE",
+        "hu": "PISZTÁCIÁS LATTE"
+      },
+      "desc": {
+        "en": "Real pistachio paste through the milk. Nutty, faintly salty, a little thicker than you expect.",
+        "hu": "Valódi pisztáciakrém a tejben. Diós, sós, kicsit sűrűbb, mint amire számítasz."
+      },
+      "tip": {
+        "en": "If you mean it about pistachio, take the croissant too — it's the same paste inside.",
+        "hu": "Ha a pisztáciát komolyan gondolod, a croissant-t is így kérd — ugyanaz a krém van benne."
+      },
+      "ingredients": {
+        "en": [
+          "Double espresso",
+          "Steamed milk",
+          "Pistachio paste"
+        ],
+        "hu": [
+          "Dupla espresso",
+          "Gőzölt tej",
+          "Pisztáciakrém"
+        ]
+      },
+      "pairings": [
+        "pistachio-croissant",
+        "pistachio-cheesecake"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "matcha-latte",
+      "cat": "specialty",
+      "order": 14,
+      "price_huf": 1590,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 58,
+        "lightBold": 44,
+        "mildIntense": 50,
+        "milkyCreamy": 78
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "MATCHA LATTE",
+        "hu": "MATCHA LATTE"
+      },
+      "desc": {
+        "en": "Ceremonial matcha whisked smooth and lengthened with milk. Grassy, gently sweet, caffeine without coffee.",
+        "hu": "Ceremóniás matcha, habosra keverve, tejjel. Füves, édeskés, koffein kávé nélkül."
+      },
+      "tip": {
+        "en": "Whisked by hand with bamboo, one cup at a time. That's the extra thirty seconds.",
+        "hu": "Bambuszseprűvel keverjük ki, minden csészét külön. Ezért tart fél perccel tovább."
+      },
+      "ingredients": {
+        "en": [
+          "2g ceremonial matcha",
+          "Water, 80°C",
+          "Steamed milk"
+        ],
+        "hu": [
+          "2 g ceremóniás matcha",
+          "Víz, 80 °C",
+          "Gőzölt tej"
+        ]
+      },
+      "behind": {
+        "en": [
+          "Grade — ceremonial, not culinary",
+          "Water — 80°C; boiling turns it bitter",
+          "Whisk — bamboo, every single serve"
+        ],
+        "hu": [
+          "Minőség — ceremóniás, nem konyhai",
+          "Víz — 80 °C, forrón megkeseredik",
+          "Seprű — bambusz, minden adaghoz"
+        ]
+      },
+      "pairings": [
+        "pistachio-cheesecake",
+        "cranberry-oat-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "iced-matcha",
+      "cat": "specialty",
+      "order": 15,
+      "price_huf": 1690,
+      "temp": "iced",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 56,
+        "lightBold": 46,
+        "mildIntense": 54,
+        "milkyCreamy": 70
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1551024709-8f23befc6f87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1618897996318-5a901fa6ca71?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "ICED MATCHA",
+        "hu": "ICED MATCHA"
+      },
+      "desc": {
+        "en": "The same matcha over cold milk and ice. Greener, sharper, and far more refreshing.",
+        "hu": "Ugyanaz a matcha, hideg tejen, jégen. Zöldebb, élesebb, és sokkal frissítőbb."
+      },
+      "tip": {
+        "en": "Give it a stir before you drink; matcha likes to settle under the ice.",
+        "hu": "Keverd el, mielőtt iszod — a matcha szeret leülni a jég alá."
+      },
+      "ingredients": {
+        "en": [
+          "2g ceremonial matcha",
+          "Cold milk",
+          "Ice"
+        ],
+        "hu": [
+          "2 g ceremóniás matcha",
+          "Hideg tej",
+          "Jég"
+        ]
+      },
+      "pairings": [
+        "blueberry-muffin",
+        "strawberry-cheesecake"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "strawberry-matcha",
+      "cat": "specialty",
+      "order": 16,
+      "price_huf": 1890,
+      "temp": "iced",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 74,
+        "lightBold": 42,
+        "mildIntense": 48,
+        "milkyCreamy": 72
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1560508180-03f285f67ded?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "STRAWBERRY MATCHA",
+        "hu": "EPRES MATCHA"
+      },
+      "desc": {
+        "en": "Strawberry purée at the bottom, matcha on top. Pink and green, and exactly as good as it looks.",
+        "hu": "Eperpüré a pohár alján, matcha a tetején. Rózsaszín és zöld, és pontosan olyan jó, amilyennek látszik."
+      },
+      "tip": {
+        "en": "It's built in layers for a reason. Once you stir it, there's no going back.",
+        "hu": "A rétegek miatt készül így. Ha megkeverted, már nem tudod visszacsinálni."
+      },
+      "ingredients": {
+        "en": [
+          "House strawberry purée",
+          "Cold milk",
+          "2g ceremonial matcha",
+          "Ice"
+        ],
+        "hu": [
+          "Házi eperpüré",
+          "Hideg tej",
+          "2 g ceremóniás matcha",
+          "Jég"
+        ]
+      },
+      "pairings": [
+        "strawberry-cheesecake",
+        "chocolate-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "mango-matcha",
+      "cat": "specialty",
+      "order": 17,
+      "price_huf": 1890,
+      "temp": "iced",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 76,
+        "lightBold": 42,
+        "mildIntense": 48,
+        "milkyCreamy": 70
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1546173159-315724a31696?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "MANGO MATCHA",
+        "hu": "MANGÓS MATCHA"
+      },
+      "desc": {
+        "en": "Ripe mango purée under the matcha. Tropical and grassy at once — it sounds odder than it drinks.",
+        "hu": "Érett mangópüré a matcha alatt. Trópusi és füves egyszerre — furcsábban hangzik, mint amilyen."
+      },
+      "tip": {
+        "en": "If the strawberry was too sweet, go this way; the mango carries more acidity.",
+        "hu": "Ha az epres túl édes volt, ez a másik irány — a mangó savasabb."
+      },
+      "ingredients": {
+        "en": [
+          "Ripe mango purée",
+          "Cold milk",
+          "2g ceremonial matcha",
+          "Ice"
+        ],
+        "hu": [
+          "Érett mangópüré",
+          "Hideg tej",
+          "2 g ceremóniás matcha",
+          "Jég"
+        ]
+      },
+      "pairings": [
+        "mango-smoothie",
+        "cranberry-oat-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "belgian-hot-chocolate",
+      "cat": "specialty",
+      "order": 18,
+      "price_huf": 1390,
+      "temp": "hot",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 84,
+        "lightBold": 56,
+        "mildIntense": 52,
+        "milkyCreamy": 92
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1517578239113-b03992dcdd25?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1594631252845-29fc4cc8cde9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BELGIAN HOT CHOCOLATE",
+        "hu": "BELGA FORRÓ CSOKI"
+      },
+      "desc": {
+        "en": "Real Belgian chocolate melted into milk. Not powder, not syrup — it asks for a spoon.",
+        "hu": "Valódi belga csokoládé, tejben olvasztva. Nem por, nem szirup — kanalat kér."
+      },
+      "tip": {
+        "en": "It sells hardest from November, but we make it all year. Cream on top if you ask.",
+        "hu": "Novembertől fogy a legjobban, de egész évben megvan. Tejszínhabot kérésre teszünk rá."
+      },
+      "ingredients": {
+        "en": [
+          "Belgian dark chocolate, 54%",
+          "Whole milk",
+          "A pinch of salt"
+        ],
+        "hu": [
+          "Belga étcsokoládé, 54%",
+          "Teljes tej",
+          "Egy csipet só"
+        ]
+      },
+      "pairings": [
+        "cinnamon-roll"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "chai-latte",
+      "cat": "specialty",
+      "order": 19,
+      "price_huf": 1490,
+      "temp": "both",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 72,
+        "lightBold": 52,
+        "mildIntense": 58,
+        "milkyCreamy": 80
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541167760496-1628856ab772?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CHAI LATTE",
+        "hu": "CHAI LATTE"
+      },
+      "desc": {
+        "en": "Spiced black tea concentrate under steamed milk. Cinnamon, ginger, cardamom, clove.",
+        "hu": "Fűszeres feketetea-koncentrátum gőzölt tejjel. Fahéj, gyömbér, kardamom, szegfűszeg."
+      },
+      "tip": {
+        "en": "We cook the concentrate weekly from whole spices. That's why it doesn't taste like the sachet version.",
+        "hu": "A koncentrátumot hetente főzzük, egész fűszerekből. Ezért nem olyan, mint a zacskós."
+      },
+      "ingredients": {
+        "en": [
+          "House chai concentrate",
+          "Steamed milk",
+          "Whole cinnamon, ginger, cardamom"
+        ],
+        "hu": [
+          "Házi chai koncentrátum",
+          "Gőzölt tej",
+          "Egész fahéj, gyömbér, kardamom"
+        ]
+      },
+      "pairings": [
+        "cinnamon-roll",
+        "apple-pie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "dirty-chai-latte",
+      "cat": "specialty",
+      "order": 20,
+      "price_huf": 1690,
+      "temp": "both",
+      "allergens": [
+        "Milk"
+      ],
+      "milks": [
+        "Oat",
+        "CoconutRice",
+        "Pea"
+      ],
+      "flavor": {
+        "bitterSweet": 62,
+        "lightBold": 66,
+        "mildIntense": 70,
+        "milkyCreamy": 74
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1534778101976-62847782c213?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1583165278997-0250ea5d72e2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "DIRTY CHAI LATTE",
+        "hu": "DIRTY CHAI LATTE"
+      },
+      "desc": {
+        "en": "A chai latte with a shot through it. The spice stays; there's just a coffee underneath now.",
+        "hu": "Chai latte egy shot espressóval. A fűszer marad, csak lesz alatta egy kávé is."
+      },
+      "tip": {
+        "en": "Order this over the plain chai in the morning, when the day looks long.",
+        "hu": "Reggel ezt kérd a sima chai helyett, ha a nap hosszabbnak ígérkezik."
+      },
+      "ingredients": {
+        "en": [
+          "House chai concentrate",
+          "Single espresso",
+          "Steamed milk"
+        ],
+        "hu": [
+          "Házi chai koncentrátum",
+          "Szimpla espresso",
+          "Gőzölt tej"
+        ]
+      },
+      "pairings": [
+        "ham-eggs-croissant",
+        "walnut-braid"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "matcha-tonic",
+      "cat": "specialty",
+      "order": 21,
+      "price_huf": 1690,
+      "temp": "iced",
+      "flavor": {
+        "bitterSweet": 44,
+        "lightBold": 48,
+        "mildIntense": 62,
+        "milkyCreamy": 6
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1515823064-d6e0c04616a7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1551024709-8f23befc6f87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "MATCHA TONIC",
+        "hu": "MATCHA TONIC"
+      },
+      "desc": {
+        "en": "Matcha over tonic and ice. Green, bitter, fizzing — the other half of the espresso tonic.",
+        "hu": "Matcha tonikon, jégen. Zöld, keserű, pezsgő — az espresso tonic másik fele."
+      },
+      "tip": {
+        "en": "No milk in this one, so it's the vegan answer to the afternoon dip.",
+        "hu": "Tej nincs benne, szóval ez a vegán válasz a délutáni gödörre."
+      },
+      "ingredients": {
+        "en": [
+          "2g ceremonial matcha",
+          "Tonic, 150ml",
+          "Ice, lime"
+        ],
+        "hu": [
+          "2 g ceremóniás matcha",
+          "Tonik, 150 ml",
+          "Jég, lime"
+        ]
+      },
+      "pairings": [
+        "pesto-sandwich",
+        "cranberry-oat-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "black-tea",
+      "cat": "tea",
+      "order": 22,
+      "price_huf": 1190,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 36,
+        "lightBold": 62,
+        "mildIntense": 58,
+        "milkyCreamy": 2
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1576092768241-dec231879fc3?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BLACK TEA",
+        "hu": "FEKETE TEA"
+      },
+      "desc": {
+        "en": "Whole-leaf black tea, served in a pot. Strong, malty, and it steeps for as long as you want it to.",
+        "hu": "Egész levelű fekete tea, kancsóban. Erős, malátás, és annyi ideig ázik, ameddig te akarod."
+      },
+      "tip": {
+        "en": "The pot gives you two cups. The second is stronger if you leave the leaf in.",
+        "hu": "A kancsóból két csésze jön ki. A második erősebb, ha bent hagyod a levelet."
+      },
+      "ingredients": {
+        "en": [
+          "Whole-leaf black tea",
+          "Water, 95°C",
+          "4 minutes"
+        ],
+        "hu": [
+          "Egész levelű fekete tea",
+          "Víz, 95 °C",
+          "4 perc"
+        ]
+      },
+      "pairings": [
+        "walnut-braid",
+        "apple-pie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "green-tea",
+      "cat": "tea",
+      "order": 23,
+      "price_huf": 1190,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 44,
+        "lightBold": 32,
+        "mildIntense": 34,
+        "milkyCreamy": 2
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1563822249548-9a72b6353cd1?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1558160074-4d7d8bdf4256?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "GREEN TEA",
+        "hu": "ZÖLD TEA"
+      },
+      "desc": {
+        "en": "A soft, grassy green tea, steeped cooler so it never turns bitter.",
+        "hu": "Lágy, füves zöld tea, alacsonyabb hőfokon áztatva, hogy ne keseredjen meg."
+      },
+      "tip": {
+        "en": "Made with 80°C water. If you've had a bitter green tea somewhere, it was poured boiling.",
+        "hu": "80 °C-os vízzel készül. Ha valahol keserű zöld teát kaptál, ott forró vizet öntöttek rá."
+      },
+      "ingredients": {
+        "en": [
+          "Whole-leaf green tea",
+          "Water, 80°C",
+          "2 minutes"
+        ],
+        "hu": [
+          "Egész levelű zöld tea",
+          "Víz, 80 °C",
+          "2 perc"
+        ]
+      },
+      "pairings": [
+        "cranberry-oat-cookie",
+        "strawberry-cheesecake"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "fruit-tea",
+      "cat": "tea",
+      "order": 24,
+      "price_huf": 1190,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 62,
+        "lightBold": 34,
+        "mildIntense": 40,
+        "milkyCreamy": 2
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1576092768241-dec231879fc3?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "FRUIT TEA",
+        "hu": "GYÜMÖLCS TEA"
+      },
+      "desc": {
+        "en": "Hibiscus, rosehip and dried berries. Caffeine free, tart, and a deep red in the cup.",
+        "hu": "Hibiszkusz, csipkebogyó, szárított bogyós gyümölcs. Koffeinmentes, savas, mélyvörös."
+      },
+      "tip": {
+        "en": "Ask for it iced; poured over ice it becomes a completely different drink.",
+        "hu": "Jegesen is kérheted — kiöntjük jégre, és egy egészen más ital lesz belőle."
+      },
+      "ingredients": {
+        "en": [
+          "Hibiscus, rosehip, mixed berries",
+          "Water, 95°C",
+          "5 minutes"
+        ],
+        "hu": [
+          "Hibiszkusz, csipkebogyó, bogyós gyümölcsök",
+          "Víz, 95 °C",
+          "5 perc"
+        ]
+      },
+      "pairings": [
+        "strawberry-cheesecake",
+        "chocolate-muffin"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "herbal-tea",
+      "cat": "tea",
+      "order": 25,
+      "price_huf": 1190,
+      "temp": "hot",
+      "flavor": {
+        "bitterSweet": 52,
+        "lightBold": 26,
+        "mildIntense": 28,
+        "milkyCreamy": 2
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1571934811356-5cc061b6821f?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1544787219-7f47ccb76574?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "HERBAL TEA",
+        "hu": "HERBA TEA"
+      },
+      "desc": {
+        "en": "Chamomile, mint and lemon balm. Caffeine free, and made for slowing down.",
+        "hu": "Kamilla, menta és citromfű. Koffeinmentes, és arra való, hogy lassíts egy kicsit."
+      },
+      "tip": {
+        "en": "This is what we suggest at five, if you still plan on sleeping tonight.",
+        "hu": "Ez az, amit délután ötkor ajánlunk, ha még aludni is szeretnél éjjel."
+      },
+      "ingredients": {
+        "en": [
+          "Chamomile, mint, lemon balm",
+          "Water, 95°C",
+          "5 minutes"
+        ],
+        "hu": [
+          "Kamilla, menta, citromfű",
+          "Víz, 95 °C",
+          "5 perc"
+        ]
+      },
+      "pairings": [
+        "cinnamon-roll",
+        "cranberry-oat-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "mango-smoothie",
+      "cat": "smoothie",
+      "order": 26,
+      "price_huf": 1490,
+      "temp": "iced",
+      "flavor": {
+        "bitterSweet": 84,
+        "lightBold": 40,
+        "mildIntense": 46,
+        "milkyCreamy": 30
+      },
+      "images": [
+        "https://images.unsplash.com/photo-1546173159-315724a31696?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1622597467836-f3285f2131b8?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1600271886742-f049cd451bba?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "MANGO SMOOTHIE",
+        "hu": "MANGÓ SMOOTHIE"
+      },
+      "desc": {
+        "en": "Ripe mango, banana and orange juice blended smooth. Thick, cold, and no added sugar.",
+        "hu": "Érett mangó, banán és narancslé, simára turmixolva. Sűrű, hideg, és nincs benne hozzáadott cukor."
+      },
+      "tip": {
+        "en": "The 5dl comes with two straws if you ask; it's a size built for sharing.",
+        "hu": "Az 5 decis változat két szívószállal jön, ha megkéred — ez egy megosztható méret."
+      },
+      "ingredients": {
+        "en": [
+          "Ripe mango",
+          "Banana",
+          "Fresh orange juice",
+          "Ice"
+        ],
+        "hu": [
+          "Érett mangó",
+          "Banán",
+          "Frissen facsart narancslé",
+          "Jég"
         ]
       },
       "sizes": {
         "en": [
-          "One size"
+          "3dl — 1490 Ft",
+          "5dl — 1890 Ft"
         ],
         "hu": [
-          "Egy méret"
+          "3 dl — 1490 Ft",
+          "5 dl — 1890 Ft"
         ]
       },
       "pairings": [
-        "bros-sandwich"
-      ]
+        "pesto-sandwich",
+        "blueberry-muffin"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "bros-sandwich",
-      "cat": "food",
-      "order": 9,
-      "price_huf": 3000,
-      "temp": "hot",
-      "allergens": [
-        "Gluten",
-        "Egg"
-      ],
+      "id": "mixed-berry-smoothie",
+      "cat": "smoothie",
+      "order": 27,
+      "price_huf": 1490,
+      "temp": "iced",
+      "flavor": {
+        "bitterSweet": 72,
+        "lightBold": 42,
+        "mildIntense": 50,
+        "milkyCreamy": 32
+      },
       "images": [
-        "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=900&q=80",
-        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1553530666-ba11a7da3888?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1615478503562-ec2d8aa0e24e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1502741224143-90386d7f8c82?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "BROS SANDWICH",
-        "hu": "BROS SZENDVICS"
+        "en": "MIXED BERRY SMOOTHIE",
+        "hu": "VEGYES GYÜMÖLCS SMOOTHIE"
       },
       "desc": {
-        "en": "Toasted sourdough, slow fillings, made when you order it.",
-        "hu": "Pirított kovászos kenyér, lassan készült töltelék, rendelésre frissen."
+        "en": "Strawberry, raspberry, blueberry and banana. Tarter than the mango, and a deep purple.",
+        "hu": "Eper, málna, áfonya és banán. Savasabb, mint a mangós, és mélylila."
       },
       "tip": {
-        "en": "The sauce recipe is a secret. We've tried to get it out of them.",
-        "hu": "A szósz receptje titok. Hiába próbáltuk kiszedni belőlük."
+        "en": "Made from frozen berries year round, which is why it's as good in January.",
+        "hu": "Fagyasztott bogyósból készül, egész évben — ezért egyenletes a minősége januárban is."
+      },
+      "ingredients": {
+        "en": [
+          "Strawberry, raspberry, blueberry",
+          "Banana",
+          "Apple juice",
+          "Ice"
+        ],
+        "hu": [
+          "Eper, málna, áfonya",
+          "Banán",
+          "Almalé",
+          "Jég"
+        ]
+      },
+      "sizes": {
+        "en": [
+          "3dl — 1490 Ft",
+          "5dl — 1890 Ft"
+        ],
+        "hu": [
+          "3 dl — 1490 Ft",
+          "5 dl — 1890 Ft"
+        ]
+      },
+      "pairings": [
+        "broscafe-sandwich",
+        "chocolate-cookie"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pesto-sandwich",
+      "cat": "sandwich",
+      "order": 28,
+      "price_huf": 1690,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1592415486689-125cbbfcbee2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509722747041-616f39b57569?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PESTO SANDWICH",
+        "hu": "PESTO SZENDVICS"
+      },
+      "desc": {
+        "en": "Basil pesto, mozzarella and tomato, grilled crisp. The vegetarian standard.",
+        "hu": "Bazsalikomos pesto, mozzarella és paradicsom, ropogósra grillezve. A vegetáriánus alapérték."
+      },
+      "tip": {
+        "en": "It comes grilled. If you want it cold, say so at the counter; it works that way too.",
+        "hu": "Grillezve adjuk. Ha hidegen kéred, szólj a pultnál — úgy is működik."
       },
       "ingredients": {
         "en": [
           "Sourdough",
-          "Slow-cooked filling of the day",
-          "Greens",
-          "House sauce"
+          "House basil pesto",
+          "Mozzarella",
+          "Tomato",
+          "Rocket"
         ],
         "hu": [
           "Kovászos kenyér",
-          "A nap lassú tölteléke",
-          "Zöldek",
-          "Házi szósz"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "One size"
-        ],
-        "hu": [
-          "Egy méret"
+          "Házi bazsalikomos pesto",
+          "Mozzarella",
+          "Paradicsom",
+          "Rukkola"
         ]
       },
       "pairings": [
-        "americano",
-        "espresso-tonic"
-      ]
+        "espresso-tonic",
+        "mango-smoothie"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "cinnamon-waffles",
-      "cat": "food",
-      "order": 10,
-      "price_huf": 2600,
-      "temp": "hot",
+      "id": "ham-eggs-croissant",
+      "cat": "sandwich",
+      "order": 29,
+      "price_huf": 1690,
       "allergens": [
         "Gluten",
         "Milk",
         "Egg"
       ],
       "images": [
-        "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=900&q=80",
-        "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900&q=80",
-        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "WAFFLES",
-        "hu": "GOFRI"
+        "en": "HAM & EGGS CROISSANT",
+        "hu": "HAM & EGGS CROISSANT"
       },
       "desc": {
-        "en": "Crisp outside, soft inside, maple doing what maple does.",
-        "hu": "Kívül ropogós, belül puha, a juharszirup teszi a dolgát."
+        "en": "A butter croissant with ham and scrambled egg. Breakfast that fits in one hand.",
+        "hu": "Vajas croissant sonkával és rántottával. A reggeli, ami elfér egy kézben."
       },
       "tip": {
-        "en": "Weekend mornings were invented for this.",
-        "hu": "A hétvégi reggelek ezért lettek kitalálva."
+        "en": "Reliably there until half ten. After that it's down to luck.",
+        "hu": "Fél tizenegyig biztosan van. Utána már csak ha szerencséd van."
       },
       "ingredients": {
         "en": [
-          "Buttermilk batter",
-          "Butter",
-          "Maple syrup",
-          "Berries"
+          "Butter croissant",
+          "Cooked ham",
+          "Scrambled egg",
+          "Cheddar"
         ],
         "hu": [
-          "Írós tészta",
-          "Vaj",
-          "Juharszirup",
-          "Bogyós gyümölcsök"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Half",
-          "Full"
-        ],
-        "hu": [
-          "Fél adag",
-          "Egész"
+          "Vajas croissant",
+          "Főtt sonka",
+          "Rántotta",
+          "Cheddar"
         ]
       },
       "pairings": [
-        "latte",
-        "cappuccino"
-      ]
+        "flat-white",
+        "americano"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "croissant",
-      "cat": "sweet",
-      "order": 11,
-      "price_huf": 1200,
-      "temp": "hot",
+      "id": "eggs-benedict-salmon-croissant",
+      "cat": "sandwich",
+      "order": 30,
+      "price_huf": 2290,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Fish"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1608039829572-78524f79c4c7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "EGGS BENEDICT SALMON CROISSANT",
+        "hu": "EGGS BENEDICT LAZACOS CROISSANT"
+      },
+      "desc": {
+        "en": "Poached egg, smoked salmon and hollandaise on a croissant. Our most expensive sandwich, and worth it.",
+        "hu": "Buggyantott tojás, füstölt lazac és hollandi mártás, croissant-on. A legdrágább szendvicsünk, és megéri."
+      },
+      "tip": {
+        "en": "The hollandaise is whisked to order, which is the extra few minutes. Wait for it.",
+        "hu": "A hollandit rendelésre keverjük, ezért tart pár perccel tovább. Várd meg."
+      },
+      "ingredients": {
+        "en": [
+          "Butter croissant",
+          "Smoked salmon",
+          "Poached egg",
+          "Hollandaise",
+          "Chives"
+        ],
+        "hu": [
+          "Vajas croissant",
+          "Füstölt lazac",
+          "Buggyantott tojás",
+          "Hollandi mártás",
+          "Snidling"
+        ]
+      },
+      "pairings": [
+        "cappuccino",
+        "black-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "broscafe-sandwich",
+      "cat": "sandwich",
+      "order": 31,
+      "price_huf": 1890,
       "allergens": [
         "Gluten",
         "Milk"
       ],
-      "flavor": {
-        "bitterSweet": 70,
-        "lightBold": 20,
-        "mildIntense": 25,
-        "milkyCreamy": 60
-      },
       "images": [
-        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=900&q=80",
-        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
-        "https://images.unsplash.com/photo-1519748771451-a94c596fad67?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njd8MHwxfHNlYXJjaHwxfHxmYXNoaW9uJTIwbGlmZXN0eWxlJTIwZWRpdG9yaWFsJTIwY29mZmVlfGVufDB8fHx8MTc4NzY2Mzg2M3ww&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1509722747041-616f39b57569?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1592415486689-125cbbfcbee2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "BUTTER CROISSANT",
-        "hu": "VAJAS CROISSANT"
+        "en": "BROSCAFÉ SANDWICH",
+        "hu": "BROSCAFÉ SZENDVICS"
       },
       "desc": {
-        "en": "Laminated, golden, and gone by eleven most days.",
-        "hu": "Rétegzett, aranybarna, és a legtöbb nap tizenegyre elfogy."
+        "en": "The house sandwich: turkey, cheddar, avocado and crisp onion. The one we ate most while testing.",
+        "hu": "A házi szendvicsünk: pulyka, cheddar, avokádó és pirított hagyma. Ezt ettük meg a legtöbbször teszteléskor."
       },
       "tip": {
-        "en": "Warm it up. Thank us later.",
-        "hu": "Melegítsd meg. Később megköszönöd."
+        "en": "If you try one of the six, make it this one. That's why our name is on it.",
+        "hu": "Ha csak egyet próbálsz ki a hatból, ezt. Ezért van rajta a nevünk."
       },
       "ingredients": {
         "en": [
-          "Flour",
-          "A lot of butter",
-          "Time",
-          "Patience"
+          "Sourdough",
+          "Turkey breast",
+          "Cheddar",
+          "Avocado",
+          "Crisp onion",
+          "House mayo"
         ],
         "hu": [
-          "Liszt",
-          "Sok vaj",
-          "Idő",
-          "Türelem"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "One size"
-        ],
-        "hu": [
-          "Egy méret"
+          "Kovászos kenyér",
+          "Pulykamell",
+          "Cheddar",
+          "Avokádó",
+          "Pirított hagyma",
+          "Házi majonéz"
         ]
       },
       "pairings": [
-        "cappuccino",
-        "espresso"
-      ]
+        "cold-brew",
+        "americano"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "banana-bread",
-      "cat": "sweet",
-      "order": 12,
-      "price_huf": 1400,
-      "temp": "hot",
+      "id": "salami-sandwich",
+      "cat": "sandwich",
+      "order": 32,
+      "price_huf": 1590,
       "allergens": [
         "Gluten",
-        "Egg",
-        "Nuts"
+        "Milk"
       ],
-      "flavor": {
-        "bitterSweet": 78,
-        "lightBold": 30,
-        "mildIntense": 35,
-        "milkyCreamy": 45
-      },
       "images": [
-        "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=900&q=80",
-        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=900&q=80",
-        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
+        "https://images.unsplash.com/photo-1550507992-eb63ffee0847?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509722747041-616f39b57569?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "BANANA BREAD",
-        "hu": "BANÁNOS KENYÉR"
+        "en": "SALAMI SANDWICH",
+        "hu": "SZALÁMIS SZENDVICS"
       },
       "desc": {
-        "en": "Dense, toasty, just sweet enough. A Bros classic.",
-        "hu": "Sűrű, pirítós, épp elég édes. Bros klasszikus."
+        "en": "Hungarian salami, butter and pickles. Four ingredients, nothing spare.",
+        "hu": "Magyar szalámi, vaj, savanyú uborka. Négy összetevő, semmi fölösleges."
       },
       "tip": {
-        "en": "Toasted with a little salted butter. Trust us.",
-        "hu": "Pirítva, egy kevés sózott vajjal. Bízz bennünk."
+        "en": "Our cheapest sandwich, and the oldest recipe on the list.",
+        "hu": "A legolcsóbb szendvicsünk, és a legrégebbi recept a listán."
       },
       "ingredients": {
         "en": [
-          "Overripe bananas",
-          "Brown butter",
-          "Walnuts"
+          "Sourdough",
+          "Hungarian winter salami",
+          "Butter",
+          "Pickled cucumber"
         ],
         "hu": [
-          "Túlérett banán",
-          "Barna vaj",
-          "Dió"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "Slice",
-          "Two slices (no judgment)"
-        ],
-        "hu": [
-          "Szelet",
-          "Két szelet (nem ítélkezünk)"
+          "Kovászos kenyér",
+          "Téliszalámi",
+          "Vaj",
+          "Kovászos uborka"
         ]
       },
       "pairings": [
-        "cappuccino",
-        "cold-brew"
-      ]
+        "espresso",
+        "black-tea"
+      ],
+      "stock_photos": true
     },
     {
-      "id": "brownie-sundae",
-      "cat": "sweet",
-      "order": 13,
-      "price_huf": 2400,
-      "temp": "both",
+      "id": "triple-cheese-sandwich",
+      "cat": "sandwich",
+      "order": 33,
+      "price_huf": 1690,
+      "allergens": [
+        "Gluten",
+        "Milk"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1592415486689-125cbbfcbee2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "TRIPLE CHEESE SANDWICH",
+        "hu": "TRIPLA SAJTOS SZENDVICS"
+      },
+      "desc": {
+        "en": "Cheddar, mozzarella and smoked cheese, grilled until it gives up. Nothing restrained about it.",
+        "hu": "Cheddar, mozzarella és füstölt sajt, grillezve, amíg szétfolyik. Nincs itt semmi visszafogottság."
+      },
+      "tip": {
+        "en": "Best hot, and only hot. Two minutes into a takeaway box it isn't the same thing.",
+        "hu": "Forrón a legjobb, és csak forrón. Ha elvinnéd, két perc alatt már nem ugyanaz."
+      },
+      "ingredients": {
+        "en": [
+          "Sourdough",
+          "Cheddar",
+          "Mozzarella",
+          "Smoked cheese",
+          "Butter"
+        ],
+        "hu": [
+          "Kovászos kenyér",
+          "Cheddar",
+          "Mozzarella",
+          "Füstölt sajt",
+          "Vaj"
+        ]
+      },
+      "pairings": [
+        "americano",
+        "coca-cola"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cinnamon-roll",
+      "cat": "pastry",
+      "order": 34,
+      "price_huf": 790,
       "allergens": [
         "Gluten",
         "Milk",
         "Egg"
       ],
-      "flavor": {
-        "bitterSweet": 85,
-        "lightBold": 75,
-        "mildIntense": 70,
-        "milkyCreamy": 70
-      },
       "images": [
-        "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=900&q=80",
-        "https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=900&q=80",
-        "https://images.pexels.com/photos/32507191/pexels-photo-32507191.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+        "https://images.unsplash.com/photo-1509365465985-25d11c17e812?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
       ],
       "name": {
-        "en": "BROWNIE SUNDAY",
-        "hu": "BROWNIE SUNDAY"
+        "en": "CINNAMON ROLL",
+        "hu": "FAHÉJAS TEKERCS"
       },
       "desc": {
-        "en": "Warm brownie, cold ice cream, chocolate everywhere.",
-        "hu": "Meleg brownie, hideg fagyi, csoki mindenhol."
+        "en": "Enriched dough, cinnamon butter, a thick glaze. Out of the oven at eight.",
+        "hu": "Kelt tészta, fahéjas vajkrém, sűrű cukormáz. Reggel nyolckor jön ki a sütőből."
+      },
+      "pairings": [
+        "latte",
+        "chai-latte"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cheese-scone",
+      "cat": "pastry",
+      "order": 35,
+      "price_huf": 190,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CHEESE SCONE",
+        "hu": "SAJTOS POGÁCSA"
+      },
+      "desc": {
+        "en": "A flaky cheese scone. The cheapest thing on the counter, and never there by evening.",
+        "hu": "Réteges, sajtos pogácsa. A legolcsóbb dolog a pultban, és sosem marad estére."
+      },
+      "pairings": [
+        "espresso",
+        "black-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "walnut-braid",
+      "cat": "pastry",
+      "order": 36,
+      "price_huf": 990,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "WALNUT BRAID",
+        "hu": "DIÓS FONAT"
+      },
+      "desc": {
+        "en": "A braided yeast dough filled with ground walnut. Dense, not too sweet, and better the next day than you'd think.",
+        "hu": "Fonott kelt tészta darált dióval. Sűrű, nem túl édes, és jobb másnap is, mint gondolnád."
+      },
+      "pairings": [
+        "black-tea",
+        "americano"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "bavarian-pretzel",
+      "cat": "pastry",
+      "order": 37,
+      "price_huf": 790,
+      "allergens": [
+        "Gluten"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BAVARIAN PRETZEL",
+        "hu": "BAJOR SÓS PEREC"
+      },
+      "desc": {
+        "en": "A lye pretzel under coarse salt. Dark and crisp outside, soft within — ask for butter.",
+        "hu": "Lúgos perec durva sóval. Kívül sötét és ropogós, belül puha — vajjal kérd."
+      },
+      "pairings": [
+        "americano",
+        "coca-cola"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pistachio-croissant",
+      "cat": "pastry",
+      "order": 38,
+      "price_huf": 990,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PISTACHIO CROISSANT",
+        "hu": "PISZTÁCIÁS CROISSANT"
+      },
+      "desc": {
+        "en": "A butter croissant filled with pistachio paste and finished with crushed pistachio.",
+        "hu": "Vajas croissant, pisztáciakrémmel töltve, darált pisztáciával a tetején."
+      },
+      "pairings": [
+        "pistachio-latte",
+        "cortado"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "nutella-croissant",
+      "cat": "pastry",
+      "order": 39,
+      "price_huf": 990,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509365465985-25d11c17e812?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "NUTELLA CROISSANT",
+        "hu": "NUTELLÁS CROISSANT"
+      },
+      "desc": {
+        "en": "The same croissant, filled with Nutella. Ask for it warmed and it will run.",
+        "hu": "Ugyanaz a croissant, Nutellával töltve. Kérd megmelegítve, és folyni fog."
+      },
+      "pairings": [
+        "cappuccino",
+        "belgian-hot-chocolate"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "croissant",
+      "cat": "pastry",
+      "order": 40,
+      "price_huf": 690,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1555507036-ab1f4038808a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CROISSANT",
+        "hu": "CROISSANT"
+      },
+      "desc": {
+        "en": "A plain butter croissant, twenty-seven layers. The kind that gets crumbs everywhere.",
+        "hu": "Sima vajas croissant, huszonhét réteg. Az a fajta, ami mindenhova morzsázik."
       },
       "tip": {
-        "en": "Share it. Or don't. We're not watching.",
-        "hu": "Oszd meg. Vagy ne. Nem nézünk oda."
+        "en": "Before nine it's still warm from the oven. After that, ask us to warm it.",
+        "hu": "Ha reggel kilenc előtt jössz, még langyos. Utána kérd melegítve."
       },
       "ingredients": {
         "en": [
-          "Double-choc brownie",
-          "Vanilla ice cream",
-          "Warm chocolate sauce"
+          "French flour",
+          "Butter, 82%",
+          "Levain",
+          "Sea salt"
         ],
         "hu": [
-          "Dupla csokis brownie",
-          "Vanílafagyi",
-          "Meleg csokiszósz"
-        ]
-      },
-      "sizes": {
-        "en": [
-          "One size"
-        ],
-        "hu": [
-          "Egy méret"
+          "Francia liszt",
+          "Vaj, 82%",
+          "Kovász",
+          "Tengeri só"
         ]
       },
       "pairings": [
         "espresso",
+        "cappuccino"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cheese-straw",
+      "cat": "pastry",
+      "order": 41,
+      "price_huf": 990,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1608198093002-ad4e005484ec?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1509440159596-0249088772ff?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CHEESE STRAW",
+        "hu": "SAJTOS RÚD"
+      },
+      "desc": {
+        "en": "A long, flaky cheese straw. Saltier than the scone, and twice the size.",
+        "hu": "Hosszú, réteges sajtos rúd. Sósabb, mint a pogácsa, és kétszer akkora."
+      },
+      "pairings": [
+        "americano",
+        "coca-cola"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pistachio-raspberry-pie",
+      "cat": "cake",
+      "order": 42,
+      "price_huf": 1490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1565958011703-44f9829ba187?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PISTACHIO RASPBERRY PIE",
+        "hu": "PISZTÁCIÁS MÁLNÁS PITE"
+      },
+      "desc": {
+        "en": "Pistachio cream and fresh raspberry on shortcrust. Salt and acidity at the same time.",
+        "hu": "Pisztáciás krém és friss málna omlós tésztán. A sós és a savanyú egyszerre."
+      },
+      "pairings": [
+        "flat-white",
+        "green-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pistachio-cheesecake",
+      "cat": "cake",
+      "order": 43,
+      "price_huf": 1490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1631206753348-db44968fd440?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PISTACHIO CHEESECAKE",
+        "hu": "PISZTÁCIÁS SAJTTORTA"
+      },
+      "desc": {
+        "en": "A baked cheesecake with pistachio paste on a biscuit base. Dense, salt-sweet, pale green.",
+        "hu": "Sült sajttorta pisztáciakrémmel, kekszalappal. Sűrű, sós-édes, halványzöld."
+      },
+      "pairings": [
+        "pistachio-latte",
+        "matcha-latte"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "oreo-cheesecake",
+      "cat": "cake",
+      "order": 44,
+      "price_huf": 1490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Soy"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1574085733277-851d9d856a3a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1612203985729-70726954388c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1563805042-7684c019e1cb?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "OREO CHEESECAKE",
+        "hu": "OREÓS SAJTTORTA"
+      },
+      "desc": {
+        "en": "Cream cheese and crushed Oreo on an Oreo base. It isn't subtle, and doesn't intend to be.",
+        "hu": "Krémsajt és darált Oreo, Oreo-alapon. Nem finomkodik, és nem is akar."
+      },
+      "pairings": [
+        "cold-brew",
+        "latte"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "raw-vegan-choc-hazelnut-cake",
+      "cat": "cake",
+      "order": 45,
+      "price_huf": 1590,
+      "allergens": [
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "RAW VEGAN CHOCOLATE HAZELNUT CAKE",
+        "hu": "NYERS VEGÁN CSOKIS MOGYORÓ TORTA"
+      },
+      "desc": {
+        "en": "Dates, hazelnut and cacao, never baked. Vegan, gluten free, and surprisingly dense.",
+        "hu": "Datolya, mogyoró és kakaó, sütés nélkül. Vegán, gluténmentes, és meglepően sűrű."
+      },
+      "tip": {
+        "en": "The one cake here with no dairy, no egg and no flour in it.",
+        "hu": "Ez az egyetlen tortánk, amiben nincs se tej, se tojás, se liszt."
+      },
+      "pairings": [
+        "matcha-tonic",
+        "v60"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "gluten-free-belgian-chocolate-cake",
+      "cat": "cake",
+      "order": 46,
+      "price_huf": 1590,
+      "allergens": [
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1578985545062-69928b1d9587?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1571115177098-24ec42ed204d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "GLUTEN-FREE BELGIAN CHOCOLATE CAKE",
+        "hu": "GLUTÉNMENTES BELGA CSOKI TORTA"
+      },
+      "desc": {
+        "en": "Belgian chocolate and almond flour. Gluten free, though nobody would guess.",
+        "hu": "Belga csokoládé és mandulaliszt. Gluténmentes, de senki nem venné észre."
+      },
+      "pairings": [
+        "double-espresso",
+        "belgian-hot-chocolate"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "gf-df-raspberry-cream-cake",
+      "cat": "cake",
+      "order": 47,
+      "price_huf": 1590,
+      "allergens": [
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1565958011703-44f9829ba187?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1488477181946-6428a0291777?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "GLUTEN- & DAIRY-FREE RASPBERRY CREAM CAKE",
+        "hu": "GM + LM MÁLNAKRÉMES TORTA"
+      },
+      "desc": {
+        "en": "Raspberry cream made with coconut, on a gluten-free sponge. Light, tart, and genuinely free-from.",
+        "hu": "Málnakrém kókusztejszínből, gluténmentes piskótán. Könnyű, savas, és tényleg mentes."
+      },
+      "tip": {
+        "en": "Gluten free and dairy free at once — the question we field most at the counter.",
+        "hu": "Gluténmentes és laktózmentes egyszerre — ezt kérdezik a legtöbben a pultnál."
+      },
+      "pairings": [
+        "fruit-tea",
+        "herbal-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "strawberry-cheesecake",
+      "cat": "cake",
+      "order": 48,
+      "price_huf": 1390,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1488477181946-6428a0291777?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1565958011703-44f9829ba187?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "STRAWBERRY CHEESECAKE",
+        "hu": "EPRES SAJTTORTA"
+      },
+      "desc": {
+        "en": "A chilled cheesecake with fresh strawberry and coulis. The lightest of the eight.",
+        "hu": "Hűtött sajttorta friss eperrel és eperöntettel. A legkönnyebb a nyolc közül."
+      },
+      "pairings": [
+        "iced-matcha",
+        "fruit-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "apple-pie",
+      "cat": "cake",
+      "order": 49,
+      "price_huf": 1390,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1535920527002-b35e96722eb9?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1519676867240-f03562e64548?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "APPLE PIE",
+        "hu": "ALMÁS PITE"
+      },
+      "desc": {
+        "en": "A lattice apple pie with cinnamon, as it should be. Have it warmed, with cream.",
+        "hu": "Rácsos almás pite fahéjjal, ahogy kell. Melegítve kérd, tejszínhabbal."
+      },
+      "pairings": [
+        "chai-latte",
+        "black-tea"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "brownie-sundae",
+      "cat": "dessert",
+      "order": 50,
+      "price_huf": 2490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1551024506-0bccd828d307?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1566454419290-57a64afe30ac?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BROWNIE SUNDAE",
+        "hu": "BROWNIE SUNDAE"
+      },
+      "desc": {
+        "en": "Warm brownie, vanilla ice cream, melted chocolate. Enough for two, though you won't share it.",
+        "hu": "Meleg brownie, vaníliafagylalt, olvasztott csoki. Két embernek is elég, de nem fogod megosztani."
+      },
+      "tip": {
+        "en": "The brownie goes out warm and the ice cream cold. The moment between them is the point.",
+        "hu": "A brownie-t melegen adjuk ki, a fagyi hidegen megy rá. A kettő közti pillanat a lényeg."
+      },
+      "ingredients": {
+        "en": [
+          "House brownie",
+          "Vanilla ice cream",
+          "Melted Belgian chocolate",
+          "Toasted walnut"
+        ],
+        "hu": [
+          "Házi brownie",
+          "Vaníliafagylalt",
+          "Olvasztott belga csoki",
+          "Pirított dió"
+        ]
+      },
+      "pairings": [
+        "double-espresso",
         "cold-brew"
-      ]
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "nutella-waffle",
+      "cat": "dessert",
+      "order": 51,
+      "price_huf": 2490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1562376552-0d160a2f238d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1484723091739-30a097e8f929?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1519676867240-f03562e64548?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "NUTELLA WAFFLE",
+        "hu": "NUTELLÁS GOFRI"
+      },
+      "desc": {
+        "en": "A waffle baked to order, with Nutella and fresh banana. Made when you ask, which is why it takes a while.",
+        "hu": "Frissen sütött gofri, Nutellával és friss banánnal. Rendelésre készül, ezért kell rá várni."
+      },
+      "tip": {
+        "en": "Eight minutes in the iron. Get a coffee while you wait; we don't rush it.",
+        "hu": "Nyolc perc, amíg megsül. Addig kérj egy kávét — nem siettetjük a vasat."
+      },
+      "ingredients": {
+        "en": [
+          "Waffle batter",
+          "Nutella",
+          "Fresh banana",
+          "Icing sugar"
+        ],
+        "hu": [
+          "Gofritészta",
+          "Nutella",
+          "Friss banán",
+          "Porcukor"
+        ]
+      },
+      "pairings": [
+        "cappuccino",
+        "belgian-hot-chocolate"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "pistachio-waffle",
+      "cat": "dessert",
+      "order": 52,
+      "price_huf": 2490,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg",
+        "Nuts"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1562376552-0d160a2f238d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587314168485-3236d6710814?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "PISTACHIO WAFFLE",
+        "hu": "PISZTÁCIÁS GOFRI"
+      },
+      "desc": {
+        "en": "The same waffle with pistachio paste and crushed pistachio. Saltier and nuttier than the Nutella one.",
+        "hu": "Ugyanaz a gofri, pisztáciakrémmel és darált pisztáciával. Sósabb és diósabb, mint a nutellás."
+      },
+      "tip": {
+        "en": "If you can't choose between the two, this is the grown-up one.",
+        "hu": "Ha nem tudsz dönteni a kettő között: ez a felnőttebb változat."
+      },
+      "ingredients": {
+        "en": [
+          "Waffle batter",
+          "Pistachio paste",
+          "Crushed pistachio",
+          "Whipped cream"
+        ],
+        "hu": [
+          "Gofritészta",
+          "Pisztáciakrém",
+          "Darált pisztácia",
+          "Tejszínhab"
+        ]
+      },
+      "pairings": [
+        "pistachio-latte",
+        "flat-white"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "chocolate-muffin",
+      "cat": "dessert",
+      "order": 53,
+      "price_huf": 890,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CHOCOLATE MUFFIN",
+        "hu": "CSOKIS MUFFIN"
+      },
+      "desc": {
+        "en": "A cocoa muffin studded with Belgian chocolate, baked fresh every morning.",
+        "hu": "Kakaós muffin belga csokidarabokkal, minden reggel frissen sütve."
+      },
+      "pairings": [
+        "americano",
+        "latte"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "blueberry-muffin",
+      "cat": "dessert",
+      "order": 54,
+      "price_huf": 890,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1486427944299-d1955d23e34d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1550617931-e17a7b70dce2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1587241321921-91a834d6d191?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BLUEBERRY MUFFIN",
+        "hu": "ÁFONYÁS MUFFIN"
+      },
+      "desc": {
+        "en": "A soft muffin with whole blueberries and lemon zest. The less chocolatey morning.",
+        "hu": "Puha muffin egész áfonyaszemekkel és citromhéjjal. A kevésbé csokis reggel."
+      },
+      "pairings": [
+        "green-tea",
+        "cappuccino"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "chocolate-cookie",
+      "cat": "dessert",
+      "order": 55,
+      "price_huf": 790,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1568051243858-533a607809a5?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CHOCOLATE COOKIE",
+        "hu": "CSOKIS KEKSZ"
+      },
+      "desc": {
+        "en": "Crisp at the edge, soft in the middle, loaded with Belgian chocolate. Baked twice a day.",
+        "hu": "Kívül ropogós, belül puha, tele belga csokidarabokkal. Napi kétszer sütjük."
+      },
+      "pairings": [
+        "espresso",
+        "cold-brew"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "cranberry-oat-cookie",
+      "cat": "dessert",
+      "order": 56,
+      "price_huf": 790,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1568051243858-533a607809a5?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1544787219-7f47ccb76574?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "CRANBERRY OAT COOKIE",
+        "hu": "VÖRÖSÁFONYÁS ZABKEKSZ"
+      },
+      "desc": {
+        "en": "Rolled oats, dried cranberry and a little cinnamon. The less guilty cookie.",
+        "hu": "Zabpehely, aszalt vörösáfonya, kevés fahéj. A kevésbé bűnös keksz."
+      },
+      "pairings": [
+        "herbal-tea",
+        "v60"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "brownie-cookie",
+      "cat": "dessert",
+      "order": 57,
+      "price_huf": 790,
+      "allergens": [
+        "Gluten",
+        "Milk",
+        "Egg"
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "BROWNIE COOKIE",
+        "hu": "BROWNIE KEKSZ"
+      },
+      "desc": {
+        "en": "Halfway between a brownie and a cookie: cracked on top, still giving in the middle.",
+        "hu": "A brownie és a keksz között félúton: repedezett teteje van, és a közepe még enged."
+      },
+      "pairings": [
+        "double-espresso",
+        "belgian-hot-chocolate"
+      ],
+      "stock_photos": true
+    },
+    {
+      "id": "san-benedetto-sparkling",
+      "cat": "bottled",
+      "order": 58,
+      "price_huf": 590,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1550505095-81378a674395?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "SAN BENEDETTO SPARKLING WATER 0.5L",
+        "hu": "SAN BENEDETTO SZÉNSAVAS VÍZ 0,5 L"
+      },
+      "desc": {
+        "en": "Italian mineral water, carbonated. Half a litre, cold.",
+        "hu": "Olasz ásványvíz, szénsavval. Fél liter, hideg."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "san-benedetto-still",
+      "cat": "bottled",
+      "order": 59,
+      "price_huf": 590,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1550505095-81378a674395?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "SAN BENEDETTO STILL WATER 0.5L",
+        "hu": "SAN BENEDETTO SZÉNSAVMENTES VÍZ 0,5 L"
+      },
+      "desc": {
+        "en": "The same Italian spring, without the bubbles.",
+        "hu": "Ugyanaz az olasz forrás, buborékok nélkül."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "san-benedetto-peach-ice-tea",
+      "cat": "bottled",
+      "order": 60,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1497534446932-c925b458314e?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "SAN BENEDETTO PEACH ICE TEA 0.5L",
+        "hu": "SAN BENEDETTO BARACK ICE TEA 0,5 L"
+      },
+      "desc": {
+        "en": "Bottled peach iced tea. Sweet, and everybody knows it.",
+        "hu": "Barackos jeges tea palackban. Édes, és mindenki ismeri."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "san-benedetto-lemon-ice-tea",
+      "cat": "bottled",
+      "order": 61,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1621263764928-df1444c5e859?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1499638673689-79a0b5115d87?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "SAN BENEDETTO LEMON ICE TEA 0.5L",
+        "hu": "SAN BENEDETTO CITROM ICE TEA 0,5 L"
+      },
+      "desc": {
+        "en": "The lemon version: sharper, less sweet.",
+        "hu": "A citromos változat: savasabb, kevésbé édes."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "coca-cola",
+      "cat": "bottled",
+      "order": 62,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1554866585-cd94860890b7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "COCA-COLA 0.33L",
+        "hu": "COCA-COLA 0,33 L"
+      },
+      "desc": {
+        "en": "Canned Coca-Cola, served very cold.",
+        "hu": "Dobozos Coca-Cola, jéghidegen."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "coca-cola-zero",
+      "cat": "bottled",
+      "order": 63,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554866585-cd94860890b7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "COCA-COLA ZERO 0.33L",
+        "hu": "COCA-COLA ZERO 0,33 L"
+      },
+      "desc": {
+        "en": "The same, without the sugar.",
+        "hu": "Ugyanaz, cukor nélkül."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "lemonsoda",
+      "cat": "bottled",
+      "order": 64,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1621263764928-df1444c5e859?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1613478223719-2ab802602423?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "LEMONSODA 0.33L",
+        "hu": "LEMONSODA CITROMOS 0,33 L"
+      },
+      "desc": {
+        "en": "Italian lemon soda. More bitter and more real than lemonade.",
+        "hu": "Olasz citromos üdítő. Keserűbb és valódibb, mint a limonádé."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "oransoda",
+      "cat": "bottled",
+      "order": 65,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1613478223719-2ab802602423?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1600271886742-f049cd451bba?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "ORANSODA 0.33L",
+        "hu": "ORANSODA NARANCSOS 0,33 L"
+      },
+      "desc": {
+        "en": "Its orange sibling, made with real juice.",
+        "hu": "A narancsos testvére, valódi narancslével."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "dr-pepper",
+      "cat": "bottled",
+      "order": 66,
+      "price_huf": 790,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1556679343-c7306c1976bc?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1554866585-cd94860890b7?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "DR PEPPER 0.33L",
+        "hu": "DR PEPPER 0,33 L"
+      },
+      "desc": {
+        "en": "Dr Pepper. You either like it or you don't; there's no middle.",
+        "hu": "Dr Pepper. Vagy szereted, vagy nem — nincs középút."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-indian-tonic",
+      "cat": "bottled",
+      "order": 67,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T INDIAN TONIC 0.2L",
+        "hu": "&T INDIAN TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "A classic Indian tonic with clean quinine. The one we build the espresso tonic on.",
+        "hu": "Klasszikus indiai tonik, tiszta kininnel. Ebből készül az espresso tonic is."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-grapefruit-tonic",
+      "cat": "bottled",
+      "order": 68,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T GRAPEFRUIT TONIC 0.2L",
+        "hu": "&T GRAPEFRUIT TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "Grapefruit tonic: a heavier, more bitter citrus.",
+        "hu": "Grépfrútos tonik: keserűbb, húsosabb citrus."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-ginger-ale",
+      "cat": "bottled",
+      "order": 69,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T GINGER ALE TONIC 0.2L",
+        "hu": "&T GINGER ALE TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "Ginger, sharp and warming. The winter one.",
+        "hu": "Gyömbéres, csípős, melegítő. Télen ez fogy."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-botanical-tonic",
+      "cat": "bottled",
+      "order": 70,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1597318181409-cf64d0b5d8a2?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T BOTANICAL TONIC 0.2L",
+        "hu": "&T BOTANICAL TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "A herbal, floral tonic. The least bitter of the six.",
+        "hu": "Füves, virágos tonik. A legkevésbé keserű a hatból."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-persian-rose-tonic",
+      "cat": "bottled",
+      "order": 71,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1560508180-03f285f67ded?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T PERSIAN ROSE TONIC 0.2L",
+        "hu": "&T PERSIAN ROSE TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "Rose tonic. Perfumed, faintly pink, and not for everyone.",
+        "hu": "Rózsás tonik. Parfümös, halványrózsaszín, és nem mindenkinek való."
+      },
+      "stock_photos": true
+    },
+    {
+      "id": "and-t-yuzu-tonic",
+      "cat": "bottled",
+      "order": 72,
+      "price_huf": 990,
+      "temp": "iced",
+      "images": [
+        "https://images.unsplash.com/photo-1581006852262-e4307cf6283a?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200",
+        "https://images.unsplash.com/photo-1621263764928-df1444c5e859?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
+      ],
+      "name": {
+        "en": "&T YUZU TONIC 0.2L",
+        "hu": "&T YUZU TONIC 0,2 L"
+      },
+      "desc": {
+        "en": "Yuzu: a Japanese citrus, somewhere between lime and mandarin.",
+        "hu": "Yuzu: japán citrus, a lime és a mandarin között."
+      },
+      "stock_photos": true
     },
     {
       "id": "bros-tee",
       "cat": "merch",
-      "order": 14,
+      "order": 73,
       "price_huf": 11200,
       "images": [
         "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&q=80",
@@ -884,12 +2924,14 @@
       "pairings": [
         "bros-hoodie",
         "bros-beans"
-      ]
+      ],
+      "active": false,
+      "stock_photos": true
     },
     {
       "id": "bros-hoodie",
       "cat": "merch",
-      "order": 15,
+      "order": 74,
       "price_huf": 23200,
       "images": [
         "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=900&q=80",
@@ -929,12 +2971,14 @@
       "pairings": [
         "bros-tee",
         "bros-mug"
-      ]
+      ],
+      "active": false,
+      "stock_photos": true
     },
     {
       "id": "bros-mug",
       "cat": "merch",
-      "order": 16,
+      "order": 75,
       "price_huf": 7200,
       "images": [
         "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=900&q=80",
@@ -968,12 +3012,14 @@
       "pairings": [
         "bros-beans",
         "latte"
-      ]
+      ],
+      "active": false,
+      "stock_photos": true
     },
     {
       "id": "bros-beans",
       "cat": "merch",
-      "order": 17,
+      "order": 76,
       "price_huf": 5600,
       "flavor": {
         "bitterSweet": 45,
@@ -1025,12 +3071,14 @@
       "pairings": [
         "bros-mug",
         "espresso"
-      ]
+      ],
+      "active": false,
+      "stock_photos": true
     },
     {
       "id": "bros-tote",
       "cat": "merch",
-      "order": 18,
+      "order": 77,
       "price_huf": 8800,
       "images": [
         "https://images.unsplash.com/photo-1630381260512-e3fe55c11973?crop=entropy&cs=srgb&fm=jpg&q=85&w=1200"
@@ -1062,7 +3110,9 @@
       "pairings": [
         "bros-beans",
         "bros-tee"
-      ]
+      ],
+      "active": false,
+      "stock_photos": true
     }
   ]
 }

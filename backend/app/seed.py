@@ -57,10 +57,15 @@ def _upsert(collection, documents, force: bool = False) -> tuple[int, int, int]:
             if existing and existing.get("edited_at"):
                 kept += 1
                 continue
+        # `active` defaults to True, so a product the file lists again is taken
+        # back out of the archive. An explicit `"active": false` is honoured
+        # instead: that is how the merch stays in the catalog, with its copy and
+        # images intact, while staying off the site.
+        fields = {**doc, "active": doc.get("active", True)}
         collection.update_one(
             {"id": doc["id"]},
-            {"$set": {**doc, "active": True}, "$unset": {"edited_at": "", "edited_by": ""}}
-            if force else {"$set": {**doc, "active": True}},
+            {"$set": fields, "$unset": {"edited_at": "", "edited_by": ""}}
+            if force else {"$set": fields},
             upsert=True,
         )
         seeded += 1

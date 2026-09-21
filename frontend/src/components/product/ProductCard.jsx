@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
 
+import StockPhotoNote from "@/components/product/StockPhotoNote";
 import { MOTION } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { formatPrice } from "@/lib/format";
@@ -55,6 +56,7 @@ export default function ProductCard({ product, index = 0 }) {
             product.video && hovered ? "opacity-0" : ""
           }`}
         />
+        <StockPhotoNote product={product} className="absolute bottom-3 left-3 z-10" />
         {product.video && (
           <video
             ref={videoRef}

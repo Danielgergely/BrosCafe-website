@@ -1,6 +1,7 @@
 import { Coffee } from "lucide-react";
 
 import PageShell from "@/components/layout/PageShell";
+import StockPhotoNote from "@/components/product/StockPhotoNote";
 import Steam from "@/components/ui/Steam";
 import { useI18n } from "@/i18n";
 import { localize, useCatalog } from "@/lib/catalog";
@@ -41,13 +42,14 @@ export default function ShopPage() {
               i % 2 === 1 ? "md:ml-14" : ""
             }`}
           >
-            <div className="overflow-hidden">
+            <div className="relative overflow-hidden">
               <img
                 src={product.images?.[0]}
                 alt={product.name}
                 loading="lazy"
                 className="h-52 w-full object-cover transition-transform duration-700 ease-editorial group-hover:scale-105 md:h-64"
               />
+              <StockPhotoNote product={product} className="absolute bottom-3 left-3 z-10" />
             </div>
             <div className="flex items-center justify-between gap-4 p-5">
               <div className="min-w-0">

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Check, ChevronDown, Heart, Plus, X } from "lucide-react";
 
+import StockPhotoNote from "@/components/product/StockPhotoNote";
 import { FLAVOUR_KEYS, MOTION } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { localize, useCatalog } from "@/lib/catalog";
@@ -175,11 +176,16 @@ function Gallery({ product }) {
         </div>
       )}
 
-      {product.cat === "merch" && media.length > 2 && (
-        <p className="absolute left-4 top-4 rounded-full bg-olive/85 px-4 py-1.5 text-[9px] font-semibold tracking-label text-cream">
-          {t("product.drag")}
-        </p>
-      )}
+      {/* Both notes live over the top-left corner: the close button owns the
+          right, the slide dots the bottom. Stacked so they never collide. */}
+      <div className="pointer-events-none absolute left-4 top-4 z-10 flex max-w-[calc(100%-5rem)] flex-col items-start gap-2">
+        {product.cat === "merch" && media.length > 2 && (
+          <p className="rounded-full bg-olive/85 px-4 py-1.5 text-[9px] font-semibold tracking-label text-cream">
+            {t("product.drag")}
+          </p>
+        )}
+        <StockPhotoNote product={product} />
+      </div>
     </div>
   );
 }
