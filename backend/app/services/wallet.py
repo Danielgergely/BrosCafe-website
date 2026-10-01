@@ -19,6 +19,10 @@ async def ensure_identity(member: dict) -> dict:
         updates["wallet_serial"] = "bros_customer_" + uuid.uuid4().hex[:12]
     if not member.get("wallet_auth_token"):
         updates["wallet_auth_token"] = secrets.token_urlsafe(24)
+    # Passes issued before the barcode moved to the member code carry this
+    # token, and members.find_by_scan still resolves it, so one in a customer's
+    # phone goes on working until it next refreshes. Kept for those; nothing
+    # new encodes it.
     if not member.get("loyalty_token"):
         updates["loyalty_token"] = secrets.token_urlsafe(24)
     if updates:
@@ -31,6 +35,21 @@ def web_service_url() -> str:
     return f"{settings.frontend_url}/api/wallet"
 
 
+def scan_value(member: dict) -> str:
+    """What the counter's scanner reads off this member's pass.
+
+    The member code, not the longer loyalty token. Both resolve —
+    members.find_by_scan accepts the code, the Wallet serial and the token —
+    but the code is 10 characters against the token's 32, which is a 21x21 QR
+    against a 29x29 one. Apple draws the barcode small, and at that density on
+    a phone screen the counter camera only caught it sometimes.
+
+    Passes already in circulation still carry the token and keep working, so
+    nothing has to be reissued: each one picks this up when it next refreshes.
+    """
+    return member["code"]
+
+
 async def build_pkpass(member: dict, lang: str | None = None) -> bytes:
     await ensure_identity(member)
     return apple.build_pkpass(
@@ -39,7 +58,7 @@ async def build_pkpass(member: dict, lang: str | None = None) -> bytes:
         await app_settings.read(),
         serial=member["wallet_serial"],
         auth_token=member["wallet_auth_token"],
-        barcode_msg=member["loyalty_token"],
+        barcode_msg=scan_value(member),
         web_service_url=web_service_url(),
         lang=lang or member.get("wallet_lang", "en"),
     )
@@ -74,7 +93,7 @@ async def google_save_link(member: dict, lang: str = "en") -> str:
     """
     await ensure_identity(member)
     cafe = settings.cafe
-    barcode = member["loyalty_token"]
+    barcode = scan_value(member)
     url = card_url(member["code"])
 
     await google.ensure_class(cafe, lang)
@@ -110,7 +129,7 @@ async def _notify_google(member: dict) -> None:
         return  # never saved a Google pass
     try:
         updated = await google.push_update(
-            member, settings.cafe, member["loyalty_token"],
+            member, settings.cafe, scan_value(member),
             card_url(member["code"]), member.get("google_wallet_lang", "en"))
         if updated:
             logger.info("Google Wallet updated for %s", member["code"])

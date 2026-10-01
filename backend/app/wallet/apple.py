@@ -253,6 +253,10 @@ def build_pass_dict(member, cafe, settings, serial, auth_token, barcode_msg, web
             "format": "PKBarcodeFormatQR",
             "message": barcode_msg,
             "messageEncoding": "iso-8859-1",
+            # Printed under the QR. A dim or scratched screen still defeats a
+            # camera occasionally, and this is what the barista types into the
+            # scanner's manual field instead of turning the customer away.
+            "altText": barcode_msg,
         }],
         "storeCard": {
             "headerFields": [{"key": "left", "label": header_label, "value": header_value}],
