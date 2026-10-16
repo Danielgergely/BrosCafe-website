@@ -28,6 +28,7 @@ wallet_stats = db.wallet_stats
 # latest computed summary the phone reads.
 sales_days = db.sales_days
 live_sales = db.live_sales
+sales_forecasts = db.sales_forecasts
 
 
 async def ensure_indexes() -> None:
@@ -61,6 +62,7 @@ async def ensure_indexes() -> None:
     await wallet_registrations.create_index("expire_at", expireAfterSeconds=0)
     await voided_passes.create_index("serial", unique=True)
     await sales_days.create_index("date", unique=True)
+    await sales_forecasts.create_index("date", unique=True)
 
 
 def close() -> None:

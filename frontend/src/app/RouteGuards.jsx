@@ -1,5 +1,5 @@
 import { Coffee } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 import { ROUTES } from "@/config/site";
 import { useCustomer } from "@/state/CustomerAuth";
@@ -24,8 +24,11 @@ export function CustomerOnly({ children }) {
 /** Requires a staff (or admin) password session. */
 export function StaffOnly({ children, adminOnly = false }) {
   const { user, loading } = useStaff();
+  const location = useLocation();
   if (loading || user === null) return <Checking />;
-  if (!user) return <Navigate to={ROUTES.login} replace />;
+  // Remember where they were going (the sales widget opens /admin?tab=live),
+  // so signing in lands there rather than on the default page.
+  if (!user) return <Navigate to={ROUTES.login} replace state={{ from: location.pathname + location.search }} />;
   if (adminOnly && user.role !== "admin") return <Navigate to={ROUTES.staff} replace />;
   return children;
 }

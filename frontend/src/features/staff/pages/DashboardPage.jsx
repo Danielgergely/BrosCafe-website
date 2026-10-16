@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  ArrowsClockwise, ChartLine, Coffee, FunnelSimple, Gear, Gift, Image as ImageIcon, ListChecks,
-  Newspaper, Plus, ScanSmiley, SignOut, Storefront, Users, UsersThree, Wallet,
+  ArrowsClockwise, ChartLine, Coffee, FunnelSimple, Gear, Gift, Image as ImageIcon, Lightning,
+  ListChecks, Newspaper, Plus, ScanSmiley, SignOut, Storefront, Users, UsersThree, Wallet,
 } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ import CoffeePanel from "@/features/staff/panels/CoffeePanel";
 import CustomersPanel from "@/features/staff/panels/CustomersPanel";
 import FunnelPanel from "@/features/staff/panels/FunnelPanel";
 import JournalPanel from "@/features/staff/panels/JournalPanel";
+import LiveSalesPanel from "@/features/staff/panels/LiveSalesPanel";
 import MediaPanel from "@/features/staff/panels/MediaPanel";
 import MembersPanel from "@/features/staff/panels/MembersPanel";
 import OverviewPanel from "@/features/staff/panels/OverviewPanel";
@@ -29,6 +30,7 @@ import { useStaff } from "@/state/StaffAuth";
 
 /** Tab order, icon and panel. Adding a view means one entry here. */
 const TABS = [
+  { id: "live", icon: Lightning, Panel: LiveSalesPanel },
   // Content first: this is what gets edited weekly, unlike the analytics.
   { id: "products", icon: Storefront, Panel: ProductsPanel },
   { id: "journal", icon: Newspaper, Panel: JournalPanel },
@@ -56,7 +58,11 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const { signOut } = useStaff();
 
-  const [activeTab, setActiveTab] = useState("products");
+  // ?tab=live opens a tab directly — the sales widget's tap lands here.
+  const [activeTab, setActiveTab] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get("tab");
+    return TABS.some((tab) => tab.id === requested) ? requested : "products";
+  });
   const [staffForm, setStaffForm] = useState(null);
   const [settings, setSettings] = useState(null);
 

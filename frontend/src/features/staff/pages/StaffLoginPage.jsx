@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Coffee } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import LanguageToggle from "@/components/layout/LanguageToggle";
 import { ROUTES } from "@/config/site";
@@ -8,6 +8,13 @@ import { useI18n } from "@/i18n";
 import { errorMessage } from "@/lib/api";
 import { useStaff } from "@/state/StaffAuth";
 import logo from "@/assets/logo-full-olive.png";
+
+/** Back to the page that sent them here, if it is one their role may open. */
+function landingFor(role, from) {
+  if (from?.startsWith(ROUTES.admin) && role === "admin") return from;
+  if (from?.startsWith(ROUTES.staff)) return from;
+  return role === "admin" ? ROUTES.admin : ROUTES.staff;
+}
 
 export default function StaffLoginPage() {
   const { t } = useI18n();
@@ -18,11 +25,11 @@ export default function StaffLoginPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const landingFor = (role) => (role === "admin" ? ROUTES.admin : ROUTES.staff);
+  const from = useLocation().state?.from;
 
   useEffect(() => {
-    if (user) navigate(landingFor(user.role), { replace: true });
-  }, [user, navigate]);
+    if (user) navigate(landingFor(user.role, from), { replace: true });
+  }, [user, navigate, from]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -30,7 +37,7 @@ export default function StaffLoginPage() {
     setBusy(true);
     try {
       const signedIn = await signIn(email, password);
-      navigate(landingFor(signedIn.role), { replace: true });
+      navigate(landingFor(signedIn.role, from), { replace: true });
     } catch (err) {
       setError(errorMessage(err, t("staff.loginFailed")));
     } finally {

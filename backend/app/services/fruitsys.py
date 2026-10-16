@@ -11,6 +11,9 @@ the password lives on the server.
 Figures are gross (VAT included), which is what the till shows. What Fruitsys
 returns is data from outside, so every number is parsed defensively.
 """
+import json
+import re
+
 import httpx
 
 BASE = "https://cloud.fruitsys.hu/raktar/"
@@ -71,6 +74,26 @@ class Fruitsys:
             if 0 <= hour <= 23 and amount:
                 hours[hour] = amount
         return hours
+
+    async def receipts(self, workday_id: str) -> dict:
+        """Receipts for one workday: {"count", "gross", "net"}.
+
+        The daily turnover report writes its summary straight into the page
+        rather than loading it, so this posts the report's own query form —
+        a read, like the page's Lekérdezés button — and reads the embedded
+        table.
+        """
+        response = await self.http.post("stat_forgalom.php", data={
+            "workday1": workday_id, "workday2": workday_id, "idoszakkuld": "-1",
+            "mnvalasztegyeb": "", "tipus": "", "asztal": "", "munkanaponk": ""})
+        response.raise_for_status()
+        match = re.search(r"var griddata = (\[.*?\]);", response.text)
+        rows = json.loads(match.group(1)) if match else []
+        return {
+            "count": sum(_number(r.get("nysz")) for r in rows if isinstance(r, dict)),
+            "gross": sum(_number(r.get("szamla_vegosszeg")) for r in rows if isinstance(r, dict)),
+            "net": sum(_number(r.get("netto")) for r in rows if isinstance(r, dict)),
+        }
 
     async def products(self, workday_id: str) -> list[dict]:
         """What sold on one workday: [{"name", "count", "gross"}]."""

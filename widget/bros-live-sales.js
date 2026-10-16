@@ -18,10 +18,13 @@
 //     (dark bar = beat it, light = fell short, line = the usual), and the top 3
 //   - Lock Screen: a ring closing at break-even with the total inside, or the
 //     total, a progress bar and what's still missing
+//   - a tap opens the live sales dashboard in /admin (fresh figures, forecasts)
 // Figures are gross (VAT included), as the till shows them.
 
 const URL = "https://broscafe.hu/api/live-sales";
 const KEY = "PASTE-THE-KEY-HERE";
+// Tapping the widget opens the live sales dashboard (staff login, once).
+const DASHBOARD = "https://broscafe.hu/admin?tab=live";
 
 const OLIVE = new Color("#66734A");
 const CREAM = new Color("#F5F0E6");
@@ -260,6 +263,7 @@ function homeWidget(data, family) {
   widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   const size = family === "medium" ? new Size(338, 158) : new Size(158, 158);
   widget.backgroundImage = glass(size, data.target_progress || 0, reached);
+  widget.url = DASHBOARD;
   return widget;
 }
 
@@ -313,6 +317,7 @@ function bar(width, progress) {
 
 function lockWidget(data, family) {
   const widget = new ListWidget();
+  widget.url = DASHBOARD;
   widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   const change = hasDiff(data) ? ` ${arrow(data)}${Math.abs(Math.round(data.diff_pct))}%` : "";
 

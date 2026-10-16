@@ -187,6 +187,15 @@ analysis states it — net, VAT excluded — and the server scales it to gross:
 | `GROSS_PER_NET`     | `1.072` | the café's gross/net ratio (Fruitsys, opening to mid-October) |
 
 `0` for the break-even hides the glass, the "still missing" line and the ETA.
+`MONTH_OPEN_DAYS` (default `26`) sets the month's break-even on the dashboard.
+
+**Dashboard.** `/admin?tab=live` (admins only; a tap on the widget opens it)
+fetches fresh figures from Fruitsys on opening — at most once a minute — and
+shows today by the hour, the forecast, the best sellers, receipts and average
+basket, the week and the month. At 9:00, 12:00 and 15:00 a forecast of the
+day's total is saved to `sales_forecasts`; after closing it is scored against
+the actual. Days from before the feature existed are replayed once from the
+history (marked * on the dashboard), using only what was known before each day.
 
 ---
 

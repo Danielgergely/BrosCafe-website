@@ -107,6 +107,8 @@ class Settings:
     # gross/net ratio (1.072 from opening to mid-October). 0 turns it off.
     break_even_net_ft = _int("BREAK_EVEN_NET_FT", 61000)
     gross_per_net = _float("GROSS_PER_NET", 1.072)
+    # Open days in an average month (Mon–Sat), as in the margin analysis.
+    month_open_days = _int("MONTH_OPEN_DAYS", 26)
 
     @property
     def live_sales_configured(self) -> bool:
