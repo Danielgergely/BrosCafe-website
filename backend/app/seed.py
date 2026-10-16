@@ -27,6 +27,7 @@ import sys
 from pymongo import MongoClient
 
 from app.config import DATA_DIR, settings
+from app.models import PostUpsert, ProductUpsert
 
 CATALOG_FILE = DATA_DIR / "catalog.json"
 CONTENT_FILE = DATA_DIR / "whats_new.json"
@@ -34,6 +35,14 @@ CONTENT_FILE = DATA_DIR / "whats_new.json"
 SECTIONS = {
     "products": (CATALOG_FILE, "products"),
     "content": (CONTENT_FILE, "posts"),
+}
+
+# The fields a document of each kind can carry. A field the file leaves out is
+# removed from the database, so taking a key out of catalog.json (say,
+# "stock_photos") actually takes it off the site — $set alone only ever adds.
+KNOWN_FIELDS = {
+    "products": set(ProductUpsert.model_fields) - {"id", "active"},
+    "content": set(PostUpsert.model_fields) - {"id", "active"},
 }
 
 
@@ -48,7 +57,8 @@ def file_document(section: str, doc_id: str) -> dict | None:
     return next((d for d in _load(path, key) if d["id"] == doc_id), None)
 
 
-def _upsert(collection, documents, force: bool = False) -> tuple[int, int, int]:
+def _upsert(collection, documents, force: bool = False,
+            known: frozenset = frozenset()) -> tuple[int, int, int]:
     """Upsert by id, archive what the file no longer lists, keep admin edits.
 
     Upserting rather than wiping means member-facing ids stay stable. Skipping
@@ -68,12 +78,13 @@ def _upsert(collection, documents, force: bool = False) -> tuple[int, int, int]:
         # instead: that is how the merch stays in the catalog, with its copy and
         # images intact, while staying off the site.
         fields = {**doc, "active": doc.get("active", True)}
-        collection.update_one(
-            {"id": doc["id"]},
-            {"$set": fields, "$unset": {"edited_at": "", "edited_by": ""}}
-            if force else {"$set": fields},
-            upsert=True,
-        )
+        unset = {field: "" for field in known if field not in doc}
+        if force:
+            unset.update(edited_at="", edited_by="")
+        update = {"$set": fields}
+        if unset:
+            update["$unset"] = unset
+        collection.update_one({"id": doc["id"]}, update, upsert=True)
         seeded += 1
 
     # Anything the file dropped gets archived — but only if the file is still
@@ -128,7 +139,8 @@ def main(argv=None) -> int:
                 continue
             path, key = SECTIONS[name]
             seeded, archived, kept = _upsert(
-                database[name], _load(path, key), force=args.force)
+                database[name], _load(path, key), force=args.force,
+                known=frozenset(KNOWN_FIELDS[name]))
             note = f", {kept} left as edited in /admin" if kept else ""
             print(f"{name}: {seeded} seeded, {archived} archived{note}")
     finally:
