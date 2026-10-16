@@ -7,12 +7,18 @@ wiped `products`, so running the wrong one destroyed the catalog.
     python -m app.seed --products   # catalog only
     python -m app.seed --content    # What's New only
     python -m app.seed --force      # discard admin edits, make the DB match the files
+    python -m app.seed --prices     # take every price from catalog.json, keep other admin edits
 
 Two sources of truth have to coexist here: these files, which arrive by git
 push, and the admin dashboard, which writes straight to MongoDB. Anything saved
 through the dashboard carries `edited_at`, and the seeder leaves those items
 alone — otherwise the next deploy would silently revert a price someone fixed in
 the browser. `--force` is the deliberate way back to the file version.
+
+`--prices` is the narrow version of that, for when the till's price list has
+changed and catalog.json carries the new figures: it overwrites `price_huf` on
+every product, edited or not, and touches nothing else. An item edited in the
+dashboard stays marked as edited, so its photos and copy stay protected.
 """
 import argparse
 import json
@@ -80,18 +86,42 @@ def _upsert(collection, documents, force: bool = False) -> tuple[int, int, int]:
     return seeded, archived, kept
 
 
+def sync_prices(collection, documents) -> list[tuple[str, int, int]]:
+    """Set each product's price to the file's, ignoring `edited_at`.
+
+    Only products already in the database are touched — this never creates or
+    archives anything. Returns (id, old, new) for every price that changed.
+    """
+    changed = []
+    for doc in documents:
+        existing = collection.find_one({"id": doc["id"]}, {"price_huf": 1})
+        if existing is None or existing.get("price_huf") == doc["price_huf"]:
+            continue
+        collection.update_one({"id": doc["id"]}, {"$set": {"price_huf": doc["price_huf"]}})
+        changed.append((doc["id"], existing.get("price_huf"), doc["price_huf"]))
+    return changed
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--products", action="store_true", help="seed the catalog only")
     parser.add_argument("--content", action="store_true", help="seed What's New only")
     parser.add_argument("--force", action="store_true",
                         help="overwrite items edited in the admin dashboard")
+    parser.add_argument("--prices", action="store_true",
+                        help="only set product prices from catalog.json, even on edited items")
     args = parser.parse_args(argv)
     both = not (args.products or args.content)
 
     client = MongoClient(settings.mongo_url)
     database = client[settings.db_name]
     try:
+        if args.prices:
+            changed = sync_prices(database["products"], _load(CATALOG_FILE, "products"))
+            for doc_id, old, new in changed:
+                print(f"  {doc_id}: {old} -> {new} Ft")
+            print(f"prices: {len(changed)} changed")
+            return 0
         for name, wanted in (("products", both or args.products),
                              ("content", both or args.content)):
             if not wanted:

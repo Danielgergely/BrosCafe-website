@@ -171,10 +171,10 @@ backend/data/catalog.json      products: names, descriptions, prices, images
 backend/data/whats_new.json    the On tap & in rotation posts
 ```
 
-`SEED_ON_STARTUP=true` (the default) re-seeds from those files on every boot,
-so **editing them and deploying is all it takes** — no database surgery. The
-seeder upserts by `id` and archives anything no longer listed, so it is safe
-to run repeatedly and never deletes a member's history.
+`SEED_ON_STARTUP=true` (the compose default) re-seeds from those files on every
+boot, so **editing them and deploying is all it takes** — no database surgery.
+The seeder upserts by `id` and archives anything no longer listed, so it is
+safe to run repeatedly and never deletes a member's history.
 
 ```bash
 # swap a product photo
@@ -186,9 +186,39 @@ git commit -am "New espresso photo" && git push
 Prices are integers in **forint**. There is no separate EUR field; the euro
 figure shown next to some prices is calculated from HUF.
 
-**When you start editing products through `/admin` instead, set
-`SEED_ON_STARTUP=false`** — otherwise the next deploy overwrites those edits
-with whatever is in the JSON files. Pick one source of truth, not both.
+### Editing through `/admin` as well
+
+The dashboard and the JSON files can both own content, item by item. Anything
+saved, added or archived in `/admin` is marked as edited, and from then on the
+seeder leaves it alone: a deploy never reverts a price fixed in the browser,
+and a product added in the dashboard is not archived for missing from
+`catalog.json`. Everything else keeps following the files.
+
+The flip side: once an item has been edited in `/admin`, changing it in the
+JSON file does nothing until you hand it back. Either
+
+- press **Revert to the file version** on that item in the dashboard, which restores the file
+  version and returns it to the seeder, or
+- re-seed with `--force`, which does that for every item at once and discards
+  all dashboard edits:
+
+  ```bash
+  docker compose -p broscafe-prod exec backend python -m app.seed --force
+  ```
+
+When only the **prices** in `catalog.json` should win — say the till's price
+list changed — use `--prices`. It sets every product's price from the file,
+edited or not, and leaves photos, copy and the edited mark alone:
+
+```bash
+docker compose -p broscafe-prod exec backend python -m app.seed --prices
+```
+
+It prints each price it changed; running it again changes nothing.
+
+Each seed run logs how many items it left alone as edited in `/admin`.
+`SEED_ON_STARTUP=false` is only needed if you want deploys to stop touching
+content entirely.
 
 ---
 
