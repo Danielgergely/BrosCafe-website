@@ -4,7 +4,6 @@ import { toast } from "sonner";
 
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyProgress from "@/components/loyalty/LoyaltyProgress";
-import OpeningCountdown from "@/components/loyalty/OpeningCountdown";
 import InviteFriend from "@/components/loyalty/InviteFriend";
 import WalletButtons from "@/components/loyalty/WalletButtons";
 import { BRAND, ROUTES } from "@/config/site";
@@ -24,7 +23,7 @@ function Panel({ title, children, testId }) {
   );
 }
 
-/** The signed-in member's hub: stamps, opening pass, rewards, favourites, wallet. */
+/** The signed-in member's hub: stamps, rewards, favourites, wallet. */
 export default function AccountPage() {
   const { t, lang } = useI18n();
 
@@ -83,27 +82,6 @@ export default function AccountPage() {
             <p className="mt-3 text-sm font-semibold text-olive">{t("card.celebrateTitle")}</p>
           )}
         </button>
-
-        <Panel title={t("account.openingTitle")} testId="account-opening">
-          {member.opening_status === "redeemed" ? (
-            <p className="text-sm font-semibold text-olive">{t("opening.redeemed")}</p>
-          ) : (
-            <>
-              <p className="text-sm font-semibold text-olive">{t("opening.statusReserved")}</p>
-              <p className="mt-1 text-xs text-muted">{t("opening.revealDate")}</p>
-              <div className="mt-4" data-testid="account-countdown">
-                <OpeningCountdown variant="compact" showHeader={false} />
-              </div>
-              <button
-                data-testid="show-opening-pass"
-                onClick={() => navigate(ROUTES.card(member.code))}
-                className="mt-4 rounded-card border border-olive px-4 py-2 text-sm font-semibold text-olive"
-              >
-                {t("opening.showPass")}
-              </button>
-            </>
-          )}
-        </Panel>
 
         <Panel title={t("account.rewardsTitle")} testId="account-rewards">
           <p className="flex items-center gap-2 text-ink">

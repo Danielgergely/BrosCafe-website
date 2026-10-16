@@ -5,7 +5,6 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import PageShell from "@/components/layout/PageShell";
 import LoyaltyCardVisual from "@/components/loyalty/LoyaltyCardVisual";
 import WalletButtons from "@/components/loyalty/WalletButtons";
-import OpeningCountdown from "@/components/loyalty/OpeningCountdown";
 import { ROUTES } from "@/config/site";
 import { useI18n } from "@/i18n";
 import { api, errorMessage } from "@/lib/api";
@@ -119,25 +118,6 @@ export default function LoyaltyCardPage() {
       >
         <Gamepad2 size={17} /> {t("game.playWhileYouWait")}
       </Link>
-
-      {member.opening_status !== "redeemed" && (
-        <div
-          data-testid="opening-pass"
-          className="mt-8 rounded-panel border border-olive/40 bg-white p-6 text-center"
-        >
-          <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
-            {t("opening.passTitle")}
-          </p>
-          <p className="mt-2 font-display text-2xl text-ink">{t("opening.dateLine")}</p>
-          <p className="mt-1 text-sm font-semibold text-olive">{t("opening.badge")}</p>
-          <div className="mt-4" data-testid="card-countdown">
-            <OpeningCountdown variant="compact" showHeader={false} />
-          </div>
-          <p className="mt-4 text-sm text-ink">{t("opening.reservedForYou")}</p>
-          <p className="mt-1 text-sm text-muted">{t("opening.mystery")}</p>
-          <p className="mt-3 text-xs text-muted">{t("opening.bring")}</p>
-        </div>
-      )}
 
       <div className="mt-10 grid grid-cols-2 gap-4">
         {[

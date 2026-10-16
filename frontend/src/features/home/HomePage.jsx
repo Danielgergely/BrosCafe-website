@@ -12,7 +12,6 @@ import LoyaltyCTA from "@/features/home/sections/LoyaltyCTA";
 import Marquee from "@/features/home/sections/Marquee";
 import MenuRows from "@/features/home/sections/MenuRows";
 import MerchLookbook from "@/features/home/sections/MerchLookbook";
-import OpeningTeaser from "@/features/home/sections/OpeningTeaser";
 import WhatsNew from "@/features/home/sections/WhatsNew";
 import YourPicks from "@/features/home/sections/YourPicks";
 import { useLenis } from "@/hooks/useLenis";
@@ -34,7 +33,6 @@ export default function HomePage() {
       <main>
         <Hero />
         <Marquee />
-        <OpeningTeaser />
         <MenuRows />
         <YourPicks />
         <BrosMoment />

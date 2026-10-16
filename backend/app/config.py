@@ -4,7 +4,6 @@ Nothing else in the backend reads os.environ directly, so adding a knob means
 adding it here and to .env.example — no hunting through routers.
 """
 import os
-from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -25,15 +24,6 @@ def _int(key: str, default: int) -> int:
         return int(os.environ.get(key, default))
     except (TypeError, ValueError):
         return default
-
-
-def _opening_datetime() -> datetime:
-    """Grand-opening moment, café-local. Single source for API, countdowns and copy."""
-    raw = os.environ.get("OPENING_DATETIME", "2026-09-24T07:30:00")
-    try:
-        return datetime.fromisoformat(raw).replace(tzinfo=CAFE_TZ)
-    except ValueError:
-        return datetime(2026, 9, 24, 7, 30, tzinfo=CAFE_TZ)
 
 
 class Settings:
@@ -63,7 +53,6 @@ class Settings:
     @property
     def welcome_stamps(self) -> int:
         return max(0, min(_int("WELCOME_STAMPS", 5), self.stamps_required - 1))
-    opening_datetime = _opening_datetime()
 
     # --- content ---------------------------------------------------------
     # Re-seed products and journal posts from data/*.json on every boot, so a
@@ -108,7 +97,6 @@ class Settings:
             "hours_weekdays": os.environ.get("CAFE_HOURS_WEEKDAYS", "Mon–Fri · 7:30–19:00"),
             "hours_weekend": os.environ.get("CAFE_HOURS_WEEKEND", "Sat–Sun · 9:00–18:00"),
             "stamps_required": self.stamps_required,
-            "opening_datetime": self.opening_datetime.isoformat(),
         }
 
     @property

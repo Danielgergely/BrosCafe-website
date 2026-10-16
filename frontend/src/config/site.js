@@ -30,18 +30,6 @@ export const CONTACT = {
   },
 };
 
-/**
- * Grand opening. The server is authoritative (GET /api/opening/status) so a
- * visitor's clock can't skew the countdown; this is the offline fallback.
- * Keep it in sync with OPENING_DATETIME in the backend .env.
- */
-export const OPENING = {
-  fallbackISO: "2026-09-24T07:30:00+02:00",
-  get fallbackTime() {
-    return new Date(this.fallbackISO).getTime();
-  },
-};
-
 /** Prices are stored in HUF. EUR is a courtesy conversion for visitors. */
 export const CURRENCY = {
   primary: "HUF",
@@ -53,7 +41,6 @@ export const ROUTES = {
   home: "/",
   menu: "/menu",
   news: "/whats-new",
-  opening: "/opening",
   loyalty: "/loyalty",
   shop: "/shop",
   account: "/account",
@@ -91,7 +78,6 @@ export const FOOTER_LINKS = [
   { key: "rotation", to: ROUTES.news },
   { key: "story", anchor: "about" },
   { key: "loyalty", to: ROUTES.loyalty },
-  { key: "opening", to: ROUTES.opening },
   { key: "shop", to: ROUTES.shop },
   { key: "visit", to: ROUTES.contact },
   { key: "game", to: ROUTES.game },

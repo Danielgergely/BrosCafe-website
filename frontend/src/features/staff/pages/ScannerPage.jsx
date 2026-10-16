@@ -379,13 +379,15 @@ export default function ScannerPage() {
               )}
             </div>
 
+            {/* Only for a member still holding an opening-day gift (they joined
+                before the café opened). Stays up after redeeming, until the
+                next scan, so the barista sees what to hand over. */}
+            {(revealedOffer || !["none", "redeemed"].includes(member.opening_status)) && (
             <div data-testid="opening-panel" className="mt-4 rounded-panel bg-white p-6 text-center">
               <p className="text-[11px] font-semibold uppercase tracking-label text-olive">
                 {t("staff.openingPanel")}
               </p>
-              {member.opening_status === "redeemed" && !revealedOffer ? (
-                <p className="mt-3 font-semibold text-olive">✓ {t("staff.alreadyRedeemed")}</p>
-              ) : !revealedOffer ? (
+              {!revealedOffer ? (
                 <button data-testid="reveal-opening-btn" onClick={revealOpening} disabled={busy}
                   className={`mt-4 ${primaryButton}`}>
                   {t("staff.revealOpening")}
@@ -409,6 +411,7 @@ export default function ScannerPage() {
                 </>
               )}
             </div>
+            )}
 
             <button
               data-testid="scan-next-btn"

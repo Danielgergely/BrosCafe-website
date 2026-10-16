@@ -58,7 +58,10 @@ def new_document(name: str, email: str) -> dict:
         "rewards_redeemed": 0,
         "reward_ready": False,
         "free_coffees": 0,
-        "opening_status": "reserved",
+        # The opening-day gift went to members who joined before the café
+        # opened. Documents from then carry "reserved" (or no field at all,
+        # which public() reads as reserved); everyone after gets none.
+        "opening_status": "none",
         "created_at": _now(),
     }
 

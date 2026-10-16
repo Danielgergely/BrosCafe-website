@@ -14,7 +14,6 @@ import ContactPage from "@/features/loyalty/pages/ContactPage";
 import LoyaltyCardPage from "@/features/loyalty/pages/LoyaltyCardPage";
 import LoyaltyPage from "@/features/loyalty/pages/LoyaltyPage";
 import MenuPage from "@/features/loyalty/pages/MenuPage";
-import OpeningPage from "@/features/loyalty/pages/OpeningPage";
 import ShopPage from "@/features/loyalty/pages/ShopPage";
 import VerifyMagicPage from "@/features/loyalty/pages/VerifyMagicPage";
 import WhatsNewPage from "@/features/loyalty/pages/WhatsNewPage";
@@ -105,7 +104,6 @@ export default function AppRoutes() {
         <Route path="/product/:id" element={<ProductDeepLink />} />
         <Route path="/journal/:id" element={<JournalDeepLink />} />
         <Route path={ROUTES.contact} element={<ContactPage />} />
-        <Route path={ROUTES.opening} element={<OpeningPage />} />
         <Route path={ROUTES.privacy} element={<PrivacyPage />} />
         <Route path={ROUTES.help} element={<HelpPage />} />
         <Route path={ROUTES.game} element={<GamePage />} />

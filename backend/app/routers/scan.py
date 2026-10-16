@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from app import db
 from app.config import settings
 from app.models import AdjustRequest, DrinkChoice
-from app.routers.opening import OFFER
 from app.security import get_current_user
 from app.services import drinks, email, members, tiers, wallet
 
@@ -159,10 +158,19 @@ async def adjust(code: str, body: AdjustRequest, user: dict = Depends(get_curren
     return await _card(doc)
 
 
+# The grand-opening gift. The café is open now and new members no longer get
+# one; these two endpoints stay so the counter can still honour a pass that was
+# handed out before opening day. Kept server-side so the gift stayed a surprise.
+OFFER = ["☕ Coffee", "🍪 Cookie", "✨ Exclusive Bros Cafe sticker"]
+NO_PASS = "This member has no opening gift"
+
+
 @router.post("/{code}/opening/reveal")
 async def reveal_opening(code: str, user: dict = Depends(get_current_user)):
     doc = await scanned_member(code)
     status = doc.get("opening_status", "reserved")
+    if status == "none":
+        raise HTTPException(status_code=400, detail=NO_PASS)
     if status != "redeemed":
         status = "revealed"
         await db.members.update_one({"code": doc["code"]}, {"$set": {"opening_status": status}})
@@ -172,6 +180,8 @@ async def reveal_opening(code: str, user: dict = Depends(get_current_user)):
 @router.post("/{code}/opening/redeem")
 async def redeem_opening(code: str, user: dict = Depends(get_current_user)):
     doc = await scanned_member(code)
+    if doc.get("opening_status") == "none":
+        raise HTTPException(status_code=400, detail=NO_PASS)
     if doc.get("opening_status") == "redeemed":
         raise HTTPException(status_code=400, detail="Opening offer already redeemed")
     await db.members.update_one({"code": doc["code"]}, {"$set": {
