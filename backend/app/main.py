@@ -88,8 +88,15 @@ async def on_startup() -> None:
     await _seed_admin()
     _seed_content_from_files()
     if settings.live_sales_configured:
+        logger.info("live sales: on, polling Fruitsys as %s", settings.fruitsys_user)
         task = asyncio.create_task(live_sales_service.run_forever())
         _background.add(task)  # keep a reference, or the task can be collected
+    else:
+        missing = [name for name, value in (
+            ("FRUITSYS_USER", settings.fruitsys_user),
+            ("FRUITSYS_PASSWORD", settings.fruitsys_password),
+            ("LIVE_SALES_KEY", settings.live_sales_key)) if not value]
+        logger.info("live sales: off — %s not set", ", ".join(missing))
 
 
 @app.on_event("shutdown")

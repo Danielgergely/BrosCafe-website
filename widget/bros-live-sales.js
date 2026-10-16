@@ -27,7 +27,7 @@ const hhmm = (d) => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-
 
 async function load() {
   const request = new Request(URL);
-  request.headers = { Authorization: `Bearer ${KEY}` };
+  request.headers = { Authorization: `Bearer ${KEY.trim()}` };
   request.timeoutInterval = 15;
   const data = await request.loadJSON();
   if (request.response.statusCode !== 200) {

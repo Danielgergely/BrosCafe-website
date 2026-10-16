@@ -1,11 +1,13 @@
 """Today's takings for the owners' phone widget. See services/live_sales.py."""
 import hmac
+import logging
 
 from fastapi import APIRouter, Header, HTTPException
 
 from app import db
 from app.config import settings
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["live-sales"])
 
 
@@ -14,8 +16,13 @@ async def live_sales(authorization: str = Header(default="")):
     # 404 rather than 401 when the feature is off or the key is wrong, so the
     # endpoint gives nobody a hint that it exists.
     supplied = authorization.removeprefix("Bearer ").strip()
-    if not settings.live_sales_configured or not hmac.compare_digest(
-            supplied.encode(), settings.live_sales_key.encode()):
+    if not settings.live_sales_configured:
+        raise HTTPException(status_code=404, detail="Not Found")
+    if not hmac.compare_digest(supplied.encode(), settings.live_sales_key.encode()):
+        # Lengths only, never the key: enough to tell a stray space or a
+        # truncated paste (48 expected) from a different key.
+        logger.warning("live sales: wrong key (got %d characters, expected %d)",
+                       len(supplied), len(settings.live_sales_key))
         raise HTTPException(status_code=404, detail="Not Found")
     summary = await db.live_sales.find_one({"_id": "current"}, {"_id": 0})
     if summary is None:

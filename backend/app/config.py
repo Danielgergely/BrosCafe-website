@@ -19,6 +19,12 @@ load_dotenv(BASE_DIR / ".env")
 CAFE_TZ = ZoneInfo(os.environ.get("CAFE_TIMEZONE", "Europe/Budapest"))
 
 
+def _secret(key: str) -> str:
+    """A pasted secret, without the whitespace, newline or quotes a dashboard
+    field can quietly keep around it — invisible, and enough to never match."""
+    return os.environ.get(key, "").strip().strip("'\"").strip()
+
+
 def _int(key: str, default: int) -> int:
     try:
         return int(os.environ.get(key, default))
@@ -85,9 +91,9 @@ class Settings:
     # A read-only Fruitsys back-office user (broscafe.readonly) the server
     # polls for today's takings, and the key the phone widget sends. All
     # three empty means the feature is off. See services/live_sales.py.
-    fruitsys_user = os.environ.get("FRUITSYS_USER", "")
-    fruitsys_password = os.environ.get("FRUITSYS_PASSWORD", "")
-    live_sales_key = os.environ.get("LIVE_SALES_KEY", "")
+    fruitsys_user = _secret("FRUITSYS_USER")
+    fruitsys_password = _secret("FRUITSYS_PASSWORD")
+    live_sales_key = _secret("LIVE_SALES_KEY")
     live_sales_every_min = _int("LIVE_SALES_EVERY_MIN", 15)
 
     @property
