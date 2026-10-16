@@ -105,7 +105,7 @@ class Settings:
     # The day's break-even, as the margin analysis states it: net revenue,
     # VAT excluded. The till reports gross, so it is scaled by the café's
     # gross/net ratio (1.072 from opening to mid-October). 0 turns it off.
-    break_even_net_ft = _int("BREAK_EVEN_NET_FT", 61000)
+    break_even_net_ft = _int("BREAK_EVEN_NET_FT", 64300)
     gross_per_net = _float("GROSS_PER_NET", 1.072)
     # Open days in an average month (Mon–Sat), as in the margin analysis.
     month_open_days = _int("MONTH_OPEN_DAYS", 26)

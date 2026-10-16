@@ -322,6 +322,7 @@ export default function LiveSalesPanel() {
         <Tile label={t("admin.live.breakEven")} value={reached ? `✓ ${s.target_reached_at}` : formatHuf(s.target_missing)}>
           {reached ? t("admin.live.reached") : s.target_eta ? t("admin.live.missingEta", { time: s.target_eta }) : t("admin.live.missing")}
           {s.target && <ProgressBar value={s.target_progress} />}
+          {s.target && <p className="mt-1 text-[11px]">{t("admin.live.breakEvenDay", { amount: formatHuf(s.target) })}</p>}
         </Tile>
         <Tile label={t("admin.live.forecast")} value={s.forecast ? `≈ ${k(s.forecast.value)}` : "–"}>
           {s.forecast && t("admin.live.range", { low: k(s.forecast.low), high: k(s.forecast.high) })}

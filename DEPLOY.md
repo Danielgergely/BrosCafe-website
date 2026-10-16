@@ -183,7 +183,7 @@ analysis states it — net, VAT excluded — and the server scales it to gross:
 
 | Variable            | Default | Meaning                                                    |
 | ------------------- | ------- | ---------------------------------------------------------- |
-| `BREAK_EVEN_NET_FT` | `61000` | break-even per open day, net (the analysis's "Fedezeti pont") |
+| `BREAK_EVEN_NET_FT` | `64300` | break-even per open day, net (the analysis's "Fedezeti pont") |
 | `GROSS_PER_NET`     | `1.072` | the café's gross/net ratio (Fruitsys, opening to mid-October) |
 
 `0` for the break-even hides the glass, the "still missing" line and the ETA.

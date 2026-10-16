@@ -453,6 +453,7 @@ const en = {
       today: "Today", vsUsual: "vs {n} usual days", recordEver: "best day ever",
       recordWeekday: "best of this weekday",
       breakEven: "Break-even", reached: "reached", missing: "still missing",
+      breakEvenDay: "daily break-even: {amount} (gross)",
       missingEta: "still missing · ≈ {time}",
       forecast: "Forecast for today", range: "range {low} – {high}",
       basket: "Average basket", receipts: "{n} receipts", usualBasket: "usually {amount}",

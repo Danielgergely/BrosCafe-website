@@ -456,6 +456,7 @@ const hu = {
       today: "Mai forgalom", vsUsual: "vs. {n} szokásos nap", recordEver: "minden idők legjobbja",
       recordWeekday: "e napok legjobbja",
       breakEven: "Nullszaldó", reached: "megvan", missing: "még hiányzik",
+      breakEvenDay: "napi nullszaldó: {amount} (bruttó)",
       missingEta: "még hiányzik · ≈ {time}",
       forecast: "Mai előrejelzés", range: "sáv: {low} – {high}",
       basket: "Átlagos kosár", receipts: "{n} nyugta", usualBasket: "általában {amount}",
