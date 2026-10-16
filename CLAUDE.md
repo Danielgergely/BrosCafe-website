@@ -28,12 +28,12 @@ pytest -n 0 path::test      # run serially / a single test (do NOT use -p no:xdi
 black / isort / flake8      # available via requirements-dev
 ```
 
-Full stack: `docker compose --env-file .env.stage -p broscafe-stage up -d --build` (see `.env.deploy.example`). Coolify uses `docker-compose.coolify.yml` (identical but publishes no ports).
+Full stack: `docker compose --env-file .env.prod -p broscafe-prod up -d --build` (see `.env.deploy.example`). Coolify uses `docker-compose.coolify.yml` (identical but publishes no ports).
 
 ## Architecture
 
 - **Single origin is load-bearing.** nginx (`frontend/nginx.conf`) serves the SPA and proxies `/api/` to `backend:8001`; the dev server mirrors this with its proxy, so `REACT_APP_BACKEND_URL` is normally empty. Apple Wallet passes embed `<FRONTEND_URL>/api/wallet`, so `FRONTEND_URL` must never change for an environment once passes are issued, and real passes are never issued from staging (`APPLE_PASS_CONFIGURED=false`).
-- **Branches = environments:** `stage` → stage.broscafe.hu, `main` → broscafe.hu (production). Pushes auto-deploy.
+- **Production only, deployed on push.** A push to `main` rebuilds broscafe.hu via Coolify. There is no staging site, so verify locally before pushing.
 - **Backend config:** `backend/app/config.py` is the only place that reads `os.environ`. New settings go there and in `.env.example` / `docker-compose.yml`. `backend/server.py` is just a shim re-exporting `app.main:app`.
 - **Backend layout:** `app/main.py` mounts every `app/routers/*` module under `/api`; business logic is in `app/services/`, Mongo collection handles and indexes in `app/db.py`, Wallet pass generation in `app/wallet/` (Apple `.pkpass` + Google Wallet). On startup it ensures indexes, syncs the admin user from `ADMIN_EMAIL`/`ADMIN_PASSWORD`, and (if `SEED_ON_STARTUP=true`) seeds content.
 - **Content has two sources of truth.** `backend/data/catalog.json` (products, prices as integer HUF) and `backend/data/whats_new.json` are upserted by `id` by `app/seed.py`; items no longer listed are archived, not deleted. Anything saved through the admin dashboard gets `edited_at`, and the seeder skips those items unless `--force` is passed. The dashboard's "Revert to the file version" (`POST /admin/{products|whats-new}/{id}/reset`) hands a single item back to the files.

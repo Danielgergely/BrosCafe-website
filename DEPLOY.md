@@ -1,34 +1,33 @@
 # Deploying Bros Cafe
 
-Two environments, one codebase, deployed by pushing to a branch.
+One environment: production, deployed by pushing to `main`.
 
-| Branch  | Environment | URL                        | Database         |
-| ------- | ----------- | -------------------------- | ---------------- |
-| `stage` | staging     | `https://stage.broscafe.hu`| `broscafe_stage` |
-| `main`  | production  | `https://broscafe.hu`      | `broscafe_prod`  |
+| Branch | URL                   | Database        |
+| ------ | --------------------- | --------------- |
+| `main` | `https://broscafe.hu` | `broscafe_prod` |
 
-Work on a feature branch → merge to `stage` → check it → merge `stage` into
-`main`. Nothing reaches customers without passing through staging first.
+There is no staging site, so **a push to `main` goes straight to customers.**
+Check a change locally first (`yarn start` against a local API — see
+CLAUDE.md), then push.
 
 ---
 
 ## The one rule that cannot be broken
 
-**`FRONTEND_URL` is permanent per environment.**
+**`FRONTEND_URL` is permanent.**
 
 Every Apple Wallet pass has `<FRONTEND_URL>/api/wallet` written inside it, and
 Apple's servers call back on exactly that host. Change it after you've issued
 passes and every pass already on a customer's phone silently stops updating.
-
-Two consequences:
-
-- Decide production's URL once. `https://broscafe.hu` — no `www`, no trailing slash.
-- **Never issue real passes from staging.** Keep `APPLE_PASS_CONFIGURED=false`
-  on stage.
+It is `https://broscafe.hu` — no `www`, no trailing slash.
 
 This is also why the site and API share one origin: nginx serves the site and
 proxies `/api` to the backend in the same container network. Splitting them
 across two hostnames breaks Wallet.
+
+If a staging site is ever added, it gets its own database, its own
+`JWT_SECRET`, and `APPLE_PASS_CONFIGURED=false` — real passes are only ever
+issued from production.
 
 ---
 
@@ -39,20 +38,20 @@ is that it publishes no ports: Coolify's proxy joins the stack's network and
 reaches `web` on port 80 directly, so published ports are redundant and a way
 to accidentally expose the API or database.
 
-| Setting                 | Staging                       | Production            |
-| ----------------------- | ----------------------------- | --------------------- |
-| Branch                  | `stage`                       | `main`                |
-| Build pack              | Docker Compose                | Docker Compose        |
-| Compose file            | `docker-compose.coolify.yml`  | same                  |
-| Domain (on `web`)       | `https://stage.broscafe.hu`   | `https://broscafe.hu` |
-| `DB_NAME`               | `broscafe_stage`              | `broscafe_prod`       |
-| `FRONTEND_URL`          | `https://stage.broscafe.hu`   | `https://broscafe.hu` |
-| `JWT_SECRET`            | one value                     | a *different* value   |
-| `APPLE_PASS_CONFIGURED` | `false` — always              | `true` once verified  |
+| Setting                 | Value                        |
+| ----------------------- | ---------------------------- |
+| Repository              | `Danielgergely/BrosCafe-website` |
+| Branch                  | `main`                       |
+| Build pack              | Docker Compose               |
+| Compose file            | `docker-compose.coolify.yml` |
+| Domain (on `web`)       | `https://broscafe.hu`        |
+| `DB_NAME`               | `broscafe_prod`              |
+| `FRONTEND_URL`          | `https://broscafe.hu`        |
+| `JWT_SECRET`            | `openssl rand -hex 32`       |
+| `APPLE_PASS_CONFIGURED` | `true` once the certs verify |
 
 `FRONTEND_URL` must exactly match the domain assigned to `web`. Set secrets in
-Coolify's Environment Variables tab, never in the compose file. Put Basic
-Authentication on the staging application (Advanced → Basic Authentication).
+Coolify's Environment Variables tab, never in the compose file.
 
 Apple Wallet keys go in `/srv/broscafe/certs` on the server — the compose file
 mounts that read-only. Create it before setting `APPLE_PASS_CONFIGURED=true`.
@@ -64,14 +63,12 @@ server-setup document.
 
 ## First deploy without Coolify (plain Docker on a VPS)
 
-
 Assumes a Linux server with Docker, and DNS for broscafe.hu under your control.
 
 ### 1. Point DNS at the server
 
 ```
-A    broscafe.hu          → <server IP>
-A    stage.broscafe.hu    → <server IP>
+A    broscafe.hu    → <server IP>
 ```
 
 ### 2. Get the code onto the server
@@ -80,62 +77,52 @@ A    stage.broscafe.hu    → <server IP>
 ssh you@server
 sudo mkdir -p /srv/broscafe && sudo chown $USER /srv/broscafe
 cd /srv/broscafe
-git clone https://github.com/gbeng2005-crypto/BrosCafe-website.git prod
-git clone https://github.com/gbeng2005-crypto/BrosCafe-website.git stage
-cd stage && git checkout stage && cd ..
+git clone https://github.com/Danielgergely/BrosCafe-website.git prod
 ```
 
-### 3. Configure both environments
+### 3. Configure
 
 ```bash
 cp prod/.env.deploy.example prod/.env.prod
-cp prod/.env.deploy.example stage/.env.stage
-openssl rand -hex 32     # a different secret for each
+openssl rand -hex 32     # for JWT_SECRET
 ```
 
-Edit each. The values that must differ:
+Edit `.env.prod`:
 
-| Variable          | prod                    | stage                        |
-| ----------------- | ----------------------- | ---------------------------- |
-| `DB_NAME`         | `broscafe_prod`         | `broscafe_stage`             |
-| `HOST_PORT`       | `8080`                  | `8081`                       |
-| `FRONTEND_URL`    | `https://broscafe.hu`   | `https://stage.broscafe.hu`  |
-| `JWT_SECRET`      | one secret              | a *different* secret         |
-| `APPLE_PASS_CONFIGURED` | `true` (once certs verify) | `false` — always      |
+| Variable                | Value                          |
+| ----------------------- | ------------------------------ |
+| `DB_NAME`               | `broscafe_prod`                |
+| `HOST_PORT`             | `8080`                         |
+| `FRONTEND_URL`          | `https://broscafe.hu`          |
+| `JWT_SECRET`            | the secret from above          |
+| `APPLE_PASS_CONFIGURED` | `true` once the certs verify   |
 
-### 4. Bring them up
+### 4. Bring it up
 
 ```bash
 cd /srv/broscafe/prod
-docker compose --env-file .env.prod  -p broscafe-prod  up -d --build
-
-cd /srv/broscafe/stage
-docker compose --env-file .env.stage -p broscafe-stage up -d --build
+docker compose --env-file .env.prod -p broscafe-prod up -d --build
 ```
 
-Each stack binds nginx to `127.0.0.1` only — 8080 and 8081. Nothing is
-reachable from the internet until you put a TLS-terminating proxy in front.
+The stack binds nginx to `127.0.0.1:8080` only. Nothing is reachable from the
+internet until you put a TLS-terminating proxy in front.
 
 ### 5. Terminate TLS
 
 Whatever your platform provides (Coolify, Caddy, nginx, Traefik), route:
 
 ```
-https://broscafe.hu        → 127.0.0.1:8080
-https://stage.broscafe.hu  → 127.0.0.1:8081
+https://broscafe.hu  → 127.0.0.1:8080
 ```
 
 The proxy must forward `X-Forwarded-Proto` and `X-Forwarded-For`; the
 containers already trust and use them.
 
-Put HTTP Basic auth in front of `stage.broscafe.hu` — it should not be
-indexed or found by customers.
-
 ### 6. Verify
 
 ```bash
 curl -s https://broscafe.hu/api/            # {"message":"Bros Cafe API"}
-curl -s https://broscafe.hu/api/products | jq length     # 18
+curl -s https://broscafe.hu/api/products | jq length     # active products on the menu
 curl -s https://broscafe.hu/api/cafe | jq .apple_wallet_configured
 ```
 
@@ -143,16 +130,20 @@ curl -s https://broscafe.hu/api/cafe | jq .apple_wallet_configured
 
 ## Deploying a change
 
+With Coolify this is automatic: a push to `main` triggers the rebuild.
+
+Without it:
+
 ```bash
-cd /srv/broscafe/stage
+cd /srv/broscafe/prod
 git pull
-docker compose --env-file .env.stage -p broscafe-stage up -d --build
+docker compose --env-file .env.prod -p broscafe-prod up -d --build
 ```
 
-…check `stage.broscafe.hu`, then the same in `prod` with `.env.prod`.
-
-With a platform like Coolify this is automatic: connect the repo, map `main`
-to production and `stage` to staging, and a push triggers the rebuild.
+Then open broscafe.hu on a phone and check what you changed. To undo a bad
+deploy, `git revert` the commit and push — the rebuild puts the previous
+version back. Database changes (seeded content, prices) are not undone by a
+revert; re-run the seeder after it.
 
 ### Zero downtime
 
@@ -237,7 +228,7 @@ The heaviest thing on the server is the frontend build, which peaks at
 **~1.5 GiB**. Coolify itself uses 750 MB–1.2 GB.
 
 - **4 GB is enough for production alone** (~500 MB–1.1 GB spare at peak).
-- **8 GB if you also run staging on the same box**, or if you'd rather not
+- **8 GB if you ever add a staging site on the same box**, or if you'd rather not
   think about it.
 
 On a 4 GB server, add swap so a build spike can never OOM-kill anything:
@@ -323,8 +314,7 @@ docker exec -i broscafe-prod-mongo-1 \
 | Restart the API only      | `docker compose --env-file .env.prod -p broscafe-prod restart backend`   |
 | Re-seed content by hand   | `docker compose -p broscafe-prod exec backend python -m app.seed`         |
 | Mongo shell               | `docker compose -p broscafe-prod exec mongo mongosh broscafe_prod`        |
-| Stop an environment       | `docker compose --env-file .env.prod -p broscafe-prod down`               |
-| Wipe stage and start over | `docker compose --env-file .env.stage -p broscafe-stage down -v`          |
+| Stop the site             | `docker compose --env-file .env.prod -p broscafe-prod down`               |
 
 `down -v` deletes the database volume. Never run it against prod.
 
