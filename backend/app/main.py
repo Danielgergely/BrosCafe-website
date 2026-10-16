@@ -1,4 +1,5 @@
 """Bros Cafe API — application assembly."""
+import asyncio
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -9,17 +10,18 @@ from starlette.middleware.cors import CORSMiddleware
 from app import db
 from app.config import settings
 from app.routers import (
-    admin, contact, content, customer_auth, game, media, members, meta,
+    admin, contact, content, customer_auth, game, live_sales, media, members, meta,
     scan, staff_auth, track, wallet,
 )
 from app.security import hash_password, verify_password
+from app.services import live_sales as live_sales_service
 
 logging.basicConfig(level=logging.INFO,
                     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 api = APIRouter(prefix="/api")
-for module in (meta, staff_auth, customer_auth, members, scan,
+for module in (meta, staff_auth, customer_auth, members, scan, live_sales,
                track, content, contact, game, media, wallet, admin):
     api.include_router(module.router)
 
@@ -77,13 +79,21 @@ def _seed_content_from_files() -> None:
         logger.exception("Seeding from data files failed; continuing without it")
 
 
+_background: set[asyncio.Task] = set()
+
+
 @app.on_event("startup")
 async def on_startup() -> None:
     await db.ensure_indexes()
     await _seed_admin()
     _seed_content_from_files()
+    if settings.live_sales_configured:
+        task = asyncio.create_task(live_sales_service.run_forever())
+        _background.add(task)  # keep a reference, or the task can be collected
 
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
+    for task in _background:
+        task.cancel()
     db.close()

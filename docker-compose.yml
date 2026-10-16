@@ -67,6 +67,11 @@ services:
       EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
       SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
       CONTACT_PER_HOUR: ${CONTACT_PER_HOUR:-5}
+      # Live sales widget. A read-only Fruitsys user (broscafe.readonly) and
+      # the key the phone sends. Leave them empty and the feature stays off.
+      FRUITSYS_USER: ${FRUITSYS_USER:-}
+      FRUITSYS_PASSWORD: ${FRUITSYS_PASSWORD:-}
+      LIVE_SALES_KEY: ${LIVE_SALES_KEY:-}
       # Apple Wallet. Leave APPLE_PASS_CONFIGURED unset and passes stay off.
       APPLE_PASS_CONFIGURED: ${APPLE_PASS_CONFIGURED:-false}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}

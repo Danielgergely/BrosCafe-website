@@ -89,6 +89,11 @@ services:
       EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
       SUPPORT_EMAIL: ${SUPPORT_EMAIL:-}
       CONTACT_PER_HOUR: ${CONTACT_PER_HOUR:-5}
+      # Live sales widget. A read-only Fruitsys user (broscafe.readonly) and
+      # the key the phone sends. Leave them empty and the feature stays off.
+      FRUITSYS_USER: ${FRUITSYS_USER:-}
+      FRUITSYS_PASSWORD: ${FRUITSYS_PASSWORD:-}
+      LIVE_SALES_KEY: ${LIVE_SALES_KEY:-}
 
       # Apple Wallet. Keep false on staging — a pass issued from staging points
       # at the staging domain forever.

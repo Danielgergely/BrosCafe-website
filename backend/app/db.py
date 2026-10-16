@@ -24,6 +24,10 @@ game_runs = db.game_runs
 wallet_registrations = db.wallet_registrations
 voided_passes = db.voided_passes
 wallet_stats = db.wallet_stats
+# Live sales widget: one document per past workday's hourly takings, and the
+# latest computed summary the phone reads.
+sales_days = db.sales_days
+live_sales = db.live_sales
 
 
 async def ensure_indexes() -> None:
@@ -56,6 +60,7 @@ async def ensure_indexes() -> None:
     # untouched — Mongo drops a device token once its void has had time to land.
     await wallet_registrations.create_index("expire_at", expireAfterSeconds=0)
     await voided_passes.create_index("serial", unique=True)
+    await sales_days.create_index("date", unique=True)
 
 
 def close() -> None:

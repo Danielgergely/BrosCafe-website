@@ -81,6 +81,19 @@ class Settings:
         "CAFE_EMAIL", "hello@broscafe.hu")
     contact_per_hour = _int("CONTACT_PER_HOUR", 5)
 
+    # --- live sales widget ---------------------------------------------
+    # A read-only Fruitsys back-office user (broscafe.readonly) the server
+    # polls for today's takings, and the key the phone widget sends. All
+    # three empty means the feature is off. See services/live_sales.py.
+    fruitsys_user = os.environ.get("FRUITSYS_USER", "")
+    fruitsys_password = os.environ.get("FRUITSYS_PASSWORD", "")
+    live_sales_key = os.environ.get("LIVE_SALES_KEY", "")
+    live_sales_every_min = _int("LIVE_SALES_EVERY_MIN", 15)
+
+    @property
+    def live_sales_configured(self) -> bool:
+        return bool(self.fruitsys_user and self.fruitsys_password and self.live_sales_key)
+
     @property
     def email_configured(self) -> bool:
         return bool(self.resend_api_key and self.email_from)

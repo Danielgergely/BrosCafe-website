@@ -153,6 +153,33 @@ two backend replicas behind the proxy.
 
 ---
 
+## Live sales widget
+
+The backend can poll Fruitsys for today's takings and serve them to an iPhone
+widget (`widget/bros-live-sales.js`, run by the free Scriptable app). It is off
+until three environment variables are set in Coolify:
+
+| Variable            | Value                                                    |
+| ------------------- | -------------------------------------------------------- |
+| `FRUITSYS_USER`     | `broscafe.readonly` — never the main back-office login   |
+| `FRUITSYS_PASSWORD` | that user's password                                     |
+| `LIVE_SALES_KEY`    | `openssl rand -hex 24` — the same value goes in the widget |
+
+Every 15 minutes, Monday to Saturday 06:00–20:00, the API logs in to Fruitsys
+and fetches today's hourly takings: a few kilobytes and under a second. The
+first run also stores every earlier day once, for the comparison.
+`GET /api/live-sales` with `Authorization: Bearer <LIVE_SALES_KEY>` returns the
+latest summary; any other request gets a 404. Check it's running with:
+
+```bash
+docker compose -p broscafe-prod logs backend | grep "live sales"
+```
+
+Figures are gross (VAT included), as on the till. The comparison is against
+earlier weeks' same weekday up to the same minute.
+
+---
+
 ## Changing content: images, prices, product copy
 
 Product and journal content lives in MongoDB, seeded from two files:
