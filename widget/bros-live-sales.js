@@ -14,8 +14,8 @@
 //   - ▲/▼ against earlier weeks' same weekday up to the same minute
 //   - how much is still missing, and at today's pace roughly when it'll be in
 //   - 🏆 when today beats the best day for this weekday (🏆🏆: best day ever)
-//   - small: today's best seller; medium: today's running total against the
-//     usual day and the break-even line, and the top 3
+//   - small: today's best seller; medium: today per hour against the usual
+//     (dark bar = beat it, light = fell short, line = the usual), and the top 3
 //   - Lock Screen: a ring closing at break-even with the total inside, or the
 //     total, a progress bar and what's still missing
 // Figures are gross (VAT included), as the till shows them.
@@ -104,65 +104,54 @@ function glass(size, level, reached) {
 }
 
 /**
- * Running total through the day: today as a bold line up to now, the usual
- * day for this weekday as a faint line, the break-even as a dashed line —
- * where today's line crosses it is when the day has paid for itself.
+ * Today per hour against the usual for this weekday. A finished hour is a
+ * dark bar if it beat the usual and a light one if it fell short; the usual
+ * is a short line across each slot, so the gap reads at a glance. The hour
+ * still running is an outline — it isn't fair to judge it yet — and hours to
+ * come show only where the usual day would be.
  */
-function runningTotal(size, data, reached) {
+function hourBars(size, data, reached) {
   const ctx = canvas(size);
-  const line = reached ? CREAM : OLIVE;
-  const faint = reached ? new Color("#F5F0E6", 0.45) : new Color("#2F3324", 0.35);
+  const strong = reached ? CREAM : OLIVE;
+  const weak = reached ? new Color("#F5F0E6", 0.35) : new Color("#66734A", 0.5);
+  const tick = reached ? new Color("#1E2216") : INK;
   const label = reached ? CREAM : MUTED;
 
-  const today = Object.entries(data.hours).map(([h, v]) => [Number(h), v]);
-  const usual = Object.entries(data.average_hours || {}).map(([h, v]) => [Number(h), v]);
-  const all = [...today, ...usual].map(([h]) => h);
-  if (!all.length) return ctx.getImage();
-  const from = Math.min(...all);
-  const to = Math.max(...all) + 1;
+  const today = data.hours || {};
+  const usual = data.average_hours || {};
+  const hours = [...Object.keys(today), ...Object.keys(usual)].map(Number);
+  if (!hours.length) return ctx.getImage();
+  const from = Math.min(...hours), to = Math.max(...hours);
+  const max = Math.max(...Object.values(today), ...Object.values(usual), 1);
+  const now = new Date(data.updated_at).getHours();
 
-  const cumulative = (pairs) => {
-    const points = [[from, 0]];
-    let sum = 0;
-    for (let h = from; h < to; h++) {
-      const value = (pairs.find(([hour]) => hour === h) || [h, 0])[1];
-      sum += value;
-      points.push([h + 1, sum]);
+  const slot = size.width / (to - from + 1);
+  const bottom = size.height - 12, ceiling = 3;
+  const y = (v) => bottom - (v / max) * (bottom - ceiling);
+  for (let h = from; h <= to; h++) {
+    const x = (h - from) * slot;
+    const barX = x + slot * 0.2, barW = slot * 0.6;
+    const value = today[h] || 0, normal = usual[h] || 0;
+    if (value && h < now) {
+      ctx.setFillColor(value >= normal ? strong : weak);
+      ctx.fillRect(new Rect(barX, y(value), barW, bottom - y(value)));
+    } else if (value && h === now) {
+      const outline = new Path();
+      outline.addRect(new Rect(barX + 0.75, y(value) + 0.75, barW - 1.5, bottom - y(value) - 0.75));
+      ctx.addPath(outline);
+      ctx.setStrokeColor(strong);
+      ctx.setLineWidth(1.5);
+      ctx.strokePath();
     }
-    return points;
-  };
-  const usualPoints = cumulative(usual);
-  // Today stops at now, not at the end of the current hour.
-  const now = new Date(data.updated_at);
-  const nowHour = now.getHours() + now.getMinutes() / 60;
-  const todayPoints = cumulative(today).filter(([h]) => h <= Math.floor(nowHour));
-  todayPoints.push([Math.max(nowHour, from), data.total]);
-
-  const top = Math.max(data.target || 0, data.total, usualPoints[usualPoints.length - 1][1], 1) * 1.08;
-  const left = 2, right = size.width - 2, bottom = size.height - 12, ceiling = 4;
-  const x = (h) => left + ((h - from) / (to - from)) * (right - left);
-  const y = (v) => bottom - (v / top) * (bottom - ceiling);
-  const point = ([h, v]) => new Point(x(h), y(v));
-
-  if (data.target) {
-    const ty = y(data.target);
-    for (let px = left; px < right; px += 7) {
-      polyline(ctx, [new Point(px, ty), new Point(Math.min(px + 4, right), ty)], faint, 1.2);
+    if (normal) {
+      ctx.setFillColor(tick);
+      ctx.fillRect(new Rect(x + slot * 0.08, y(normal) - 1, slot * 0.84, 2));
     }
-    ctx.setFont(Font.boldSystemFont(8));
-    ctx.setTextColor(label);
-    ctx.drawTextInRect(`0-pont ${thousands(data.target)}`, new Rect(left, Math.max(ty - 11, 0), 80, 10));
-  }
-  polyline(ctx, usualPoints.map(point), faint, 1.5);
-  polyline(ctx, todayPoints.map(point), line, 3);
-  const end = point(todayPoints[todayPoints.length - 1]);
-  ctx.setFillColor(line);
-  ctx.fillEllipse(new Rect(end.x - 3.5, end.y - 3.5, 7, 7));
-
-  ctx.setFont(Font.systemFont(8));
-  ctx.setTextColor(label);
-  for (let h = from; h <= to; h += 3) {
-    ctx.drawTextInRect(String(h), new Rect(Math.min(x(h), right - 12), bottom + 2, 14, 10));
+    if ((h - from) % 3 === 0) {
+      ctx.setFont(Font.systemFont(8));
+      ctx.setTextColor(label);
+      ctx.drawTextInRect(String(h), new Rect(x, bottom + 2, slot * 2, 10));
+    }
   }
   return ctx.getImage();
 }
@@ -252,7 +241,7 @@ function mediumWidget(data, reached) {
   right.layoutVertically();
   right.addSpacer();
   const chartSize = new Size(150, 72);
-  right.addImage(runningTotal(chartSize, data, reached)).imageSize = chartSize;
+  right.addImage(hourBars(chartSize, data, reached)).imageSize = chartSize;
   const top = topProducts(data);
   if (top.length) {
     right.addSpacer(4);
