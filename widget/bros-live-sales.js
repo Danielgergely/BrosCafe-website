@@ -14,8 +14,10 @@
 //   - ▲/▼ against earlier weeks' same weekday up to the same minute
 //   - how much is still missing, and at today's pace roughly when it'll be in
 //   - 🏆 when today beats the best day for this weekday (🏆🏆: best day ever)
-//   - medium size: today's takings per hour against the usual pattern, and
-//     today's best seller
+//   - small: today's best seller; medium: today's running total against the
+//     usual day and the break-even line, and the top 3
+//   - Lock Screen: a ring closing at break-even with the total inside, or the
+//     total, a progress bar and what's still missing
 // Figures are gross (VAT included), as the till shows them.
 
 const URL = "https://broscafe.hu/api/live-sales";
@@ -29,13 +31,18 @@ const WATER_BACK = new Color("#C9D1AE", 0.55);
 const WATER_FRONT = new Color("#AEBB86", 0.6);
 const UP = new Color("#2E7D32");
 const DOWN = new Color("#C62828");
+const WHITE = (alpha = 1) => new Color("#FFFFFF", alpha);
 const WEEKDAYS = ["vasárnap", "hétfő", "kedd", "szerda", "csütörtök", "péntek", "szombat"];
+const MEDALS = ["🥇", "🥈", "🥉"];
 // Older than this means the server stopped updating.
 const STALE_MINUTES = 45;
 
 const money = (n) => `${Math.round(n).toLocaleString("hu-HU")} Ft`;
+const thousands = (n) => (n >= 10000 ? `${Math.round(n / 1000)}k` : `${(n / 1000).toLocaleString("hu-HU", { maximumFractionDigits: 1 })}k`);
 const hhmm = (d) => d.toLocaleTimeString("hu-HU", { hour: "2-digit", minute: "2-digit" });
 const pct = (n) => `${n >= 0 ? "+" : ""}${n.toLocaleString("hu-HU", { maximumFractionDigits: 1 })}%`;
+const hasDiff = (data) => data.diff_pct !== null && data.diff_pct !== undefined;
+const arrow = (data) => (data.diff_pct >= 0 ? "▲" : "▼");
 
 async function load() {
   const request = new Request(URL);
@@ -48,14 +55,29 @@ async function load() {
   return data;
 }
 
-// ---- drawing -----------------------------------------------------------
+function canvas(size, opaque = false) {
+  const ctx = new DrawContext();
+  ctx.size = size;
+  ctx.opaque = opaque;
+  ctx.respectScreenScale = true;
+  return ctx;
+}
+
+function polyline(ctx, points, color, width) {
+  if (points.length < 2) return;
+  const path = new Path();
+  points.forEach((p, i) => (i === 0 ? path.move(p) : path.addLine(p)));
+  ctx.addPath(path);
+  ctx.setStrokeColor(color);
+  ctx.setLineWidth(width);
+  ctx.strokePath();
+}
+
+// ---- home screen drawing -----------------------------------------------
 
 /** The glass: water up to `level` (0–1) with a two-layer wavy surface. */
 function glass(size, level, reached) {
-  const ctx = new DrawContext();
-  ctx.size = size;
-  ctx.opaque = true;
-  ctx.respectScreenScale = true;
+  const ctx = canvas(size, true);
   ctx.setFillColor(reached ? OLIVE : CREAM);
   ctx.fillRect(new Rect(0, 0, size.width, size.height));
   if (reached || level <= 0) return ctx.getImage();
@@ -81,77 +103,71 @@ function glass(size, level, reached) {
   return ctx.getImage();
 }
 
-/** Today's takings per hour as bars, the usual for this weekday as dots.
- *  On the olive "reached" background the bars turn cream to stay visible. */
-function chart(size, data, reached) {
-  const bar = reached ? new Color("#F5F0E6", 0.9) : OLIVE;
-  const dot = reached ? new Color("#1E2216") : INK;
+/**
+ * Running total through the day: today as a bold line up to now, the usual
+ * day for this weekday as a faint line, the break-even as a dashed line —
+ * where today's line crosses it is when the day has paid for itself.
+ */
+function runningTotal(size, data, reached) {
+  const ctx = canvas(size);
+  const line = reached ? CREAM : OLIVE;
+  const faint = reached ? new Color("#F5F0E6", 0.45) : new Color("#2F3324", 0.35);
   const label = reached ? CREAM : MUTED;
-  const ctx = new DrawContext();
-  ctx.size = size;
-  ctx.opaque = false;
-  ctx.respectScreenScale = true;
-  const hours = [...Object.keys(data.hours), ...Object.keys(data.average_hours || {})].map(Number);
-  if (!hours.length) return ctx.getImage();
-  const from = Math.min(...hours), to = Math.max(...hours);
-  const values = [...Object.values(data.hours), ...Object.values(data.average_hours || {})];
-  const max = Math.max(...values, 1);
-  const slot = size.width / (to - from + 1);
-  const base = size.height - 12;
-  const top = 4;
-  for (let h = from; h <= to; h++) {
-    const x = (h - from) * slot;
-    const today = data.hours[h] || 0;
-    if (today) {
-      const height = ((base - top) * today) / max;
-      ctx.setFillColor(bar);
-      ctx.fillRect(new Rect(x + slot * 0.18, base - height, slot * 0.64, height));
+
+  const today = Object.entries(data.hours).map(([h, v]) => [Number(h), v]);
+  const usual = Object.entries(data.average_hours || {}).map(([h, v]) => [Number(h), v]);
+  const all = [...today, ...usual].map(([h]) => h);
+  if (!all.length) return ctx.getImage();
+  const from = Math.min(...all);
+  const to = Math.max(...all) + 1;
+
+  const cumulative = (pairs) => {
+    const points = [[from, 0]];
+    let sum = 0;
+    for (let h = from; h < to; h++) {
+      const value = (pairs.find(([hour]) => hour === h) || [h, 0])[1];
+      sum += value;
+      points.push([h + 1, sum]);
     }
-    const usual = (data.average_hours || {})[h];
-    if (usual) {
-      const y = base - ((base - top) * usual) / max;
-      ctx.setFillColor(dot);
-      ctx.fillEllipse(new Rect(x + slot / 2 - 2, y - 2, 4, 4));
+    return points;
+  };
+  const usualPoints = cumulative(usual);
+  // Today stops at now, not at the end of the current hour.
+  const now = new Date(data.updated_at);
+  const nowHour = now.getHours() + now.getMinutes() / 60;
+  const todayPoints = cumulative(today).filter(([h]) => h <= Math.floor(nowHour));
+  todayPoints.push([Math.max(nowHour, from), data.total]);
+
+  const top = Math.max(data.target || 0, data.total, usualPoints[usualPoints.length - 1][1], 1) * 1.08;
+  const left = 2, right = size.width - 2, bottom = size.height - 12, ceiling = 4;
+  const x = (h) => left + ((h - from) / (to - from)) * (right - left);
+  const y = (v) => bottom - (v / top) * (bottom - ceiling);
+  const point = ([h, v]) => new Point(x(h), y(v));
+
+  if (data.target) {
+    const ty = y(data.target);
+    for (let px = left; px < right; px += 7) {
+      polyline(ctx, [new Point(px, ty), new Point(Math.min(px + 4, right), ty)], faint, 1.2);
     }
-    if ((h - from) % 3 === 0) {
-      ctx.setFont(Font.systemFont(8));
-      ctx.setTextColor(label);
-      ctx.drawTextInRect(String(h), new Rect(x, base + 1, slot * 2, 10));
-    }
+    ctx.setFont(Font.boldSystemFont(8));
+    ctx.setTextColor(label);
+    ctx.drawTextInRect(`0-pont ${thousands(data.target)}`, new Rect(left, Math.max(ty - 11, 0), 80, 10));
+  }
+  polyline(ctx, usualPoints.map(point), faint, 1.5);
+  polyline(ctx, todayPoints.map(point), line, 3);
+  const end = point(todayPoints[todayPoints.length - 1]);
+  ctx.setFillColor(line);
+  ctx.fillEllipse(new Rect(end.x - 3.5, end.y - 3.5, 7, 7));
+
+  ctx.setFont(Font.systemFont(8));
+  ctx.setTextColor(label);
+  for (let h = from; h <= to; h += 3) {
+    ctx.drawTextInRect(String(h), new Rect(Math.min(x(h), right - 12), bottom + 2, 14, 10));
   }
   return ctx.getImage();
 }
 
-/** Lock Screen gauge: a ring that closes as the day reaches break-even. */
-function gauge(progress) {
-  const size = new Size(60, 60);
-  const ctx = new DrawContext();
-  ctx.size = size;
-  ctx.opaque = false;
-  ctx.respectScreenScale = true;
-  const ring = (fraction, alpha) => {
-    const path = new Path();
-    const steps = Math.max(2, Math.round(60 * fraction));
-    for (let i = 0; i <= steps; i++) {
-      const angle = -Math.PI / 2 + 2 * Math.PI * fraction * (i / steps);
-      const point = new Point(30 + 25 * Math.cos(angle), 30 + 25 * Math.sin(angle));
-      i === 0 ? path.move(point) : path.addLine(point);
-    }
-    ctx.addPath(path);
-    ctx.setStrokeColor(new Color("#FFFFFF", alpha));
-    ctx.setLineWidth(6);
-    ctx.strokePath();
-  };
-  ring(1, 0.25);
-  if (progress > 0) ring(Math.min(progress, 1), 1);
-  ctx.setFont(Font.boldSystemFont(14));
-  ctx.setTextColor(Color.white());
-  ctx.setTextAlignedCenter();
-  ctx.drawTextInRect(progress >= 1 ? "✓" : `${Math.round(progress * 100)}%`, new Rect(0, 21, 60, 20));
-  return ctx.getImage();
-}
-
-// ---- layout ------------------------------------------------------------
+// ---- home screen layout ------------------------------------------------
 
 function text(stack, value, size, color, bold = false) {
   const t = stack.addText(value);
@@ -174,6 +190,10 @@ function targetLine(data) {
   return `Még ${money(data.target_missing)}${eta}`;
 }
 
+function topProducts(data) {
+  return data.top_products || (data.top_product ? [data.top_product] : []);
+}
+
 function summary(stack, data, reached) {
   const ink = reached ? CREAM : INK;
   const muted = reached ? CREAM : MUTED;
@@ -181,13 +201,12 @@ function summary(stack, data, reached) {
   stack.addSpacer(2);
   text(stack, money(data.total), 24, ink, true);
   stack.addSpacer(3);
-  if (data.diff_pct === null || data.diff_pct === undefined) {
+  if (!hasDiff(data)) {
     text(stack, "Még nincs mihez hasonlítani", 11, muted);
   } else {
-    const up = data.diff_pct >= 0;
     const weekday = WEEKDAYS[new Date(data.date).getDay()];
-    text(stack, `${up ? "▲" : "▼"} ${pct(data.diff_pct)} · ${data.compared_days} ${weekday}`, 12,
-      reached ? CREAM : up ? UP : DOWN, true);
+    text(stack, `${arrow(data)} ${pct(data.diff_pct)} · ${data.compared_days} ${weekday}`, 12,
+      reached ? CREAM : data.diff_pct >= 0 ? UP : DOWN, true);
   }
   const line = targetLine(data);
   if (line) {
@@ -203,55 +222,137 @@ function footer(stack, data, reached) {
     stale ? DOWN : reached ? CREAM : MUTED);
 }
 
-function homeWidget(data, family) {
+function smallWidget(data, reached) {
   const widget = new ListWidget();
-  widget.setPadding(12, 12, 12, 12);
-  widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
-
-  const reached = Boolean(data.target_reached_at);
-  const size = family === "medium" ? new Size(338, 158) : new Size(158, 158);
-  widget.backgroundImage = glass(size, data.target_progress || 0, reached);
-
-  if (family !== "medium") {
-    summary(widget, data, reached);
-    widget.addSpacer();
-    footer(widget, data, reached);
-    return widget;
+  summary(widget, data, reached);
+  widget.addSpacer();
+  const best = topProducts(data)[0];
+  if (best) {
+    text(widget, `🥇 ${best.name} · ${best.count} db`, 11, reached ? CREAM : INK, true);
+    widget.addSpacer(3);
   }
+  footer(widget, data, reached);
+  return widget;
+}
 
+function mediumWidget(data, reached) {
+  const widget = new ListWidget();
   const row = widget.addStack();
+
   const left = row.addStack();
   left.layoutVertically();
   summary(left, data, reached);
   left.addSpacer();
   footer(left, data, reached);
+
   row.addSpacer(10);
+
+  // Spacers above and below centre the chart and the list in the column.
   const right = row.addStack();
   right.layoutVertically();
-  right.addImage(chart(new Size(150, 96), data, reached)).imageSize = new Size(150, 96);
-  right.addSpacer(4);
-  if (data.top_product) {
-    text(right, `Top: ${data.top_product.name} · ${data.top_product.count} db`, 10, reached ? CREAM : INK, true);
+  right.addSpacer();
+  const chartSize = new Size(150, 72);
+  right.addImage(runningTotal(chartSize, data, reached)).imageSize = chartSize;
+  const top = topProducts(data);
+  if (top.length) {
+    right.addSpacer(4);
+    top.forEach((product, i) => {
+      text(right, `${MEDALS[i]} ${product.name} · ${product.count}`, 10, reached ? CREAM : INK, i === 0);
+    });
   }
+  right.addSpacer();
   return widget;
+}
+
+function homeWidget(data, family) {
+  const reached = Boolean(data.target_reached_at);
+  const widget = family === "medium" ? mediumWidget(data, reached) : smallWidget(data, reached);
+  widget.setPadding(12, 12, 12, 12);
+  widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
+  const size = family === "medium" ? new Size(338, 158) : new Size(158, 158);
+  widget.backgroundImage = glass(size, data.target_progress || 0, reached);
+  return widget;
+}
+
+// ---- Lock Screen -------------------------------------------------------
+// iOS tints Lock Screen widgets itself, so these use white at different
+// strengths and let shape, not colour, carry the meaning.
+
+/** A ring that closes at break-even, today's total inside, ▲/▼ below it. */
+function gauge(data) {
+  const S = 72, centre = S / 2, radius = S / 2 - 4;
+  const ctx = canvas(new Size(S, S));
+  const ring = (fraction, alpha) => {
+    const steps = Math.max(2, Math.round(90 * fraction));
+    const points = [];
+    for (let i = 0; i <= steps; i++) {
+      const angle = -Math.PI / 2 + 2 * Math.PI * fraction * (i / steps);
+      points.push(new Point(centre + radius * Math.cos(angle), centre + radius * Math.sin(angle)));
+    }
+    polyline(ctx, points, WHITE(alpha), 6);
+  };
+  ring(1, 0.25);
+  const progress = data.target_progress || 0;
+  if (progress > 0) ring(Math.min(progress, 1), 1);
+
+  ctx.setTextAlignedCenter();
+  ctx.setTextColor(WHITE());
+  ctx.setFont(Font.boldSystemFont(19));
+  ctx.drawTextInRect(thousands(data.total), new Rect(0, 19, S, 24));
+  ctx.setFont(Font.boldSystemFont(11));
+  const below = data.target_reached_at ? "✓ 0-pont" : hasDiff(data) ? `${arrow(data)} ${Math.abs(Math.round(data.diff_pct))}%` : "";
+  ctx.drawTextInRect(below, new Rect(0, 42, S, 14));
+  return ctx.getImage();
+}
+
+/** A thin progress bar to break-even. */
+function bar(width, progress) {
+  const size = new Size(width, 8);
+  const ctx = canvas(size);
+  const track = new Path();
+  track.addRoundedRect(new Rect(0, 1, width, 6), 3, 3);
+  ctx.addPath(track);
+  ctx.setFillColor(WHITE(0.3));
+  ctx.fillPath();
+  const fill = new Path();
+  fill.addRoundedRect(new Rect(0, 1, Math.max(6, width * Math.min(progress, 1)), 6), 3, 3);
+  ctx.addPath(fill);
+  ctx.setFillColor(WHITE());
+  ctx.fillPath();
+  return ctx.getImage();
 }
 
 function lockWidget(data, family) {
   const widget = new ListWidget();
   widget.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
-  const arrow = data.diff_pct === null || data.diff_pct === undefined ? "" : data.diff_pct >= 0 ? " ▲" : " ▼";
-  const change = arrow ? `${arrow}${Math.abs(Math.round(data.diff_pct))}%` : "";
+  const change = hasDiff(data) ? ` ${arrow(data)}${Math.abs(Math.round(data.diff_pct))}%` : "";
+
   if (family === "accessoryCircular") {
-    widget.addImage(gauge(data.target_progress || 0));
+    widget.setPadding(0, 0, 0, 0);
+    widget.addImage(gauge(data)).imageSize = new Size(72, 72);
   } else if (family === "accessoryInline") {
     widget.addText(`☕ ${money(data.total)}${change}`);
   } else {
-    text(widget, `☕ ${money(data.total)}${change}${trophies(data)}`, 14, Color.white(), true);
-    const line = targetLine(data);
-    if (line) text(widget, line, 12, Color.white());
+    widget.setPadding(0, 2, 0, 2);
+    const head = widget.addStack();
+    text(head, `☕ ${money(data.total)}`, 15, WHITE(), true);
+    head.addSpacer();
+    text(head, `${change.trim()}${trophies(data)}`, 13, WHITE(), true);
+    if (data.target) {
+      widget.addSpacer(4);
+      const row = widget.addStack();
+      row.centerAlignContent();
+      row.addImage(bar(118, data.target_progress || 0)).imageSize = new Size(118, 8);
+      row.addSpacer(6);
+      text(row, `${Math.round((data.target_progress || 0) * 100)}%`, 11, WHITE(), true);
+      widget.addSpacer(3);
+      text(widget, targetLine(data), 12, WHITE(0.85));
+    }
   }
   return widget;
 }
+
+// ---- entry -------------------------------------------------------------
 
 function messageWidget(title, detail) {
   const widget = new ListWidget();

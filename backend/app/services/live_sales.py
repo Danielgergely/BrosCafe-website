@@ -105,7 +105,8 @@ async def refresh() -> dict:
         **_comparison(past, total, now),
         **_target(total, now, past, previous),
         **_records(past, best_ever, total),
-        "top_product": _top(sold),
+        "top_product": (_top(sold) or [None])[0],
+        "top_products": _top(sold),
     }
     await db.live_sales.replace_one({"_id": "current"}, summary, upsert=True)
     return summary
@@ -183,11 +184,10 @@ def _records(past: list[dict], best_ever: dict | None, total: int) -> dict:
     }
 
 
-def _top(sold: dict[str, int]) -> dict | None:
-    if not sold:
-        return None
-    name, count = max(sold.items(), key=lambda item: item[1])
-    return {"name": name, "count": count}
+def _top(sold: dict[str, int], count: int = 3) -> list[dict]:
+    """Today's best sellers by number sold."""
+    ranked = sorted(sold.items(), key=lambda item: item[1], reverse=True)[:count]
+    return [{"name": name, "count": n} for name, n in ranked if n > 0]
 
 
 def _polling_time(now: datetime) -> bool:
