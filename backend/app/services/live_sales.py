@@ -97,20 +97,33 @@ async def _sync_past_days(client: Fruitsys, today: date) -> None:
 
 async def _fetch_today(client: Fruitsys, today: date) -> dict:
     hours: dict[int, int] = {}
-    products: dict[str, dict] = {}
+    sold: list[dict] = []
     receipts = {"count": 0, "gross": 0, "net": 0}
     for workday in await client.workdays(today.year, today.month):
         if workday["opened_at"][:10] != today.isoformat():
             continue
         for hour, amount in (await client.hourly(workday["id"])).items():
             hours[hour] = hours.get(hour, 0) + amount
-        for product in await client.products(workday["id"]):
-            entry = products.setdefault(product["name"], {"count": 0, "gross": 0})
-            entry["count"] += product["count"]
-            entry["gross"] += product["gross"]
+        sold += await client.products(workday["id"])
         for key, value in (await client.receipts(workday["id"])).items():
             receipts[key] += value
-    return {"hours": hours, "products": products, "receipts": receipts}
+
+    # Some Fruitsys users are sent the counts but not the amounts. Then the
+    # revenue is the count at the till's list price: close, though it misses
+    # discounts and paid extras such as plant milk — so it is marked.
+    estimated = any(p["count"] for p in sold) and not any(p["gross"] for p in sold)
+    if estimated:
+        prices = await client.prices()
+        for p in sold:
+            p["gross"] = p["count"] * prices.get(f"{p['name']} {p['unit']}".strip(), 0)
+
+    products: dict[str, dict] = {}
+    for p in sold:
+        entry = products.setdefault(p["name"], {"count": 0, "gross": 0})
+        entry["count"] += p["count"]
+        entry["gross"] += p["gross"]
+    return {"hours": hours, "products": products, "receipts": receipts,
+            "products_estimated": estimated}
 
 
 async def refresh() -> dict:
@@ -142,6 +155,7 @@ async def refresh() -> dict:
         "top_product": (_top(products, 1) or [None])[0],
         "top_products": _top(products, 3),
         "products": _top(products, 5),
+        "products_estimated": fetched["products_estimated"],
         "week": _week(history, today, total),
         "month": _month(history, today, total),
         **await _forecasts(history, today, now, hours, total),

@@ -191,7 +191,7 @@ function Products({ summary, t }) {
             <span className="mr-2 text-muted">{i + 1}.</span>{p.name}
           </span>
           <span className="shrink-0 text-right tabular-nums">
-            <span className="font-semibold text-ink">{formatHuf(p.gross)}</span>
+            <span className="font-semibold text-ink">{summary.products_estimated ? "≈ " : ""}{formatHuf(p.gross)}</span>
             <span className="ml-2 text-xs text-muted">
               {t("admin.live.sold", { n: p.count })}
               {summary.total ? ` · ${Math.round((p.gross / summary.total) * 100)}%` : ""}
@@ -199,6 +199,9 @@ function Products({ summary, t }) {
           </span>
         </li>
       ))}
+      {summary.products_estimated && (
+        <li className="pt-1 text-xs text-muted">{t("admin.live.productsEstimated")}</li>
+      )}
     </ol>
   );
 }

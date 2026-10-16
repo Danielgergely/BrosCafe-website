@@ -14,7 +14,11 @@ returns is data from outside, so every number is parsed defensively.
 import json
 import re
 
+import logging
+
 import httpx
+
+logger = logging.getLogger(__name__)
 
 BASE = "https://cloud.fruitsys.hu/raktar/"
 RESTAURANT_ID = 1
@@ -96,13 +100,39 @@ class Fruitsys:
         }
 
     async def products(self, workday_id: str) -> list[dict]:
-        """What sold on one workday: [{"name", "count", "gross"}]."""
+        """What sold on one workday: [{"name", "unit", "count", "gross"}].
+
+        `gross` is 0 when Fruitsys withholds the amounts from this user — it
+        does for some users and not others; the counts always come through.
+        """
         response = await self.http.post("stat_termek_master.php", data={
             "etteremid": RESTAURANT_ID, "etteremvalaszttipus": 0, "valasztottettermek": "[]",
             "idoszak": f"-1,{workday_id}", "time1": "", "time2": "", "munkakezd": "", "munkaveg": "",
             "counter": 0, "waiter": 0, "gep": 0, "aktarak": 0, "aktusertipus": 2, "szemelyzet": 0})
         response.raise_for_status()
-        rows = (response.json().get("data") or {}).get("data") or []
-        return [{"name": str(row.get("nev") or "").strip(), "count": _number(row.get("darab")),
-                 "gross": _number(row.get("teljesar"))}
-                for row in rows if isinstance(row, dict) and row.get("nev")]
+        rows = [row for row in (response.json().get("data") or {}).get("data") or []
+                if isinstance(row, dict) and row.get("nev")]
+        products = [{
+            "name": str(row["nev"]).strip(),
+            "unit": str(row.get("kiszereles") or "").strip(),
+            "count": _number(row.get("darab")),
+            # The first money field this user is sent: full gross, then gross
+            # after discounts.
+            "gross": next((_number(row.get(f)) for f in ("teljesar", "kedvezmenyesbrutto", "bruttobevet")
+                           if _number(row.get(f))), 0),
+        } for row in rows]
+        if any(p["count"] for p in products) and not any(p["gross"] for p in products):
+            logger.info("fruitsys: product report has counts but no amounts; fields sent: %s",
+                        sorted(rows[0].keys()))
+        return products
+
+    async def prices(self) -> dict[str, int]:
+        """The till's list price per product, keyed "name unit" ("Omlett adag")."""
+        response = await self.http.get("termekar_query.php", params={
+            "order": "[]", "filter": "{}", "etterem": RESTAURANT_ID, "csakaktiv": 0})
+        response.raise_for_status()
+        prices = {}
+        for row in response.json().get("data") or []:
+            if isinstance(row, dict) and row.get("nev") and _number(row.get("pult_ar_1R1")):
+                prices[str(row["nev"]).strip()] = _number(row.get("pult_ar_1R1"))
+        return prices

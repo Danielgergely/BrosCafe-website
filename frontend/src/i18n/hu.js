@@ -468,6 +468,7 @@ const hu = {
       notYet: "még nincs", late: "utólag mentve",
       forecastHow: "9:00-kor, 12:00-kor és 15:00-kor elmentjük az előrejelzést, zárás után pedig összevetjük a tényleges forgalommal. A mai tempót és egy szokásos ilyen napot kever, a kávézó növekedésével korrigálva, és tanul abból, mennyire talált a korábbi előrejelzés.",
       productsTitle: "Mai legnépszerűbbek", sold: "{n} db",
+      productsEstimated: "≈ darab × listaár: a Fruitsys ennek a felhasználónak nem küldi az összegeket, így a kedvezmények és a fizetős extrák kimaradnak.",
       scorecardTitle: "Mennyire talált az előrejelzés?",
       withinRange: "{n}/{of} a sávon belül", lastWeek: "utolsó 7 nap ±{pct}%",
       day: "Nap", actual: "Tény",

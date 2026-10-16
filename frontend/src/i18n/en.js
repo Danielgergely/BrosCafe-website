@@ -465,6 +465,7 @@ const en = {
       notYet: "not yet", late: "saved late",
       forecastHow: "At 9:00, 12:00 and 15:00 the forecast is saved and, after closing, compared with the actual total. It blends today's pace with an ordinary day of this weekday, corrected for the café's growth, and learns from how earlier forecasts turned out.",
       productsTitle: "Best sellers today", sold: "{n} sold",
+      productsEstimated: "≈ count × list price: Fruitsys doesn't send this user the amounts, so discounts and paid extras are missing.",
       scorecardTitle: "How good were the forecasts?",
       withinRange: "{n}/{of} inside the range", lastWeek: "last 7 days ±{pct}%",
       day: "Day", actual: "Actual",
