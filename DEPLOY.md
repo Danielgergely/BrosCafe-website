@@ -178,6 +178,16 @@ docker compose -p broscafe-prod logs backend | grep "live sales"
 Figures are gross (VAT included), as on the till. The comparison is against
 earlier weeks' same weekday up to the same minute.
 
+The widget's "glass" fills towards the day's break-even. Set it as the margin
+analysis states it — net, VAT excluded — and the server scales it to gross:
+
+| Variable            | Default | Meaning                                                    |
+| ------------------- | ------- | ---------------------------------------------------------- |
+| `BREAK_EVEN_NET_FT` | `61000` | break-even per open day, net (the analysis's "Fedezeti pont") |
+| `GROSS_PER_NET`     | `1.072` | the café's gross/net ratio (Fruitsys, opening to mid-October) |
+
+`0` for the break-even hides the glass, the "still missing" line and the ETA.
+
 ---
 
 ## Changing content: images, prices, product copy

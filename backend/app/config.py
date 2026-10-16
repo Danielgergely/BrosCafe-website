@@ -25,6 +25,13 @@ def _secret(key: str) -> str:
     return os.environ.get(key, "").strip().strip("'\"").strip()
 
 
+def _float(key: str, default: float) -> float:
+    try:
+        return float(os.environ.get(key, default))
+    except (TypeError, ValueError):
+        return default
+
+
 def _int(key: str, default: int) -> int:
     try:
         return int(os.environ.get(key, default))
@@ -95,6 +102,11 @@ class Settings:
     fruitsys_password = _secret("FRUITSYS_PASSWORD")
     live_sales_key = _secret("LIVE_SALES_KEY")
     live_sales_every_min = _int("LIVE_SALES_EVERY_MIN", 15)
+    # The day's break-even, as the margin analysis states it: net revenue,
+    # VAT excluded. The till reports gross, so it is scaled by the café's
+    # gross/net ratio (1.072 from opening to mid-October). 0 turns it off.
+    break_even_net_ft = _int("BREAK_EVEN_NET_FT", 61000)
+    gross_per_net = _float("GROSS_PER_NET", 1.072)
 
     @property
     def live_sales_configured(self) -> bool:

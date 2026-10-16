@@ -71,3 +71,15 @@ class Fruitsys:
             if 0 <= hour <= 23 and amount:
                 hours[hour] = amount
         return hours
+
+    async def products(self, workday_id: str) -> list[dict]:
+        """What sold on one workday: [{"name", "count", "gross"}]."""
+        response = await self.http.post("stat_termek_master.php", data={
+            "etteremid": RESTAURANT_ID, "etteremvalaszttipus": 0, "valasztottettermek": "[]",
+            "idoszak": f"-1,{workday_id}", "time1": "", "time2": "", "munkakezd": "", "munkaveg": "",
+            "counter": 0, "waiter": 0, "gep": 0, "aktarak": 0, "aktusertipus": 2, "szemelyzet": 0})
+        response.raise_for_status()
+        rows = (response.json().get("data") or {}).get("data") or []
+        return [{"name": str(row.get("nev") or "").strip(), "count": _number(row.get("darab")),
+                 "gross": _number(row.get("teljesar"))}
+                for row in rows if isinstance(row, dict) and row.get("nev")]

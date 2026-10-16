@@ -94,6 +94,10 @@ services:
       FRUITSYS_USER: ${FRUITSYS_USER:-}
       FRUITSYS_PASSWORD: ${FRUITSYS_PASSWORD:-}
       LIVE_SALES_KEY: ${LIVE_SALES_KEY:-}
+      # Break-even per open day, net as in the margin analysis; scaled by the
+      # gross/net ratio because the till reports gross.
+      BREAK_EVEN_NET_FT: ${BREAK_EVEN_NET_FT:-61000}
+      GROSS_PER_NET: ${GROSS_PER_NET:-1.072}
 
       # Apple Wallet. Keep false on staging — a pass issued from staging points
       # at the staging domain forever.
