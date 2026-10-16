@@ -5,14 +5,12 @@ import Loader from "@/components/ui/Loader";
 import DayList from "@/features/home/DayList";
 import About from "@/features/home/sections/About";
 import BrosMoment from "@/features/home/sections/BrosMoment";
-import Coffee from "@/features/home/sections/Coffee";
-import Collection from "@/features/home/sections/Collection";
 import Community from "@/features/home/sections/Community";
 import DiscoverBros from "@/features/home/sections/DiscoverBros";
 import Hero from "@/features/home/sections/Hero";
 import LoyaltyCTA from "@/features/home/sections/LoyaltyCTA";
 import Marquee from "@/features/home/sections/Marquee";
-import MenuPreview from "@/features/home/sections/MenuPreview";
+import MenuRows from "@/features/home/sections/MenuRows";
 import MerchLookbook from "@/features/home/sections/MerchLookbook";
 import OpeningTeaser from "@/features/home/sections/OpeningTeaser";
 import WhatsNew from "@/features/home/sections/WhatsNew";
@@ -37,12 +35,10 @@ export default function HomePage() {
         <Hero />
         <Marquee />
         <OpeningTeaser />
-        <Coffee />
-        <Collection />
+        <MenuRows />
         <YourPicks />
         <BrosMoment />
         <About />
-        <MenuPreview />
         <DiscoverBros />
         <MerchLookbook />
         <LoyaltyCTA />

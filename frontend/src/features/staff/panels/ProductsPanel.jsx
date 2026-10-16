@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ArrowCounterClockwise, Plus } from "@phosphor-icons/react";
 import { toast } from "sonner";
 
-import { CATEGORIES } from "@/config/site";
+import { CATEGORIES, MENU_SECTIONS, SECTION_OF_CAT } from "@/config/site";
 import {
   Loading, Modal, SectionCard, adminInputClass,
 } from "@/features/staff/components/AdminPrimitives";
@@ -69,6 +69,7 @@ export default function ProductsPanel() {
         price_huf: Number(form.price_huf) || 0,
         // Explicit null, not omitted: the API reads it as "remove this field".
         flavor: form.flavor ?? null,
+        section: form.section || null,
         behind: lines(form.behind),
       });
     } catch (error) {
@@ -184,7 +185,7 @@ export default function ProductsPanel() {
           width="max-w-2xl"
         >
           <form onSubmit={save} className="space-y-4" data-testid="product-form">
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className={labelClass}>{t("content.id")}</span>
                 <input
@@ -210,6 +211,24 @@ export default function ProductsPanel() {
                 >
                   {CATS.map((cat) => (
                     <option key={cat} value={cat}>{t(`product.cats.${cat}`)}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className={labelClass}>{t("content.section")}</span>
+                <select
+                  data-testid="product-section-select"
+                  value={form.section || ""}
+                  onChange={(event) => setForm({ ...form, section: event.target.value })}
+                  className={`mt-1 ${adminInputClass}`}
+                >
+                  <option value="">
+                    {t("content.sectionAuto", {
+                      section: t(`product.sections.${SECTION_OF_CAT[form.cat] ?? "coffee"}`),
+                    })}
+                  </option>
+                  {MENU_SECTIONS.map((section) => (
+                    <option key={section} value={section}>{t(`product.sections.${section}`)}</option>
                   ))}
                 </select>
               </label>

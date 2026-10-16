@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Coffee } from "lucide-react";
 import { Route, Routes, useLocation, useParams } from "react-router-dom";
 
-import { MOTION, ROUTES } from "@/config/site";
+import { MOTION, ROUTES, sectionOf } from "@/config/site";
 import { CustomerOnly, StaffOnly } from "@/app/RouteGuards";
 import HomePage from "@/features/home/HomePage";
 import GamePage from "@/features/game/GamePage";
@@ -19,6 +19,7 @@ import ShopPage from "@/features/loyalty/pages/ShopPage";
 import VerifyMagicPage from "@/features/loyalty/pages/VerifyMagicPage";
 import WhatsNewPage from "@/features/loyalty/pages/WhatsNewPage";
 import StaffLoginPage from "@/features/staff/pages/StaffLoginPage";
+import { useCatalog } from "@/lib/catalog";
 import { useUi } from "@/state/UiStore";
 
 /**
@@ -37,16 +38,32 @@ function ChunkLoading() {
   );
 }
 
-/** /product/:id opens the shared modal over the collection page. */
+/**
+ * /product/:id opens the shared modal over the page the product lives on: its
+ * menu tab, or the shop for merch. Until the catalog arrives the section is
+ * unknown, and the menu's first tab stands in.
+ */
 function ProductDeepLink() {
   const { id } = useParams();
   const { openProduct } = useUi();
+  const { get } = useCatalog();
+  const product = get(id);
 
   useEffect(() => {
     openProduct(id);
   }, [id, openProduct]);
 
-  return <ShopPage />;
+  if (product?.cat === "merch") return <ShopPage />;
+  return <MenuPage section={product ? sectionOf(product) : undefined} />;
+}
+
+/**
+ * What counts as "a different page" for the enter animation and the scroll
+ * reset. The menu's tabs are one page: switching from /menu/cold to
+ * /menu/sweet should swap the grid, not fade the whole screen and jump to top.
+ */
+function pageKey(pathname) {
+  return pathname.startsWith(`${ROUTES.menu}/`) ? ROUTES.menu : pathname;
 }
 
 /** /journal/:id opens the entry over the journal page, so posts stay shareable. */
@@ -63,16 +80,17 @@ function JournalDeepLink() {
 
 export default function AppRoutes() {
   const location = useLocation();
+  const page = pageKey(location.pathname);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [location.pathname]);
+  }, [page]);
 
   return (
     // Enter-only transition. An exit animation here used to trap redirects
     // (magic-link sign-in) on the outgoing screen.
     <motion.div
-      key={location.pathname}
+      key={page}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: MOTION.page, ease: MOTION.ease }}
@@ -81,6 +99,7 @@ export default function AppRoutes() {
         <Route path={ROUTES.home} element={<HomePage />} />
         <Route path={ROUTES.loyalty} element={<LoyaltyPage />} />
         <Route path={ROUTES.menu} element={<MenuPage />} />
+        <Route path={ROUTES.menuSection(":section")} element={<MenuPage />} />
         <Route path={ROUTES.news} element={<WhatsNewPage />} />
         <Route path={ROUTES.shop} element={<ShopPage />} />
         <Route path="/product/:id" element={<ProductDeepLink />} />

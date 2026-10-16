@@ -31,7 +31,7 @@ const SYNONYMS = {
   drink: ["bottled"], drinks: ["bottled"], soda: ["bottled"], water: ["bottled"],
   cola: ["bottled"], bottle: ["bottled"], bottled: ["bottled"],
   gift: ["merch"], merch: ["merch"], shirt: ["merch"], tee: ["merch"],
-  hoodie: ["merch"], mug: ["merch"], beans: ["merch"], tote: ["merch"], bag: ["merch"],
+  hoodie: ["merch"], mug: ["merch"], beans: ["beans", "merch"], tote: ["merch"], bag: ["merch"],
   // Magyar
   kávé: ["coffee"], kave: ["coffee"], kávék: ["coffee"], eszpresszó: ["coffee"],
   forró: ["coffee", "tea", "specialty"], filteres: ["coffee"],
@@ -60,7 +60,7 @@ const SYNONYMS = {
   ital: ["bottled"], italok: ["bottled"], üdítő: ["bottled"], víz: ["bottled"],
   ásványvíz: ["bottled"], tonik: ["specialty", "bottled"], üveges: ["bottled"],
   ajándék: ["merch"], bögre: ["merch"], pulcsi: ["merch"], pulóver: ["merch"],
-  póló: ["merch"], bab: ["merch"], kávébab: ["merch"], táska: ["merch"],
+  póló: ["merch"], bab: ["beans"], kávébab: ["beans"], szemes: ["beans"], táska: ["merch"],
 };
 
 /** Fields worth searching on a localized product. */

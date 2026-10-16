@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { ArrowUpRight, Coffee, Gamepad2, Menu, User, X } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Coffee, Gamepad2, LogOut, Menu, User, X } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import LanguageToggle from "@/components/layout/LanguageToggle";
@@ -200,29 +200,53 @@ export default function Nav({ solid = false }) {
               </button>
             </div>
 
-            <ul className="flex flex-1 flex-col justify-center gap-2 px-8">
-              {NAV_LINKS.map((link, i) => (
-                <motion.li
-                  key={link.key}
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={{ delay: 0.08 + i * 0.06, duration: 0.5, ease: MOTION.ease }}
-                >
-                  <button
-                    data-testid={`mobile-nav-link-${link.key}`}
-                    onClick={() => onNavigate(link)}
-                    className="font-display text-5xl font-medium text-olive transition-opacity duration-300 hover:opacity-60"
-                  >
-                    {t(`nav.${link.key}`)}
-                  </button>
-                </motion.li>
-              ))}
+            {/* Each entry is a full-width row with a chevron, so it reads as
+                something to tap rather than a column of large words. */}
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
+              <ul className="border-t border-olive/15" data-testid="mobile-nav-list">
+                {NAV_LINKS.map((link, i) => {
+                  const current = link.to ? pathname.startsWith(link.to) : pathname === ROUTES.home && link.anchor === "home";
+                  return (
+                    <motion.li
+                      key={link.key}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ delay: 0.05 + i * 0.05, duration: 0.45, ease: MOTION.ease }}
+                      className="border-b border-olive/15"
+                    >
+                      <button
+                        data-testid={`mobile-nav-link-${link.key}`}
+                        onClick={() => onNavigate(link)}
+                        aria-current={current ? "page" : undefined}
+                        className="group flex w-full items-center gap-4 py-4 text-left active:bg-olive/5"
+                      >
+                        <span className="w-6 text-[11px] font-semibold tabular-nums text-olive/40">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        <span className="flex-1 font-display text-3xl font-medium text-olive">
+                          {t(`nav.${link.key}`)}
+                        </span>
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                            current
+                              ? "border-olive bg-olive text-cream"
+                              : "border-olive/25 text-olive group-active:bg-olive group-active:text-cream"
+                          }`}
+                        >
+                          <ChevronRight size={18} strokeWidth={1.8} />
+                        </span>
+                      </button>
+                    </motion.li>
+                  );
+                })}
+              </ul>
 
-              <motion.li
-                initial={{ opacity: 0, y: 24 }}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
+                transition={{ delay: 0.4, duration: 0.45 }}
+                className="mt-6 divide-y divide-olive/10 rounded-card border border-olive/15 bg-white/60"
               >
                 <button
                   data-testid="mobile-nav-link-account"
@@ -230,36 +254,26 @@ export default function Nav({ solid = false }) {
                     setMenuOpen(false);
                     navigate(member ? ROUTES.account : ROUTES.loyalty);
                   }}
-                  className="font-display text-3xl font-medium italic text-olive/70 transition-opacity duration-300 hover:opacity-60"
+                  className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-olive active:bg-olive/5"
                 >
-                  {t(member ? "nav.account" : "nav.signIn")}
+                  <User size={18} strokeWidth={1.8} />
+                  <span className="flex-1">{t(member ? "nav.account" : "nav.signIn")}</span>
+                  {stampLabel && <span className="text-xs text-olive/60">{stampLabel}</span>}
+                  <ChevronRight size={16} className="text-olive/40" />
                 </button>
-              </motion.li>
-
-              {member && (
-                <motion.li
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.44, duration: 0.5 }}
-                >
+                {member && (
                   <Link
                     data-testid="mobile-nav-game"
                     to={ROUTES.game}
                     onClick={() => setMenuOpen(false)}
-                    className="inline-flex items-center gap-2 font-display text-3xl font-medium italic text-olive/70 transition-opacity duration-300 hover:opacity-60"
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-sm font-medium text-olive active:bg-olive/5"
                   >
-                    <Gamepad2 size={22} strokeWidth={1.8} />
-                    {t("game.title")}
+                    <Gamepad2 size={18} strokeWidth={1.8} />
+                    <span className="flex-1">{t("game.title")}</span>
+                    <ChevronRight size={16} className="text-olive/40" />
                   </Link>
-                </motion.li>
-              )}
-
-              {member && (
-                <motion.li
-                  initial={{ opacity: 0, y: 24 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.48, duration: 0.5 }}
-                >
+                )}
+                {member && (
                   <button
                     data-testid="mobile-nav-sign-out"
                     onClick={() => {
@@ -267,33 +281,34 @@ export default function Nav({ solid = false }) {
                       setMenuOpen(false);
                       navigate(ROUTES.home);
                     }}
-                    className="font-display text-3xl font-medium italic text-olive/40 transition-opacity duration-300 hover:opacity-60"
+                    className="flex w-full items-center gap-3 px-4 py-3.5 text-left text-sm font-medium text-olive/60 active:bg-olive/5"
                   >
-                    {t("account.logOut")}
+                    <LogOut size={18} strokeWidth={1.8} />
+                    <span className="flex-1">{t("account.logOut")}</span>
                   </button>
-                </motion.li>
-              )}
+                )}
+              </motion.div>
 
-              <motion.li
-                initial={{ opacity: 0, y: 24 }}
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="mt-8 flex flex-wrap items-center gap-4"
+                transition={{ delay: 0.45, duration: 0.45 }}
+                className="mt-6 flex items-center gap-4"
               >
                 <Link
                   data-testid="mobile-nav-loyalty-cta"
                   to={ROUTES.loyalty}
                   onClick={() => setMenuOpen(false)}
-                  className="inline-flex items-center gap-2 rounded-full bg-olive px-8 py-4 text-xs font-semibold tracking-wide text-cream"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-olive px-6 py-4 text-xs font-semibold tracking-wide text-cream"
                 >
                   {t("nav.cta")}
                   <ArrowUpRight size={14} />
                 </Link>
                 <LanguageToggle />
-              </motion.li>
-            </ul>
+              </motion.div>
+            </div>
 
-            <p className="px-8 pb-8 text-[11px] tracking-label text-olive/60">{t("nav.tagline")}</p>
+            <p className="px-6 pb-6 text-[11px] tracking-label text-olive/60">{t("nav.tagline")}</p>
           </motion.div>
         )}
       </AnimatePresence>

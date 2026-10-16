@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { CATEGORIES, FEATURED } from "@/config/site";
+import { FEATURED, sectionOf } from "@/config/site";
 import { api } from "@/lib/api";
 
 /**
@@ -53,7 +53,10 @@ export function CatalogProvider({ children }) {
       status,
       byId,
       get: (id) => byId.get(id) ?? null,
-      inCategory: (cat) => (cat === "all" ? products : products.filter((p) => p.cat === cat)),
+      inCategory: (cat) => products.filter((p) => p.cat === cat),
+      /** One menu section's products, in menu order. Merch never has a section. */
+      inSection: (section) =>
+        products.filter((p) => p.cat !== "merch" && sectionOf(p) === section),
       /** Same category first, then everything else — never the product itself. */
       related: (product, count = 3) => {
         if (!product) return [];
@@ -64,9 +67,6 @@ export function CatalogProvider({ children }) {
       },
       /** Config-driven feature rows, filtered to what the catalog actually has. */
       featured: (key) => (FEATURED[key] ?? []).map((id) => byId.get(id)).filter(Boolean),
-      categories: CATEGORIES.filter(
-        (cat) => cat === "all" || products.some((p) => p.cat === cat),
-      ),
     };
   }, [products, status]);
 

@@ -94,7 +94,7 @@ export default function Hero() {
         >
           <button
             data-testid="hero-explore-button"
-            onClick={() => scrollToSection("coffee")}
+            onClick={() => scrollToSection("menu")}
             className="group inline-flex items-center gap-3 rounded-full bg-cream px-8 py-4 text-[11px] font-semibold tracking-label text-olive transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.18)]"
           >
             {t("hero.explore")}

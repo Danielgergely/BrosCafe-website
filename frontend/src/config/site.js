@@ -62,6 +62,8 @@ export const ROUTES = {
   privacy: "/privacy",
   help: "/help",
   game: "/game",
+  /** One menu section's tab: `/menu/cold`. */
+  menuSection: (section) => `/menu/${section}`,
   staff: "/staff",
   admin: "/admin",
   card: (code) => `/card/${code}`,
@@ -105,7 +107,7 @@ export const FOOTER_LINKS = [
 // is archived, and leaving it here would number the sections 05, 07, 08 with a
 // visible gap. Put it back between "discover" and "loyalty" when merch returns.
 export const HOME_SECTIONS = [
-  "coffee", "collection", "about", "menu", "discover", "loyalty", "news", "community",
+  "menu", "about", "discover", "loyalty", "news", "community",
 ];
 
 /** Media placeholders. Swap for real Bros Cafe footage and photography. */
@@ -151,27 +153,44 @@ export const MOTION = {
   loaderMs: 1300,
 };
 
-/** Which products the homepage coffee row and the loyalty discover row feature. */
+/** Which products the loyalty discover row and the merch lookbook feature. */
 export const FEATURED = {
-  coffeeRow: ["espresso", "cappuccino", "flat-white", "latte"],
   discoverRow: ["cappuccino", "croissant", "bros-mug"],
   merchLookbook: ["bros-hoodie", "bros-tee", "bros-mug", "bros-beans"],
-  menuGroups: [
-    "coffee", "specialty", "tea", "smoothie",
-    "sandwich", "pastry", "cake", "dessert", "bottled",
-  ],
 };
 
 /**
- * Menu categories, in menu order. `all` is the filter chip, not a category any
- * product carries; the rest mirror `CATEGORIES` in backend/app/models.py and
- * the labels in i18n `product.cats`. Merch sits last and stays off
- * `FEATURED.menuGroups`, because it belongs on the shop page, not the menu.
+ * Product categories. They mirror `CATEGORIES` in backend/app/models.py and the
+ * labels in i18n `product.cats`. A category is what a product *is* — the
+ * backend uses it to decide which drinks earn a stamp — so it stays finer than
+ * the menu's four sections below.
  */
 export const CATEGORIES = [
-  "all", "coffee", "specialty", "tea", "smoothie",
-  "sandwich", "pastry", "cake", "dessert", "bottled", "merch",
+  "coffee", "specialty", "tea", "smoothie",
+  "sandwich", "pastry", "cake", "dessert", "bottled", "beans", "merch",
 ];
+
+/**
+ * The menu's sections, in order: one homepage row and one /menu tab each.
+ * Labels live in i18n `product.sections`; the backend validates the same list
+ * (`SECTIONS` in models.py). Merch has no section: it belongs to the shop page.
+ */
+export const MENU_SECTIONS = ["coffee", "cold", "savoury", "sweet"];
+
+/**
+ * Where a product goes when it has no `section` of its own — products added in
+ * the dashboard, mostly. catalog.json sets `section` explicitly, because some
+ * categories split: a croissant is savoury, a cinnamon roll sweet, and the
+ * tonics are cold drinks although they are specialities.
+ */
+export const SECTION_OF_CAT = {
+  coffee: "coffee", specialty: "coffee", tea: "coffee", beans: "coffee",
+  smoothie: "cold", bottled: "cold",
+  sandwich: "savoury", pastry: "savoury",
+  cake: "sweet", dessert: "sweet",
+};
+
+export const sectionOf = (product) => product.section || SECTION_OF_CAT[product.cat] || null;
 
 /**
  * The flavour axes, in the order their labels appear in i18n `product.scales`.

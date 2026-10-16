@@ -9,7 +9,7 @@ const en = {
 
   nav: {
     home: "HOME",
-    coffee: "THE COFFEE & BEANS",
+    coffee: "MENU",
     rotation: "CURRENT ROTATION",
     story: "OUR STORY",
     loyalty: "LOYALTY CLUB",
@@ -51,23 +51,6 @@ const en = {
   ],
 
   home: {
-    coffee: {
-      label: "THE ESPRESSO BAR",
-      title1: "THE HEART OF",
-      title2: "EVERY CUP",
-      punct: ".",
-      body: "Our Brazilian house blend brings notes of cocoa, roasted hazelnut and caramel to every classic. Smooth, full-bodied and low in acidity — it's beautifully balanced black or with milk.",
-      body2: "Feeling adventurous? Ask for our guest coffee. Tap any drink to discover its character.",
-    },
-    collection: {
-      label: "THE COLLECTION",
-      title1: "WHAT ARE YOU",
-      title2: "AFTER",
-      punct: "?",
-      placeholder: "espresso, sweet, beans…",
-      searchLabel: "Search the Bros Cafe collection",
-      empty: "Nothing like that yet — but tell us, and we'll think about it.",
-    },
     picks: { label: "SAVED BY YOU", title: "YOUR BROS PICKS", punct: "." },
     moment: {
       intro: "TAKE A MINUTE.",
@@ -120,8 +103,11 @@ const en = {
       title1: "THE COFFEE",
       title2: "PROGRAM",
       punct: ".",
-      body: "Choose your profile: our classic Brazilian roast or the seasonal guest bean. Extracted with precision, paired with fresh bakes.",
-      cta: "VIEW FULL MENU",
+      body: "Coffee from our Brazilian house roast, cold drinks, breakfast and something sweet. Swipe along a row, tap anything to see what's in it.",
+      seeAll: "ALL",
+      allIn: "ALL {section}",
+      prev: "Previous",
+      next: "Next",
     },
     discover: {
       label: "DISCOVER BROS",
@@ -205,9 +191,14 @@ const en = {
     iced: "ICED",
     scales: [["BITTER", "SWEET"], ["LIGHT", "STRONG"], ["MILD", "INTENSE"], ["MILKY", "CREAMY"]],
     cats: {
-      all: "ALL", coffee: "COFFEE", specialty: "SPECIALTIES", tea: "TEA",
+      coffee: "COFFEE", specialty: "SPECIALTIES", tea: "TEA",
       smoothie: "SMOOTHIES", sandwich: "SANDWICHES", pastry: "BAKERY",
-      cake: "CAKES", dessert: "MADE HERE", bottled: "DRINKS", merch: "MERCH",
+      cake: "CAKES", dessert: "MADE HERE", bottled: "DRINKS", beans: "COFFEE BEANS",
+      merch: "MERCH",
+    },
+    sections: {
+      coffee: "COFFEE & SPECIALTIES", cold: "COLD DRINKS",
+      savoury: "BREAKFAST & SANDWICHES", sweet: "SWEETS",
     },
     allergenMap: {
       Milk: "Milk", Gluten: "Gluten", Egg: "Egg", Nuts: "Nuts",
@@ -365,8 +356,13 @@ const en = {
 
   menuPage: {
     tapHint: "Tap any item to see what's in it",
-    title: "The coffee program",
-    sub: "Our classic Brazilian roast or the seasonal guest bean, extracted with precision and paired with fresh bakes. Tap anything to see what's in it.",
+    title: "The menu",
+    sub: "Everything on the counter today, with today's prices. Pick a section, or search the whole menu.",
+    sections: "Menu sections",
+    searchPlaceholder: "Search: latte, sweet, gluten-free…",
+    searchLabel: "Search the menu",
+    clearSearch: "Clear search",
+    empty: "Nothing like that yet — but tell us, and we'll think about it.",
   },
 
   shop: {
@@ -597,6 +593,8 @@ const en = {
     category: "Category",
     price: "Price",
     priceHuf: "Price (Ft)",
+    section: "Menu section",
+    sectionAuto: "Automatic ({section})",
     desc: "Description",
     tip: "Bros tip",
     mainPhoto: "Main photo",

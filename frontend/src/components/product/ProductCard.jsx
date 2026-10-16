@@ -45,7 +45,7 @@ export default function ProductCard({ product, index = 0 }) {
       onMouseEnter={onEnter}
       onMouseLeave={onLeave}
     >
-      <div className="relative h-[300px] overflow-hidden rounded-card bg-white md:h-[340px]">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-white sm:aspect-auto sm:h-[300px] md:h-[340px]">
         <motion.img
           layoutId={`product-image-${product.id}`}
           src={product.images?.[0]}
@@ -98,8 +98,10 @@ export default function ProductCard({ product, index = 0 }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-baseline justify-between gap-3 px-1">
-        <h3 className="font-display text-xl font-medium text-olive">{product.name}</h3>
+      {/* Stacked in the two-column phone grid, where a name and a price side
+          by side leave each about eighty pixels. */}
+      <div className="mt-3 flex flex-col gap-1 px-1 sm:mt-4 sm:flex-row sm:items-baseline sm:justify-between sm:gap-3">
+        <h3 className="font-display text-lg font-medium leading-tight text-olive sm:text-xl">{product.name}</h3>
         <span className="whitespace-nowrap text-sm font-medium text-olive/70">
           {formatPrice(product.price_huf)}
         </span>

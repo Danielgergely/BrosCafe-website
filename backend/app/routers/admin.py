@@ -161,7 +161,7 @@ async def analytics_segments():
 # Fields a product may legitimately not have. Sent as null they mean "remove",
 # which $set cannot express — see upsert_product.
 OPTIONAL_PRODUCT_FIELDS = (
-    "flavor", "tip", "ingredients", "behind", "sizes", "material", "video", "temp",
+    "flavor", "tip", "ingredients", "behind", "sizes", "material", "video", "temp", "section",
 )
 
 

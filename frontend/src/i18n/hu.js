@@ -12,7 +12,7 @@ const hu = {
 
   nav: {
     home: "FŐOLDAL",
-    coffee: "KÁVÉ ÉS BAB",
+    coffee: "ÉTLAP",
     rotation: "ROTÁCIÓ",
     story: "TÖRTÉNETÜNK",
     loyalty: "HŰSÉGKLUB",
@@ -54,23 +54,6 @@ const hu = {
   ],
 
   home: {
-    coffee: {
-      label: "AZ ESPRESSO BÁR",
-      title1: "MINDEN CSÉSZE",
-      title2: "SZÍVE",
-      punct: ".",
-      body: "A brazil házi keverékünk kakaós, pirított mogyorós és karamelles jegyeket ad minden klasszikusnak. Selymes, testes és alacsony savtartalmú — feketén és tejjel is gyönyörűen kiegyensúlyozott.",
-      body2: "Kalandvágyó vagy? Kérd a vendégkávénkat. Koppints bármelyik italra, és megismered a karakterét.",
-    },
-    collection: {
-      label: "A KÍNÁLAT",
-      title1: "MIRE",
-      title2: "VÁGYSZ",
-      punct: "?",
-      placeholder: "espresso, édes, kávébab…",
-      searchLabel: "Keresés a Bros Cafe kínálatában",
-      empty: "Ilyen még nincs — de szólj, és elgondolkodunk rajta.",
-    },
     picks: { label: "AMIT ELMENTETTÉL", title: "A TE KEDVENCEID", punct: "." },
     moment: {
       intro: "ÁLLJ MEG EGY PERCRE.",
@@ -123,8 +106,11 @@ const hu = {
       title1: "A KÁVÉ-",
       title2: "PROGRAMUNK",
       punct: ".",
-      body: "Válaszd ki a karakteredet: a klasszikus brazil pörkölésünket vagy az aktuális vendégkávét. Precízen lefőzve, friss péksüteménnyel.",
-      cta: "TELJES ÉTLAP",
+      body: "Kávé a brazil házi pörkölésünkből, hideg italok, reggeli és valami édes. Görgess végig egy soron, és koppints bármire, hogy lásd, mi van benne.",
+      seeAll: "MIND",
+      allIn: "ÖSSZES: {section}",
+      prev: "Előző",
+      next: "Következő",
     },
     discover: {
       label: "FEDEZD FEL A BROST",
@@ -208,10 +194,14 @@ const hu = {
     iced: "JEGES",
     scales: [["KESERŰ", "ÉDES"], ["KÖNNYED", "TESTES"], ["LÁGY", "INTENZÍV"], ["TEJES", "KRÉMES"]],
     cats: {
-      all: "ÖSSZES", coffee: "KÁVÉK", specialty: "KÜLÖNLEGESSÉGEK", tea: "TEÁK",
+      coffee: "KÁVÉK", specialty: "KÜLÖNLEGESSÉGEK", tea: "TEÁK",
       smoothie: "SMOOTHIE-K", sandwich: "SZENDVICSEK", pastry: "PÉKÁRU",
       cake: "SÜTEMÉNYEK", dessert: "HELYBEN KÉSZÜLT ÉDESSÉGEK", bottled: "ITALOK",
-      merch: "MERCH",
+      beans: "SZEMES KÁVÉ", merch: "MERCH",
+    },
+    sections: {
+      coffee: "KÁVÉ & KÜLÖNLEGESSÉGEK", cold: "HIDEG ITALOK",
+      savoury: "REGGELI & SZENDVICSEK", sweet: "ÉDESSÉGEK",
     },
     allergenMap: {
       Milk: "Tej", Gluten: "Glutén", Egg: "Tojás", Nuts: "Diófélék",
@@ -369,8 +359,13 @@ const hu = {
 
   menuPage: {
     tapHint: "Koppints bármelyikre a részletekért",
-    title: "A kávéprogramunk",
-    sub: "A klasszikus brazil pörkölésünk vagy az aktuális vendégkávé, precízen lefőzve, friss péksüteménnyel. Koppints rá bármire, és megtudod, mi van benne.",
+    title: "Étlap",
+    sub: "Minden, ami ma a pulton van, a mai árakkal. Válassz egy részt, vagy keress a teljes kínálatban.",
+    sections: "Az étlap részei",
+    searchPlaceholder: "Keresés: latte, édes, gluténmentes…",
+    searchLabel: "Keresés az étlapon",
+    clearSearch: "Keresés törlése",
+    empty: "Ilyen még nincs — de szólj, és elgondolkodunk rajta.",
   },
 
   shop: {
@@ -601,6 +596,8 @@ const hu = {
     category: "Kategória",
     price: "Ár",
     priceHuf: "Ár (Ft)",
+    section: "Étlap rész",
+    sectionAuto: "Automatikus ({section})",
     desc: "Leírás",
     tip: "Bros tipp",
     mainPhoto: "Főkép",

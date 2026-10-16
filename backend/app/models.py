@@ -84,8 +84,14 @@ class LocalizedList(BaseModel):
 # separate counters' worth of cakes, cookies and pastries in one flat list.
 CATEGORIES = Literal[
     "coffee", "specialty", "tea", "smoothie",
-    "sandwich", "pastry", "cake", "dessert", "bottled", "merch",
+    "sandwich", "pastry", "cake", "dessert", "bottled", "beans", "merch",
 ]
+# What the site groups the menu by: four rows, coarser than `cat`. Kept apart
+# from `cat` because `cat` decides real behaviour (which drinks earn a stamp,
+# see services/drinks.py) and a section mixes those — "cold" holds both the
+# smoothies that do and the bottled drinks that don't. Unset means the
+# frontend derives it from `cat` (config/site.js SECTION_OF_CAT).
+SECTIONS = Literal["coffee", "cold", "savoury", "sweet"]
 POST_KINDS = Literal["guest", "house", "pastry"]
 
 
@@ -93,6 +99,7 @@ class ProductUpsert(BaseModel):
     """Mirrors data/catalog.json so admin-created products match seeded ones."""
     id: str = Field(pattern=r"^[a-z0-9-]{2,50}$")
     cat: CATEGORIES
+    section: Optional[SECTIONS] = None
     order: int = 99
     price_huf: int = Field(ge=0)
     name: Localized
