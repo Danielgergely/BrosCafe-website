@@ -20,7 +20,7 @@ export const BRAND = {
 
 export const CONTACT = {
   email: "hello@broscafe.hu",
-  instagram: "broscafe",
+  instagram: "broscafe.co",
   get instagramUrl() {
     return `https://instagram.com/${this.instagram}`;
   },
