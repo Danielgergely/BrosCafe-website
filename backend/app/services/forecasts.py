@@ -22,10 +22,19 @@ pace already measures today's level, and correcting it too overshoots.
 With a few weeks of data that is all the learning the numbers can carry —
 anything cleverer would memorise noise.
 
+Holidays and other odd days (services/daytypes.py) are compared with days
+like them and never learnt from: each day in `history` and each forecast
+document may carry a "kind", and only "normal" ones feed the averages of
+ordinary days and the calibration.
+
 Pure functions only: no database, no network, so they can be checked against
 the stored history directly.
 """
 from statistics import mean
+
+from app.services.daytypes import HOLIDAY, MIN_HOLIDAYS, NORMAL, WORKDAY_SATURDAY
+
+SATURDAY = 5
 
 CHECKPOINTS = (9, 12, 15)
 # Before there is enough history to calibrate: lean on the average early.
@@ -46,10 +55,38 @@ def taken_by(hours: dict, hour: int, minute: int = 0) -> float:
     return sum(v for h, v in hours.items() if h < hour) + hours.get(hour, 0) * minute / 60
 
 
-def reference_days(history: list[dict], weekday: int) -> tuple[list[dict], str]:
-    """The days to compare with: the same weekday if there are any, else all."""
-    same = [d for d in history if d["weekday"] == weekday]
-    return (same, "weekday") if same else (history, "all")
+def _normal(day: dict) -> bool:
+    return day.get("kind", NORMAL) == NORMAL
+
+
+def reference_days(history: list[dict], weekday: int, kind: str = NORMAL) -> tuple[list[dict], str]:
+    """The days to compare with, and which they are ("weekday", "holidays",
+    "saturdays", "weekdays" or "all"):
+
+      holiday           earlier holidays once there are MIN_HOLIDAYS, else
+                        ordinary Saturdays
+      workday_saturday  ordinary Monday-to-Friday days
+      anything else     ordinary days of the same weekday
+
+    falling back to all ordinary days, then to every day.
+    """
+    normal = [d for d in history if _normal(d)]
+    if kind == HOLIDAY:
+        earlier = [d for d in history if d.get("kind") == HOLIDAY]
+        if len(earlier) >= MIN_HOLIDAYS:
+            return earlier, "holidays"
+        saturdays = [d for d in normal if d["weekday"] == SATURDAY]
+        if saturdays:
+            return saturdays, "saturdays"
+    elif kind == WORKDAY_SATURDAY:
+        weekdays = [d for d in normal if d["weekday"] < SATURDAY]
+        if weekdays:
+            return weekdays, "weekdays"
+    else:
+        same = [d for d in normal if d["weekday"] == weekday]
+        if same:
+            return same, "weekday"
+    return (normal, "all") if normal else (history, "all")
 
 
 def estimate(so_far: float, hour: int, minute: int, reference: list[dict],
@@ -107,12 +144,12 @@ def calibrate(closed: list[dict]) -> dict:
     level correction from the most recent ones, and the 90th-percentile error
     left after both as the forecast range (90th percentile, at least the default).
 
-    `closed` is forecast documents with an actual total, in date order.
-    Returns {"weights", "spreads", "levels", "days"} — defaults wherever the
+    `closed` is forecast documents with an actual total, in date order;
+    only ordinary days count. Returns {"weights", "spreads", "levels", "days"} — defaults wherever the
     data is too thin.
     """
     weights, spreads, days = dict(DEFAULT_WEIGHTS), dict(DEFAULT_SPREAD), {}
-    closed = sorted(closed, key=lambda doc: doc["date"])
+    closed = sorted((doc for doc in closed if _normal(doc)), key=lambda doc: doc["date"])
     # Growth: recent days against the plain average they were compared with.
     recent_days = [(doc["checkpoints"][str(CHECKPOINTS[0])]["average"], doc["actual"])
                    for doc in closed if doc.get("actual")
@@ -142,10 +179,10 @@ def calibrate(closed: list[dict]) -> dict:
 
 
 def checkpoint(day_hours: dict, cp: int, history: list[dict], weekday: int,
-               calibration: dict) -> dict | None:
+               calibration: dict, kind: str = NORMAL) -> dict | None:
     """The forecast as it would have been made at cp:00 — only hours before
     the checkpoint count, so it can be replayed for past days honestly."""
-    reference, basis = reference_days(history, weekday)
+    reference, basis = reference_days(history, weekday, kind)
     result = estimate(taken_by(day_hours, cp, 0), cp, 0, reference,
                       calibration["weights"][cp], calibration["spreads"][cp],
                       calibration.get("levels", {}).get(cp, 1.0))

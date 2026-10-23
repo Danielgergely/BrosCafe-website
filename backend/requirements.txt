@@ -33,5 +33,9 @@ Pillow==12.3.0
 # --- uploads -----------------------------------------------------------
 python-multipart==0.0.20   # required for multipart/form-data: admin image upload
 
+# --- live sales forecasts ---------------------------------------------
+# Hungarian public holidays and the yearly swapped days off (services/daytypes.py).
+holidays==0.107
+
 # --- configuration -----------------------------------------------------
 python-dotenv==1.2.3

@@ -109,6 +109,10 @@ class Settings:
     gross_per_net = _float("GROSS_PER_NET", 1.072)
     # Open days in an average month (Mon–Sat), as in the margin analysis.
     month_open_days = _int("MONTH_OPEN_DAYS", 26)
+    # Where the weather beside each day's takings is taken (Open-Meteo, no
+    # key): the café, 1132 Budapest, Csanády u. 4/b.
+    weather_lat = _float("WEATHER_LAT", 47.516)
+    weather_lon = _float("WEATHER_LON", 19.058)
 
     @property
     def live_sales_configured(self) -> bool:

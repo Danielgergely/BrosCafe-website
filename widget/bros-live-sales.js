@@ -11,7 +11,8 @@
 // What it shows:
 //   - the background fills like a glass towards the day's break-even, and turns
 //     olive once it's reached
-//   - ▲/▼ against earlier weeks' same weekday up to the same minute
+//   - ▲/▼ against earlier weeks' same weekday up to the same minute (on a
+//     public holiday: Saturdays, until there are a few earlier holidays)
 //   - how much is still missing, and at today's pace roughly when it'll be in
 //   - 🏆 when today beats the best day for this weekday (🏆🏆: best day ever)
 //   - small: today's best seller; medium: today per hour against the usual
@@ -182,6 +183,17 @@ function targetLine(data) {
   return `Még ${money(data.target_missing)}${eta}`;
 }
 
+// What today is compared with: the same weekday, or on a holiday Saturdays
+// (or earlier holidays), on a working Saturday ordinary weekdays.
+function comparedWith(data) {
+  const basis = (data.day || {}).basis || "weekday";
+  if (basis === "saturdays") return "szombat";
+  if (basis === "holidays") return "ünnep";
+  if (basis === "weekdays") return "hétköznap";
+  if (basis === "all") return "nap";
+  return WEEKDAYS[new Date(data.date).getDay()];
+}
+
 function topProducts(data) {
   return data.top_products || (data.top_product ? [data.top_product] : []);
 }
@@ -196,8 +208,7 @@ function summary(stack, data, reached) {
   if (!hasDiff(data)) {
     text(stack, "Még nincs mihez hasonlítani", 11, muted);
   } else {
-    const weekday = WEEKDAYS[new Date(data.date).getDay()];
-    text(stack, `${arrow(data)} ${pct(data.diff_pct)} · ${data.compared_days} ${weekday}`, 12,
+    text(stack, `${arrow(data)} ${pct(data.diff_pct)} · ${data.compared_days} ${comparedWith(data)}`, 12,
       reached ? CREAM : data.diff_pct >= 0 ? UP : DOWN, true);
   }
   const line = targetLine(data);

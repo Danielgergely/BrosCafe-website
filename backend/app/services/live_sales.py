@@ -14,6 +14,13 @@ taken by 10:20. Fruitsys only reports by clock hour, so "by 10:20" counts the
 fetched once and kept in `sales_days`. Forecasts and how they turned out are
 in `sales_forecasts`; the method is in services/forecasts.py.
 
+Public holidays and days marked unusual in the dashboard are compared with
+days like them rather than the same weekday, and kept out of what the
+forecasts learn from (services/daytypes.py). The weather at the café is
+stored beside each day (services/weather.py), and school breaks, payday and
+summer time are worked out for it (daytypes.context) — for now only shown,
+until there is enough history to test whether they help.
+
 The loop runs inside the API process. That is fine with the single uvicorn
 worker the Dockerfile starts; more workers would each poll.
 """
@@ -27,7 +34,7 @@ import httpx
 
 from app import db
 from app.config import CAFE_TZ, settings
-from app.services import forecasts
+from app.services import daytypes, forecasts, posts, weather
 from app.services.forecasts import taken_by
 from app.services.fruitsys import Fruitsys, FruitsysError
 
@@ -43,9 +50,12 @@ BACKFILL_MONTHS = 24
 FRESH_AFTER_SECONDS = 60
 # How many finished days the dashboard's forecast history shows.
 HISTORY_DAYS = 30
+# Today's weather is fetched again at most this often.
+WEATHER_EVERY_SECONDS = 3600
 
 _lock = asyncio.Lock()
 _last_refresh = 0.0
+_weather_today: dict = {"at": 0.0, "date": None, "summary": None}
 
 
 def _months_back(today: date, count: int):
@@ -95,6 +105,65 @@ async def _sync_past_days(client: Fruitsys, today: date) -> None:
                 {"date": day}, {"$set": {"receipts": await client.receipts(doc["workday_id"])}})
 
 
+async def _sync_weather(today: date) -> dict | None:
+    """Store the weather for every stored day that has none yet, and return
+    today's (fetched again at most hourly). Weather is a nice-to-have: if
+    Open-Meteo is down, the takings still update."""
+    missing = [d["date"] for d in await db.sales_days.find(
+        {"weather": {"$exists": False}}, {"_id": 0, "date": 1}).to_list(None)]
+    fresh = (_weather_today["date"] == today.isoformat()
+             and time.monotonic() - _weather_today["at"] < WEATHER_EVERY_SECONDS)
+    if fresh and not missing:
+        return _weather_today["summary"]
+    try:
+        start = min([date.fromisoformat(day) for day in missing] + [today])
+        days = await weather.hourly(start, today)
+    except (httpx.HTTPError, ValueError) as exc:
+        logger.warning("weather fetch failed: %s", exc)
+        return _weather_today["summary"] if _weather_today["date"] == today.isoformat() else None
+    for day in missing:
+        summary = weather.summarise(days.get(day) or {})
+        if summary:
+            await db.sales_days.update_one({"date": day}, {"$set": {"weather": summary}})
+    _weather_today.update(at=time.monotonic(), date=today.isoformat(),
+                          summary=weather.summarise(days.get(today.isoformat()) or {}))
+    return _weather_today["summary"]
+
+
+async def unusual_days() -> dict[str, str]:
+    """Days marked unusual in the dashboard: {date: note}."""
+    return {doc["date"]: doc.get("note") or "" for doc in await db.special_days.find(
+        {}, {"_id": 0}).to_list(None)}
+
+
+async def mark_unusual(day: str, note: str | None) -> None:
+    """Mark a day unusual (note given) or ordinary again (None)."""
+    if note is None:
+        await db.special_days.delete_one({"date": day})
+    else:
+        await db.special_days.update_one({"date": day}, {"$set": {"date": day, "note": note}}, upsert=True)
+
+
+async def mark_post(day: str, time_of_day: str | None, note: str | None, remove: bool = False) -> None:
+    """Flag an Instagram post on a day (one per day), or remove the flag."""
+    if remove:
+        await db.social_posts.delete_one({"date": day})
+    else:
+        await db.social_posts.update_one({"date": day}, {"$set": {
+            "date": day, "time": time_of_day, "note": note or ""}}, upsert=True)
+
+
+async def _post_effects(summary: dict, unusual: dict[str, str]) -> dict:
+    flagged = await db.social_posts.find({}, {"_id": 0}).to_list(None)
+    if not flagged:
+        return {"posts": [], "average_lift_pct": None, "finished": 0}
+    days = {d["date"]: {"hours": d["hours"], "kind": daytypes.day_info(d["date"], unusual)["kind"]}
+            for d in await db.sales_days.find({}, {"_id": 0, "date": 1, "hours": 1}).to_list(None)}
+    if summary and summary.get("hours"):
+        days[summary["date"]] = {"hours": summary["hours"], "kind": summary.get("day", {}).get("kind", "normal")}
+    return posts.effects(flagged, days)
+
+
 async def _fetch_today(client: Fruitsys, today: date) -> dict:
     hours: dict[int, int] = {}
     sold: list[dict] = []
@@ -134,9 +203,15 @@ async def refresh() -> dict:
         await _sync_past_days(client, today)
         fetched = await _fetch_today(client, today)
 
+    today_weather = await _sync_weather(today)
+    unusual = await unusual_days()
     history = await db.sales_days.find(
         {"date": {"$lt": today.isoformat()}}, {"_id": 0}).sort("date", 1).to_list(None)
-    past = [d for d in history if d["weekday"] == today.weekday()]
+    for day in history:
+        day["kind"] = daytypes.day_info(day["date"], unusual)["kind"]
+    day_info = daytypes.day_info(today, unusual)
+    past, basis = forecasts.reference_days(
+        [d for d in history if d["weekday"] not in CLOSED_WEEKDAYS], today.weekday(), day_info["kind"])
     previous = await db.live_sales.find_one({"_id": "current"}) or {}
     hours, products, receipts = fetched["hours"], fetched["products"], fetched["receipts"]
     total = sum(hours.values())
@@ -148,6 +223,11 @@ async def refresh() -> dict:
         "hours": {str(h): v for h, v in sorted(hours.items())},
         "has_sales": bool(hours),
         "compared_days": len(past),
+        # What today is compared with: "weekday" normally; "saturdays" or
+        # "holidays" on a holiday, "weekdays" on a working Saturday.
+        "day": {**day_info, "basis": basis},
+        "context": daytypes.context(today, CAFE_TZ),
+        "weather": today_weather,
         **_comparison(past, total, now),
         **_target(total, now, past, previous),
         **_records(past, history, total),
@@ -158,7 +238,7 @@ async def refresh() -> dict:
         "products_estimated": fetched["products_estimated"],
         "week": _week(history, today, total),
         "month": _month(history, today, total),
-        **await _forecasts(history, today, now, hours, total),
+        **await _forecasts(history, today, now, hours, total, day_info["kind"], today_weather),
     }
     await db.live_sales.replace_one({"_id": "current"}, summary, upsert=True)
     _last_refresh = time.monotonic()
@@ -306,7 +386,7 @@ def _month(history: list[dict], today: date, total: int) -> dict:
 
 
 async def _forecasts(history: list[dict], today: date, now: datetime,
-                     hours: dict[int, int], total: int) -> dict:
+                     hours: dict[int, int], total: int, kind: str, today_weather: dict | None) -> dict:
     """Close finished days' forecasts, replay any day that has none, save
     today's checkpoints as they come due, and forecast from right now."""
     open_days = [d for d in history if d["weekday"] not in CLOSED_WEEKDAYS]
@@ -321,14 +401,16 @@ async def _forecasts(history: list[dict], today: date, now: datetime,
         if doc is None:
             calibration = forecasts.calibrate(closed)
             checkpoints = {str(cp): forecasts.checkpoint(day["hours"], cp, open_days[:i],
-                                                         day["weekday"], calibration)
+                                                         day["weekday"], calibration, day["kind"])
                            for cp in forecasts.CHECKPOINTS}
             doc = {"date": day["date"], "weekday": day["weekday"], "backtest": True,
                    "checkpoints": {k: v for k, v in checkpoints.items() if v}}
         if doc.get("actual") != actual[day["date"]] or day["date"] not in stored:
             doc["actual"] = actual[day["date"]]
             await db.sales_forecasts.replace_one({"date": doc["date"]}, doc, upsert=True)
-        closed.append(doc)
+        # The kind is worked out afresh each time, as days can be marked
+        # unusual afterwards.
+        closed.append({**doc, "kind": day["kind"]})
 
     calibration = forecasts.calibrate(closed)
     if today.weekday() in CLOSED_WEEKDAYS:
@@ -339,16 +421,20 @@ async def _forecasts(history: list[dict], today: date, now: datetime,
         "checkpoints": {}, "actual": None}
     for cp in forecasts.CHECKPOINTS:
         if now.hour >= cp and str(cp) not in today_doc["checkpoints"]:
-            result = forecasts.checkpoint(hours, cp, open_days, today.weekday(), calibration)
+            result = forecasts.checkpoint(hours, cp, open_days, today.weekday(), calibration, kind)
             if result:
                 result["made_at"] = now.isoformat(timespec="minutes")
+                # The weather forecast as it stood, for checking later whether
+                # weather would have helped — a model may only use what was known.
+                if today_weather:
+                    result["weather"] = {k: v for k, v in today_weather.items() if k != "hours"}
                 # Saved after the checkpoint's hour (the server was off, say):
                 # still computed from the hours before it, but shown as late.
                 result["late"] = now.hour > cp
                 today_doc["checkpoints"][str(cp)] = result
     await db.sales_forecasts.replace_one({"date": today_doc["date"]}, today_doc, upsert=True)
 
-    reference, basis = forecasts.reference_days(open_days, today.weekday())
+    reference, basis = forecasts.reference_days(open_days, today.weekday(), kind)
     current = forecasts.estimate(
         total, now.hour, now.minute, reference,
         forecasts.weight_at(now.hour, now.minute, calibration["weights"]),
@@ -364,31 +450,44 @@ async def dashboard() -> dict:
     summary = await db.live_sales.find_one({"_id": "current"}, {"_id": 0})
     docs = await db.sales_forecasts.find(
         {"actual": {"$ne": None}}, {"_id": 0}).sort("date", -1).to_list(HISTORY_DAYS)
+    unusual = await unusual_days()
+    posted = {doc["date"] for doc in await db.social_posts.find({}, {"_id": 0, "date": 1}).to_list(None)}
+    weather_of = {d["date"]: d.get("weather") for d in await db.sales_days.find(
+        {"date": {"$in": [doc["date"] for doc in docs]}}, {"_id": 0, "date": 1, "weather": 1}).to_list(None)}
     history = []
     for doc in docs:
+        weather_day = weather_of.get(doc["date"])
         history.append({
             "date": doc["date"],
             "weekday": doc["weekday"],
             "actual": doc["actual"],
             "replayed": doc.get("backtest", False),
+            "day": daytypes.day_info(doc["date"], unusual),
+            "context": daytypes.context(doc["date"], CAFE_TZ),
+            "posted": doc["date"] in posted,
+            "weather": {k: v for k, v in weather_day.items() if k != "hours"} if weather_day else None,
             "checkpoints": {cp: {"value": c["value"], "low": c["low"], "high": c["high"],
                                  "error_pct": forecasts.error_pct(c["value"], doc["actual"])}
                             for cp, c in doc["checkpoints"].items()},
         })
+    # Holidays and unusual days are shown but not scored: the forecasts are
+    # for ordinary days, and those are what they learn from.
     accuracy = {}
     for cp in forecasts.CHECKPOINTS:
-        errors = [h["checkpoints"][str(cp)]["error_pct"] for h in history if str(cp) in h["checkpoints"]]
+        scored = [h for h in history if str(cp) in h["checkpoints"] and h["day"]["kind"] == daytypes.NORMAL]
+        errors = [h["checkpoints"][str(cp)]["error_pct"] for h in scored]
         recent = errors[:7]
         accuracy[str(cp)] = {
             "days": len(errors),
             "mean_abs_error": round(mean(abs(e) for e in errors), 1) if errors else None,
             "bias": round(mean(errors), 1) if errors else None,
             "last_week_abs_error": round(mean(abs(e) for e in recent), 1) if recent else None,
-            "within_range": sum(1 for h in history if str(cp) in h["checkpoints"]
-                                and h["checkpoints"][str(cp)]["low"] <= h["actual"]
+            "within_range": sum(1 for h in scored
+                                if h["checkpoints"][str(cp)]["low"] <= h["actual"]
                                 <= h["checkpoints"][str(cp)]["high"]),
         }
-    return {"summary": summary, "forecast_history": history, "accuracy": accuracy}
+    return {"summary": summary, "forecast_history": history, "accuracy": accuracy,
+            "posts": await _post_effects(summary, unusual)}
 
 
 def _polling_time(now: datetime) -> bool:

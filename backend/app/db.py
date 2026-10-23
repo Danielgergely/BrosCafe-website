@@ -29,6 +29,8 @@ wallet_stats = db.wallet_stats
 sales_days = db.sales_days
 live_sales = db.live_sales
 sales_forecasts = db.sales_forecasts
+special_days = db.special_days
+social_posts = db.social_posts
 
 
 async def ensure_indexes() -> None:
@@ -63,6 +65,8 @@ async def ensure_indexes() -> None:
     await voided_passes.create_index("serial", unique=True)
     await sales_days.create_index("date", unique=True)
     await sales_forecasts.create_index("date", unique=True)
+    await special_days.create_index("date", unique=True)
+    await social_posts.create_index("date", unique=True)
 
 
 def close() -> None:

@@ -197,6 +197,29 @@ day's total is saved to `sales_forecasts`; after closing it is scored against
 the actual. Days from before the feature existed are replayed once from the
 history (marked * on the dashboard), using only what was known before each day.
 
+**Holidays and odd days.** Hungarian public holidays and swapped days off are
+compared with Saturdays (with earlier holidays once there are three), working
+Saturdays with ordinary weekdays, and neither teaches the forecasts. For a day
+the calendar can't know about (an event on the street, closing early), use
+the flag on the dashboard: it is then left out of the learning and the score.
+
+**Weather.** The weather at the café (Open-Meteo, no key) is stored beside
+each day and shown on the dashboard; earlier days are filled in on the first
+run. It does not change the forecasts yet: that needs a few months of days.
+`WEATHER_LAT` / `WEATHER_LON` default to the café.
+
+**School breaks, payday, sunset.** Also shown per day and not yet used:
+school breaks, days since payday (the 10th, or the working day before) and
+sunset. **Once a year**, when the decree on the next school year ("a tanév
+rendje") comes out in summer, add its breaks to `SCHOOL_BREAKS` in
+`backend/app/services/daytypes.py`; holidays update themselves.
+
+**Instagram posts.** "Ma posztoltunk" on the dashboard (or the camera beside
+an earlier day) flags a post, optionally starting with its time ("14:30 new
+pumpkin latte"). The section below the scorecard shows the takings from the
+post until the end of the next open day, against the same hours a week
+before and a week after: provisional until that week after is in.
+
 ---
 
 ## Changing content: images, prices, product copy
