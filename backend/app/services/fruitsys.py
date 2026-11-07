@@ -35,6 +35,12 @@ def _number(value) -> int:
         return 0
 
 
+def price_key(*parts) -> str:
+    """"name unit" with runs of spaces collapsed: the price list has "tea  3cl"
+    where the product report has name "tea", unit "3cl"."""
+    return " ".join(" ".join(str(p or "") for p in parts).split())
+
+
 class Fruitsys:
     def __init__(self, user: str, password: str):
         self.user, self.password = user, password
@@ -134,5 +140,5 @@ class Fruitsys:
         prices = {}
         for row in response.json().get("data") or []:
             if isinstance(row, dict) and row.get("nev") and _number(row.get("pult_ar_1R1")):
-                prices[str(row["nev"]).strip()] = _number(row.get("pult_ar_1R1"))
+                prices[price_key(row["nev"])] = _number(row.get("pult_ar_1R1"))
         return prices

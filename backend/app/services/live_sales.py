@@ -36,7 +36,7 @@ from app import db
 from app.config import CAFE_TZ, settings
 from app.services import daytypes, forecasts, posts, weather
 from app.services.forecasts import taken_by
-from app.services.fruitsys import Fruitsys, FruitsysError
+from app.services.fruitsys import Fruitsys, FruitsysError, price_key
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ async def _fetch_today(client: Fruitsys, today: date) -> dict:
     if estimated:
         prices = await client.prices()
         for p in sold:
-            p["gross"] = p["count"] * prices.get(f"{p['name']} {p['unit']}".strip(), 0)
+            p["gross"] = p["count"] * prices.get(price_key(p["name"], p["unit"]), 0)
 
     products: dict[str, dict] = {}
     for p in sold:
