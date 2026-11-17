@@ -16,7 +16,7 @@ const FILES: Record<Section, () => Doc[]> = {
 };
 
 /** ProductUpsert / PostUpsert fields minus id and active (seed.py KNOWN_FIELDS). */
-export const KNOWN_FIELDS: Record<Section, string[]> = {
+const KNOWN_FIELDS: Record<Section, string[]> = {
   products: [
     'cat', 'section', 'order', 'price_huf', 'name', 'desc', 'images', 'tip', 'ingredients', 'behind', 'sizes', 'material',
     'flavor', 'allergens', 'milks', 'temp', 'video', 'pairings', 'stock_photos',
@@ -30,67 +30,43 @@ export function fileDocument(section: Section, docId: string): Doc | null {
 }
 
 /** Upsert by id, archive what the file no longer lists, keep admin edits. Returns [seeded, archived, kept]. */
-async function upsert(app: App, collection: Collection, documents: Doc[], force = false, known: string[] = []): Promise<[number, number, number]> {
+async function upsert(app: App, collection: Collection, documents: Doc[], known: string[]): Promise<[number, number, number]> {
   let seeded = 0, kept = 0;
   const fileIds: unknown[] = [];
   for (const doc of documents) {
     fileIds.push(doc.id);
-    if (!force) {
-      const existing = await collection.findOne({ id: doc.id }, { projection: { edited_at: 1 } });
-      if (existing && existing.edited_at) {
-        kept += 1;
-        continue;
-      }
+    const existing = await collection.findOne({ id: doc.id }, { projection: { edited_at: 1 } });
+    if (existing && existing.edited_at) {
+      kept += 1;
+      continue;
     }
     const fields = { ...doc, active: 'active' in doc ? doc.active : true };
     const unset: Record<string, string> = {};
     for (const field of known) if (!(field in doc)) unset[field] = '';
-    if (force) Object.assign(unset, { edited_at: '', edited_by: '' });
     const update: { $set: Doc; $unset?: Record<string, string> } = { $set: fields };
     if (Object.keys(unset).length) update.$unset = unset;
     await collection.updateOne({ id: doc.id }, update, { upsert: true });
     seeded += 1;
   }
 
-  // {"id": {"$nin": file_ids}, "active": {"$ne": False}} (+ "edited_at": {"$exists": False}), with the id list
-  // passed as one JSON array: D1 allows only 100 bound parameters, and the catalog is close to that.
+  // {"id": {"$nin": file_ids}, "active": {"$ne": False}, "edited_at": {"$exists": False}}, with the id list passed
+  // as one JSON array: D1 allows only 100 bound parameters, and the catalog is close to that.
   const sql =
     `UPDATE ${collection.name} SET doc = json_set(doc, '$.active', json('false'))
      WHERE (json_extract(doc, '$.id') IS NULL OR json_extract(doc, '$.id') NOT IN (SELECT value FROM json_each(?)))
-       AND (json_extract(doc, '$.active') IS NULL OR json_extract(doc, '$.active') != 0)` +
-    (force ? '' : ` AND json_type(doc, '$.edited_at') IS NULL`);
+       AND (json_extract(doc, '$.active') IS NULL OR json_extract(doc, '$.active') != 0)
+       AND json_type(doc, '$.edited_at') IS NULL`;
   const res = await app.db.d1.prepare(sql).bind(JSON.stringify(fileIds)).run();
   return [seeded, res.meta.changes ?? 0, kept];
 }
 
-/** Set each product's price to the file's, ignoring edited_at. Returns [id, old, new] per change. */
-export async function syncPrices(app: App, documents: Doc[]): Promise<[string, unknown, number][]> {
-  const changed: [string, unknown, number][] = [];
-  for (const doc of documents) {
-    const existing = await app.db.products.findOne({ id: doc.id }, { projection: { price_huf: 1 } });
-    if (existing === null || existing.price_huf === doc.price_huf) continue;
-    await app.db.products.updateOne({ id: doc.id }, { $set: { price_huf: doc.price_huf } });
-    changed.push([doc.id, existing.price_huf ?? null, doc.price_huf]);
-  }
-  return changed;
-}
-
-/** `python -m app.seed [--products|--content|--force|--prices]`. */
-export async function seed(app: App, opts: { products?: boolean; content?: boolean; force?: boolean; prices?: boolean } = {}) {
-  const both = !(opts.products || opts.content);
-  if (opts.prices) {
-    const changed = await syncPrices(app, FILES.products());
-    for (const [docId, old, now] of changed) console.log(`  ${docId}: ${old} -> ${now} Ft`);
-    console.log(`prices: ${changed.length} changed`);
-    return 0;
-  }
-  for (const [name, wanted] of [['products', both || opts.products], ['content', both || opts.content]] as [Section, boolean][]) {
-    if (!wanted) continue;
-    const [seeded, archived, kept] = await upsert(app, app.db[name], FILES[name](), !!opts.force, KNOWN_FIELDS[name]);
+/** seed.py without options: products and content from the data files. */
+async function seed(app: App) {
+  for (const name of ['products', 'content'] as Section[]) {
+    const [seeded, archived, kept] = await upsert(app, app.db[name], FILES[name](), KNOWN_FIELDS[name]);
     const note = kept ? `, ${kept} left as edited in /admin` : '';
     console.log(`${name}: ${seeded} seeded, ${archived} archived${note}`);
   }
-  return 0;
 }
 
 /** Keep the configured admin account in sync with the environment. */

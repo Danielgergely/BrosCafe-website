@@ -22,14 +22,13 @@
 <link rel="stylesheet" href="/shell.css">
 <link rel="stylesheet" href="/pages.css">
 <link rel="stylesheet" href="/after-hours/after-hours.css">
-<link rel="stylesheet" href="/glass.css">
 <script src="/glass.js" defer></script>
 </head>
 <body class="sub" data-page="after-hours">
 <script src="/shell.js"></script>
 <main id="tartalom" class="ah">
 
-  <section class="ah-hero wash--blush">
+  <section class="ah-hero">
     <div class="wrap ah-hero__grid">
       <div class="ah-hero__text">
         <p class="eyebrow">Privát este · 18:00–22:00</p>
@@ -42,17 +41,17 @@
         </p>
       </div>
       <div class="ah-hero__media">
-        <figure class="cut ah-hero__video" data-vt="page-hero" style="--tilt: 2.5deg">
+        <figure class="cut ah-hero__video" data-vt="page-hero">
           <picture><source srcset="/shared/media/after-hours-lounge-evening-4x5.webp" type="image/webp"><img src="/shared/media/after-hours-lounge-evening-4x5.jpg" alt="Esti fények a vendégtérben, a falon faith, hope, love táblák" width="1080" height="1350" fetchpriority="high"></picture>
           <video muted loop playsinline preload="none" poster="/shared/media/after-hours-lounge-evening-9x16.jpg" aria-hidden="true"><source src="/shared/media/after-hours-lounge-evening-9x16.mp4" type="video/mp4"></video>
         </figure>
-        <span class="cut ah-hero__photo" style="--tilt: -4deg"><picture><source srcset="/shared/media/after-hours-dining-room-warm-3x2.webp" type="image/webp"><img src="/shared/media/after-hours-dining-room-warm-3x2.jpg" alt="" width="2000" height="1335"></picture></span>
+        <span class="cut ah-hero__photo"><picture><source srcset="/shared/media/after-hours-dining-room-warm-3x2.webp" type="image/webp"><img src="/shared/media/after-hours-dining-room-warm-3x2.jpg" alt="" width="2000" height="1335"></picture></span>
         <span class="sticker sticker--white ah-hero__tag">14&nbsp;900&nbsp;Ft-tól</span>
       </div>
     </div>
   </section>
 
-  <section class="ah-sec wash--glow-soft" id="alapdij" aria-labelledby="alapdij-cim">
+  <section class="ah-sec" id="alapdij" aria-labelledby="alapdij-cim">
     <div class="wrap">
       <h2 class="title" id="alapdij-cim">Ami az estében <em>benne van.</em></h2>
       <ul class="ah-inc4" id="ah-inc4"></ul>
@@ -60,7 +59,7 @@
     </div>
   </section>
 
-  <section class="ah-sec ah-occ wash--oat-soft" id="alkalmak" aria-labelledby="alkalmak-cim">
+  <section class="ah-sec ah-occ" id="alkalmak" aria-labelledby="alkalmak-cim">
     <div class="wrap">
       <h2 class="title" id="alkalmak-cim">Tökéletes <em>választás</em></h2>
       <ul class="ah-occ__grid" id="ah-occ"></ul>
@@ -69,7 +68,7 @@
     </div>
   </section>
 
-  <section class="ah-sec ah-book wash--sage-mist" id="foglalas" aria-labelledby="foglalas-cim">
+  <section class="ah-sec ah-book" id="foglalas" aria-labelledby="foglalas-cim">
     <div class="wrap">
       <h2 class="title" id="foglalas-cim">Válasszatok <em>egy estét.</em></h2>
       <p class="body">Esténként egy társaságot fogadunk. A foglalás az előleg kifizetésével azonnal végleges.</p>
@@ -83,7 +82,6 @@
             <div class="ah-when">
               <div>
                 <div class="ah-cal" id="ah-cal"></div>
-                <p class="ah-mock" id="ah-cal-mock" hidden>Előnézet · a foglalt és a zárt esték csak példák.</p>
                 <p class="ah-err" id="err-date" role="alert" hidden></p>
               </div>
               <div>

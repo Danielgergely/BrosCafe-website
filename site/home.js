@@ -1,12 +1,10 @@
-// Bros Cafe · D · Kollázs — home: films, the "next" tabs and the index rail, the scroll driver for browsers without
-// scroll-driven animations, live opening status, the time-aware extra, detail panels.
-// Scene media is set in index.html; the motion itself is CSS (style.css, "motion").
+// Bros Cafe — home: films, the "next" tabs and the index rail, the scroll driver for browsers without scroll-driven
+// animations, live opening status, the time-aware extra, detail panels. The motion itself is CSS (style.css, "motion").
 (() => {
-  const B = window.BROS, t = B.t, shell = B.shell;
+  const B = window.BROS, t = B.t, shell = B.shell, esc = shell.esc;
   const root = document.documentElement;
   const still = root.classList.contains('still');
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const scenes = $$('.scene');
   const desk = matchMedia('(min-width: 900px)');
   const MAPS = 'https://www.google.com/maps/search/?api=1&query=Bros%20Cafe%2C%201132%20Budapest%2C%20Csan%C3%A1dy%20u.%204%2Fb';

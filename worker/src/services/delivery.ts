@@ -3,9 +3,9 @@
 import type { App } from '../http';
 import type { Doc } from '../db';
 import { settings } from '../config';
-import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
+import { isoAt, nowIso, tokenUrlsafe } from '../util';
 import {
-  ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
+  ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, iso, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
   staffAddress, text, today, validDate, weekday,
 } from './bookings';
 import { earnsStamp } from './drinks';
@@ -17,9 +17,9 @@ import * as stripe from './stripe';
 import * as szamlazz from './szamlazz';
 
 // ---- config (DRAFT defaults; the editable part lives in dl_settings / dl_slots) ----
-export const CATS = ['coffee', 'specialty', 'tea', 'smoothie', 'bottled']; // every drink (Daniel 2026-11-17)
+const CATS = ['coffee', 'specialty', 'tea', 'smoothie', 'bottled']; // every drink (Daniel 2026-11-17)
 /** Hungarian public holidays: never delivery days. Extend each year (the same list as CONFIG.holidays on the page). */
-export const HOLIDAYS = ['2026-12-25', '2026-12-26', '2027-01-01', '2027-03-15', '2027-03-26', '2027-03-29', '2027-05-01', '2027-05-17', '2027-08-20', '2027-10-23', '2027-11-01', '2027-12-25', '2027-12-26'];
+const HOLIDAYS = ['2026-12-25', '2026-12-26', '2027-01-01', '2027-03-15', '2027-03-26', '2027-03-29', '2027-05-01', '2027-05-17', '2027-08-20', '2027-10-23', '2027-11-01', '2027-12-25', '2027-12-26'];
 const RUSH_AUTO_OFF_MIN = 45;
 const SLOT_HOURS = ['07:30', '18:00'];
 const DAYS_AHEAD_MAX = 10;
@@ -31,7 +31,6 @@ const PATHS = ['/delivery/', '/delivery/csoport/'];
 const BOARD = ['new', 'making', 'out', 'delivered'];
 
 const d1 = (app: App) => app.db.d1;
-const iso = (v: string | null) => (v ? parseIso(v).toISOString() : null);
 const all = async <T = Doc>(q: D1PreparedStatement) => (await q.all<T>()).results;
 
 interface Settings { rush_until: string | null; days: number[]; free_from: number; fee_huf: number; rush_max: number; rush_eta_min: number }
@@ -100,7 +99,7 @@ const nice = (v: string) => (v && v === v.toUpperCase() ? v.charAt(0) + v.slice(
 async function priceCups(app: App, items: unknown): Promise<Cup[]> {
   if (!Array.isArray(items) || !items.length || items.length > MAX_CUPS) throw invalid(['items']);
   const ids = [...new Set(items.map((i) => String(i?.product_id ?? '')))];
-  const products = new Map((await app.db.products.find({ id: { $in: ids }, active: { $ne: false }, cat: { $in: CATS } }, { projection: { _id: 0 }, limit: 200 })).map((p) => [p.id as string, p]));
+  const products = new Map((await app.db.products.find({ id: { $in: ids }, active: { $ne: false }, cat: { $in: CATS } }, { limit: 200 })).map((p) => [p.id as string, p]));
   return items.map((i) => {
     const p = products.get(String(i?.product_id ?? ''));
     if (!p) throw invalid(['items']);

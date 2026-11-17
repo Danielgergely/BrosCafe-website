@@ -1,43 +1,30 @@
-// Bros Cafe · D — Bros Delivery: the order page (delivery/), the group order page (delivery/csoport/)
-// and the admin mock-up (admin/delivery/). Spec: docs/delivery.md · backend contract: docs/delivery-api.md
+// Bros Delivery: the order page (delivery/), the group order page (delivery/csoport/) and the admin page
+// (admin/delivery/). Spec: docs/delivery.md · backend contract: docs/delivery-api.md
 (() => {
-  const B = window.BROS || { t: (s, v) => { let o = s; if (v) for (const k in v) o = o.replace(`{${k}}`, v[k]); return o; }, en: false, lang: 'hu', locale: 'hu-HU' };
+  const B = window.BROS, { esc, ft } = B.shell;
   const t = B.t, loc = B.locale;
   const tn = (key, n, vars) => t(B.en && n === 1 ? `${key}|1` : key, { n, ...vars }); // English singular: "1 drink"
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const phone = matchMedia('(max-width: 619.98px)');
 
-  // ---------- CONFIG: every open point of the spec is one value here (all DRAFT until the proposal is agreed) ----------
+  // ---------- CONFIG: the page-side values (draft until the proposal is agreed); the server owns slots and fees ----------
   const CONFIG = {
     draft: true,
-    freeFrom: 5,            // drinks from which delivery is free
-    fee: 490,               // Ft below that
-    slots: [                // defaults; the admin edits them (time, cutoff, capacity)
-      { id: 's0900', time: '09:00', cutoffMin: 45, capacity: 8 },
-      { id: 's1030', time: '10:30', cutoffMin: 45, capacity: 12 },
-      { id: 's1400', time: '14:00', cutoffMin: 45, capacity: 12 },
-    ],
+    newSlot: { time: '09:00', cutoffMin: 45, capacity: 8 }, // the admin's first slot when none is left
     slotHours: ['07:30', '18:00'], // a slot must be inside the opening hours
-    days: [1, 2, 3, 4, 5],  // delivery weekdays (0 = Sunday, when the café is closed)
     daysAhead: 5,           // how many delivery days the picker offers
-    // Hungarian public holidays: no delivery. Extend each year; other closed days are closed per date in the admin.
-    holidays: ['2026-12-25', '2026-12-26', '2027-01-01', '2027-03-15', '2027-03-26', '2027-03-29', '2027-05-01', '2027-05-17', '2027-08-20', '2027-10-23', '2027-11-01', '2027-12-25', '2027-12-26'],
-    rush: { maxDrinks: 8, etaMin: 30, autoOffMin: 45 }, // "amint lehet": staff switch, off by default, switches itself off
-    cats: ['coffee', 'specialty', 'tea', 'smoothie', 'bottled'], // every drink category (Daniel 2026-11-17: no exclusions)
-    excludeIds: [],         // Daniel 2026-11-17: offices may order any drink
+    rushOffMin: 45,         // rush switches itself off after this many minutes (server-side)
+    cats: ['coffee', 'specialty', 'tea', 'smoothie', 'bottled'], // every drink category
     stampSpecials: ['pistachio-latte', 'caramel-latte', 'pumpkin-spice-latte', 'espresso-tonic'], // + every 'coffee': COFFEE_SPECIALS in worker/src/services/drinks.ts
     milkExtra: 0,           // Ft for plant milk; not in the catalogue yet
-    group: { fee: 'organiser', unpaid: 'dropped' }, // fee below 5 at cutoff: 'organiser' | 'split' | 'cancel'; unpaid drinks are not made
-    recurring: { mode: 'reminder' }, // 'reminder' = payment link by email before each delivery, no stored card
-    zone: { radiusM: 500, areas: ['Váci út', 'Lehel utca, Lehel tér', 'Duna-parti irodák'] },
+    areas: ['Váci út', 'Lehel utca, Lehel tér', 'Duna-parti irodák'],
     menuShow: 4,            // drinks listed per category on a phone before "show all"
   };
 
-  // The fee rule shown and used on the pages comes from the API (GET /slots, GET /groups/:code); CONFIG is only the mock server's value.
-  const RULES = { freeFrom: CONFIG.freeFrom, fee: CONFIG.fee };
+  // The fee rule comes from the API (GET /slots, GET /groups/:code); these are the values until it answers.
+  const RULES = { freeFrom: 5, fee: 490 };
   const FEE_TEXT = { chip: '{n} italtól ingyenes kiszállítás, alatta {fee}', how: 'Ami addig ki van fizetve, azt visszük. {n} italtól ingyenes a kiszállítás.' };
   function setRules(freeFrom, fee) {
     if (Number.isFinite(freeFrom)) RULES.freeFrom = freeFrom;
@@ -45,7 +32,6 @@
     $$('[data-fee]').forEach((el) => { el.textContent = t(FEE_TEXT[el.dataset.fee], { n: RULES.freeFrom, fee: ft(RULES.fee) }); });
   }
 
-  const ft = (n) => `${new Intl.NumberFormat('hu-HU', { useGrouping: 'always' }).format(n)} Ft`;
   const COFFEE_SET = new Set('espresso espresso-macchiato cortado cappuccino flat-white latte americano matcha-latte'.split(' ')); // /shared/media/coffee-<id>-1x1
   const hm = (s) => s.replace(/^0/, '');
   const feeFor = (n) => (n >= RULES.freeFrom ? 0 : RULES.fee);
@@ -57,9 +43,7 @@
   const TZ = 'Europe/Budapest';
   const bpFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
   const bp = (ms = Date.now()) => { const p = {}; for (const x of bpFmt.formatToParts(ms)) p[x.type] = x.value; return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` }; };
-  const bpInstant = (date, time) => { const g = Date.parse(`${date}T${time}:00Z`), w = bp(g); return g - (Date.parse(`${w.date}T${w.time}:00Z`) - g); }; // ms of a Budapest wall time
   const parse = (s) => new Date(`${s}T00:00:00Z`);
-  const addDays = (s, n) => new Date(parse(s).getTime() + n * 864e5).toISOString().slice(0, 10);
   const today = () => bp().date;
   const dShort = new Intl.DateTimeFormat(loc, { month: 'short', day: 'numeric', timeZone: 'UTC' });
   const dWk = new Intl.DateTimeFormat(loc, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -90,7 +74,7 @@
     const list = await r.json();
     menu.clear();
     for (const p of Array.isArray(list) ? list : list.products || []) {
-      if (p.active === false || !CONFIG.cats.includes(p.cat) || CONFIG.excludeIds.includes(p.id)) continue;
+      if (p.active === false || !CONFIG.cats.includes(p.cat)) continue;
       const own = (p.images || []).find((s) => typeof s === 'string' && s.startsWith('/images/products/')); // never a third-party image
       const sizes = ((p.sizes && (p.sizes[B.lang] || p.sizes.hu)) || []).map((s) => { const [label, price] = s.split('—'); return { label: label.trim(), price: Number((price || '').replace(/\D/g, '')) || p.price_huf }; });
       menu.set(p.id, { id: p.id, cat: p.cat, name: nice(p.name[B.lang] || p.name.hu), price: p.price_huf, photo: COFFEE_SET.has(p.id) ? `/shared/media/coffee-${p.id}-1x1.jpg` : own ? own.replace('/images/products/', '/shared/photos/') : null, milks: p.milks || [], sizes, temp: p.temp });
@@ -112,7 +96,7 @@
 
   // ---------- data access: everything the pages read or write goes through `api` ----------
   // The worker: worker/src/routers/delivery.ts, docs/delivery-api.md.
-  const http = (() => {
+  const api = (() => {
     const base = '/api/delivery';
     const call = async (path, opts) => {
       // admin calls carry the staff token (belepes/staff.js); a dead session goes back to the login
@@ -148,127 +132,6 @@
     };
   })();
 
-  // MOCK: sample data built from today; what you change is kept in this browser only (localStorage), nothing is sent.
-  const mock = (() => {
-    const KEY = 'bros-delivery-mock';
-    const wait = (v) => new Promise((res) => setTimeout(() => res(v), calm ? 0 : 240));
-    const fail = (code, extra) => Object.assign(new Error(code), { status: 409, code, ...extra });
-    const fresh = () => ({ v: 3, rushUntil: 0, slots: CONFIG.slots.map((s) => ({ ...s })), days: [...CONFIG.days], closed: {}, groups: {}, status: {}, paused: {} });
-    let mem = null;
-    const get = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) return s; } catch (e) { /* private mode */ } return mem || (mem = fresh()); };
-    const set = (fn) => { const s = get(); fn(s); mem = s; try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* memory only */ } return s; };
-    const sorted = (st) => [...st.slots].sort((a, b) => a.time.localeCompare(b.time));
-    const rushOn = (st) => Date.now() < st.rushUntil;
-
-    // sample orders for today's board: [slot index, company, contact, type, cups, address, note, status]
-    const SAMPLE = [
-      [0, 'Minta Kft.', 'Minta Anna', 'company', ['Minta Anna · Flat white', 'Minta Bence · Cappuccino · Zabtej', 'Minta Csilla · Latte', 'Minta Dávid · Americano', 'Minta Emma · Matcha latte', 'Minta Félix · Cortado'], 'Minta utca 1., 4. emelet', 'A recepción kell szólni.', 'delivered'],
-      [0, 'Minta Stúdió', 'Minta Gréta', 'group', ['Minta Gréta · Latte', 'Minta Hanna · Cappuccino'], 'Minta köz 2., 1. emelet', '', 'delivered'],
-      [1, 'Minta Zrt.', 'Minta Júlia', 'company', ['Latte', 'Latte', 'Cappuccino', 'Cappuccino · Zabtej', 'Flat white', 'Americano'], 'Minta út 3., 6. emelet', 'Tárgyaló a lift mellett.', 'out'],
-      [1, 'Minta Iroda Bt.', 'Minta Kata', 'group', ['Minta Kata · Pisztáciás latte', 'Minta Lili · Flat white', 'Minta Márk · Cortado', 'Minta Nóra · Latte · Borsótej', 'Minta Olivér · Americano'], 'Minta tér 4., földszint', '', 'making'],
-      [2, 'Minta Kft.', 'Minta Anna', 'company', ['Flat white', 'Cappuccino', 'Latte', 'Mangó smoothie · 3 dl'], 'Minta utca 1., 4. emelet', 'A recepción kell szólni.', 'new'],
-    ];
-    const orders = (st) => { const sl = sorted(st); return SAMPLE.filter((o) => sl[o[0]]).map(([i, company, contact, type, cups, address, note, status], n) => { const id = `BD-${String(n + 1).padStart(4, '0')}`; return { id, slot_id: sl[i].id, type, company, contact, address, note, cups, drinks: cups.length, status: st.status[id] || status }; }); };
-    const RECURRING = [['R-1', 'Minta Kft.', 'weekdays', 1, 6], ['R-2', 'Minta Stúdió', 1, 0, 4], ['R-3', 'Minta Zrt.', 5, 2, 8]];
-
-    const drinksOf = (g) => g.participants.reduce((n, p) => n + (p.paid ? p.items.length : 0), 0);
-    function booked(st, date, id) {
-      const own = Object.values(st.groups).filter((g) => g.date === date && g.slot_id === id).reduce((n, g) => n + drinksOf(g), 0);
-      if (date === today()) return own + orders(st).filter((o) => o.slot_id === id).reduce((n, o) => n + o.drinks, 0);
-      return own + (parse(date).getUTCDate() * 5 + [...id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7) % 9; // made-up load for the other days (labelled on the page)
-    }
-    function slotInfo(st, date, s) {
-      const cutoff = bpInstant(date, s.time) - s.cutoffMin * 60000, left = Math.max(0, s.capacity - booked(st, date, s.id));
-      const status = (st.closed[date] || []).includes(s.id) ? 'closed' : Date.now() >= cutoff ? 'past' : left <= 0 ? 'full' : 'open';
-      return { id: s.id, time: s.time, cutoff_min: s.cutoffMin, cutoff_at: new Date(cutoff).toISOString(), capacity: s.capacity, left, status };
-    }
-    const deliveryDay = (st, date) => st.days.includes(parse(date).getUTCDay()) && !CONFIG.holidays.includes(date);
-    // the next delivery days that can still be ordered for: no holidays, and not today once its last cutoff has passed
-    function days(st) {
-      const out = [];
-      for (let i = 0; i < 40 && out.length < CONFIG.daysAhead; i++) {
-        const date = addDays(today(), i); if (!deliveryDay(st, date)) continue;
-        const slots = sorted(st).map((s) => slotInfo(st, date, s));
-        if (slots.length && slots.every((s) => s.status === 'past')) continue;
-        out.push({ date, slots });
-      }
-      return out;
-    }
-    const rushView = (st) => ({ on: rushOn(st), until: rushOn(st) ? new Date(st.rushUntil).toISOString() : null, max_drinks: CONFIG.rush.maxDrinks, eta_min: CONFIG.rush.etaMin });
-    const slotsView = (st) => ({ free_from: CONFIG.freeFrom, fee: CONFIG.fee, rush: rushView(st), days: days(st) });
-    const findSlot = (st, p) => (days(st).find((d) => d.date === p.date) || { slots: [] }).slots.find((s) => s.id === p.slot_id);
-    function checkSlot(st, p, n) {
-      if (!n) throw Object.assign(fail('invalid'), { status: 400 });
-      if (p.rush) { if (!rushOn(st)) throw fail('rush_off'); if (n > CONFIG.rush.maxDrinks) throw fail('slot_full', { left: CONFIG.rush.maxDrinks }); return null; }
-      const s = findSlot(st, p);
-      if (!s || s.status === 'closed' || s.status === 'past') throw fail('slot_closed');
-      if (s.left < n) throw fail('slot_full', { left: s.left });
-      return s;
-    }
-    const part = (name, cups) => ({ name, paid: true, items: cups.map((c) => (typeof c === 'string' ? { label: c, price: 0 } : { label: cupLabel(c), price: cupPrice(c) })) });
-    const cup = (id, o) => (menu.has(id) ? { ...newCup(id), ...o } : menu.size ? newCup(menu.keys().next().value) : 'Latte');
-    // two built-in demo groups so a shared link works in any browser: MINTA (open) and ZARVA (locked 20 minutes ago)
-    function demo(st, code) {
-      const base = { sample: true, company: 'Minta Kft.', address: { street: 'Minta utca 1.', floor: '4. emelet' }, organiser: 'Minta Anna' };
-      const three = () => [part('Minta Anna', [cup('flat-white')]), part('Minta Bence', [cup('cappuccino', { milk: 'Oat' })]), part('Minta Csilla', [cup('matcha-latte')])];
-      if (code === 'ZARVA') {
-        const cutoff = Date.now() - 20 * 60000, at = bp(Math.ceil((cutoff + 45 * 60000) / 3e5) * 3e5);
-        return { ...base, code, date: at.date, slot_id: 'x', time: at.time, cutoff_at: new Date(cutoff).toISOString(), participants: [...three(), part('Minta Dávid', [cup('americano')]), part('Minta Emma', [cup('latte')]), part('Minta Félix', [cup('cortado')])] };
-      }
-      const g = st.groups.MINTA;
-      if (g && Date.now() < new Date(g.cutoff_at)) return g;
-      let pick = null; for (const d of days(st)) { const s = d.slots.find((x) => x.status === 'open'); if (s) { pick = { date: d.date, s }; break; } }
-      const made = { ...base, code: 'MINTA', date: pick ? pick.date : today(), slot_id: pick ? pick.s.id : 'x', time: pick ? pick.s.time : bp(Date.now() + 2 * 3600e3).time, cutoff_at: pick ? pick.s.cutoff_at : new Date(Date.now() + 2 * 3600e3).toISOString(), participants: three() };
-      set((s) => { s.groups.MINTA = made; });
-      return made;
-    }
-    const findGroup = (st, code) => (code === 'MINTA' || code === 'ZARVA' ? demo(st, code) : st.groups[code]);
-    function groupView(g) {
-      const n = drinksOf(g);
-      return { code: g.code, sample: !!g.sample, status: Date.now() >= new Date(g.cutoff_at) ? 'locked' : 'open', date: g.date, time: g.time, cutoff_at: g.cutoff_at, company: g.company, address: g.address, organiser: g.organiser,
-        drinks: n, free_from: CONFIG.freeFrom, fee: CONFIG.fee, fee_due: n >= CONFIG.freeFrom ? 0 : CONFIG.fee, fee_rule: CONFIG.group.fee, participants: g.participants.map((p) => ({ name: p.name, paid: p.paid, items: p.items.map((i) => i.label) })) };
-    }
-    const cups = (items) => items.map((i) => ({ ...newCup(i.product_id), ...i }));
-
-    return {
-      slots: () => wait().then(() => slotsView(get())),
-      checkAddress: () => wait({ status: 'confirm' }), // real: 'in_zone' | 'out_of_zone' | 'confirm'
-      order: (p) => wait().then(() => { checkSlot(get(), p, p.items.length); return { preview: true, order_id: 'BD-0000' }; }),
-      recurring: (id, rule) => wait({ id: 'R-0', order_id: id, rule, active: true }),
-      createGroup: (p) => wait().then(() => {
-        const st = get(), s = checkSlot(st, p, p.items.length);
-        const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', code = Array.from({ length: 6 }, () => abc[Math.floor(Math.random() * abc.length)]).join('');
-        set((x) => { x.groups[code] = { code, date: p.date, slot_id: s.id, time: s.time, cutoff_at: s.cutoff_at, company: p.address.company, address: { street: p.address.street, floor: p.address.floor }, organiser: p.contact.name, participants: [part(p.contact.name, cups(p.items))] }; });
-        return { code, url: new URL(`csoport/?g=${code}`, location.href).href, preview: true };
-      }),
-      group: (code) => wait().then(() => { const g = findGroup(get(), String(code || '').toUpperCase()); if (!g) throw Object.assign(new Error('not_found'), { status: 404, code: 'not_found' }); return groupView(g); }),
-      join: (code, p) => wait().then(() => {
-        const st = get(), g = findGroup(st, code);
-        if (!g) throw fail('not_found');
-        if (Date.now() >= new Date(g.cutoff_at)) throw fail('locked');
-        const s = findSlot(st, g); if (s && s.left < p.items.length) throw fail('slot_full', { left: s.left });
-        set((x) => { x.groups[g.code] = g; g.participants.push(part(p.name, cups(p.items))); });
-        return { preview: true };
-      }),
-      admin: {
-        board: (date) => wait().then(() => { const st = get(), all = date === today() ? orders(st) : []; return { date, rush: rushOn(st), rush_until: rushView(st).until, slots: sorted(st).map((s) => { const own = all.filter((o) => o.slot_id === s.id), info = slotInfo(st, date, s); return { ...info, drinks: info.capacity - info.left, orders: own }; }) }; }),
-        setStatus: (id, status) => wait().then(() => { set((s) => { s.status[id] = status; }); return { id, status }; }),
-        setRush: (on) => wait().then(() => { set((s) => { s.rushUntil = on ? Date.now() + CONFIG.rush.autoOffMin * 60000 : 0; }); return rushView(get()); }),
-        settings: () => wait().then(() => { const st = get(); return { slots: sorted(st).map((s) => ({ ...s })), days: [...st.days] }; }),
-        saveSettings: (v) => wait().then(() => { set((s) => { s.slots = v.slots.map((x) => ({ ...x })); s.days = [...v.days]; }); return v; }),
-        closeSlot: (date, id, closed) => wait().then(() => { set((s) => { const l = new Set(s.closed[date] || []); closed ? l.add(id) : l.delete(id); s.closed[date] = [...l]; }); return { date, slot_id: id, closed }; }),
-        recurring: () => wait().then(() => { const st = get(), sl = sorted(st); return { recurring: RECURRING.filter((r) => sl[r[3]]).map(([id, company, rule, i, drinks]) => ({ id, company, rule, time: sl[i].time, drinks, active: !st.paused[id] && id !== 'R-3' || st.paused[id] === false })) }; }),
-        setRecurring: (id, active) => wait().then(() => { set((s) => { s.paused[id] = !active; }); return { id, active }; }),
-        days: () => wait().then(() => { const st = get(), out = []; for (let i = 0; i < 40 && out.length < CONFIG.daysAhead + 1; i++) { const d = addDays(today(), i); if (i === 0 || deliveryDay(st, d)) out.push(d); } return out; }),
-        reset: () => { mem = null; try { localStorage.removeItem(KEY); } catch (e) { /* */ } return wait({}); },
-      },
-    };
-  })();
-
-  // Real API by default. Mock data for local work without the worker: open the page once with ?mock=1 (kept in this browser), ?mock=0 switches back.
-  const USE_MOCK = (() => { try { const q = new URLSearchParams(location.search).get('mock'); if (q === '1') localStorage.setItem('bros-mock', '1'); if (q === '0') localStorage.removeItem('bros-mock'); return localStorage.getItem('bros-mock') === '1'; } catch (e) { return false; } })();
-  // real pages: no "sample" labels and no mock-only controls (the markup carries them for the mock)
-  if (!USE_MOCK) { document.title = document.title.replace(' (minta)', '').replace(' (sample)', ''); $$('.dla__sample, .dla__note, #dla-reset, [data-mock-only]').forEach((el) => el.remove()); }
   // Online payment is not switched on yet (the worker answers 503 payments_not_configured): say so instead of failing at the end.
   const NOT_READY = 'Az online fizetés még nincs bekapcsolva, ezért itt most nem lehet rendelni. Írj nekünk: hello@broscafe.hu';
   function notReady(anchor, where = 'afterend') {
@@ -285,10 +148,8 @@
     const head = $('#rendeles-cim'); if (head && form.id === 'dl-form') { head.textContent = t('Az online rendelés hamarosan indul.'); const intro = head.nextElementSibling; if (intro && intro.matches('p.body')) intro.hidden = true; }
     form.insertAdjacentHTML('beforebegin', `<div class="dl-return" id="dl-closed" role="status"><p>${t('Addig írj nekünk, és egyeztetünk.')}</p><p style="margin-top:14px"><a class="btn" href="/kapcsolat/">${t('Írj nekünk')}</a></p></div>`);
   }
-  const api = USE_MOCK ? mock : http;
 
   // ---------- shared bits ----------
-  const PREVIEW = 'Ez egy előnézet: a valódi oldalon itt a fizetés következne (Stripe).';
   const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
   const LAST = 'bros-delivery-last'; // what was ordered, kept for the thank-you view after the Stripe round trip
   const cross = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
@@ -310,7 +171,6 @@
     };
   }
   const busy = (btn, on) => { if (on) btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy'); btn.disabled = !!on; };
-  const show = (el, html) => { el.innerHTML = html; el.hidden = false; el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' }); };
   // Stripe return parameters, removed from the address bar once read
   function returned(keys) {
     const q = new URLSearchParams(location.search), out = {};
@@ -327,10 +187,9 @@
     const video = $('.dl-hero__video video');
     if (video && !calm) { video.autoplay = true; video.play().catch(() => {}); }
     openWide(); addEventListener('hashchange', openTarget); openTarget();
-    $('#dl-slots-mock').hidden = !USE_MOCK;
 
     // zone list + address check
-    $('#dl-areas').innerHTML = CONFIG.zone.areas.map((a) => `<li>${esc(t(a))}</li>`).join('');
+    $('#dl-areas').innerHTML = CONFIG.areas.map((a) => `<li>${esc(t(a))}</li>`).join('');
     const zf = $('#dl-zone-form'), zr = $('#dl-zone-result');
     zf.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -340,12 +199,12 @@
       busy(zb, true);
       const res = await api.checkAddress(v).catch(() => ({ status: 'confirm' }));
       busy(zb, false);
-      zr.textContent = res.status === 'in_zone' ? t('Ide szállítunk.') : res.status === 'out_of_zone' ? t('Ez a cím sajnos kívül esik a zónán.') : USE_MOCK ? t('Előnézet: a valódi oldalon itt rögtön megmondjuk, hogy a cím a zónában van-e. Addig a rendelés után visszaigazoljuk.') : t('Ezt a címet a rendelés után igazoljuk vissza.');
+      zr.textContent = res.status === 'in_zone' ? t('Ide szállítunk.') : res.status === 'out_of_zone' ? t('Ez a cím sajnos kívül esik a zónán.') : t('Ezt a címet a rendelés után igazoljuk vissza.');
       zr.hidden = false;
     });
 
     const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
-    const menuEl = $('#dl-menu'), moreEl = $('#dl-more'), catsEl = $('#dl-cats'), cupsEl = $('#dl-cups'), daysEl = $('#dl-days'), slotsEl = $('#dl-slots'), sum = $('#dl-sum'), result = $('#dl-result'), after = $('#dl-after'), ret = $('#dl-return'), payBtn = $('#dl-pay');
+    const menuEl = $('#dl-menu'), moreEl = $('#dl-more'), catsEl = $('#dl-cats'), cupsEl = $('#dl-cups'), daysEl = $('#dl-days'), slotsEl = $('#dl-slots'), sum = $('#dl-sum'), result = $('#dl-result'), ret = $('#dl-return'), payBtn = $('#dl-pay');
     let cups = [], cat = CONFIG.cats[0], showAll = false, data = null, day = null, slot = null, capShown = false, sending = false, liveTimer = null; // slot: a slot id or 'rush'
     const kind = () => F('pay').value;
 
@@ -357,7 +216,6 @@
         let last = null; try { last = JSON.parse(sessionStorage.getItem(LAST)); sessionStorage.removeItem(LAST); } catch (e) { /* no storage */ }
         ret.innerHTML = `<h3>${t('Köszönjük, megvan a rendelés!')}</h3>
           <p>${t('Azonosító')}: <b>${esc(r.order)}</b>${last ? `<br>${tn('{n} ital', last.n)} · ${esc(last.text)} · ${esc(last.company)}` : ''}</p><p>${t('A visszaigazolást és a számlát e-mailben küldjük.')}</p>
-          ${USE_MOCK ? `<p class="fine">${t('Előnézet: valójában nem történt rendelés és fizetés.')}</p>` : ''}
           ${last && !last.rush ? `<fieldset class="dl-repeat"><legend>${t('Ismételd minden…')} ${draftPill('Tervezet · a módja még nyitott')}</legend>
             <div class="dl-repeat__row"><label class="dl-pill"><input type="radio" name="repeat" value="weekdays" checked><span>${t('munkanapon')}</span></label><label class="dl-pill"><input type="radio" name="repeat" value="${last.wd}"><span>${EVERY[last.wd].split(' ').pop()}</span></label>
             <button type="button" class="btn btn--ghost" data-repeat>${t('Ismétlés beállítása')}</button></div>
@@ -370,8 +228,7 @@
           try {
             await api.recurring(r.order, rule, r.t);
             const when = rule === 'weekdays' ? t('minden munkanapon') : EVERY[rule];
-            out.textContent = USE_MOCK ? t('Előnézet: a valódi oldalon {when} {time}-ra előkészítjük ezt a rendelést, és előtte e-mailben küldünk egy fizetési linket. Bármikor leállíthatod.', { when, time: hm(last.time) })
-              : t('Beállítva: {when} {time}-ra előkészítjük ezt a rendelést, és előtte e-mailben küldünk egy fizetési linket. Bármikor leállíthatod.', { when, time: hm(last.time) });
+            out.textContent = t('Beállítva: {when} {time}-ra előkészítjük ezt a rendelést, és előtte e-mailben küldünk egy fizetési linket. Bármikor leállíthatod.', { when, time: hm(last.time) });
           } catch (err) { out.textContent = t('Most nem sikerült beállítani. Próbáld újra egy perc múlva.'); }
           busy(b, false); out.hidden = false;
         });
@@ -542,7 +399,7 @@
       e.preventDefault();
       if (sending) return;
       const k = kind();
-      result.hidden = true; after.hidden = true;
+      result.hidden = true;
       F('tax_number').value = taxFmt(F('tax_number').value);
       const bad = [...BASE, ...(k === 'company' ? INV : []), 'terms'].filter((n) => !check1(n, k));
       if (bad.length) return focusBad(bad[0]);
@@ -552,11 +409,7 @@
         const res = k === 'company' ? await api.order(p) : await api.createGroup(p);
         try { sessionStorage.setItem(LAST, JSON.stringify({ n: p.items.length, text, company: p.address.company, wd: parse(p.date).getUTCDay(), time: curSlot() ? curSlot().time : '', rush: p.rush })); } catch (err) { /* no storage: the thank-you view is shorter */ }
         if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
-        if (!USE_MOCK || !res.preview) throw new Error('no_checkout_url'); // a 200 without a payment link is a failure
-        const back = (q) => `${location.pathname}?${q}`;
-        show(after, k === 'company'
-          ? `<p class="dl-preview">${t(PREVIEW)} ${t('Nézd meg, mi jön utána:')} <a href="${back(`order=${res.order_id}&paid=1`)}">${t('sikeres fizetés')}</a> · <a href="${back('cancelled=1')}">${t('megszakított fizetés')}</a></p>`
-          : shareHtml(res, text));
+        throw new Error('no_checkout_url'); // a 200 without a payment link is a failure
       } catch (err) {
         result.textContent = problem(err); result.hidden = false; result.focus();
         if (err.code) loadSlots();
@@ -564,20 +417,10 @@
       sending = false; busy(payBtn, false);
     });
 
-    function shareHtml(res, text) {
-      return `<p class="dl-preview">${t('Előnézet: a valódi oldalon előbb a saját italodat fizeted ki (Stripe), utána jön ez.')}</p>
-        <h3>${t('Kész a csoportos rendelés')}</h3>
-        <p>${t('{slot}. Küldd át ezt a linket a kollégáknak: mindenki hozzáadja és kifizeti a saját italát.', { slot: esc(text) })}</p>
-        ${shareBox(res.url)}
-        <p class="dl-after__actions"><a class="btn" href="${esc(res.url)}">${t('A csoport oldala')} <span aria-hidden="true">→</span></a></p>
-        <p class="fine">${t('Előnézet: ez a link most csak ebben a böngészőben él.')}</p>`;
-    }
-
     mode(); renderCups();
     loadSlots();
     menuEl.innerHTML = `<li class="dl-state" role="status">${t('Itallap betöltése…')}</li>`;
     loadMenu().then(() => { if (!menu.size) throw new Error('empty'); renderMenu(); }).catch(() => { menuEl.innerHTML = `<li class="dl-state" role="alert">${t('Az itallap most nem érhető el. Próbáld újra egy perc múlva.')}</li>`; });
-    addEventListener('storage', (e) => { if (e.key === 'bros-delivery-mock') loadSlots(); }); // the admin mock-up in another tab
     watchDay(loadSlots);
     setInterval(() => { if (!document.hidden && !sending) loadSlots(); }, 60000); // cutoffs pass and rush switches itself off while the page is open
   }
@@ -621,7 +464,7 @@
       let main = $('#dl-g-main'); if (!main) { root.innerHTML = '<div class="dl-g__main" id="dl-g-main"></div>'; main = $('#dl-g-main'); }
       main.innerHTML = `
           <section class="dl-card" aria-labelledby="dl-g-title">
-            <p class="dl-g__tags"><span class="dl-tag dl-tag--big" data-st="${open ? 'open' : 'locked'}">${open ? t('Nyitva') : t('Lezárva')}</span>${g.sample || USE_MOCK ? `<span class="dl-draft">${g.sample ? t('Minta · kitalált nevek és italok') : t('Előnézet · minta adatok')}</span>` : ''}</p>
+            <p class="dl-g__tags"><span class="dl-tag dl-tag--big" data-st="${open ? 'open' : 'locked'}">${open ? t('Nyitva') : t('Lezárva')}</span></p>
             <h2 id="dl-g-title">${dayLabel(g.date)} · ${hm(g.time)}</h2>
             <p class="dl-g__addr">${addr}<br>${t('Szervező')}: ${esc(g.organiser)}</p>
             ${open ? `<p class="dl-g__count"><span>${t('Lezárásig')}</span><b id="dl-count" role="timer"></b></p>` : `<p class="dl-g__locked">${t('A rendelés lezárult, már készítjük. {time}-kor visszük.', { time: hm(g.time) })}</p>`}
@@ -686,9 +529,7 @@
         try {
           const res = await api.join(g.code, { name: F('name').value.trim(), email: F('email').value.trim(), loyalty_email: F('loyalty_email').value.trim(), items: [{ ...cupItem(cup), who: F('name').value.trim() }], terms: true, lang: B.lang, return_path: location.pathname });
           if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
-          if (!USE_MOCK || !res.preview) throw new Error('no_checkout_url');
-          form.reset(); drink(); await load();
-          if ($('#dl-join')) say(`${t(PREVIEW)} ${t('A mintában az italod már a listán van.')}`);
+          throw new Error('no_checkout_url');
         } catch (err) {
           say(err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'locked' ? t('A rendelés közben lezárult.') : err.code === 'slot_full' ? t('Erre az időpontra sajnos betelt a hely.') : t('Most nem sikerült hozzáadni. Próbáld újra egy perc múlva.'));
           if (err.code === 'locked') load();
@@ -710,19 +551,19 @@
         if (soft) return;
         clearInterval(timer);
         root.innerHTML = `<section class="dl-card dl-g__none"><h2>${err.code === 'not_found' ? t('Ez a csoportos rendelés nem található.') : t('A csoportos rendelés most nem érhető el.')}</h2><p>${t('Lehet, hogy a link hibás vagy már lejárt. Kérj újat a szervezőtől.')}</p>
-          <p class="actions">${USE_MOCK ? `<a class="btn" href="?g=MINTA">${t('Minta csoport')}</a>` : ''}<a class="link" href="../">Bros Delivery</a></p></section>`;
+          <p class="actions"><a class="link" href="../">Bros Delivery</a></p></section>`;
       }
     }
     root.innerHTML = `<p class="dl-state" role="status">${t('Csoportos rendelés betöltése…')}</p>`;
     loadMenu().catch(() => {}).then(() => load());
-    setInterval(() => { if (!document.hidden) load(true); }, 8000); // "live" list: poll; the real page may use the same poll
-    addEventListener('storage', (e) => { if (e.key === 'bros-delivery-mock') load(true); });
+    setInterval(() => { if (!document.hidden) load(true); }, 8000); // the list stays live
     watchDay(() => { if (g) view(); }); // "Ma" / "Holnap" labels
   }
 
   // ---------- admin ----------
   async function adminPage() {
-    if (!USE_MOCK) { if (!B.staff) return; await B.staff.guard(); } // the board is counter work; saving settings and cancelling need the admin role
+    if (!B.staff) return;
+    await B.staff.guard(); // the board is counter work; saving settings and cancelling need the admin role
     const root = $('#dl-admin'), live = $('#dla-live');
     const ST = ['new', 'making', 'out', 'delivered'], ST_HU = { new: 'új', making: 'készül', out: 'úton', delivered: 'kézbesítve' };
     const NEXT = { new: 'Elkezdem készíteni', making: 'Elindultam vele', out: 'Kézbesítve' };
@@ -751,7 +592,7 @@
     function renderRush() {
       const on = board.rush, mins = on && board.rush_until ? Math.max(1, Math.ceil((new Date(board.rush_until) - Date.now()) / 60000)) : 0;
       const sw = $('.dla__switch', rushEl), had = sw && document.activeElement === sw;
-      rushEl.innerHTML = `<div><h2 id="dla-rush-title">Rush</h2><p>${on ? `${t('Bekapcsolva: az oldalon most rendelhető „amint lehet” kiszállítás.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Kikapcsolva. Kapcsold be, ha ráértek: ketten vagytok, és egyikőtök el tud indulni. {m} perc után magától kikapcsol.', { m: CONFIG.rush.autoOffMin })}</p></div>
+      rushEl.innerHTML = `<div><h2 id="dla-rush-title">Rush</h2><p>${on ? `${t('Bekapcsolva: az oldalon most rendelhető „amint lehet” kiszállítás.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Kikapcsolva. Kapcsold be, ha ráértek: ketten vagytok, és egyikőtök el tud indulni. {m} perc után magától kikapcsol.', { m: CONFIG.rushOffMin })}</p></div>
         <button type="button" class="dla__switch" role="switch" aria-checked="${on}" aria-labelledby="dla-rush-title"><i aria-hidden="true"></i><span>${on ? t('BE') : t('KI')}</span></button>`;
       rushEl.classList.toggle('is-on', on);
       if (had) $('.dla__switch', rushEl).focus();
@@ -771,8 +612,8 @@
               <ul>${o.cups.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
               <p>${esc(o.address)} · ${esc(o.contact)}${o.note ? `<br>${esc(t(o.note))}` : ''}</p>
               ${NEXT[o.status] ? `<button type="button" class="btn" data-next="${o.id}" data-to="${ST[ST.indexOf(o.status) + 1]}">${t(NEXT[o.status])}</button>` : ''}
-              ${NEXT[o.status] && api.admin.cancelOrder ? `<button type="button" class="dla__mini" data-cancel="${o.id}">${t('Törlés és teljes visszatérítés')}</button>` : ''}
-            </details>`).join('') : `<p class="dla__empty">${isToday || !USE_MOCK ? t('Erre az időpontra még nincs rendelés.') : t('A minta csak a mai rendeléseket mutatja.')}</p>`}
+              ${NEXT[o.status] ? `<button type="button" class="dla__mini" data-cancel="${o.id}">${t('Törlés és teljes visszatérítés')}</button>` : ''}
+            </details>`).join('') : `<p class="dla__empty">${t('Erre az időpontra még nincs rendelés.')}</p>`}
         </div>`).join('') : `<p class="dla__empty">${t('Nincs beállított időpont.')}</p>`;
     }
     function renderSlots(focus) {
@@ -792,8 +633,8 @@
       recEl.innerHTML = rec.map((r) => `<div class="dla__rec${r.active ? '' : ' is-paused'}"><span><b>${esc(r.company)}</b><small>${ruleText(r.rule)} · ${hm(r.time)} · ${tn('{n} ital', r.drinks)}</small></span>
         <span class="dla__pill" data-st="${r.active ? 'on' : 'off'}">${r.active ? t('aktív') : t('szünetel')}</span><button type="button" class="dla__mini" data-rec="${r.id}" data-to="${!r.active}">${r.active ? t('Szüneteltetés') : t('Folytatás')}</button></div>`).join('') || `<p class="dla__empty">${t('Még nincs ismétlődő rendelés.')}</p>`;
     }
-    // the days the board can show: today and the next delivery days (the real admin derives them from GET /slots)
-    const loadDays = async () => { dayList = api.admin.days ? await api.admin.days() : [...new Set([today(), ...(await api.slots()).days.map((d) => d.date)])].sort(); if (!dayList.includes(date)) date = dayList[0]; };
+    // the days the board can show: today and the next delivery days
+    const loadDays = async () => { dayList = [...new Set([today(), ...(await api.slots()).days.map((d) => d.date)])].sort(); if (!dayList.includes(date)) date = dayList[0]; };
     async function refresh(part) {
       if (!part) await loadDays();
       if (!part || part === 'board') { board = await api.admin.board(date); renderRush(); renderBoard(); }
@@ -803,7 +644,7 @@
     rushEl.addEventListener('click', async (e) => {
       if (!e.target.closest('.dla__switch')) return;
       const on = !board.rush;
-      if (await act(() => api.admin.setRush(on), on ? t('Rush bekapcsolva, {m} perc múlva magától kikapcsol', { m: CONFIG.rush.autoOffMin }) : t('Rush kikapcsolva'), 'board')) $('.dla__switch', rushEl).focus();
+      if (await act(() => api.admin.setRush(on), on ? t('Rush bekapcsolva, {m} perc múlva magától kikapcsol', { m: CONFIG.rushOffMin }) : t('Rush kikapcsolva'), 'board')) $('.dla__switch', rushEl).focus();
     });
     datesEl.addEventListener('click', async (e) => { const b = e.target.closest('[data-date]'); if (!b || working) return; date = b.dataset.date; await act(async () => {}, '', 'board'); $(`[data-date="${date}"]`, datesEl)?.focus(); });
     boardEl.addEventListener('toggle', (e) => { const d = e.target.closest('.dla__order'); if (d) d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }, true);
@@ -849,10 +690,10 @@
       else if (e.target.closest('[data-add]')) {
         // the first free half hour after the last slot, inside the opening hours
         const used = new Set(settings.slots.map((s) => s.time)), last = settings.slots[settings.slots.length - 1], toMin = (x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3)), toStr = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-        let m = last ? toMin(last.time) + 60 : toMin(CONFIG.slots[0].time);
+        let m = last ? toMin(last.time) + 60 : toMin(CONFIG.newSlot.time);
         const lo = toMin(CONFIG.slotHours[0]), hi = toMin(CONFIG.slotHours[1]);
         for (let i = 0; i < 48 && (m > hi || m < lo || used.has(toStr(m))); i++) m = m + 30 > hi ? lo : m + 30;
-        settings.slots.push({ id: `s${Date.now().toString(36)}`, time: toStr(m), cutoffMin: last ? last.cutoffMin : CONFIG.slots[0].cutoffMin, capacity: last ? last.capacity : CONFIG.slots[0].capacity });
+        settings.slots.push({ id: `s${Date.now().toString(36)}`, time: toStr(m), cutoffMin: last ? last.cutoffMin : CONFIG.newSlot.cutoffMin, capacity: last ? last.capacity : CONFIG.newSlot.capacity });
         const sel = `[data-i="${settings.slots.length - 1}"] input`; renderSlots(sel); save(sel);
       }
     });
@@ -861,7 +702,6 @@
       const id = b.dataset.rec, on = b.dataset.to === 'true';
       await act(() => api.admin.setRecurring(id, on), on ? t('aktív') : t('szünetel'), 'settings'); $(`[data-rec="${id}"]`, recEl)?.focus();
     });
-    $('#dla-reset')?.addEventListener('click', () => act(async () => { if (api.admin.reset) await api.admin.reset(); openIds.clear(); date = today(); slotsMsg.textContent = ''; }, t('Minta visszaállítva')));
     const first = () => refresh().catch(() => { boardEl.innerHTML = `<p class="dla__empty" role="alert">${t('Az adatok most nem érhetők el. Próbáld újra egy perc múlva.')}</p>`; });
     first();
     watchDay(() => { date = today(); first(); }); // the board left open overnight moves to the new day

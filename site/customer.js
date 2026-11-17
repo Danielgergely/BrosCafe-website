@@ -1,10 +1,9 @@
-// Bros Cafe · D · Kollázs — customer area: /fiok/, /card/<code>, /auth/verify/, /adatvedelem/, /segitseg/, /404.html.
-// Same API calls, storage keys and texts as the React app (texts: customer-texts.js, generated from frontend/src/i18n).
+// Bros Cafe — customer area: /fiok/, /card/<code>, /auth/verify/, /adatvedelem/, /segitseg/, /404.html.
+// Same API calls and storage keys as the old React app; texts in customer-texts.js.
 (() => {
-  const B = window.BROS, S = B.shell, en = B.lang === 'en';
+  const B = window.BROS, S = B.shell, { esc, toast } = S, en = B.lang === 'en';
   const page = document.body.dataset.page;
   const app = document.getElementById('app');
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const $ = (s, r = app) => r.querySelector(s);
   const $$ = (s, r = app) => [...r.querySelectorAll(s)];
   const TX = (window.BROS_TEXTS || {})[B.lang] || {};
@@ -14,7 +13,6 @@
     return Object.keys(vars).reduce((s, k) => s.split(`{${k}}`).join(vars[k]), v);
   };
   const X = (hu, e) => (en ? e : hu); // strings the live site has no key for
-  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const HOME = '/', SIGNUP = '/husegkartya/', ACCOUNT = '/fiok/', GAME = '/jatek/', NEWS = '/ujdonsagok/';
   const EMAIL = 'hello@broscafe.hu';
   const ICON = {
@@ -46,12 +44,6 @@
     if (Array.isArray(d)) return d.map((e) => (e && typeof e.msg === 'string' ? e.msg : JSON.stringify(e))).join(' ');
     return typeof d.msg === 'string' ? d.msg : String(d);
   };
-  function toast(msg) {
-    let el = document.querySelector('.toast');
-    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.append(el); }
-    el.textContent = msg; el.classList.add('show');
-    clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
-  }
   function setTitle(hu, e) { document.title = `${X(hu, e)} · Bros Cafe`; }
   function finish() { S.footer(); B.mount(); }
   const view = (html) => { app.innerHTML = html; };
@@ -69,7 +61,7 @@
   }
 
   // ---------- the pass (mirrors LoyaltyCardVisual: same tier band, same three figures) ----------
-  function pass(m, { withQr = false, last = false, tilt = false } = {}) {
+  function pass(m, { withQr = false, last = false } = {}) {
     const req = m.stamps_required ?? 10, tier = m.tier || 'base', free = m.always_free, rem = req - m.stamps;
     const head = free
       ? `<p class="pass__k">${tx('card.member')}</p><h2 class="pass__name">${esc(m.name)}</h2><p class="pass__sub">${tx('loyalty.tierAlwaysFree')}</p>`
@@ -79,7 +71,7 @@
     const cols = req > 5 ? Math.ceil(req / 2) : req;
     const slots = free ? '' : `<div class="pass__slots" style="--cols:${cols}" aria-hidden="true">${Array.from({ length: req }, (_, i) => `<i class="${i < m.stamps ? 'on' : ''}${last && i === m.stamps - 1 ? ' pop' : ''}"></i>`).join('')}</div>`;
     const nextLabel = m.next_tier ? tx('card.toTier', { tier: tx(`loyalty.tiers.${m.next_tier}`) }) : tx('card.topTier');
-    return `<div class="pass pass--${esc(tier)}${m.reward_ready ? ' pass--ready' : ''}${tilt ? ' pass--tilt' : ''}">
+    return `<div class="pass pass--${esc(tier)}${m.reward_ready ? ' pass--ready' : ''}">
       <div class="pass__top"><span class="pass__brand"><img src="/shared/img/mark-cream.png" alt="" width="20" height="24">Bros Cafe</span><span class="pass__tier">${tx(`loyalty.tiers.${tier}`)}</span></div>
       <div>${head}</div>${slots}
       <div class="pass__stats"><div><b>${m.total_coffees ?? 0}</b><span>${tx('card.totalCoffees')}</span></div><div><b>${m.rewards_redeemed ?? 0}</b><span>${tx('card.freeCoffees')}</span></div><div><b>${m.next_tier ? m.coffees_to_next : '—'}</b><span>${esc(nextLabel)}</span></div></div>
@@ -109,7 +101,7 @@
   }
 
   // =====================================================================================================================
-  // /auth/verify/ — the magic link lands here: ?token= is exchanged once, stored like React does, then the account opens
+  // /auth/verify/ — the magic link lands here: ?token= is exchanged once for a session, then the account opens
   // =====================================================================================================================
   async function verify() {
     setTitle('Belépés', 'Signing in');
@@ -145,7 +137,7 @@
     const picks = (() => { try { return JSON.parse(localStorage.getItem('bros-favs') || '[]'); } catch (e) { return []; } })();
     const invite = `${location.origin}${SIGNUP}?ref=${encodeURIComponent(m.code)}`;
     view(`
-<section class="phero acct-hero wash--sage-mist"><div class="wrap">
+<section class="phero acct-hero"><div class="wrap">
   <p class="eyebrow">${tx('account.greeting')}</p>
   <h1 data-vt="page-title">${esc(m.name)}.</h1>
   <p class="phero__lead">${tx('account.memberSince', { since: esc(fmtMonth(m.created_at)) })}</p>
@@ -153,17 +145,17 @@
 </div></section>
 <section class="sec sec--last"><div class="wrap acct">
   <div class="acct__card">
-    ${pass(m, { withQr: true, tilt: true })}
+    ${pass(m, { withQr: true })}
     <div class="acct__row"><a class="btn" href="/card/${encodeURIComponent(m.code)}">${tx('loyalty.openWalletCard')}</a><a class="btn btn--ghost" href="${GAME}">${tx('game.playWhileYouWait')}</a></div>
   </div>
   <div class="acct__side">
-    <div class="paper wash--glow-soft" data-testid="account-rewards"><h2 class="label">${tx('account.rewardsTitle')}</h2><p class="big">${ico('gift')}${tx('account.rewardsAvailable', { n: m.reward_ready ? 1 : 0 })}</p></div>
-    <div class="paper wash--blush-soft" data-testid="account-invite"><h2 class="label">${tx('account.inviteTitle')}</h2>
+    <div class="paper" data-testid="account-rewards"><h2 class="label">${tx('account.rewardsTitle')}</h2><p class="big">${ico('gift')}${tx('account.rewardsAvailable', { n: m.reward_ready ? 1 : 0 })}</p></div>
+    <div class="paper" data-testid="account-invite"><h2 class="label">${tx('account.inviteTitle')}</h2>
       ${m.free_coffees > 0 ? `<p class="banked">${tx('account.bankedFree', { n: m.free_coffees })}</p>` : ''}
       <p>${tx('account.inviteBody')}</p><button class="btn" type="button" data-share>${tx('account.inviteShare')}</button></div>
-    <div class="paper wash--oat-soft" data-testid="account-wallet"><h2 class="label">${tx('account.walletTitle')}</h2>${walletHTML()}</div>
-    <div class="paper wash--cream" id="picks" hidden><h2 class="label">${tx('account.picks')}</h2><div class="chips" id="pick-list"></div></div>
-    <div class="paper wash--sage-mist" data-testid="account-news"><a class="link" href="${NEWS}">${tx('account.whatsNew')} →</a></div>
+    <div class="paper" data-testid="account-wallet"><h2 class="label">${tx('account.walletTitle')}</h2>${walletHTML()}</div>
+    <div class="paper" id="picks" hidden><h2 class="label">${tx('account.picks')}</h2><div class="chips" id="pick-list"></div></div>
+    <div class="paper" data-testid="account-news"><a class="link" href="${NEWS}">${tx('account.whatsNew')} →</a></div>
     <div class="acct-set" data-testid="account-settings"><h2 class="label">${tx('account.title')}</h2>
       <p class="kv">${tx('account.emailLabel')}: <b id="mail-now">${esc(m.email)}</b></p>
       <form class="mail-form" id="mail-form" hidden novalidate><label class="field"><span>${tx('account.changeEmailPrompt')}</span><input type="email" name="email" autocomplete="email" inputmode="email" required value="${esc(m.email)}"></label>
@@ -261,7 +253,7 @@
   function privacy() {
     setTitle('Adatkezelés', 'Privacy');
     const sections = TX.privacy.sections || [];
-    view(`<section class="phero wash--sage-mist"><div class="wrap"><p class="eyebrow">${X('Adatkezelés', 'Privacy')}</p><h1 data-vt="page-title">${esc(TX.privacy.title)}</h1></div></section>
+    view(`<section class="phero"><div class="wrap"><p class="eyebrow">${X('Adatkezelés', 'Privacy')}</p><h1 data-vt="page-title">${esc(TX.privacy.title)}</h1></div></section>
 <div class="wrap"><div class="legal"><p class="upd">${esc(TX.privacy.updated)}</p><p class="lead">${esc(TX.privacy.intro)}</p>
 ${sections.map((s) => `<section><h2>${esc(s.h)}</h2>${s.p.map((p) => `<p>${esc(p)}</p>`).join('')}</section>`).join('')}
 <div class="choice"><h2>${esc(TX.privacy.choiceTitle)}</h2><p id="choice-state"></p><div class="acct__row"><button class="btn" type="button" data-set="granted" data-testid="privacy-allow">${esc(TX.privacy.allow)}</button><button class="btn btn--light" type="button" data-set="denied" data-testid="privacy-withdraw">${esc(TX.privacy.withdraw)}</button></div></div>
@@ -277,14 +269,12 @@ ${sections.map((s) => `<section><h2>${esc(s.h)}</h2>${s.p.map((p) => `<p>${esc(p
   }
 
   // =====================================================================================================================
-  // /segitseg/ — help: POST /api/contact (the preview never sends mail, as on the other forms; ?live=1 lifts that)
+  // /segitseg/ — help: POST /api/contact (not sent on the preview unless ?live=1, see shell.js)
   // =====================================================================================================================
   function help() {
     setTitle('Írj nekünk', 'Write to us');
     const H = TX.help;
-    if (new URLSearchParams(location.search).get('live') === '1') { try { sessionStorage.setItem('bros-live', '1'); } catch (e) { /* */ } }
-    const guard = /^(broscafe\.gracelabs\.dev|localhost|127\.0\.0\.1)$/.test(location.hostname) && !(() => { try { return sessionStorage.getItem('bros-live') === '1'; } catch (e) { return false; } })();
-    view(`<section class="phero wash--glow-soft"><div class="wrap"><p class="eyebrow">${X('Segítség', 'Help')}</p><h1 data-vt="page-title">${esc(H.title)}</h1><p class="phero__lead">${esc(H.intro)}</p></div></section>
+    view(`<section class="phero"><div class="wrap"><p class="eyebrow">${X('Segítség', 'Help')}</p><h1 data-vt="page-title">${esc(H.title)}</h1><p class="phero__lead">${esc(H.intro)}</p></div></section>
 <div class="wrap"><div class="helpwrap" id="hw">
 <form class="form" id="help-form" novalidate data-testid="help-form">
   <label class="field"><span>${esc(tx('auth.firstNameLabel'))}</span><input name="name" maxlength="80" autocomplete="name" required data-err="${X('Add meg a neved.', 'Please enter your name.')}"></label>
@@ -304,7 +294,7 @@ ${sections.map((s) => `<section><h2>${esc(s.h)}</h2>${s.p.map((p) => `<p>${esc(p
       $$('[aria-invalid]', form).forEach((x) => x.removeAttribute('aria-invalid'));
       if (bad) { bad.setAttribute('aria-invalid', 'true'); bad.focus(); return say(bad.dataset.err); }
       say('');
-      if (guard) return sent(X('Előnézet', 'Preview'), X('Ez egy előnézet: a valódi oldalon itt elküldjük az üzeneted a Bros Cafénak.', 'This is a preview: on the real site your message would be sent to Bros Cafe here.'));
+      if (S.guard) return sent(X('Előnézet', 'Preview'), X('Ez egy előnézet: a valódi oldalon itt elküldjük az üzeneted a Bros Cafénak.', 'This is a preview: on the real site your message would be sent to Bros Cafe here.'));
       btn.disabled = true; btn.innerHTML = `<i class="spinner" aria-hidden="true"></i> ${esc(H.sending)}`;
       try {
         await api('contact', { method: 'POST', body: { __lang: 1, name: f.name.value, email: f.email.value, message: f.message.value, website: f.website.value } });

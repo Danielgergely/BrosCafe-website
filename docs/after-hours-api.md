@@ -1,7 +1,7 @@
 # Bros After Hours — backend contract (built 2026-11-17; see "As built" at the end)
 
 Spec: `docs/after-hours.md`. The page talks to the backend only through `api` in
-`site/after-hours/after-hours.js` (real API by default; `?mock=1` switches a browser to the mock data for local work, `?mock=0` back). A Cloudflare Worker on the site's origin under `/api/after-hours/*`, with D1.
+`site/after-hours/after-hours.js`. A Cloudflare Worker on the site's origin under `/api/after-hours/*`, with D1.
 
 ## Tables (D1)
 

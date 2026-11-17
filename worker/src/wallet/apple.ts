@@ -8,6 +8,7 @@ import type { Doc } from '../db';
 import type { Env } from '../env';
 import * as artwork from './artwork';
 import { PASS_ASSETS } from './pass_assets';
+import { pyStr } from '../util';
 
 const apnsHost = (env: Env) => (env.APNS_HOST as string | undefined) || 'https://api.push.apple.com';
 
@@ -17,16 +18,8 @@ const apnsHost = (env: Env) => (env.APNS_HOST as string | undefined) || 'https:/
 export const get = (d: Doc, k: string, def: unknown = null): any => (d[k] === undefined ? def : d[k]);
 
 /** A number Python holds as a float, so json.dumps prints 47.0 rather than 47. */
-export class PyFloat {
+class PyFloat {
   constructor(readonly value: number) {}
-}
-
-/** str(value) as Python prints it. */
-export function pyStr(v: unknown): string {
-  if (v === null || v === undefined) return 'None';
-  if (v === true) return 'True';
-  if (v === false) return 'False';
-  return String(v);
 }
 
 /** str.format with keyword arguments. */
@@ -52,7 +45,7 @@ function pyString(s: string) {
 }
 
 /** json.dumps(value) with Python's defaults (", " and ": " separators, ensure_ascii), byte for byte. */
-export function pyDumps(v: unknown): string {
+function pyDumps(v: unknown): string {
   if (v === null || v === undefined) return 'null';
   if (v === true) return 'true';
   if (v === false) return 'false';
@@ -126,7 +119,7 @@ const toBinary = (b: Uint8Array) => {
 const fromBinary = (s: string) => Uint8Array.from(s, (c) => c.charCodeAt(0));
 
 /** PKCS#7 detached signature (DER) over the manifest, signed with SHA-256 by the pass certificate, WWDR included. */
-export function signManifest(env: Env, manifest: Uint8Array): Uint8Array {
+function signManifest(env: Env, manifest: Uint8Array): Uint8Array {
   const { key, cert } = loadIdentity(env);
   const wwdr = loadWwdr(env);
   const p7 = forge.pkcs7.createSignedData();
@@ -152,7 +145,7 @@ export function signManifest(env: Env, manifest: Uint8Array): Uint8Array {
 const OLIVE = [102, 115, 74];
 
 // `fg` colours the member's name, the stamp row and the header value, so the accent runs through the card.
-export const TIER_PALETTE: Record<string, { bg: number[]; fg: number[]; label: number[] }> = {
+const TIER_PALETTE: Record<string, { bg: number[]; fg: number[]; label: number[] }> = {
   base: { bg: OLIVE, fg: [245, 240, 230], label: [204, 211, 186] },
   bronze: { bg: OLIVE, fg: [226, 162, 108], label: [206, 214, 188] },
   silver: { bg: OLIVE, fg: [214, 222, 232], label: [206, 214, 188] },
@@ -171,7 +164,7 @@ function tierLine(L: Strings, member: Doc): string {
 }
 
 // ---------------------------------------------------------------- pass.json
-export const PASS_STRINGS: Record<string, Strings> = {
+const PASS_STRINGS: Record<string, Strings> = {
   en: {
     desc: 'Bros Cafe Loyalty Card', club: 'Loyalty Club', member: 'Member',
     reward_label: 'Reward', reward_value: '\u{1F389} FREE COFFEE AVAILABLE',
@@ -225,7 +218,7 @@ function required(env: Env, k: string): string {
   return String(v);
 }
 
-export function buildPassDict(
+function buildPassDict(
   env: Env, member: Doc, cafe: Doc, settings: Doc, serial: string, authToken: string, barcodeMsg: string,
   webServiceUrl: string, lang = 'en',
 ): Doc {
@@ -371,7 +364,7 @@ export async function buildPkpass(
   return pack(app.env, files);
 }
 
-export const VOIDED_TEXT: Record<string, { desc: string; title: string; body: string }> = {
+const VOIDED_TEXT: Record<string, { desc: string; title: string; body: string }> = {
   en: {
     desc: 'Bros Cafe loyalty card',
     title: 'CARD CLOSED',

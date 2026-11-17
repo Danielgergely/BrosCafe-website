@@ -1,84 +1,77 @@
 # Bros Cafe · Üveg — the shell and the design language
 
-**Since 2026-11-17 the site wears "Üveg"** (chosen by the owners): `glass.css` + `glass.js`, loaded last on every page,
-re-skin the Kollázs base below into espresso #25251C / olive #68704B / ivory #F3EBDD / champagne #C6A875 / taupe #BDAA96,
-crisp Fraunces with a real italic (`<em>` in headings = italic, files in `/shared/fonts/*-italic.woff2`), and liquid
-glass on everything that floats (header, tab bar, sheets, pills, tiles over photos). Markup, motion and the contracts in
-this file are unchanged; where the "look" rules below say tilt, sticker, ink outline, press edge or marker, `glass.css`
-overrides them. New colours live only in the `:root` block of `glass.css`. Every new page links, after its own CSS:
-`<link rel="stylesheet" href="/glass.css">` and `<script src="/glass.js" defer></script>`; theme-color `#25251C`.
-Glass + view transitions: while a page change runs, the bars drop their own backdrop filter and their transition
-groups carry it (`html.vt-on`, `glass.js`); Safari (`html.wk`) gets near-solid bars for those 0.4 s.
-
-The Kollázs base (still the structure everything sits on):
+**Üveg** ("glass", chosen by the owners in Nov 2026): espresso and warm photos for the evening moments, ivory for
+reading, crisp Fraunces with a real italic, and liquid glass on everything that floats (header, tab bar, sheets, chips
+over photos). One stylesheet system, no override layer:
 
 | File | What |
 |---|---|
-| `shell.css` | fonts, tokens, reset, type, buttons, cards, the collage kit (washes, cut photos, stickers), header, tab bar, sheets, footer, view transitions. Loaded first on every page. |
+| `shell.css` | fonts, **all colour tokens**, evening bands, reset, type, buttons, cards, photos, header, tab bar, sheets, toast, consent, footer, view transitions. Loaded first on every page. |
 | `shell.js` | the nav config (`NAV`) and everything built from it; sheet physics; `window.BROS.shell`. First thing in `<body>`. |
-| `pages.css` | subpage components in the same language: `.phero` (page head on a wash with a cut photo), `.paper`, `.tap`, `.chip`, `.fold`, forms, and each page's own blocks. |
+| `glass.js` | keeps the glass bars glassy through page changes (below). Deferred, on every page. |
+| `pages.css` | subpage components: `.phero`, `.paper`, `.chip`, `.fold`, forms, and the blocks of étlap, hűségkártya, újdonságok, kapcsolat, játék. |
 | `site.js` | subpage logic; calls `BROS.shell.footer()`. |
-| `style.css` + `home.js` | **home only**: hero, the pinned act (cups → the two extras), the visit; scroll-driven motion, panels; loaded after `shell.css`. |
+| `style.css` + `home.js` | **home only**: hero, the pinned act (cups → the two extras), the visit; scroll-driven motion, panels. |
+| page css | `after-hours/`, `delivery/`, `jatek/game.css`, `customer.css`, staff: `belepes/`, `pult/`, `admin/`. Loaded after `pages.css`. |
 
 Media: `docs/media-picks.md` says which photo or clip goes where (`/shared/media/…`, every photo also as `.webp`).
 
-## Tokens (`:root` in `shell.css`)
+## Tokens (`:root` in `shell.css`, the only place for colour values)
 
 | Group | Tokens |
 |---|---|
-| Brand | `--olive #66734A` · `--cream #F5F0E6` · `--white` |
-| Olive shades | `--olive-dark` (hover) · `--olive-deep` (small olive text, button edge) · `--olive-soft` · `--olive-tint` · `--olive-rgb` |
-| Cream shades | `--cream-2` · `--cream-3` · `--cream-rgb` |
-| Café accents | `--sage` · `--sage-mist` · `--blush` · `--oat` · `--glow` · `--honey` · `--dove`, and the paler `--sage-light` · `--blush-soft` · `--glow-soft` · `--oat-soft` (computed from them). **Pending the brothers' approval**: the hex values exist only in that one block, never write them anywhere else. |
-| Text | `--text #322F20` · `--text-soft` · `--text-faint` · `--text-rgb` |
-| Roles | `--bg` · `--surface` · `--surface-2` · `--accent` · `--accent-text` · `--on-accent` · `--line` · `--line-strong` · `--hl` (the marker colour behind `<em>`) |
-| Type | `--serif` (Fraunces) · `--sans` (Inter) · `--soft` (Fraunces' round cut) |
-| Shape, depth | `--r-sm 12` · `--r-md 18` · `--r-lg 28` · `--r-pill` · `--shadow-sm/md/lg` (warm, for photos and floating panels) · `--edge` (1.5 px ink outline) · `--press` / `--press-ink` (the hard edge under a button / a card) |
-| Layout | `--pad` · `--max 1240px` · `--header-h` (56 phone / 68 desktop) · `--tabbar-h` (64 / 0) · `--safe-b` · `--bottom-h` |
+| Palette | `--espresso` #25251C (`-2`, `-3`, `-rgb`) · `--ivory` #F3EBDD (`-hi`, `-2`, `-3`, `-rgb`) · `--champagne` #C6A875 (`-hi`, `-rgb`) · `--bronze` (champagne on ivory, AA) · `--taupe` · `--olive` #68704B (`-dark` fills with ivory text, `-deep` small olive text, `-soft`, `-tint`, `-rgb`, `-card`) · `--open` (the "open now" dot) · `--err` (`-rgb`, `-bg`) · `--white` |
+| Roles | `--text` · `--text-soft` · `--text-faint` · `--text-rgb` · `--surface` · `--surface-2` · `--accent-text` · `--on-accent` · `--eyebrow` · `--line` · `--line-strong` · `--hair` (1 px line) · `--btn-fill` (the lit olive gradient) |
+| Glass | `--g-{chrome,smoke,clear,olive,frost,sheet}-bg` (tint) + `-fx` (backdrop filter) · `--g-rim-dark` / `--g-rim-light` (the light on the edges) · `--g-lift` / `--g-lift-sm` (shadow under floating glass) · `--warm` (filter: daylight photo → evening light) |
+| Type | `--serif` (Fraunces) · `--sans` (Inter) · `--soft` (Fraunces axes, add to `font-variation-settings`) |
+| Shape, depth | `--r-sm 14` · `--r-md 20` · `--r-lg 26` · `--r-pill` · `--shadow-sm/md/lg` |
+| Layout | `--pad` · `--max 1200px` · `--header-h` (60 phone / 76 desktop) · `--tabbar-h` (78 / 0) · `--safe-b` · `--bottom-h` |
 | Motion | `--ease` · `--dur .3s` · `--tap .1s` |
+| Game | `--g-game-*`: the canvas colours `jatek/game.js` reads. |
 
-Alpha colours: `rgb(var(--text-rgb) / .14)`. On a coloured wash, small olive text uses `--accent-text` (the wash classes
-already darken it).
+Alpha colours: `rgb(var(--espresso-rgb) / .1)`. `--cream`, `--glow`, `--honey`, `--edge` are old names kept only for
+markup built in JS; don't use them in CSS.
 
 ## The look, as rules
 
-1. **Colour = washes.** A section or a card sits on one wash: `class="wash wash--sage"` (also `--sage-mist`, `--blush`,
-   `--blush-soft`, `--glow`, `--glow-soft`, `--oat-soft`, `--cream`). The class sets `--wash`, the matching marker
-   colour and text contrast. One wash per band; neighbours differ. Cream stays the page ground, white is for cards and
-   chips, olive only for buttons, the pass and "current" marks.
-2. **Type.** Headings are Fraunces, weight 540–640, with `font-variation-settings: "opsz" <size>, var(--soft)`, tight
-   (`letter-spacing: -.02em … -.035em`, `line-height` ≤ 1.05). Never the old thin 300 weight. Emphasis is `<em>` inside
-   `.display` / `.title`: a marker stroke in `--hl`, **not italics** (no italic cut is shipped; a faux italic looks
-   cheap). Inter for everything else; labels are 700, uppercase, `.16em`.
-3. **Photos are cut out.** `<span class="cut" style="--tilt: -2deg"><picture>…</picture></span>`: white paper edge,
-   warm shadow, 1–4° tilt; `cut--arch`, `cut--circle` for shape. Give it a size (height or `aspect-ratio`); the image
-   fills it. Two overlapping cuts with opposite tilts beat one big rectangle. No full-bleed photo backgrounds, no blur.
-4. **Stickers.** `.sticker` (+ `--white`, `--blush`, `--sage`, `--olive`; `--tilt`) for a label laid on a photo or a
-   card corner; `.new` for the small "Új" badge. Max two per screen.
-5. **Tappable things have an ink outline and a hard edge**, and go down on press: border `var(--edge)`,
-   `box-shadow: var(--press-ink)`, `:active { translate: 0 3px; box-shadow: 0 0 0 transparent; transition-duration: var(--tap) }`.
-   `.btn` does this already. Things that are not tappable have no outline (soft shadow or nothing).
-6. **Chrome is drawn in ink**: header, tab bar, sheets and footer are separated by a 1.5 px `--text` line, not by
-   shadows.
+1. **Ivory to read, espresso for the evening.** Pages sit on ivory; page heads, the hero, the extras, the card panel,
+   the footer and the bars are *evening bands* (the first group rule in `shell.css`): every role token inside flips to
+   "on espresso" (ivory text, champagne eyebrows and small accents). A light surface inside a band (`.form`, `.paper`,
+   `.sheet`, `.panel`, … the second group rule) reads as on ivory again. Add a new band or surface to those lists, never
+   hand-pick colours.
+2. **Type.** Headings are Fraunces, weight 420, `font-variation-settings: var(--soft)`, `font-synthesis: none`,
+   tight tracking (`-.01em … -.026em`). Emphasis is `<em>`: the real italic at weight 380, no marker. Labels and
+   eyebrows: Inter 600, 11.5 px, uppercase, `.22em`, `color: var(--eyebrow)`. Inter for everything else.
+3. **Photos** sit in a `.cut`: rounded `--r-lg`, `--shadow-md`, no border, no tilt. Give it a size (height or
+   `aspect-ratio`); the image fills it. Photos on an evening band get `filter: var(--warm)` (or the lighter
+   `sepia(.32) saturate(1.2) brightness(.92)` on cards).
+4. **Glass only on what floats**: `chrome` (header, tab bar, booking bar, toast), `smoke` (chips over a photo),
+   `clear` (ghost buttons and pills on espresso), `olive` (the extras, the pass), `frost` / `sheet` (bars and sheets
+   over ivory). Each is `background: var(--g-x-bg); backdrop-filter: var(--g-x-fx); box-shadow: var(--g-rim-…)`.
+   Reduced transparency and more contrast swap them for solid fills (token blocks in `shell.css`).
+5. **Buttons**: `.btn` is the lit olive pill; on a band, `.btn--ghost` and `.link` become clear glass pills (a link
+   on a light card in a band stays a text link). No ink outlines and no hard press edges: flat things get `--hair`
+   or nothing, cards a soft shadow.
+6. **The page runs under the chrome**: the header is smoked glass, the tab bar a floating capsule; on home and on
+   page heads the band starts under the header (`margin-top: calc(-1 * var(--header-h))`).
 
 ## Components
 
 - **Type**: `.eyebrow`, `.display` (`--md`), `.title` (`--lg`), `.body` (`--lg`), `.fine`.
-- **Buttons**: `.btn` (olive), `.btn--ghost` (white, olive text), `.btn--light` (white, ink), `.link`, `.actions`.
-- **Cards**: `.card`, `.card--flat`, `.card--tint`, `.card--media` (yesterday's soft cards; fine for forms and long
-  text, prefer a wash + `--edge` for anything tappable).
-- **Collage kit**: `.wash--*`, `.cut`, `.sticker`, `.new` (above).
-- **Text over a photo**: `.scrim` / `.scrim--soft`. Rarely needed now: put text beside the cut photo instead.
+- **Buttons**: `.btn` (olive), `.btn--ghost` (outline / clear glass on a band), `.btn--light` (ivory), `.link`, `.actions`.
+- **Cards and photos**: `.card` (hairline, `--r-lg`), `.cut` (+ `.cut--circle`), `.sticker` (a frosted pill; smoked
+  inside a `.cut`), `.new` (the small "Új" badge).
 - **Layout**: `.wrap`, `.visually-hidden`.
-- **Header** `.site-header`, **tab bar** `.tabbar`, **sheets** `dialog.sheet`: generated by `shell.js`, never by hand.
+- **Header** `.site-header`, **tab bar** `.tabbar`, **sheets** `dialog.sheet`, **toast**, **consent banner**: generated
+  by `shell.js`, never by hand.
 
-`body` has `padding-top: var(--header-h)` and `padding-bottom: var(--bottom-h)`. Sticky things use
-`top: var(--header-h)`; fixed things at the bottom use `bottom: calc(var(--bottom-h) + …)`.
+`body` has `padding-top: var(--header-h)` and `padding-bottom: var(--bottom-h)` (home sets both to 0: its scenes carry
+the clearance). Sticky things use `top: var(--header-h)`; fixed things at the bottom use `bottom: calc(var(--bottom-h) + …)`.
 
 ## Motion
 
-- **Press feedback is instant**: every tappable element changes on `:active` within `--tap` (scale .96–.98, or the
-  hard edge going down). Hover effects only inside `@media (hover: hover)`.
+- **Press feedback is instant**: tappable things scale to .96–.98 on `:active` with `transition-duration: .1s`.
+  Hover (inside `@media (hover: hover)`): `filter: brightness(1.08–1.18)` or a lighter fill, never a jump.
 - **Sheets are physical** (`BROS.shell.sheet(dialog, { wide, hide })`): below `wide` (default 900 px) the dialog
   rises on a critically damped spring, follows the finger 1:1 on its `.sheet__grab`, resists past the top, and on
   release goes where the flick was heading (closes or springs back with the finger's velocity). It can be caught
@@ -87,14 +80,13 @@ already darken it).
 - **Scroll-driven motion (home)**: three scenes, no scroll snapping. `data-m` = an entry and an exit animation tied to
   its scene's view timeline. `data-s` = scrubbed while the act (`.act`, `#kavek`) is pinned: the stage is `sticky` for
   `--scrub` screens of scroll; the cups sit on a wheel (`--cw` card width, `--R` radius, `--step` angle) that the scroll
-  turns, then the wheel sinks, the paper turns blush and the two extras come in from the sides. Timings are the
-  `--a` / `--b` pairs in the "motion" block at the end of `style.css`. Where scroll-driven animations are missing,
-  `home.js` writes `--pin` / `--pout` / `--p` and the same keyframes are scrubbed through `animation-delay`
-  (test with `?nosda`; `?still` = the plain layout). To reuse on a subpage keep it small: one
-  `animation-timeline: view()` reveal per section (`from { opacity: 0; transform: translateY(40px) }`,
-  `animation-range: entry 10% entry 80%`), inside `@supports (animation-timeline: view())` and
-  `@media (prefers-reduced-motion: no-preference)`. Only `transform` and `opacity`. At rest nothing is transformed
-  except a `.cut` / `.sticker` tilt.
+  turns, then the wheel sinks, evening falls over the room photo and the two extras come in from the sides. The film
+  shrinks into a rounded card as the hero is covered. Timings are the `--a` / `--b` pairs in the "motion" block at the
+  end of `style.css`. Where scroll-driven animations are missing, `home.js` writes `--pin` / `--pout` / `--p` and the
+  same keyframes are scrubbed through `animation-delay` (test with `?nosda`; `?still` = the plain layout). To reuse on
+  a subpage keep it small: one `animation-timeline: view()` reveal per section (`from { opacity: 0; transform:
+  translateY(40px) }`, `animation-range: entry 10% entry 80%`), inside `@supports (animation-timeline: view())` and
+  `@media (prefers-reduced-motion: no-preference)`. Only `transform` and `opacity`. At rest nothing is transformed.
 - **Reduced motion / Save-Data**: no scroll motion, no video (the still shows), sheets and panels open without
   travel, view transitions off. Everything stays usable.
 - **Page to page**: cross-document view transitions (below).
@@ -113,7 +105,6 @@ already darken it).
   <script src="/i18n.js"></script>
   <link rel="stylesheet" href="/shell.css">
   <link rel="stylesheet" href="/pages.css">
-  <link rel="stylesheet" href="/glass.css">
   <script src="/glass.js" defer></script>
 </head>
 <body class="sub" data-page="etlap">
@@ -122,6 +113,7 @@ already darken it).
 <script src="/site.js" defer></script>
 ```
 
+- A page's own CSS goes after `pages.css`.
 - `data-page` = the entry's `id` in `NAV`; it sets `aria-current="page"`. Pages outside the nav (pult, admin) get no
   current mark.
 - No skip link and no header in the page: `shell.js` adds both.
@@ -132,11 +124,12 @@ already darken it).
 | Flag | Phone | Desktop |
 |---|---|---|
 | `tab: true` (Főoldal, Étlap, Kártya) | own tab | link |
-| `extra: true` (Bros After Hours, Bros Delivery) | the **Extrák** tab opens a sheet with one big photo card each | always a top-level link with the "Új" badge; never folds into "Több" |
-| neither (Újdonságok, Játék, Kapcsolat) | in the **Több** sheet, with the language switch | link; folds behind "Több" when the row gets too narrow |
+| `extra: true` (Bros After Hours, Bros Delivery) | the **Extrák** tab opens a sheet with one olive photo card each | always a top-level link with the "Új" badge; never folds into "Több" |
+| neither (Újdonságok, Játék, Kapcsolat) | in the **Több** sheet, with the language switch | link; folds behind "Több" when the row gets too narrow (and always between 900 and 1120 px) |
 
-- An extra needs `img` (path without extension; `.jpg` and `.webp` exist), `wash`, `line`, `tease`, `go` (text keys in
-  `i18n.js`). The home page's two cards (end of the act) and the hero chip show the same products: change them together.
+- An extra needs `img` (path without extension; `.jpg` and `.webp` exist), `line`, `tease`, `go` (text keys in
+  `i18n.js`); `wash` is a Kollázs leftover (its class has no style). The home page's two cards (end of the act) and the
+  hero chip show the same products: change them together.
 - `isNew: true` shows the badge (header, footer, tab); remove it when the novelty is over.
 - `short` = label for the tab bar and the desktop row. `desktop: false` hides an entry from the desktop row.
 - Icons: `home cup card game spark pin moon box plus more chevron close`. New one: an SVG path in `ICONS` (24 × 24,
@@ -149,7 +142,12 @@ already darken it).
 Cross-document, Chromium and Safari 18.2+; other browsers navigate normally; off under `prefers-reduced-motion`.
 
 Reserved names, do not reuse: `site-header`, `site-tabbar`, `nav-indicator`, `tab-indicator`. Page content is `root`:
-old page fades up and out, new one rises in. The root animation only runs for page navigations (type `page-nav`).
+the old page stays put under the new one rising in (on espresso pages a blank layer would flash through otherwise).
+The root animation only runs for page navigations (type `page-nav`).
+
+Glass and snapshots: a transition snapshots the bars without what is behind them, so while it runs (`html.vt-on`, set
+by `glass.js`) they drop their own backdrop filter and their transition groups carry it. Safari (`html.wk`) gets
+near-solid bars for those 0.4 s instead. `glass.js` also pauses a playing film for the capture.
 
 A name must be unique on a page at the moment of the transition. Convention:
 
@@ -168,10 +166,13 @@ A name must be unique on a page at the moment of the transition. Convention:
 
 ## `window.BROS.shell`
 
-`nav` · `page` · `icon(name)` · `vt(root)` · `transition(fn)` · `ft(n)` · `status()` · `paintStatus()` · `footer()` ·
-`extraNow()` · `sheet(dialog, opts)` · `sheets`.
+`nav` · `page` · `icon(name)` · `vt(root)` · `transition(fn)` · `ft(n)` · `esc(s)` · `toast(msg)` · `preview` ·
+`guard` · `status()` · `paintStatus()` · `footer()` · `extraNow()` · `sheet(dialog, opts)` · `sheets`.
 
 - `ft(1290)` → "1 290 Ft". The only price format on the site.
+- `esc(s)` → HTML-escaped text for template strings. `toast(msg)` → the one toast, gone after 2.6 s.
+- `preview` → true on the preview host and local copies; `guard` → true there unless `?live=1` lifted it for the tab
+  (the customer forms then send no e-mails).
 - `status()` → `{ open, day, text }` in Budapest time. The opening hours live here only.
 - `extraNow()` → the `NAV` entry to feature right now: Bros Delivery on weekday mornings (6–11h Budapest time),
   Bros After Hours otherwise.
@@ -180,7 +181,7 @@ A name must be unique on a page at the moment of the transition. Convention:
 
 ## Do
 
-- Use tokens, never raw hex. Keep tap targets ≥ 44 px and body text ≥ 15 px.
+- Use tokens, never raw hex outside `:root`. Keep tap targets ≥ 44 px and body text ≥ 15 px.
 - Facts: Mon–Fri 7:30–18:00, Sat 8:30–17:00, Sun closed · 1132 Budapest, Csanády u. 4/b · @broscafe.co.
   After Hours: the whole café, 2–6 people, 14 900 Ft for 2 hours, evenings 18:00–22:00. Delivery: slots 9:00 / 10:30 /
   14:00, free from 5 drinks, 490 Ft below.
@@ -188,12 +189,8 @@ A name must be unique on a page at the moment of the transition. Convention:
 
 ## Don't
 
-- No dark grounds, black scrims, film grain, vignette, blurred photo backgrounds.
 - No second header, hamburger or per-page nav list. No `position: fixed` element at `bottom: 0` on phones.
-- No `backdrop-filter` or transparency on the header / tab bar: they are snapshotted during view transitions and
-  would flicker. (This is why the chrome is solid with an ink line rather than frosted.)
-- No faux italics, no thin display weights, no `/shared/img/*.jpg` (old stock photos), no `team-silly.jpg`.
+- No tilts, stickers-as-decoration, ink outlines, hard press edges, marker highlights or pastel washes (that was
+  Kollázs). No faux italics, no thin display weights, no film grain, no `/shared/img/*.jpg` (old stock photos).
+- No glass over long reading text; no `backdrop-filter` on something that is not floating.
 - No looping decorative animation; motion answers a scroll or a touch.
-
-## Preview-only bits
-

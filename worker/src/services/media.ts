@@ -59,9 +59,9 @@ export async function save(app: App, data: Uint8Array, originalName: string, con
   return doc;
 }
 
-export const listing = (app: App, limit = 300) => app.db.media.find({}, { projection: { _id: 0 }, sort: { uploaded_at: -1 }, limit });
+export const listing = (app: App, limit = 300) => app.db.media.find({}, { sort: { uploaded_at: -1 }, limit });
 
-export const find = (app: App, filename: string) => app.db.media.findOne({ filename }, { projection: { _id: 0 } });
+export const find = (app: App, filename: string) => app.db.media.findOne({ filename });
 
 /** Where a file is referenced ({"images": url} in Mongo matches an element of the array, or the value itself). */
 export async function usage(app: App, url: string): Promise<string[]> {
@@ -74,7 +74,7 @@ export async function usage(app: App, url: string): Promise<string[]> {
     )
     .bind(url)
     .all<{ id: string }>();
-  const posts = await app.db.content.find({ image: url }, { projection: { _id: 0, id: 1 }, limit: 200 });
+  const posts = await app.db.content.find({ image: url }, { projection: { id: 1 }, limit: 200 });
   return [...products.map((d) => d.id), ...posts.map((d) => d.id)];
 }
 

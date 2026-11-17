@@ -1,5 +1,5 @@
-// Coffee Runner: the fixed-timestep driver around the shared simulation (runnerSim.js, an unchanged copy of
-// frontend/src/features/game/runnerSim.js). No DOM here, so node can replay it against the Worker (worker/src/game).
+// Coffee Runner: the fixed-timestep driver around the shared simulation (runnerSim.js, the one copy the server
+// replay in worker/src/game must match). No DOM here, so node can replay it against the Worker (worker/src/game).
 import { MAX_TICKS, TICK_RATE, createRun } from './runnerSim.js';
 
 export const STEP_MS = 1000 / TICK_RATE;

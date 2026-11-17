@@ -19,7 +19,6 @@ export function settings(env: Env) {
     cors_origins: s(env, 'CORS_ORIGINS', '*').split(',').map((o) => o.trim()).filter(Boolean),
     frontend_url: s(env, 'FRONTEND_URL').replace(/\/+$/, ''),
 
-    jwt_algorithm: 'HS256',
     staff_token_days: int(env, 'STAFF_TOKEN_DAYS', 7),
     customer_token_days: int(env, 'CUSTOMER_TOKEN_DAYS', 365),
     magic_link_minutes: int(env, 'MAGIC_LINK_MINUTES', 20),

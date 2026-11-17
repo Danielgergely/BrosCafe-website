@@ -9,7 +9,7 @@ import * as apple from '../wallet/apple';
 import * as google from '../wallet/google';
 
 /** Give a member a stable Wallet serial, auth token and scan token — once. */
-export async function ensureIdentity(app: App, member: Doc): Promise<Doc> {
+async function ensureIdentity(app: App, member: Doc): Promise<Doc> {
   const updates: Doc = {};
   if (!member.wallet_serial) updates.wallet_serial = 'bros_customer_' + uuidHex().slice(0, 12);
   if (!member.wallet_auth_token) updates.wallet_auth_token = tokenUrlsafe(24);
@@ -25,13 +25,13 @@ export async function ensureIdentity(app: App, member: Doc): Promise<Doc> {
 export const webServiceUrl = (app: App) => `${settings(app.env).frontend_url}/api/wallet`;
 
 /** What the counter's scanner reads off this member's pass: the member code (a smaller QR than the token). */
-export const scanValue = (member: Doc): string => member.code;
+const scanValue = (member: Doc): string => member.code;
 
 export async function buildPkpass(app: App, member: Doc, lang?: string | null): Promise<Uint8Array> {
   await ensureIdentity(app, member);
   return apple.buildPkpass(
     app,
-    { ...(await publicView(app, member)), name: member.name },
+    { ...publicView(app, member), name: member.name },
     settings(app.env).cafe,
     await readAppSettings(app),
     member.wallet_serial,
@@ -42,7 +42,7 @@ export async function buildPkpass(app: App, member: Doc, lang?: string | null): 
   );
 }
 
-export const cardUrl = (app: App, memberCode: string) => `${settings(app.env).frontend_url}/card/${memberCode}`;
+const cardUrl = (app: App, memberCode: string) => `${settings(app.env).frontend_url}/card/${memberCode}`;
 
 /** Origins allowed to present the Save-to-Google-Wallet button, with and without www. */
 function origins(app: App): string[] {
@@ -113,16 +113,13 @@ export async function notifyUpdate(app: App, code: string): Promise<void> {
   if (googleOn) await notifyGoogle(app, member);
 }
 
-/**
- * The single wallet_stats document. Python keyed it {"_id": "stats"}; documents carry no _id here, so it is the
- * table's only row and the filter is empty (read it with wallet_stats.findOne({})).
- */
+/** wallet_stats holds a single document (Python's {"_id": "stats"}), hence the empty filter. */
 export async function bumpStat(app: App, field: string): Promise<void> {
   await app.db.wallet_stats.updateOne({}, { $inc: { [field]: 1 } }, { upsert: true });
 }
 
 /** How long a device token outlives a closed card, so the void can reach a phone that is switched off. */
-export const VOID_KEEP_DAYS = 30;
+const VOID_KEEP_DAYS = 30;
 
 /**
  * Leave a pass that can only ever say "closed", then tell the phone. The tombstone holds the serial and its auth

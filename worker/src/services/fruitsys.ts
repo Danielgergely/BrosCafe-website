@@ -2,17 +2,18 @@
 // Fruitsys has no API: log in with the form, keep the session cookie, call the JSON endpoints its report pages call.
 // Nothing here posts to a page that changes data. Figures are gross (VAT included); every number is parsed
 // defensively, as what Fruitsys returns is data from outside.
-import { pyRound } from './forecasts';
+import { pyRound, truthy } from './forecasts';
+import { pyStr } from '../util';
 
-export const BASE = 'https://cloud.fruitsys.hu/raktar/';
-export const RESTAURANT_ID = 1;
+const BASE = 'https://cloud.fruitsys.hu/raktar/';
+const RESTAURANT_ID = 1;
 const TIMEOUT_MS = 20_000;
 const MAX_REDIRECTS = 20;
 
-export class FruitsysError extends Error {}
+class FruitsysError extends Error {}
 
 /** httpx.HTTPError: a failed request or a non-2xx answer. */
-export class HTTPError extends Error {}
+class HTTPError extends Error {}
 
 /** Python's ValueError (bad JSON, a bad date...): an expected failure, logged rather than crashing. */
 export const isExpectedError = (e: unknown) => e instanceof FruitsysError || e instanceof HTTPError || e instanceof SyntaxError;
@@ -48,19 +49,12 @@ export function pyFloat(value: unknown): number | null {
   return Number(t.replace(/_/g, ''));
 }
 
-/** Python truthiness for a JSON value. */
-const truthy = (v: unknown) =>
-  !(v === null || v === undefined || v === false || v === 0 || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && v !== null && !Object.keys(v).length));
-
 /** _number: round(float(value or 0)), 0 when it isn't a number. */
-export function number(value: unknown): number {
+function number(value: unknown): number {
   const f = pyFloat(truthy(value) ? value : 0);
   if (f === null || Number.isNaN(f)) return 0;
   return pyRound(f); // like Python, an infinity is an error
 }
-
-/** str(value) for the JSON scalars Fruitsys sends. */
-const pyStr = (v: unknown) => (v === null || v === undefined ? 'None' : v === true ? 'True' : v === false ? 'False' : String(v));
 
 /** "name unit" with runs of spaces collapsed: the price list has "tea  3cl" where the product report has "tea", "3cl". */
 export function priceKey(...parts: unknown[]): string {

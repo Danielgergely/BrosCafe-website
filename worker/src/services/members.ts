@@ -7,9 +7,9 @@ import { expireObject } from '../wallet/google';
 import { voidApplePass } from './wallet'; // circular (wallet imports this module); only used at call time
 import { nowIso, uuid4, uuidHex } from '../util';
 
-export const REGISTRATION = 'registration';
+const REGISTRATION = 'registration';
 export const COFFEE_ADDED = 'coffee_added';
-export const FREE_COFFEE_EARNED = 'free_coffee_earned';
+const FREE_COFFEE_EARNED = 'free_coffee_earned';
 export const FREE_COFFEE_REDEEMED = 'free_coffee_redeemed';
 export const REWARD_EARNED = 'reward_earned';
 export const REWARD_REDEEMED = 'reward_redeemed';
@@ -38,7 +38,7 @@ export function publicView(app: App, doc: Doc): Doc {
   };
 }
 
-export function newDocument(app: App, name: string, email: string): Doc {
+function newDocument(app: App, name: string, email: string): Doc {
   return {
     code: uuidHex().slice(0, 10),
     name: name.trim() || 'Friend',

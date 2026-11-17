@@ -1,7 +1,7 @@
 // MongoDB-shaped collections on D1. Every collection is a table of JSON documents, so the ported code keeps the
 // exact document shapes of the Python backend (and the data imports one to one). Only what the backend used is
 // implemented: equality, $ne, $exists, $gt/$gte/$lt/$lte, $in/$nin, $or in filters; $set, $unset, $inc in updates;
-// projections, sort, skip, limit. Field names may be dotted ("a.b").
+// projections, sort, limit. Field names may be dotted ("a.b").
 //
 // Mongo semantics that matter and are kept:
 // - {f: null} matches a missing field; {f: {$ne: x}} also matches a missing field.
@@ -10,9 +10,9 @@
 
 export type Doc = Record<string, any>;
 export type Filter = Record<string, any>;
-export type Sort = [string, 1 | -1][] | Record<string, 1 | -1>;
-export interface FindOptions { projection?: Record<string, 0 | 1>; sort?: Sort; skip?: number; limit?: number }
-export interface Update { $set?: Doc; $unset?: Record<string, unknown>; $inc?: Record<string, number> }
+type Sort = [string, 1 | -1][] | Record<string, 1 | -1>;
+interface FindOptions { projection?: Record<string, 0 | 1>; sort?: Sort; limit?: number }
+interface Update { $set?: Doc; $unset?: Record<string, unknown>; $inc?: Record<string, number> }
 
 const FIELD = /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/;
 function path(field: string) {
@@ -107,7 +107,7 @@ function setPath(doc: Doc, field: string, value: unknown) {
   o[keys.at(-1)!] = value;
 }
 
-export function project(doc: Doc, projection?: Record<string, 0 | 1>): Doc {
+function project(doc: Doc, projection?: Record<string, 0 | 1>): Doc {
   const { _id: _ignored, ...rest } = doc;
   if (!projection) return rest;
   const fields = Object.entries(projection).filter(([k]) => k !== '_id');
@@ -170,8 +170,8 @@ export class Collection {
   async find(filter: Filter = {}, opts: FindOptions = {}): Promise<Doc[]> {
     const args: unknown[] = [];
     let sql = `SELECT doc FROM ${this.name} WHERE ${compile(filter, args)}${orderBy(opts.sort)}`;
-    if (opts.limit !== undefined || opts.skip !== undefined) sql += ` LIMIT ${Math.max(0, Math.floor(opts.limit ?? -1)) || -1} OFFSET ${Math.max(0, Math.floor(opts.skip ?? 0))}`;
-    if (opts.limit === 0) return []; // Mongo's to_list(0) is not used; a zero limit here means none
+    if (opts.limit !== undefined) sql += ` LIMIT ${Math.max(0, Math.floor(opts.limit)) || -1}`;
+    if (opts.limit === 0) return [];
     const { results } = await this.d1.prepare(sql).bind(...args).all<{ doc: string }>();
     return results.map((r) => project(JSON.parse(r.doc), opts.projection));
   }
@@ -189,12 +189,6 @@ export class Collection {
   async insertOne(doc: Doc): Promise<void> {
     const { _id: _ignored, ...rest } = doc;
     await this.d1.prepare(`INSERT INTO ${this.name} (doc) VALUES (json(?))`).bind(asJson(rest)).run();
-  }
-
-  async insertMany(docs: Doc[]): Promise<void> {
-    if (!docs.length) return;
-    const stmt = this.d1.prepare(`INSERT INTO ${this.name} (doc) VALUES (json(?))`);
-    await this.d1.batch(docs.map(({ _id: _ignored, ...rest }) => stmt.bind(asJson(rest))));
   }
 
   async updateOne(filter: Filter, update: Update, opts: { upsert?: boolean } = {}) {
@@ -252,12 +246,12 @@ export class Collection {
   }
 }
 
-export const COLLECTIONS = [
+const COLLECTIONS = [
   'users', 'members', 'transactions', 'analytics_events', 'magic_tokens', 'settings', 'content', 'products', 'media',
   'contact_log', 'game_runs', 'wallet_registrations', 'voided_passes', 'wallet_stats', 'sales_days', 'live_sales',
   'sales_forecasts', 'special_days', 'social_posts',
 ] as const;
-export type CollectionName = (typeof COLLECTIONS)[number];
+type CollectionName = (typeof COLLECTIONS)[number];
 
 export type Db = Record<CollectionName, Collection> & { d1: D1Database };
 export function database(d1: D1Database): Db {

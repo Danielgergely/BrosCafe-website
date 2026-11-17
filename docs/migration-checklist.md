@@ -243,6 +243,7 @@ Total about 6–7 agent days, 18–26 Nov.
 ### After cut-over
 
 - [ ] First hour [agent]: Worker logs free of 5xx; `/api/wallet/v1/…` calls from phones answer 200/304; a real magic-link email sent; the cron ran once.
+- [ ] First hour [agent, Daniel's OK]: in Admin → Újdonságok hide the old "guest-origin" post ("Itt a hónap vendégkávéja"); it was edited in admin on 4 Sept, so seeding keeps it. No guest coffee any more (decision 2026-11-17).
 - [ ] First day (Mon 23 Nov) [brothers]: scanner at the counter all day; widget and live sales follow the till; the 9:00 forecast appears.
 - [ ] First day [agent]: member, transaction and registration counts against the final export; error counters in the admin wallet tab.
 - [ ] 23–26 Nov [agent]: a daily look at the logs; note every difference the brothers report.

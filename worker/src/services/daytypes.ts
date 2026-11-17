@@ -6,10 +6,10 @@ import { CALENDAR, FIRST_YEAR, LAST_YEAR } from './daytypes_data';
 export const NORMAL = 'normal';
 export const HOLIDAY = 'holiday';
 export const WORKDAY_SATURDAY = 'workday_saturday';
-export const UNUSUAL = 'unusual';
+const UNUSUAL = 'unusual';
 export const MIN_HOLIDAYS = 3;
 
-export const SCHOOL_BREAKS: [string, string, string][] = [
+const SCHOOL_BREAKS: [string, string, string][] = [
   ['2025-10-23', '2025-11-02', 'autumn'],
   ['2025-12-20', '2026-01-04', 'winter'],
   ['2026-04-02', '2026-04-12', 'spring'],
@@ -19,7 +19,7 @@ export const SCHOOL_BREAKS: [string, string, string][] = [
   ['2027-03-25', '2027-04-04', 'spring'],
   ['2027-06-19', '2027-08-31', 'summer'],
 ];
-export const PAYDAY = 10;
+const PAYDAY = 10;
 
 // ---- plain dates as "YYYY-MM-DD" (Python's date) ----
 
@@ -29,7 +29,7 @@ export const weekdayOf = (iso: string) => (utc(iso).getUTCDay() + 6) % 7;
 export const addDays = (iso: string, days: number) => new Date(utc(iso).getTime() + days * 86_400_000).toISOString().slice(0, 10);
 export const daysBetween = (a: string, b: string) => Math.round((utc(a).getTime() - utc(b).getTime()) / 86_400_000);
 const pad = (n: number, w = 2) => String(n).padStart(w, '0');
-export const isoDate = (y: number, m: number, d: number) => `${pad(y, 4)}-${pad(m)}-${pad(d)}`;
+const isoDate = (y: number, m: number, d: number) => `${pad(y, 4)}-${pad(m)}-${pad(d)}`;
 
 const warned = new Set<number>();
 function calendar(year: number) {
@@ -41,7 +41,7 @@ function calendar(year: number) {
   return c ?? { days_off: {}, workdays: {} };
 }
 
-export interface DayInfo { kind: string; name: string | null; name_hu: string | null }
+interface DayInfo { kind: string; name: string | null; name_hu: string | null }
 
 export function dayInfo(day: string, unusual?: Record<string, string> | Map<string, string> | null): DayInfo {
   const iso = day;
@@ -64,7 +64,7 @@ function workingDay(day: string): boolean {
   return kind === WORKDAY_SATURDAY || (weekdayOf(day) < 5 && kind !== HOLIDAY);
 }
 
-export function payday(year: number, month: number): string {
+function payday(year: number, month: number): string {
   let day = isoDate(year, month, PAYDAY);
   while (!workingDay(day)) day = addDays(day, -1);
   return day;

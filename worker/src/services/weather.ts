@@ -8,14 +8,14 @@ import { addDays } from './daytypes';
 import { fsum, pyRound } from './forecasts';
 import { httpFetch, jsonOf, pyFloat, raiseForStatus } from './fruitsys';
 
-export const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
-export const ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive';
-export const HOURLY = 'temperature_2m,apparent_temperature,precipitation,weather_code,cloud_cover';
-export const DAILY = 'sunset,daylight_duration';
-export const FORECAST_PAST_DAYS = 90;
-export const OPEN_FROM = 7;
-export const OPEN_UNTIL = 18;
-export const RAIN_MM = 0.1;
+const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
+const ARCHIVE_URL = 'https://archive-api.open-meteo.com/v1/archive';
+const HOURLY = 'temperature_2m,apparent_temperature,precipitation,weather_code,cloud_cover';
+const DAILY = 'sunset,daylight_duration';
+const FORECAST_PAST_DAYS = 90;
+const OPEN_FROM = 7;
+const OPEN_UNTIL = 18;
+const RAIN_MM = 0.1;
 
 type Row = Record<string, number | null>;
 export interface WeatherDay { hours: Record<string, Row>; sunset?: string; daylight_h?: number }

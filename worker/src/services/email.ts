@@ -9,7 +9,7 @@ const FORBIDDEN_TAGS = ['<form', '<input', '<textarea', '<select'];
 const LINK_RE = /(?:href|src)\s*=\s*["']([^"']+)/gi;
 const SAFE_SCHEMES = ['mailto:', 'tel:', 'cid:', '#'];
 
-export const DEFAULT_LANG = 'hu';
+const DEFAULT_LANG = 'hu';
 type Lang = 'hu' | 'en';
 
 const lang_ = (lang: string | null | undefined): Lang => (lang === 'hu' || lang === 'en' ? lang : DEFAULT_LANG);
@@ -72,7 +72,7 @@ const FOOTER: Record<Lang, string> = {
     'Azért kaptad ezt a levelet, mert csatlakoztál a Bros Cafe hűségprogramjához.',
 };
 
-export function shell(app: App, title: string, bodyHtml: string, buttonLabel = '', buttonUrl = '', lang: string = DEFAULT_LANG): string {
+function shell(app: App, title: string, bodyHtml: string, buttonLabel = '', buttonUrl = '', lang: string = DEFAULT_LANG): string {
   let button = '';
   if (buttonLabel && buttonUrl) {
     button =

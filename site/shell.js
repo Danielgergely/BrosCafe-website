@@ -1,11 +1,11 @@
-// Bros Cafe · D · Kollázs — the shell: one header, one bottom tab bar, the "Extrák" and "Több" sheets, on every page.
+// Bros Cafe — the shell: one header, one bottom tab bar, the "Extrák" and "Több" sheets, on every page.
 // Include as the first thing in <body>, after /i18n.js in <head>. Contract: /SHELL.md
 (() => {
   const B = window.BROS || (window.BROS = { lang: 'hu', en: false, mount() {} });
   const en = B.lang === 'en';
   const t = B.t || ((s) => s);
 
-  // ---------- customer session, analytics consent, tracking: same storage keys and rules as the React app ----------
+  // ---------- customer session, analytics consent, tracking (storage keys shared with the old React app) ----------
   const ls = {
     get(k, s = localStorage) { try { return s.getItem(k); } catch (e) { return null; } },
     set(k, v, s = localStorage) { try { s.setItem(k, v); } catch (e) { /* private mode */ } },
@@ -59,7 +59,7 @@
   // The single nav config. One line per entry; the header, the tab bar, the sheets and the footer are all built from it.
   //   tab: true      -> its own tab on phones (keep to 3 with Főoldal)
   //   extra: true    -> one of the extras: always a top-level link on desktop, a big photo card in the phone "Extrák" sheet
-  //                     (needs img, wash, line, tease, go; those texts are keys in i18n.js)
+  //                     (needs img, line, tease, go; those texts are keys in i18n.js)
   //   isNew: true    -> the small "Új" badge
   //   short          -> shorter label for the tab bar and the desktop row
   //   desktop: false -> not in the desktop link row (the logo already goes home)
@@ -69,9 +69,9 @@
     { id: 'etlap', href: '/etlap/', hu: 'Étlap', en: 'Menu', icon: 'cup', tab: true },
     { id: 'husegkartya', href: signedIn ? '/fiok/' : '/husegkartya/', hu: 'Hűségkártya', en: 'Loyalty card', short: { hu: 'Kártya', en: 'Card' }, icon: 'card', tab: true },
     { id: 'after-hours', href: '/after-hours/', hu: 'Bros After Hours', en: 'Bros After Hours', short: { hu: 'After Hours', en: 'After Hours' }, icon: 'moon', extra: true, isNew: true,
-      img: '/shared/media/after-hours-lounge-evening-4x5', wash: 'blush', line: 'Privát kávézó különleges alkalmakra — 14 900 Ft-tól', tease: 'privát este', go: 'Estét választok' },
+      img: '/shared/media/after-hours-lounge-evening-4x5', line: 'Privát kávézó különleges alkalmakra — 14 900 Ft-tól', tease: 'privát este', go: 'Estét választok' },
     { id: 'delivery', href: '/delivery/', hu: 'Bros Delivery', en: 'Bros Delivery', short: { hu: 'Delivery', en: 'Delivery' }, icon: 'box', extra: true, isNew: true,
-      img: '/shared/media/delivery-paper-cup-handwritten-4x5', wash: 'glow', line: 'Kávé az irodába — 5 italtól ingyen kiszállítás', tease: 'kávé az irodába', go: 'Rendelek' },
+      img: '/shared/media/delivery-paper-cup-handwritten-4x5', line: 'Kávé az irodába — 5 italtól ingyen kiszállítás', tease: 'kávé az irodába', go: 'Rendelek' },
     { id: 'ujdonsagok', href: '/ujdonsagok/', hu: 'Újdonságok', en: 'What’s new', icon: 'spark' },
     { id: 'jatek', href: '/jatek/', hu: 'Játék', en: 'Game', icon: 'game' },
     { id: 'kapcsolat', href: '/kapcsolat/', hu: 'Kapcsolat', en: 'Contact', icon: 'pin' },
@@ -126,7 +126,7 @@
 </nav>
 <dialog class="sheet" id="extra-sheet" aria-labelledby="extra-title">
   ${sheetHead('extra-title', L('Új a Brosnál', 'New at Bros'))}
-  <div class="picks">${extras.map((n) => `<a class="pick wash--${n.wash}" href="${n.href}"${cur(n)}><span class="pick__pic"><picture><source srcset="${n.img}.webp" type="image/webp"><img src="${n.img}.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span><span class="pick__txt"><span class="pick__name">${label(n)}</span><span class="pick__line">${t(n.line).replace(/(\d) (?=\d|Ft)/g, '$1\u00a0')}</span><span class="pick__go">${t(n.go)} →</span></span></a>`).join('')}</div>
+  <div class="picks">${extras.map((n) => `<a class="pick" href="${n.href}"${cur(n)}><span class="pick__pic"><picture><source srcset="${n.img}.webp" type="image/webp"><img src="${n.img}.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span><span class="pick__txt"><span class="pick__name">${label(n)}</span><span class="pick__line">${t(n.line).replace(/(\d) (?=\d|Ft)/g, '$1\u00a0')}</span><span class="pick__go">${t(n.go)} →</span></span></a>`).join('')}</div>
 </dialog>
 <dialog class="sheet" id="more-sheet" aria-labelledby="more-title">
   ${sheetHead('more-title', L('Több', 'More'))}
@@ -138,20 +138,7 @@
   B.mount($('#site-header')); B.mount($('#more-sheet'));
   document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-sign-out]')) customer.signOut(); }); // then the link goes home
 
-  // styles for the two things only the shell draws: the account entry and the consent banner
-  document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><style>
-.site-acct { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: var(--edge); border-radius: 50%; background: var(--surface); color: var(--text); transition: transform var(--tap); }
-.site-acct:active { transform: scale(.92); }
-.site-acct svg { width: 22px; height: 22px; }
-.site-acct.is-in { background: var(--olive); border-color: var(--olive-deep); color: var(--on-accent); }
-.consent { position: fixed; z-index: 60; left: 10px; right: 10px; bottom: calc(var(--bottom-h) + 10px); display: grid; gap: 12px; max-width: 760px; margin: 0 auto; padding: 16px 18px; border: var(--edge); border-radius: var(--r-md); background: var(--surface); box-shadow: var(--press-ink); font-size: 15px; line-height: 1.5; }
-.consent b { display: block; font: 650 16px/1.3 var(--sans); }
-.consent p { color: var(--text-soft); }
-.consent a { color: var(--olive-deep); font-weight: 600; }
-.consent__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.consent__btns .btn { min-height: 46px; padding-inline: 14px; }
-@media (min-width: 760px) { .consent { grid-template-columns: 1fr auto; align-items: center; gap: 22px; padding: 18px 22px; } .consent__btns { grid-template-columns: auto auto; } }
-</style>`);
+  document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`);
 
   // Asked once, on the first visit; both answers weigh the same. Changing your mind: /adatvedelem/.
   if (consent.read() === null && !['scanner', 'belepes', 'admin-app'].includes(page)) {
@@ -301,9 +288,21 @@
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => vt()); else vt();
 
-  // ---------- shared helpers: price, opening status, footer ----------
+  // ---------- shared helpers: price, escaping, toast, preview guard, opening status, footer ----------
   const nf = new Intl.NumberFormat('hu-HU', { useGrouping: 'always' });
   const ft = (n) => `${nf.format(Number(n) || 0)} Ft`;
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const toast = (msg) => {
+    let el = $('.toast');
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.append(el); }
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+  };
+  // The preview and local copies never send e-mails; ?live=1 lifts that on the customer forms for the rest of the tab.
+  const preview = /^(broscafe\.gracelabs\.dev|localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const live = new URLSearchParams(location.search).get('live') === '1';
+  if (live) ls.set('bros-live', '1', sessionStorage);
+  const guard = preview && !live && ls.get('bros-live', sessionStorage) !== '1';
 
   // minutes from midnight, Sunday first; null = closed. Always Budapest time, whatever the device says.
   const HOURS = [null, [450, 1080], [450, 1080], [450, 1080], [450, 1080], [450, 1080], [510, 1020]];
@@ -359,5 +358,5 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) paintStatus(); });
   };
 
-  B.shell = { nav: NAV, page, icon, vt, transition, ft, status, paintStatus, footer, extraNow, sheet, sheets, customer, consent, track };
+  B.shell = { nav: NAV, page, icon, vt, transition, ft, esc, toast, preview, guard, status, paintStatus, footer, extraNow, sheet, sheets, customer, consent, track };
 })();

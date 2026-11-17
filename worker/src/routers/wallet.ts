@@ -1,5 +1,5 @@
 // Apple Wallet pass download plus the PassKit web service Apple calls back on. Port of backend/app/routers/wallet.py.
-import { HttpError, type Ctx, type Router } from '../http';
+import { HttpError, intParam, type Ctx, type Router } from '../http';
 import type { Doc } from '../db';
 import { nowIso, parseIso } from '../util';
 import * as apple from '../wallet/apple';
@@ -8,15 +8,6 @@ import * as google from '../wallet/google';
 import * as wallet from '../services/wallet';
 
 const PKPASS_MEDIA_TYPE = 'application/vnd.apple.pkpass';
-
-/** FastAPI's int path parameter: anything else answers 422. */
-function intParam(c: Ctx, name: string): number {
-  const raw = c.params[name];
-  if (!/^\s*[+-]?\d+\s*$/.test(raw)) {
-    throw new HttpError(422, [{ type: 'int_parsing', loc: ['path', name], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw }]);
-  }
-  return Number.parseInt(raw, 10);
-}
 
 const normaliseLang = (value: string) => (String(value).toLowerCase().startsWith('hu') ? 'hu' : 'en');
 
@@ -65,8 +56,8 @@ export function register(api: Router) {
    */
   api.get('/wallet/hero/{tier}/{stamps}-{required}.png', async (c) => {
     const tier = c.params.tier;
-    const stamps = intParam(c, 'stamps');
-    const required = intParam(c, 'required');
+    const stamps = intParam(c.params.stamps, 'path', 'stamps');
+    const required = intParam(c.params.required, 'path', 'required');
     if (!(artwork.TIERS as readonly string[]).includes(tier) || !(stamps >= 0 && stamps <= 50 && required >= 0 && required <= 50)) {
       throw new HttpError(404, 'Not found');
     }

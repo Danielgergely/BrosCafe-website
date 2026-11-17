@@ -1,4 +1,4 @@
-// Bros Cafe · D — staff login (/belepes/). Session: staff.js.
+// Bros Cafe — staff login (/belepes/). Session: staff.js.
 (() => {
   const S = window.BROS.staff, t = window.BROS.t;
   const $ = (s) => document.querySelector(s);

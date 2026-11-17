@@ -22,14 +22,13 @@
 <link rel="stylesheet" href="/shell.css">
 <link rel="stylesheet" href="/pages.css">
 <link rel="stylesheet" href="/delivery/delivery.css">
-<link rel="stylesheet" href="/glass.css">
 <script src="/glass.js" defer></script>
 </head>
 <body class="sub" data-page="delivery" data-dl="order">
 <script src="/shell.js"></script>
 <main id="tartalom" class="dl">
 
-  <section class="dl-hero wash--glow">
+  <section class="dl-hero">
     <div class="wrap dl-hero__grid">
       <div class="dl-hero__text">
         <p class="eyebrow">Irodai kiszállítás · gyalog</p>
@@ -47,14 +46,14 @@
         </p>
       </div>
       <div class="dl-hero__media">
-        <span class="cut dl-hero__pic" data-vt="page-hero" style="--tilt: 2.5deg"><picture><source srcset="/shared/media/delivery-paper-cup-handwritten-4x5.webp" type="image/webp"><img src="/shared/media/delivery-paper-cup-handwritten-4x5.jpg" alt="Elviteles papírpohár kézzel írt üzenettel" width="1080" height="1350" fetchpriority="high"></picture></span>
-        <span class="cut dl-hero__photo" style="--tilt: -5deg"><picture><source srcset="/shared/media/iced-caramel-latte-2x3.webp" type="image/webp"><img src="/shared/media/iced-caramel-latte-2x3.jpg" alt="Jeges karamellás latte pohárban" width="1000" height="1500"></picture></span>
+        <span class="cut dl-hero__pic" data-vt="page-hero"><picture><source srcset="/shared/media/delivery-paper-cup-handwritten-4x5.webp" type="image/webp"><img src="/shared/media/delivery-paper-cup-handwritten-4x5.jpg" alt="Elviteles papírpohár kézzel írt üzenettel" width="1080" height="1350" fetchpriority="high"></picture></span>
+        <span class="cut dl-hero__photo"><picture><source srcset="/shared/media/iced-caramel-latte-2x3.webp" type="image/webp"><img src="/shared/media/iced-caramel-latte-2x3.jpg" alt="Jeges karamellás latte pohárban" width="1000" height="1500"></picture></span>
         <span class="sticker sticker--white dl-hero__tag">5 italtól ingyen</span>
       </div>
     </div>
   </section>
 
-  <section class="dl-sec dl-order wash--sage-mist" id="rendeles" aria-labelledby="rendeles-cim">
+  <section class="dl-sec dl-order" id="rendeles" aria-labelledby="rendeles-cim">
     <div class="wrap">
       <h2 class="title" id="rendeles-cim">Állítsd össze <em>a kört.</em></h2>
       <p class="body">Fizethet a cég egyben, vagy indíthatsz csoportos rendelést, ahol mindenki a saját italát fizeti.</p>
@@ -80,7 +79,6 @@
             <legend><span class="dl-step__no">2</span>Mikorra?</legend>
             <div class="chips" id="dl-days" role="group" aria-label="Nap"></div>
             <div class="dl-slots" id="dl-slots" role="radiogroup" aria-label="Időpont"></div>
-            <p class="dl-mock" id="dl-slots-mock" hidden>Előnézet · a szabad helyek száma csak példa.</p>
             <p class="dl-err" id="err-slot" role="alert" hidden></p>
           </fieldset>
 
@@ -128,7 +126,6 @@
           <p class="dl-err" id="err-terms" role="alert" hidden></p>
           <button class="btn dl-sum__btn" type="submit" id="dl-pay">Fizetés</button>
           <p class="dl-preview" id="dl-result" role="alert" tabindex="-1" hidden></p>
-          <div class="dl-after" id="dl-after" role="status" tabindex="-1" hidden></div>
           <p class="fine dl-sum__fine">Online fizetsz: bankkártyával, Apple Pay-jel vagy Google Pay-jel. A számlát e-mailben küldjük.</p>
         </aside>
       </form>
@@ -179,10 +176,6 @@
             <li><b>Küldd át a kollégáknak.</b> Mindenki hozzáadja a saját italát, és online kifizeti.</li>
             <li><b>A határidőnél lezárjuk.</b> <span data-fee="how">Ami addig ki van fizetve, azt visszük. 5 italtól ingyenes a kiszállítás.</span></li>
           </ol>
-          <p class="actions dl-how__actions">
-            <a class="btn btn--ghost" href="csoport/?g=MINTA">Nézd meg egy minta csoporton</a>
-            <a class="link" href="csoport/?g=ZARVA">Így néz ki lezárva</a>
-          </p>
         </details>
         <details>
           <summary>Fizetés, számla, hűségpecsét</summary>

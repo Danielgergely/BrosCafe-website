@@ -25,7 +25,7 @@ export const config = (env: Env) => ({
 export const ready = (env: Env) => !!config(env).key && s(env, 'SZAMLAZZ_OFF') !== 'true';
 export const MAX_TRIES = 6;
 
-export interface Buyer { name: string; zip: string; city: string; street: string; email: string; taxNumber?: string | null }
+interface Buyer { name: string; zip: string; city: string; street: string; email: string; taxNumber?: string | null }
 export interface Line { name: string; quantity: number; grossHuf: number; vat: string; unit?: string }
 export interface Invoice { ref: string; buyer: Buyer; lines: Line[]; type: 'elolegszamla' | 'szamla'; lang: string; comment?: string; subject: string; body: string }
 
@@ -42,7 +42,7 @@ function lineXml(l: Line) {
     `<nettoErtek>${net}</nettoErtek><afaErtek>${gross - net}</afaErtek><bruttoErtek>${gross}</bruttoErtek></tetel>`;
 }
 
-export function invoiceXml(app: App, inv: Invoice) {
+function invoiceXml(app: App, inv: Invoice) {
   const cfg = config(app.env);
   const day = today(app).date;
   const b = inv.buyer;
@@ -60,7 +60,7 @@ export function invoiceXml(app: App, inv: Invoice) {
     `<tetelek>${inv.lines.map(lineXml).join('')}</tetelek></xmlszamla>`;
 }
 
-export function stornoXml(app: App, invoiceNo: string, buyerEmail: string) {
+function stornoXml(app: App, invoiceNo: string, buyerEmail: string) {
   const cfg = config(app.env);
   return '<?xml version="1.0" encoding="UTF-8"?>' +
     '<xmlszamlast xmlns="http://www.szamlazz.hu/xmlszamlast" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.szamlazz.hu/xmlszamlast https://www.szamlazz.hu/szamla/docs/xsds/agentst/xmlszamlast.xsd">' +
@@ -84,8 +84,8 @@ async function post(app: App, field: string, xml: string): Promise<string> {
   return number;
 }
 
-export const issue = (app: App, inv: Invoice) => post(app, 'action-xmlagentxmlfile', invoiceXml(app, inv));
-export const storno = (app: App, invoiceNo: string, buyerEmail: string) => post(app, 'action-szamla_agent_st', stornoXml(app, invoiceNo, buyerEmail));
+const issue = (app: App, inv: Invoice) => post(app, 'action-xmlagentxmlfile', invoiceXml(app, inv));
+const storno = (app: App, invoiceNo: string, buyerEmail: string) => post(app, 'action-szamla_agent_st', stornoXml(app, invoiceNo, buyerEmail));
 
 /**
  * Issues the invoice of one row (`ah_bookings` or `dl_payers`) and records the outcome on it. Never throws.

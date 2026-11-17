@@ -16,13 +16,13 @@ import { Fruitsys, isExpectedError, priceKey } from './fruitsys';
 import * as posts from './posts';
 import * as weather from './weather';
 
-export const POLL_FROM = 6;
-export const POLL_UNTIL = 20;
-export const CLOSED_WEEKDAYS = new Set([6]); // Sunday
-export const BACKFILL_MONTHS = 24;
-export const FRESH_AFTER_SECONDS = 60;
-export const HISTORY_DAYS = 30;
-export const WEATHER_EVERY_SECONDS = 3600;
+const POLL_FROM = 6;
+const POLL_UNTIL = 20;
+const CLOSED_WEEKDAYS = new Set([6]); // Sunday
+const BACKFILL_MONTHS = 24;
+const FRESH_AFTER_SECONDS = 60;
+const HISTORY_DAYS = 30;
+const WEATHER_EVERY_SECONDS = 3600;
 
 let lock: Promise<unknown> = Promise.resolve();
 let lastRefresh = -Infinity; // ms, this isolate
@@ -38,9 +38,9 @@ function withLock<T>(fn: () => Promise<T>): Promise<T> {
 // ---- local time (datetime.now(CAFE_TZ)) ----
 
 const pad = (n: number) => String(n).padStart(2, '0');
-export interface Now { at: Date; date: string; hour: number; minute: number; second: number; weekday: number; offset: number }
+interface Now { at: Date; date: string; hour: number; minute: number; second: number; weekday: number; offset: number }
 
-export function cafeNow(app: App, at = new Date()): Now {
+function cafeNow(app: App, at = new Date()): Now {
   const tz = settings(app.env).cafe_tz;
   const p = localParts(at, tz);
   return { at, date: p.date, hour: p.hour, minute: p.minute, second: p.second, weekday: p.weekday, offset: utcOffsetMinutes(at, tz) };
@@ -67,7 +67,7 @@ function* monthsBack(today: string, count: number): Generator<[number, number]> 
   }
 }
 
-export function dailyTarget(app: App): number | null {
+function dailyTarget(app: App): number | null {
   const s = settings(app.env);
   const target = pyRound(s.break_even_net_ft * s.gross_per_net);
   return target > 0 ? target : null;
@@ -75,7 +75,7 @@ export function dailyTarget(app: App): number | null {
 
 async function syncPastDays(app: App, client: Fruitsys, today: string): Promise<void> {
   const known = new Map<string, Doc>();
-  for (const d of await app.db.sales_days.find({}, { projection: { _id: 0, date: 1, workday_id: 1, receipts: 1 } })) known.set(d.date, d);
+  for (const d of await app.db.sales_days.find({}, { projection: { date: 1, workday_id: 1, receipts: 1 } })) known.set(d.date, d);
   const months = known.size ? 2 : BACKFILL_MONTHS;
   for (const [year, month] of monthsBack(today, months)) {
     const workdays = await client.workdays(year, month);
@@ -105,7 +105,7 @@ async function syncPastDays(app: App, client: Fruitsys, today: string): Promise<
 
 /** Store the weather for every stored day without it, and return today's (fetched again at most hourly). */
 async function syncWeather(app: App, today: string): Promise<Doc | null> {
-  const missing = (await app.db.sales_days.find({ weather: { $exists: false } }, { projection: { _id: 0, date: 1 } })).map((d) => d.date as string);
+  const missing = (await app.db.sales_days.find({ weather: { $exists: false } }, { projection: { date: 1 } })).map((d) => d.date as string);
   const fresh = weatherToday.date === today && Date.now() - weatherToday.at < WEATHER_EVERY_SECONDS * 1000;
   if (fresh && !missing.length) return weatherToday.summary;
   let days: Record<string, weather.WeatherDay>;
@@ -129,9 +129,9 @@ async function syncWeather(app: App, today: string): Promise<Doc | null> {
 }
 
 /** Days marked unusual in the dashboard: {date: note}. */
-export async function unusualDays(app: App): Promise<Map<string, string>> {
+async function unusualDays(app: App): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  for (const doc of await app.db.special_days.find({}, { projection: { _id: 0 } })) out.set(doc.date, doc.note || '');
+  for (const doc of await app.db.special_days.find({})) out.set(doc.date, doc.note || '');
   return out;
 }
 
@@ -148,10 +148,10 @@ export async function markPost(app: App, day: string, timeOfDay: string | null, 
 }
 
 async function postEffects(app: App, summary: Doc | null, unusual: Map<string, string>) {
-  const flagged = await app.db.social_posts.find({}, { projection: { _id: 0 } });
+  const flagged = await app.db.social_posts.find({});
   if (!flagged.length) return { posts: [], average_lift_pct: null, finished: 0 };
   const days: Record<string, { hours: Record<string, number>; kind: string }> = {};
-  for (const d of await app.db.sales_days.find({}, { projection: { _id: 0, date: 1, hours: 1 } })) {
+  for (const d of await app.db.sales_days.find({}, { projection: { date: 1, hours: 1 } })) {
     days[d.date] = { hours: d.hours, kind: daytypes.dayInfo(d.date, unusual).kind };
   }
   if (summary && truthy(summary.hours)) days[summary.date] = { hours: summary.hours, kind: (summary.day ?? {}).kind ?? 'normal' };
@@ -187,7 +187,7 @@ async function fetchToday(client: Fruitsys, today: string) {
   return { hours, products, receipts, products_estimated: estimated };
 }
 
-export async function refresh(app: App): Promise<Doc> {
+async function refresh(app: App): Promise<Doc> {
   const s = settings(app.env);
   const now = cafeNow(app);
   const today = now.date;
@@ -197,7 +197,7 @@ export async function refresh(app: App): Promise<Doc> {
 
   const todayWeather = await syncWeather(app, today);
   const unusual = await unusualDays(app);
-  const history = await app.db.sales_days.find({ date: { $lt: today } }, { projection: { _id: 0 }, sort: [['date', 1]] });
+  const history = await app.db.sales_days.find({ date: { $lt: today } }, { sort: [['date', 1]] });
   for (const day of history) day.kind = daytypes.dayInfo(day.date, unusual).kind;
   const dayInfo = daytypes.dayInfo(today, unusual);
   const [past, basis] = forecasts.referenceDays(history.filter((d) => !CLOSED_WEEKDAYS.has(d.weekday)), now.weekday, dayInfo.kind);
@@ -249,7 +249,7 @@ export async function refreshIfStale(app: App, maxAge: number = FRESH_AFTER_SECO
 }
 
 /** One run of the old polling loop, under the lock. */
-export const refreshLocked = (app: App) => withLock(() => refresh(app));
+const refreshLocked = (app: App) => withLock(() => refresh(app));
 
 function comparison(past: Doc[], total: number, now: Now) {
   if (!past.length) return { average_so_far: null, average_day: null, diff_pct: null, average_hours: {} };
@@ -368,7 +368,7 @@ function month(app: App, history: Doc[], today: string, total: number) {
 async function forecastsFor(app: App, history: Doc[], today: string, now: Now, hours: Map<number, number>, total: number, kind: string, todayWeather: Doc | null) {
   const openDays = history.filter((d) => !CLOSED_WEEKDAYS.has(d.weekday));
   const stored = new Map<string, Doc>();
-  for (const doc of await app.db.sales_forecasts.find({}, { projection: { _id: 0 } })) stored.set(doc.date, doc);
+  for (const doc of await app.db.sales_forecasts.find({})) stored.set(doc.date, doc);
   const actual = new Map<string, number>(history.map((d) => [d.date, d.total]));
 
   const closed: Doc[] = [];
@@ -423,12 +423,12 @@ async function forecastsFor(app: App, history: Doc[], today: string, now: Now, h
 /** The summary plus the forecast scorecard, for the admin dashboard. */
 export async function dashboard(app: App) {
   const tz = settings(app.env).cafe_tz;
-  const summary = await app.db.live_sales.findOne({}, { projection: { _id: 0 } });
-  const docs = await app.db.sales_forecasts.find({ actual: { $ne: null } }, { projection: { _id: 0 }, sort: [['date', -1]], limit: HISTORY_DAYS });
+  const summary = await app.db.live_sales.findOne({});
+  const docs = await app.db.sales_forecasts.find({ actual: { $ne: null } }, { sort: [['date', -1]], limit: HISTORY_DAYS });
   const unusual = await unusualDays(app);
-  const posted = new Set((await app.db.social_posts.find({}, { projection: { _id: 0, date: 1 } })).map((d) => d.date));
+  const posted = new Set((await app.db.social_posts.find({}, { projection: { date: 1 } })).map((d) => d.date));
   const weatherOf = new Map<string, Doc | undefined>();
-  for (const d of await app.db.sales_days.find({ date: { $in: docs.map((doc) => doc.date) } }, { projection: { _id: 0, date: 1, weather: 1 } })) {
+  for (const d of await app.db.sales_days.find({ date: { $in: docs.map((doc) => doc.date) } }, { projection: { date: 1, weather: 1 } })) {
     weatherOf.set(d.date, d.weather);
   }
   const history: Doc[] = [];
@@ -467,7 +467,7 @@ export async function dashboard(app: App) {
   return { summary, forecast_history: history, accuracy, posts: await postEffects(app, summary, unusual) };
 }
 
-export function pollingTime(now: Now): boolean {
+function pollingTime(now: Now): boolean {
   return !CLOSED_WEEKDAYS.has(now.weekday) && POLL_FROM <= now.hour && now.hour < POLL_UNTIL;
 }
 

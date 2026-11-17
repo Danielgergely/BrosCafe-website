@@ -1,51 +1,49 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Bros Cafe website and loyalty programme. Status, decisions and open items: `PROJECT.md`. Switch plan:
+`docs/migration-checklist.md`.
 
-Bros Cafe website and loyalty programme: a React SPA (`frontend/`), a FastAPI + MongoDB API (`backend/`), deployed as one Docker Compose stack. `DEPLOY.md` is the authoritative operations guide.
+## Two stacks, until switch night
+
+- **New (this branch, `cloudflare-d`)**: static site in `site/` + Cloudflare Worker API in `worker/` (D1, R2, cron).
+  Preview https://broscafe.gracelabs.dev (copy of real data, no Wallet), production Worker at https://new.broscafe.hu
+  (side by side; moves to broscafe.hu on switch night).
+- **Old (live broscafe.hu until the switch)**: React SPA `frontend/` + FastAPI/Mongo `backend/` on the Rackforest VPS,
+  deployed by Coolify on every push to `main`. **Never push to `main`** unless Daniel asks. Never push to the
+  `emergent` remote. `frontend/` and `backend/` stay as the rollback path until about a week after the switch;
+  `backend/data/catalog.json` and `whats_new.json` are still the seed files the Worker reads.
 
 ## Commands
 
-Frontend (yarn 1, CRA via craco; run from `frontend/`):
-
 ```bash
-yarn start          # dev server on 0.0.0.0:3000, proxies /api to API_TARGET (default http://127.0.0.1:8001)
-yarn build
-yarn lint           # eslint src scripts — linting is NOT run by the dev server/build
-yarn i18n:check     # en.js/hu.js key parity, unresolved t() keys, dead keys, placeholder mismatches
-yarn runner:check   # JS vs Python Coffee Runner simulation parity (needs backend/.venv)
+cd worker
+npm run dev                                                    # local: serves site/ live + the API, local D1
+curl "localhost:8801/__scheduled?cron=*/15+*+*+*+*"            # run the cron once (syncs the admin from .dev.vars, seeds)
+npx tsc --noEmit                                               # must pass
+sh scripts/deploy-preview.sh                                   # preview (fine to run when asked to put things on the preview)
+sh scripts/deploy-prod.sh                                      # PRODUCTION: only with Daniel's explicit OK
 ```
 
-Backend (from `backend/`, expects a venv at `backend/.venv`, which `runner:check` also uses):
-
-```bash
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload --port 8001
-python -m app.seed [--products|--content|--force]
-python -m app.seed --prices # only prices from catalog.json, even on admin-edited items
-pytest                      # pytest.ini forces `-n 2 --dist loadscope` (xdist)
-pytest -n 0 path::test      # run serially / a single test (do NOT use -p no:xdist; do not edit addopts)
-black / isort / flake8      # available via requirements-dev
-```
-
-Full stack: `docker compose --env-file .env.prod -p broscafe-prod up -d --build` (see `.env.deploy.example`). Coolify uses `docker-compose.coolify.yml` (identical but publishes no ports).
+Local staff login: `worker/.dev.vars` (ADMIN_EMAIL / ADMIN_PASSWORD, git-ignored). The local D1 lives in
+`worker/.wrangler/state`; copy preview data with `wrangler d1 export … --remote` + `execute … --local --file`, and delete
+the export afterwards (it holds customer data).
 
 ## Architecture
 
-- **Single origin is load-bearing.** nginx (`frontend/nginx.conf`) serves the SPA and proxies `/api/` to `backend:8001`; the dev server mirrors this with its proxy, so `REACT_APP_BACKEND_URL` is normally empty. Apple Wallet passes embed `<FRONTEND_URL>/api/wallet`, so `FRONTEND_URL` must never change for an environment once passes are issued, and real passes are never issued from staging (`APPLE_PASS_CONFIGURED=false`).
-- **Production only, deployed on push.** A push to `main` rebuilds broscafe.hu via Coolify. There is no staging site, so verify locally before pushing.
-- **Backend config:** `backend/app/config.py` is the only place that reads `os.environ`. New settings go there and in `.env.example` / `docker-compose.yml`. `backend/server.py` is just a shim re-exporting `app.main:app`.
-- **Backend layout:** `app/main.py` mounts every `app/routers/*` module under `/api`; business logic is in `app/services/`, Mongo collection handles and indexes in `app/db.py`, Wallet pass generation in `app/wallet/` (Apple `.pkpass` + Google Wallet). On startup it ensures indexes, syncs the admin user from `ADMIN_EMAIL`/`ADMIN_PASSWORD`, and (if `SEED_ON_STARTUP=true`) seeds content.
-- **Content has two sources of truth.** `backend/data/catalog.json` (products, prices as integer HUF) and `backend/data/whats_new.json` are upserted by `id` by `app/seed.py`; items no longer listed are archived, not deleted. Anything saved through the admin dashboard gets `edited_at`, and the seeder skips those items unless `--force` is passed. The dashboard's "Revert to the file version" (`POST /admin/{products|whats-new}/{id}/reset`) hands a single item back to the files.
-- **Products have two groupings.** `cat` (fine-grained, e.g. `smoothie`, `bottled`) drives behaviour: `app/services/drinks.py` uses it to decide which drinks earn a loyalty stamp, and bottled drinks are deliberately excluded. `section` (`coffee`/`cold`/`savoury`/`sweet`) is only how the site groups the menu: one homepage row (`MenuRows.jsx`) and one `/menu/:section` tab each. If `section` is unset, `SECTION_OF_CAT` in `config/site.js` derives it. Never merge the two: "cold" mixes stampable smoothies with non-stampable bottles. Menu prices come from the Fruitsys till ("Termék árak"), not the margin spreadsheet, which only has average net prices after discounts.
-- **Live sales widget.** `services/live_sales.py` polls Fruitsys (read-only, via `services/fruitsys.py`, plain HTTP — no browser) from a background task started in `main.py`, stores a summary in `live_sales`, and `GET /api/live-sales` serves it to the Scriptable script in `widget/`. Off unless `FRUITSYS_USER`, `FRUITSYS_PASSWORD` and `LIVE_SALES_KEY` are set. The admin dashboard (`LiveSalesPanel.jsx`, `/admin?tab=live`) reads `GET /api/admin/live-sales`; forecasting and its self-scoring are pure functions in `services/forecasts.py`, worth re-running against `sales_days` before changing the method (walk-forward: calibrate only on days before the one being forecast). Holidays, working Saturdays and days flagged unusual (`services/daytypes.py`) are compared with similar days and never learnt from; weather (`services/weather.py`) and `daytypes.context` (school breaks, payday, summer time) are shown per day but deliberately not used by the forecasts yet. `SCHOOL_BREAKS` needs the next school year's dates added each summer. Instagram posts are flagged by hand on the dashboard (`social_posts`); `services/posts.py` measures the takings after each against the same weekday a week before and after.
-- **Coffee Runner game scoring is server-authoritative.** The client sends the issued seed and the input ticks; `backend/app/game/runner.py` replays the run to compute the score. It is mirrored line for line in `frontend/src/features/game/runnerSim.js` using only 32-bit integer arithmetic (no floats). Any change to either must be made in both, then verified with `yarn runner:check`. A mismatch silently rejects honest scores rather than crashing.
-- **Frontend layout:** `src/app/AppRoutes.jsx` and `RouteGuards.jsx` handle routing (customer `/account`; staff `/staff` scanner and `/admin` dashboard). Features live in `src/features/{home,loyalty,staff,game,legal}`, shared UI in `src/components`, and auth/UI contexts in `src/state/`. `src/lib/api.js` is the axios client: it attaches the staff token automatically, while customer calls pass `customerAuth()` explicitly. `@/` aliases `src/`.
-- **Copy is i18n-only.** All user-facing text goes in `src/i18n/en.js` and `hu.js` (default language `hu`), with both kept in sync, so run `yarn i18n:check`. Non-copy editable values (contact info, fallbacks such as `stampsRequired`) are in `src/config/site.js`. Live values come from `GET /api/cafe`.
-- **Customer auth** is passwordless magic link via Resend (`app/services/email.py`). Without `RESEND_API_KEY`, links only appear in the API log. Customer tokens last 365 days and renew on visit.
-- **Brand palette** is strictly olive `#66734A`, cream `#F5F0E6` and white (`src/config/palette.js`, `design_guidelines.json`).
-
-## Repo notes
-
-- `broscafe-loyalty` is a gitlink with no `.gitmodules`. Treat it as external.
-- `.emergent/`, `test_result.md`, `memory/PRD.md` and `tests/` are leftovers from the Emergent scaffolding. The PRD describes an early "frontend only" scope that no longer applies, and there is currently no committed test suite.
+- **Site** (`site/`): plain HTML pages per folder, vanilla JS, no build. `shell.js` builds the header, phone tab bar,
+  sheets and footer from one `NAV` config; `site.js` = guest page logic; `home.js` = home; `customer.js` = card/account;
+  page folders carry their own JS/CSS. Design contract and how to add a page: `site/SHELL.md` (design "Üveg").
+- **Copy**: Hungarian in the HTML/JS, English in `site/i18n.js` keyed by the exact Hungarian string (or `data-en`);
+  `customer-texts.js` holds card/account/privacy texts in both languages. Change a Hungarian string → update its key.
+  Guests are addressed with "te"; groups (After Hours/Delivery headlines) with "ti".
+- **Worker** (`worker/src/`): `routes.ts` mounts `routers/*`; logic in `services/*`; `db.ts` is a small Mongo-like layer
+  over D1 (JSON docs), bookings use raw D1 tables (`migrations/`). Ported line by line from `backend/` (see
+  `worker/PORTING.md`): keep routes, status codes and `detail` strings compatible: Wallet passes and the rollback
+  React app call them. Cron (`jobs.ts`): live sales, TTL cleanups, startup/seed once per version, daily retention.
+- **Facts in code**: hours in `shell.js` (`HOURS`) and worker vars; stamps only for coffees + `COFFEE_SPECIALS`
+  (`services/drinks.ts`); online booking for After Hours/Delivery behind `BOOKINGS_OPEN` (off in production).
+- **Game**: the server replays every run (`worker/src/game/runner.ts`) and must match `site/jatek/runnerSim.js`
+  exactly (32-bit integer maths). Change both or neither.
+- **Wallet**: `FRONTEND_URL` is baked into every issued pass; never issue passes while it points anywhere but the
+  final domain (`APPLE_PASS_CONFIGURED`/`GOOGLE_WALLET_CONFIGURED` stay "false" until switch night).
+- **Brand**: olive #68704B, espresso #25251C, ivory #F3EBDD, champagne #C6A875, taupe #BDAA96 (tokens in CSS only).

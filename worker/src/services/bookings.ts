@@ -2,7 +2,8 @@
 import { json, type App, type Ctx } from '../http';
 import { settings } from '../config';
 import * as email from './email';
-import { localParts } from '../util';
+import { localParts, parseIso } from '../util';
+export { addDays } from './daytypes';
 
 /** These two APIs answer errors as {"error": code, ...extra} (docs/after-hours-api.md), not FastAPI's {"detail"}. */
 export class ApiError extends Error {
@@ -25,8 +26,8 @@ export function assertBookingsOpen(app: App) {
 }
 
 // ---- Budapest time: a day is 'YYYY-MM-DD', a time 'HH:MM' ----
-export const tz = (app: App) => settings(app.env).cafe_tz;
-export const DATE = /^\d{4}-\d{2}-\d{2}$/;
+const tz = (app: App) => settings(app.env).cafe_tz;
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export const validDate = (s: unknown): s is string => typeof s === 'string' && DATE.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 export const today = (app: App, at = new Date()) => localParts(at, tz(app));
 /** The instant of a wall-clock time in the café's zone. */
@@ -36,7 +37,6 @@ export function instant(app: App, date: string, time: string): Date {
   const wall = Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute);
   return new Date(guess - (wall - guess));
 }
-export const addDays = (date: string, n: number) => new Date(Date.parse(`${date}T00:00:00Z`) + n * 864e5).toISOString().slice(0, 10);
 /** 0 = Sunday. */
 export const weekday = (date: string) => new Date(`${date}T00:00:00Z`).getUTCDay();
 /** 30 Nov + 3 months = 28 Feb (clamped), like the page. */
@@ -49,6 +49,8 @@ export function addMonths(date: string, n: number) {
 }
 export const mins = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3));
 export const hm = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+/** A stored timestamp as the API shows it (UTC, 'Z'). */
+export const iso = (v: string | null) => (v ? parseIso(v).toISOString() : null);
 export const ft = (n: number) => `${String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} Ft`;
 
 // ---- ids and signatures ----
@@ -88,7 +90,7 @@ export const lang = (v: unknown) => (v === 'en' ? 'en' : 'hu');
 // ---- email: the loyalty shell with a neutral footer ----
 export const esc = email.escape;
 export const staffAddress = (app: App) => settings(app.env).cafe.email || 'hello@broscafe.hu';
-export interface Mail { to: string; subject: string; title: string; html: string; text: string; button?: [string, string]; lang?: string }
+interface Mail { to: string; subject: string; title: string; html: string; text: string; button?: [string, string]; lang?: string }
 /** Never throws: an email problem must not undo a payment or a cancellation. */
 export async function mail(app: App, m: Mail) {
   const button = m.button

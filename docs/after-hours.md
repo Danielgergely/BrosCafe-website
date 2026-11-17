@@ -4,19 +4,27 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 "18:00–20:30"). The base price covers **2 hours**; guests choose a start (18:00–20:00, half-hourly) and a length
 (2, 3 or 4 h), ending by 22:00. Bookable from 2026-12-01, or from the publish day if that is later.
 
-## Offer (Daniel 2026-11-17: stick to ~14 900 and work with extras)
-- Group: 2–12 people. One booking per evening.
-- **Base 14 900 Ft (new flyer, 2026-11-17):** the private café for 2–6 people for 2 hours, 3 food selections to choose from,
-  1 free drink per guest, optional celebration cake from 10 000 Ft. Terms sentence (also goes into the ÁSZF): "Az ár 2–6 főre és 2 órára szól, a kávézó csak a tiétek, minden vendégnek egy ital jár. További vendégek és órák felárral."
-- **Surcharges (DRAFT amounts, to confirm):** +1 990 Ft per extra person (7–12); +5 900 Ft per extra hour (max 2,
-  until 22:00). Examples: 6 p/2 h → 14 900; 8 p/2 h → 18 880; 6 p/3 h → 20 800; 12 p/4 h → 38 640.
-- Cost check (estimate, 2026-11-17): at 6 people/2 h ≈ staff 3 h incl. setup 7 800 + ingredients ~5 400 + light/heat
-  ~1 200 ≈ 14 400 Ft, so the base roughly breaks even at 6; the margin comes from extras, extra hours and small
-  groups. Refine with the /broscafe-analysis Numbers costs before publishing.
-- Food: three selections ("1./2./3. ételválogatás", contents and prices TBD by the owners). Group discount on food, information
-  only: 25 % for 4–7 people, 35 % from 8. How food is paid is undecided: the page says "a helyszínen fizetitek"; nothing food-related is priced online.
-- Cake: optional checkbox, from 10 000 Ft, paid on site; shown in the admin and the staff email.
-- Voucher **AFTER25**: 25 % off the 14 900 Ft base only (−3 725 Ft), not the surcharges; server-validated, stored on the booking.
+## Offer (Daniel 2026-11-17, evening: mix of his concept and his brother's; to confirm with the brothers)
+- Group: 2–12 people, one booking per evening, everything **prepaid online** (brother's idea), food always included so
+  the advertised price is the real minimum (Daniel: "we lie if we say it only costs x when they must buy some food").
+- **Private café, 2 hours: 12 900 Ft** (flat): the café only for them, setup, staff.
+- Plus one per-person package for the whole group:
+  - **Alap: 2 400 Ft/person**: one welcome drink each (coffee, tea or lemonade) + one simple board for the group:
+    *Waffle board* (gofri, gyümölcs, csokoládé, feltétek) **or** *Fresh fruit & veggie board* (gyümölcs, zöldség, mártogatós).
+  - **Fingerfood menü: 3 900 Ft/person** (instead of Alap): welcome drink + 3 of the 6 dishes, prepared for the whole
+    group and served one after another: Waffle board, Mini pizza bites, Fresh fruit & veggie board, Mini burger sliders,
+    Mini sandwich selection, Cheese & charcuterie board.
+  - **4th dish** (menu only, from the 3 not chosen): +1 500 Ft/person (sandwich), +1 800 Ft/person (burger sliders),
+    +2 000 Ft/person (cheese & charcuterie); the others +1 500 Ft/person (prices ≈ 20 % below the brother's draft).
+- **Extra hour: +5 900 Ft** (max 2, until 22:00; start 18:00–20:00). **Cake** from 10 000 Ft (optional).
+- Headline: **"17 700 Ft-tól"** (2 people, 2 hours, drink + food). Examples: Alap 2 p 17 700 · 6 p 27 300 · 12 p 41 700;
+  menu 2 p 20 700 · 6 p 36 300 · 12 p 59 700. (Daniel's 14 900 base and the brother's 15 000 + 5 900/person = 50 400
+  for 6 were the two ends.)
+- Voucher **AFTER25**: −25 % of the café fee only (−3 225 Ft), never the food.
+- Occasion field from the brother's draft (Születésnap / Romantikus este / Baráti összejövetel / Egyéb) is a good addition.
+- Rough cost at 6 p (estimate, confirm with the brothers' real dish costs): staff 7 800 + energy 1 200 + Alap ~1 000/p
+  → ~15 000 Ft vs 27 300; menu ~1 800 food + 400 drink per person → ~22 200 Ft vs 36 300.
+- Accountant: on-site food may be 5 % VAT, the room fee 27 %: the invoice probably needs separate lines.
 - History: 24 900 flat up to 6 + 2 990/extra (16 Nov) dropped; 9 900 + 3 490/person dropped.
 
 ## Booking

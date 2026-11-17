@@ -5,7 +5,7 @@ import type { Env } from '../env';
 import { safeEqual } from './bookings';
 
 const s = (env: Env, k: string) => String(env[k] ?? '').trim();
-export const config = (env: Env) => ({
+const config = (env: Env) => ({
   key: s(env, 'STRIPE_SECRET_KEY'),
   webhookSecret: s(env, 'STRIPE_WEBHOOK_SECRET'),
   base: s(env, 'STRIPE_API_BASE') || 'https://api.stripe.com', // overridable for local tests against a stub
@@ -19,7 +19,7 @@ export const HOLD_MIN = 33;
 // Stripe counts HUF in fillér (two decimals); whole forints only.
 const minor = (huf: number) => Math.round(huf) * 100;
 
-export class StripeError extends Error {
+class StripeError extends Error {
   constructor(readonly status: number, readonly body: string) {
     super(`Stripe ${status}: ${body.slice(0, 300)}`);
   }
@@ -46,8 +46,8 @@ async function call<T = any>(app: App, method: string, path: string, params?: Re
   return JSON.parse(body) as T;
 }
 
-export interface CheckoutLine { name: string; amountHuf: number; quantity?: number }
-export interface Checkout {
+interface CheckoutLine { name: string; amountHuf: number; quantity?: number }
+interface Checkout {
   kind: 'ah' | 'dl'; ref: string; // metadata: which module and which row the payment belongs to
   lines: CheckoutLine[]; email: string; lang: string; description: string;
   successUrl: string; cancelUrl: string; expiresAt?: Date;
@@ -86,7 +86,7 @@ export async function expireSession(app: App, sessionId: string) {
   }
 }
 
-export interface StripeEvent { id: string; type: string; data: { object: Record<string, any> } }
+interface StripeEvent { id: string; type: string; data: { object: Record<string, any> } }
 const TOLERANCE_S = 300;
 /** Stripe-Signature: t=<unix>,v1=<hex hmac-sha256 of "t.body">. Null when it does not verify. */
 export async function verifyWebhook(env: Env, raw: string, header: string | null): Promise<StripeEvent | null> {

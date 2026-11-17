@@ -81,7 +81,7 @@ async function init() {
   loadBest();
 }
 
-// ---------- drawing: an evening scene (Üveg). Colours come from glass.css; geometry is the simulation's ----------
+// ---------- drawing: an evening scene (Üveg). Colours come from shell.css; geometry is the simulation's ----------
 const W = WORLD_W, H = 300, GROUND = H - 46;
 const ctx = el.canvas.getContext('2d', { alpha: false });
 const css = getComputedStyle(document.documentElement);

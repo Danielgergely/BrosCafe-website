@@ -1,15 +1,14 @@
-// Bros Cafe · Üveg: keeps the glass header and tab bar glassy through page changes (glass.css). Deferred on every page.
+// Bros Cafe · Üveg: keeps the glass header and tab bar glassy through page changes (shell.css). Deferred on every page.
 (() => {
   const root = document.documentElement;
-  // A view transition snapshots the header and the tab bar without what is behind them. While a page change runs the
-  // bars drop their own backdrop filter (html.vt-on) and their transition groups carry it instead (look.css), so the
-  // glass looks the same all the way through.
+  // A view transition snapshots the bars without what is behind them: while it runs they drop their own backdrop
+  // filter (html.vt-on) and their transition groups carry it instead (shell.css).
   const until = (vt) => {
     if (!vt) return;
     root.classList.add('vt-on');
     vt.finished.catch(() => {}).then(() => root.classList.remove('vt-on'));
   };
-  if ((navigator.vendor || '').startsWith('Apple')) root.classList.add('wk'); // see look.css, view transitions
+  if ((navigator.vendor || '').startsWith('Apple')) root.classList.add('wk'); // Safari: near-solid bars during view transitions (shell.css)
   let paused = [];
   window.addEventListener('pageswap', (e) => {
     if (!e.viewTransition) return;

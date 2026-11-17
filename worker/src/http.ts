@@ -4,7 +4,7 @@ import type { Db } from './db';
 import type { Env } from './env';
 
 export class HttpError extends Error {
-  constructor(readonly status: number, readonly detail: unknown, readonly headers: Record<string, string> = {}) {
+  constructor(readonly status: number, readonly detail: unknown) {
     super(typeof detail === 'string' ? detail : JSON.stringify(detail));
   }
 }
@@ -46,7 +46,6 @@ export class Router {
   get = (p: string, h: Handler) => this.add('GET', p, h);
   post = (p: string, h: Handler) => this.add('POST', p, h);
   put = (p: string, h: Handler) => this.add('PUT', p, h);
-  patch = (p: string, h: Handler) => this.add('PATCH', p, h);
   delete = (p: string, h: Handler) => this.add('DELETE', p, h);
 
   match(method: string, pathname: string) {
@@ -70,7 +69,7 @@ export const json = (body: unknown, status = 200, headers: Record<string, string
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...headers } });
 
 export function errorResponse(e: unknown) {
-  if (e instanceof HttpError) return json({ detail: e.detail }, e.status, e.headers);
+  if (e instanceof HttpError) return json({ detail: e.detail }, e.status);
   console.error(e);
   return json({ detail: 'Internal Server Error' }, 500);
 }
@@ -98,9 +97,9 @@ export function email(v: unknown, field: string, inv: Invalid): string {
   const [local, domain] = v.trim().split(/@(?=[^@]*$)/);
   return `${local}@${domain.toLowerCase()}`;
 }
-export function str(v: unknown, field: string, inv: Invalid, opts: { required?: boolean; min?: number; max?: number; pattern?: RegExp } = {}): string {
+export function str(v: unknown, field: string, inv: Invalid, opts: { min?: number; max?: number } = {}): string {
   if (v === undefined || v === null) {
-    if (opts.required !== false) inv.add(field, 'Field required', 'missing');
+    inv.add(field, 'Field required', 'missing');
     return '';
   }
   if (typeof v !== 'string') {
@@ -109,17 +108,15 @@ export function str(v: unknown, field: string, inv: Invalid, opts: { required?: 
   }
   if (opts.min !== undefined && v.length < opts.min) inv.add(field, `String should have at least ${opts.min} character${opts.min === 1 ? '' : 's'}`, 'string_too_short');
   if (opts.max !== undefined && v.length > opts.max) inv.add(field, `String should have at most ${opts.max} characters`, 'string_too_long');
-  if (opts.pattern && !opts.pattern.test(v)) inv.add(field, `String should match pattern '${opts.pattern.source}'`, 'string_pattern_mismatch');
   return v;
 }
-export function optStr(v: unknown, field: string, inv: Invalid, opts: { max?: number; pattern?: RegExp } = {}): string | null {
+export function optStr(v: unknown, field: string, inv: Invalid, opts: { max?: number } = {}): string | null {
   if (v === undefined || v === null) return null;
   return str(v, field, inv, opts);
 }
-export function int(v: unknown, field: string, inv: Invalid, opts: { required?: boolean; ge?: number; le?: number; def?: number } = {}): number {
+export function int(v: unknown, field: string, inv: Invalid): number {
   if (v === undefined || v === null) {
-    if (opts.def !== undefined) return opts.def;
-    if (opts.required !== false) inv.add(field, 'Field required', 'missing');
+    inv.add(field, 'Field required', 'missing');
     return 0;
   }
   const n = typeof v === 'string' && /^-?\d+$/.test(v.trim()) ? Number(v) : v;
@@ -127,24 +124,7 @@ export function int(v: unknown, field: string, inv: Invalid, opts: { required?: 
     inv.add(field, 'Input should be a valid integer', 'int_type');
     return 0;
   }
-  if (opts.ge !== undefined && n < opts.ge) inv.add(field, `Input should be greater than or equal to ${opts.ge}`, 'greater_than_equal');
-  if (opts.le !== undefined && n > opts.le) inv.add(field, `Input should be less than or equal to ${opts.le}`, 'less_than_equal');
   return n;
-}
-export function optNum(v: unknown, field: string, inv: Invalid): number | null {
-  if (v === undefined || v === null) return null;
-  const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
-  if (typeof n !== 'number' || !Number.isFinite(n)) {
-    inv.add(field, 'Input should be a valid number', 'float_type');
-    return null;
-  }
-  return n;
-}
-export function bool(v: unknown, field: string, inv: Invalid, def: boolean): boolean {
-  if (v === undefined || v === null) return def;
-  if (typeof v === 'boolean') return v;
-  inv.add(field, 'Input should be a valid boolean', 'bool_type');
-  return def;
 }
 export function oneOf<T extends string>(v: unknown, field: string, inv: Invalid, allowed: readonly T[], def?: T | null): T | null {
   if (v === undefined || v === null) return def ?? null;
@@ -154,12 +134,15 @@ export function oneOf<T extends string>(v: unknown, field: string, inv: Invalid,
   }
   return v as T;
 }
-export function strList(v: unknown, field: string, inv: Invalid, opts: { max?: number } = {}): string[] {
-  if (v === undefined || v === null) return [];
-  if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) {
-    inv.add(field, 'Input should be a valid list', 'list_type');
-    return [];
+
+/** A FastAPI `int` path or query parameter: 422 in FastAPI's shape when it does not parse. */
+export function intParam(raw: string, where: 'path' | 'query', name: string): number {
+  if (!/^\s*[+-]?\d+\s*$/.test(raw)) {
+    throw new HttpError(422, [{ type: 'int_parsing', loc: [where, name], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw }]);
   }
-  if (opts.max !== undefined && v.length > opts.max) inv.add(field, `List should have at most ${opts.max} items after validation, not ${v.length}`, 'too_long');
-  return v as string[];
+  return Number.parseInt(raw, 10);
 }
+export const queryInt = (c: Ctx, name: string, def: number) => {
+  const raw = c.query.get(name);
+  return raw === null ? def : intParam(raw, 'query', name);
+};

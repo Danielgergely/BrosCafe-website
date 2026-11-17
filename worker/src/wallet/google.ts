@@ -4,7 +4,8 @@
 import type { App } from '../http';
 import type { Doc } from '../db';
 import type { Env } from '../env';
-import { fmt, get, pyStr } from './apple';
+import { fmt, get } from './apple';
+import { pyStr } from '../util';
 
 const API_BASE = 'https://walletobjects.googleapis.com/walletobjects/v1';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
@@ -51,7 +52,7 @@ export const isConfigured = (env: Env) => configStatus(env).configured;
 const issuerId = (env: Env) => env_(env, 'GOOGLE_ISSUER_ID');
 
 /** One class per programme — the shared template every pass is built from. */
-export function classId(env: Env) {
+function classId(env: Env) {
   const suffix = env_(env, 'GOOGLE_WALLET_CLASS_SUFFIX') || 'broscafe_loyalty';
   return `${issuerId(env)}.${suffix}`;
 }
@@ -120,7 +121,7 @@ async function request(env: Env, method: string, path: string, json?: unknown): 
 
 // ---------------------------------------------------------------- pass content
 type Strings = { [k: string]: any; tier_names: Record<string, string> };
-export const STRINGS: Record<string, Strings> = {
+const STRINGS: Record<string, Strings> = {
   en: {
     program: 'Bros Cafe Loyalty Club',
     points: 'Coffees',
@@ -155,7 +156,7 @@ export const STRINGS: Record<string, Strings> = {
 
 const strings = (lang: string) => STRINGS[lang] ?? STRINGS.en;
 
-export function buildClass(env: Env, cafe: Doc, lang = 'en'): Doc {
+function buildClass(env: Env, cafe: Doc, lang = 'en'): Doc {
   const text = strings(lang);
   const logo = env_(env, 'GOOGLE_WALLET_LOGO_URL');
   const loyaltyClass: Doc = {
@@ -176,13 +177,13 @@ export function buildClass(env: Env, cafe: Doc, lang = 'en'): Doc {
 }
 
 /** Where Google fetches the member's banner. Absolute, because Google's servers request it. */
-export function heroUri(env: Env, tier: string, stamps: number, required: number) {
+function heroUri(env: Env, tier: string, stamps: number, required: number) {
   const base = String(env.FRONTEND_URL ?? '').replace(/\/+$/, '');
   if (!base) return '';
   return `${base}/api/wallet/hero/${tier}/${pyStr(stamps)}-${pyStr(required)}.png`;
 }
 
-export function buildObject(env: Env, member: Doc, cafe: Doc, barcodeValue: string, cardUrl: string, lang = 'en'): Doc {
+function buildObject(env: Env, member: Doc, cafe: Doc, barcodeValue: string, cardUrl: string, lang = 'en'): Doc {
   const text = strings(lang);
   const required = get(member, 'stamps_required', 10);
   const stamps = get(member, 'stamps', 0);

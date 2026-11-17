@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin: content tabs (products, what's new/journal, photos). Same endpoints and payloads as
+// Bros Cafe · admin: content tabs (products, what's new/journal, photos). Same endpoints and payloads as
 // ProductsPanel / JournalPanel / MediaPanel: /admin/products, /admin/whats-new, /admin/media, each with edited_at,
 // archive (DELETE) and "revert to the file version" (POST .../reset).
 (() => {
@@ -138,7 +138,7 @@
     const draw = () => {
       if (!f.flavor) { host.innerHTML = `${lab(T('content.flavour'))}<div><button type="button" class="ad-btn ad-btn--ghost" data-add>＋ ${esc(T('content.addFlavour'))}</button></div><p class="ad-small">${esc(T('content.flavourHint'))}</p>`; return; }
       host.innerHTML = `<div class="ad-row ad-row--between">${lab(T('content.flavour'))}<button type="button" class="link" data-del>${esc(T('content.removeFlavour'))}</button></div>
-        <div style="display:grid;gap:10px;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--cream)">${FLAVOUR.map((key, i) => `<label class="ad-slider"><b><span>${esc((scales[i] || [])[0])}</span><span data-v="${key}">${f.flavor[key] ?? 50}</span><span>${esc((scales[i] || [])[1])}</span></b><input type="range" min="0" max="100" step="1" data-fl="${key}" value="${f.flavor[key] ?? 50}"></label>`).join('')}</div>`;
+        <div style="display:grid;gap:10px;padding:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--ivory)">${FLAVOUR.map((key, i) => `<label class="ad-slider"><b><span>${esc((scales[i] || [])[0])}</span><span data-v="${key}">${f.flavor[key] ?? 50}</span><span>${esc((scales[i] || [])[1])}</span></b><input type="range" min="0" max="100" step="1" data-fl="${key}" value="${f.flavor[key] ?? 50}"></label>`).join('')}</div>`;
     };
     host.addEventListener('click', (e) => {
       if (e.target.closest('[data-add]')) { f.flavor = Object.fromEntries(FLAVOUR.map((k) => [k, 50])); draw(); }
@@ -267,7 +267,7 @@
       const draw = () => {
         root.innerHTML = `<div class="ad-panel"><div class="ad-row ad-row--between"><p class="ad-hint">${esc(T('content.journalHint'))}</p><button type="button" class="ad-btn" data-add data-testid="add-post-btn">＋ ${esc(T('content.addPost'))}</button></div>
           <div class="ad-cards">${posts.map((p) => `<article class="ad-post ${p.active === false ? 'is-off' : ''}" data-testid="post-card-${esc(p.id)}">
-            ${p.image ? `${pic(p.image, 'ad-post__img', p, ' loading="lazy"')}` : '<div style="height:130px;border-radius:12px;background:var(--cream)"></div>'}
+            ${p.image ? `${pic(p.image, 'ad-post__img', p, ' loading="lazy"')}` : '<div style="height:130px;border-radius:12px;background:var(--ivory)"></div>'}
             <span class="ad-eyebrow">${esc(postTags(p).map((k) => T(`news.tags.${k}`)).join(' · '))}</span>
             <h4>${esc(BA.pick(p.title))}${editedBadge(p)}${archivedBadge(p)}</h4><p>${esc(BA.pick(p.blurb))}</p>
             <div style="border-top:1px solid var(--line);padding-top:6px">${actions(p, p.id)}</div></article>`).join('')}</div></div>`;

@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin: members (tier, free coffees, erase), wallet status, analytics settings, staff users.
+// Bros Cafe · admin: members (tier, free coffees, erase), wallet status, analytics settings, staff users.
 // Endpoints as in the React dashboard: /admin/members, /admin/wallet/status, /admin/settings, /staff.
 (() => {
   const BA = window.BA; const { T, esc, card, tile, tiles } = BA;

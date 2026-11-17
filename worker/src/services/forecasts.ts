@@ -105,18 +105,18 @@ export function fsum(values: number[]): number {
 
 // ---- the forecasts ----
 
-export const SATURDAY = 5;
+const SATURDAY = 5;
 
 export const CHECKPOINTS = [9, 12, 15] as const;
-export const DEFAULT_WEIGHTS: Record<number, number> = { 9: 0.3, 12: 0.6, 15: 0.85 };
-export const DEFAULT_SPREAD: Record<number, number> = { 9: 0.25, 12: 0.15, 15: 0.1 };
-export const MIN_DAYS_TO_CALIBRATE = 8;
-export const MIN_DAYS_FOR_SPREAD = 5;
-export const LEVEL_WINDOW = 10;
+const DEFAULT_WEIGHTS: Record<number, number> = { 9: 0.3, 12: 0.6, 15: 0.85 };
+const DEFAULT_SPREAD: Record<number, number> = { 9: 0.25, 12: 0.15, 15: 0.1 };
+const MIN_DAYS_TO_CALIBRATE = 8;
+const MIN_DAYS_FOR_SPREAD = 5;
+const LEVEL_WINDOW = 10;
 
-export type Hours = Record<string, number>;
-export type Day = Record<string, any>;
-export interface Calibration {
+type Hours = Record<string, number>;
+type Day = Record<string, any>;
+interface Calibration {
   weights: Record<number, number>;
   spreads: Record<number, number>;
   levels: Record<number, number>;

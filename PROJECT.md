@@ -17,7 +17,7 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - Port: the whole backend runs as a Cloudflare Worker (worker/), deployed to the preview with a copy of the data (2026-11-14)
 
 ## Open
-- [x] 2026-11-17 independent review (docs/reviews/2026-11-17-review-1.md) fixed; deployed to the preview /d/ (version 814f2e0f);
+- [x] 2026-11-17 independent review fixed (review notes removed in the 2026-11-17 cleanup); deployed to the preview /d/ (version 814f2e0f);
       portal: choice accepted, step "Készül a weboldal" active, status line updated (no notification)
 - [ ] waiting for Daniel's inspection of the preview
 - [ ] later in phase 4: port game, /account + magic link, privacy/help, real scanner/admin into D; After Hours + Delivery
@@ -75,9 +75,14 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-17 (late night) code cleanup: glass.css/glass-staff.css merged into the base CSS (one Üveg system, SHELL.md
+  rewritten), mock modes + 200 dead i18n keys + duplicate helpers removed from site JS (shell.js now exposes esc/toast/
+  preview/guard), worker dead code/exports trimmed (API responses identical), 8.8 MB unused media + Emergent leftovers
+  removed, CLAUDE.md rewritten, runnerSim.js in site/jatek is the one copy. Verified: 72 screenshots identical to before
+  (except time-dependent After Hours/news clips), 109 API calls identical, flows + language switch retested.
 - 2026-11-17 (night) full QA by parallel agents: every guest/staff page, flows (sign-up, magic link, card, game score
   replay, scanner, 16 admin tabs, AH/Delivery up to payment), HU/EN, copy, privacy (cleanup job services/retention.ts:
-  2 y inactive members via members.erase, analytics > 14 months, daily after 03:00), staff skin glass-staff.css, game
+  2 y inactive members via members.erase, analytics > 14 months, daily after 03:00), staff skin, game
   canvas restyled (drawing only). Open: scanner undo leaves total_coffees + coffee_added row (stats count undone
   coffees, server change); AH admin calendar shows 17–30 Nov as open though guests can book from 1 Dec; rush can be
   switched on after closing; guest cancel with a valid token and real Stripe payment untested; game track small on
@@ -99,7 +104,7 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-17 (night) feedback: Kollázs looks a bit childish → back to choosing. Two premium alternatives built as
   "looks" on the preview (site/looks/e = E · Galéria, light photo book; site/looks/f = F · Bársony, Daniel's dark-luxe
   mock-ups: espresso/olive/ivory/champagne/taupe, serif + real italic). Switcher pill on preview hosts only (?look=d|e|f,
-  shell.js); worker 404s /looks/ in production. Deployed to the preview (a2f78921). G · Üveg (site/looks/g, restyles the D home; D motion + mock-up palette + liquid glass) deployed c529584d. Brief: docs/looks-brief.md (F section superseded by the mock-ups).
+  shell.js); worker 404s /looks/ in production. Deployed to the preview (a2f78921). G · Üveg (site/looks/g, restyles the D home; D motion + mock-up palette + liquid glass) deployed c529584d. Looks E/F/G + their brief: iCloud backup/looks-efg-2026-11-17.tgz.
 - 2026-11-17 (later) Daniel likes the new "Kollázs" design; images to keep improving when new footage arrives. Remove
   variants A/B/C + switcher; D becomes the real site with ALL live functions (scripts, admin, scanner, game, account…).
   Deadline: switch broscafe.hu to the Cloudflare version before 2026-12-01 (stop paying Rackforest). Checklist:

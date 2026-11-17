@@ -7,7 +7,7 @@ import { settings } from '../config';
 // `_key`: the cron job keeps its own marker document beside it ({_key: 'deployed_version'}).
 const OWN = { _key: { $exists: false } };
 
-export function DEFAULTS(app: App): Doc {
+function DEFAULTS(app: App): Doc {
   return {
     active_days: 30,
     inactive_days: 30,

@@ -1,15 +1,15 @@
 // Coffee Runner: seeds out, replays in, scores decided here. Port of backend/app/routers/game.py.
-import { HttpError, Invalid, str, type Ctx, type Router } from '../http';
+import { HttpError, Invalid, queryInt, str, type Router } from '../http';
 import { getCurrentCustomer } from '../security';
 import { TICK_RATE, simulate } from '../game/runner';
 import { isoAt, parseIso, tokenUrlsafe } from '../util';
 
-export const RUN_TTL_MINUTES = 20;
-export const RUNS_PER_HOUR = 60;
-export const MIN_ELAPSED_RATIO = 0.55;
+const RUN_TTL_MINUTES = 20;
+const RUNS_PER_HOUR = 60;
+const MIN_ELAPSED_RATIO = 0.55;
 
 const DAY = 86_400_000;
-export const PERIODS: Record<string, number | null> = { week: 7 * DAY, month: 30 * DAY, year: 365 * DAY, all: null };
+const PERIODS: Record<string, number | null> = { week: 7 * DAY, month: 30 * DAY, year: 365 * DAY, all: null };
 
 /** secrets.randbelow(2**32 - 1) + 1 */
 function randomSeed(): number {
@@ -18,16 +18,6 @@ function randomSeed(): number {
     crypto.getRandomValues(buf);
     if (buf[0] < 2 ** 32 - 1) return buf[0] + 1;
   }
-}
-
-/** A FastAPI `int` query parameter, 422 in FastAPI's shape when it does not parse. */
-function queryInt(c: Ctx, name: string, def: number): number {
-  const raw = c.query.get(name);
-  if (raw === null) return def;
-  if (!/^\s*[+-]?\d+\s*$/.test(raw)) {
-    throw new HttpError(422, [{ type: 'int_parsing', loc: ['query', name], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw }]);
-  }
-  return Number.parseInt(raw, 10);
 }
 
 /** How FastAPI rendered a datetime read back from Mongo (naive UTC, millisecond precision): `.isoformat()`. */
@@ -136,7 +126,7 @@ export function register(api: Router) {
     for (const [name, window] of Object.entries(PERIODS)) {
       const match: Record<string, unknown> = { code: member.code, finished: true, rejected: { $ne: true } };
       if (window) match.finished_at = { $gte: isoAt(new Date(Date.now() - window)) };
-      const best = await c.db.game_runs.find(match, { projection: { _id: 0, score: 1 }, sort: { score: -1 }, limit: 1 });
+      const best = await c.db.game_runs.find(match, { projection: { score: 1 }, sort: { score: -1 }, limit: 1 });
       out[name] = best.length ? best[0].score : 0;
     }
     return out;

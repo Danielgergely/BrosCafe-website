@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin: the frame (guard, tabs, ?tab=<name> routing). The tabs live in admin-{live,content,stats,people}.js.
+// Bros Cafe · admin: the frame (guard, tabs, ?tab=<name> routing). The tabs live in admin-{live,content,stats,people}.js.
 // ?tab names are the live dashboard's: live products journal photos overview funnel customers coffee rewards retention
 // segments transactions members wallet (+ settings, staff, which were dialogs on the old site).
 (async () => {

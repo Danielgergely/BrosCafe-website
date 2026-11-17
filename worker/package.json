@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --port 8801",
+    "dev": "wrangler dev --env preview --port 8801 --test-scheduled",
     "check": "tsc --noEmit",
-    "db:local": "wrangler d1 execute broscafe --local --file schema.sql",
+    "db:local": "wrangler d1 execute broscafe-preview --env preview --local --file schema.sql",
     "db:remote": "wrangler d1 execute broscafe --remote --file schema.sql",
     "deploy": "wrangler deploy"
   },

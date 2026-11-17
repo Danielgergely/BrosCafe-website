@@ -1,13 +1,14 @@
-/* Bros Cafe · D — staff login (/belepes/) */
+/* Bros Cafe — staff login (/belepes/) */
 .login { display: grid; justify-items: center; gap: 18px; padding-top: clamp(28px, 6vw, 72px); padding-bottom: clamp(40px, 7vw, 90px); }
-.login__card { position: relative; display: grid; gap: 14px; width: 100%; max-width: 440px; padding: clamp(26px, 4vw, 36px) clamp(20px, 3.4vw, 34px) clamp(22px, 3.4vw, 32px); background: var(--wash); border: var(--edge); border-radius: var(--r-lg); box-shadow: var(--press-ink); }
-.login__tag { position: absolute; top: -14px; right: 18px; }
-.login__title { font: 600 clamp(30px, 4vw, 40px)/1.05 var(--serif); font-variation-settings: "opsz" 80, var(--soft); letter-spacing: -.028em; }
+.login__card { position: relative; display: grid; gap: 14px; width: 100%; max-width: 440px; padding: clamp(26px, 4vw, 36px) clamp(20px, 3.4vw, 34px) clamp(22px, 3.4vw, 32px); border-radius: var(--r-lg); background: var(--ivory-hi); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(var(--espresso-rgb) / .07), 0 1px 2px rgb(var(--espresso-rgb) / .05), var(--shadow-md); }
+.login__tag { justify-self: start; min-height: 0; padding: 0; background: none; box-shadow: none; font: 600 11.5px/1.4 var(--sans); letter-spacing: .22em; text-transform: uppercase; color: var(--bronze); }
+.login__title { font: 420 clamp(32px, 4.4vw, 42px)/1.05 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.022em; }
 .login__sub { margin-top: -6px; font-size: 15px; line-height: 1.5; color: var(--text-soft); }
 .login__card .field input { min-height: 56px; }
-.login__error { padding: 12px 14px; border: var(--edge); border-radius: var(--r-sm); background: var(--blush); font: 650 15px/1.4 var(--sans); color: var(--text); }
-.login__go { width: 100%; min-height: 60px; margin-top: 4px; font-size: 17px; }
+.login__error { padding: 12px 14px; border-radius: var(--r-sm); background: rgb(166 61 47 / .1); font: 650 15px/1.4 var(--sans); color: #6E2118; }
+.login__go { width: 100%; margin-top: 4px; }
 .login__hint { max-width: 440px; font-size: 15px; line-height: 1.5; color: var(--text-soft); text-align: center; }
+.login__hint .link { display: inline; min-height: 0; }
 .login__back { font-size: 15px; }
 .login [hidden] { display: none; }
 @media (prefers-reduced-motion: no-preference) {

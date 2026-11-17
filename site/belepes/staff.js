@@ -1,4 +1,4 @@
-// Bros Cafe · D — the staff session (login, scanner, admin). Same API and storage key as the React app:
+// Bros Cafe — the staff session (login, scanner, admin). Same API and storage key as the React app:
 // POST /api/auth/login, GET /api/auth/me, the token in localStorage under bros_staff_token. → window.BROS.staff
 (() => {
   const B = window.BROS || (window.BROS = {});

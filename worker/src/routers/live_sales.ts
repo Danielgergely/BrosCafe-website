@@ -77,7 +77,7 @@ export function register(api: Router) {
       console.warn(`live sales: wrong key (got ${supplied.length} characters, expected ${s.live_sales_key.length})`);
       throw new HttpError(404, 'Not Found');
     }
-    const summary = await c.db.live_sales.findOne({}, { projection: { _id: 0 } });
+    const summary = await c.db.live_sales.findOne({});
     if (summary === null) throw new HttpError(503, NO_FIGURES);
     return summary;
   });

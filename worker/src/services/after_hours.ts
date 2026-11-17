@@ -4,7 +4,7 @@ import type { Env } from '../env';
 import type { Doc } from '../db';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
-  ApiError, EMAIL, TAX, ZIP, addDays, addMonths, assertBookingsOpen, bookingsOpen, esc, ft, hm, instant, invalid, lang as langOf, mail, mins, nextId, returnPath, rows,
+  ApiError, EMAIL, TAX, ZIP, addDays, addMonths, assertBookingsOpen, bookingsOpen, esc, ft, hm, instant, invalid, iso, lang as langOf, mail, mins, nextId, returnPath, rows,
   safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday,
 } from './bookings';
 import * as stripe from './stripe';
@@ -15,7 +15,7 @@ const num = (env: Env, k: string, def: number) => {
   return Number.isFinite(n) ? n : def;
 };
 /** The offer. The page's CONFIG mirrors it; the amounts are DRAFT until Daniel confirms (docs/after-hours.md). */
-export const offer = (env: Env) => ({
+const offer = (env: Env) => ({
   base: num(env, 'AH_BASE_HUF', 14900),            // 2–6 people, 2 hours
   extraGuest: num(env, 'AH_EXTRA_GUEST_HUF', 1990), // DRAFT: per person 7–12
   extraHour: num(env, 'AH_EXTRA_HOUR_HUF', 5900),   // DRAFT: per hour above 2
@@ -29,19 +29,19 @@ export const offer = (env: Env) => ({
 const VOUCHERS: Record<string, { percent: number }> = { AFTER25: { percent: 25 } };
 const PATHS = ['/after-hours/'];
 
-export const price = (env: Env, guests: number, hours: number) => {
+const price = (env: Env, guests: number, hours: number) => {
   const o = offer(env);
   return o.base + o.extraGuest * Math.max(0, guests - o.baseGuests) + o.extraHour * Math.max(0, hours - o.baseHours);
 };
 
 /** Case-insensitive, trimmed. null = no such code. The discount is a share of the base fee only. */
-export function voucher(env: Env, raw: unknown) {
+function voucher(env: Env, raw: unknown) {
   const code = String(raw ?? '').trim().toUpperCase(), v = VOUCHERS[code];
   return v ? { code, percent: v.percent, discount: Math.round((offer(env).base * v.percent) / 100) } : null;
 }
 
 /** First bookable evening: the later of the launch date and three full days' notice (one more once today's evening has opened). */
-export function bookingWindow(app: App) {
+function bookingWindow(app: App) {
   const o = offer(app.env), now = today(app);
   const notice = addDays(now.date, o.noticeDays + (now.hour * 60 + now.minute >= mins(o.open) ? 1 : 0));
   return { min: notice > o.launch ? notice : o.launch, max: addMonths(now.date, o.windowMonths) };
@@ -49,14 +49,13 @@ export function bookingWindow(app: App) {
 const defaultOpen = (env: Env, date: string) => weekday(date) !== 0 && !offer(env).closedDays.includes(date.slice(5));
 
 /** Agreed terms: 100 % at 7+ days before the start, 50 % until 48 h, nothing after. */
-export function refundPercent(app: App, b: Doc, at = new Date()) {
+function refundPercent(app: App, b: Doc, at = new Date()) {
   const h = (instant(app, b.date, b.start_time).getTime() - at.getTime()) / 3600e3;
   return h >= 7 * 24 ? 100 : h >= 48 ? 50 : 0;
 }
 
 const get = (app: App, id: string) => app.db.d1.prepare('SELECT * FROM ah_bookings WHERE id = ?').bind(id).first<Doc>();
 const expireHolds = (app: App) => app.db.d1.prepare("UPDATE ah_bookings SET status = 'expired' WHERE status = 'pending' AND hold_expires < ?").bind(nowIso()).run();
-const iso = (v: string | null) => (v ? parseIso(v).toISOString() : null);
 
 function view(b: Doc) {
   return {

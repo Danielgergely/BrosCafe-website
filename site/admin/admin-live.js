@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin: live sales (today against the forecast and the break-even line, self-scoring, unusual days,
+// Bros Cafe · admin: live sales (today against the forecast and the break-even line, self-scoring, unusual days,
 // Instagram posts, week, month). Same endpoints as LiveSalesPanel.jsx: GET /admin/live-sales, PUT/DELETE
 // /admin/live-sales/unusual/{day} and /posts/{day}.
 (() => {

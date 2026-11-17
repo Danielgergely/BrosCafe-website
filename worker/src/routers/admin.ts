@@ -2,7 +2,7 @@
 // uploaded photography. Port of backend/app/routers/admin.py. Every route checks require_admin first, as the
 // router-level dependency did (before any body validation).
 import type { Collection, Doc } from '../db';
-import { HttpError, Invalid, type Ctx, type Router } from '../http';
+import { HttpError, Invalid, queryInt, type Ctx, type Router } from '../http';
 import { requireAdmin } from '../security';
 import { settings } from '../config';
 import { nowIso } from '../util';
@@ -192,18 +192,8 @@ async function revertToFile(collection: Collection, section: 'products' | 'conte
   return original;
 }
 
-/** A FastAPI `int` query parameter. */
-function queryInt(c: Ctx, name: string, def: number): number {
-  const raw = c.query.get(name);
-  if (raw === null) return def;
-  if (!INT_STR.test(raw)) {
-    throw new HttpError(422, [{ type: 'int_parsing', loc: ['query', name], msg: 'Input should be a valid integer, unable to parse string as an integer', input: raw }]);
-  }
-  return Number.parseInt(raw, 10);
-}
-
 /** Fields a product may legitimately not have. Sent as null they mean "remove". */
-export const OPTIONAL_PRODUCT_FIELDS = ['flavor', 'tip', 'ingredients', 'behind', 'sizes', 'material', 'video', 'temp', 'section'];
+const OPTIONAL_PRODUCT_FIELDS = ['flavor', 'tip', 'ingredients', 'behind', 'sizes', 'material', 'video', 'temp', 'section'];
 
 export function register(api: Router) {
   /** Every admin route: the admin check first, as the router-level dependency ran before validation. */
@@ -227,7 +217,7 @@ export function register(api: Router) {
   });
 
   admin('get', '/members', async (c) => {
-    const docs = await c.db.members.find({}, { projection: { _id: 0 }, sort: { created_at: -1 }, limit: 1000 });
+    const docs = await c.db.members.find({}, { sort: { created_at: -1 }, limit: 1000 });
     return docs.map((d) => members.publicView(c, d));
   });
 
@@ -273,7 +263,7 @@ export function register(api: Router) {
       const v = c.query.get(k);
       if (v) query[k] = v;
     }
-    return c.db.transactions.find(query, { projection: { _id: 0 }, sort: { at: -1 }, limit });
+    return c.db.transactions.find(query, { sort: { at: -1 }, limit });
   });
 
   // ---------------------------------------------------------------- settings
@@ -296,7 +286,7 @@ export function register(api: Router) {
   admin('get', '/analytics/segments', (c) => analytics.segments(c));
 
   // ---------------------------------------------------------------- catalog
-  admin('get', '/products', (c) => c.db.products.find({}, { projection: { _id: 0 }, sort: { order: 1 }, limit: 200 }));
+  admin('get', '/products', (c) => c.db.products.find({}, { sort: { order: 1 }, limit: 200 }));
 
   admin('post', '/products', async (c, user) => {
     const inv = new Invalid();
@@ -324,7 +314,7 @@ export function register(api: Router) {
   });
 
   // ---------------------------------------------------------------- journal
-  admin('get', '/whats-new', (c) => c.db.content.find({}, { projection: { _id: 0 }, sort: { order: 1 }, limit: 100 }));
+  admin('get', '/whats-new', (c) => c.db.content.find({}, { sort: { order: 1 }, limit: 100 }));
 
   admin('post', '/whats-new', async (c, user) => {
     const inv = new Invalid();
@@ -385,7 +375,7 @@ export function register(api: Router) {
     const statsDoc = (await c.db.wallet_stats.findOne({})) ?? {};
     const last = await c.db.members.find(
       { wallet_updated_at: { $exists: true } },
-      { projection: { _id: 0, wallet_updated_at: 1 }, sort: { wallet_updated_at: -1 }, limit: 1 },
+      { projection: { wallet_updated_at: 1 }, sort: { wallet_updated_at: -1 }, limit: 1 },
     );
     return {
       config: apple.configStatus(c.env),

@@ -1,7 +1,7 @@
 # Bros Delivery — backend contract (built 2026-11-17; see "As built" at the end)
 
 Spec: `docs/delivery.md`. The pages talk to the backend only through `api` in
-`site/delivery/delivery.js` (real API by default; `?mock=1` switches a browser to the mock data for local work, `?mock=0` back). A Cloudflare Worker on the site's origin under `/api/delivery/*`, with D1. The drinks come from the
+`site/delivery/delivery.js`. A Cloudflare Worker on the site's origin under `/api/delivery/*`, with D1. The drinks come from the
 existing `GET /api/products`.
 
 Every number that the spec leaves open is one value in `CONFIG` at the top of `delivery.js` (draft defaults, see

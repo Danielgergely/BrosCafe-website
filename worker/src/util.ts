@@ -7,6 +7,9 @@
 export const isoAt = (d: Date) => d.toISOString().replace(/\.(\d{3})Z$/, '.$1000+00:00');
 export const nowIso = () => isoAt(new Date());
 
+/** str(value) as Python prints it. */
+export const pyStr = (v: unknown) => (v === null || v === undefined ? 'None' : v === true ? 'True' : v === false ? 'False' : String(v));
+
 /** uuid.uuid4().hex and str(uuid.uuid4()). */
 export const uuidHex = () => crypto.randomUUID().replace(/-/g, '');
 export const uuid4 = () => crypto.randomUUID();

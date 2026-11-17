@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin: analytics tabs (overview, funnel, customers, coffee, rewards, retention, segments) and the
+// Bros Cafe · admin: analytics tabs (overview, funnel, customers, coffee, rewards, retention, segments) and the
 // transactions list. Endpoints as in the React panels: /admin/analytics/*, /admin/transactions?limit=150.
 (() => {
   const BA = window.BA; const { T, esc, card, tile, tiles } = BA;

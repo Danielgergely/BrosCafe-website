@@ -43,6 +43,6 @@ export function register(api: Router) {
 
   api.get('/staff', async (c) => {
     await requireAdmin(c);
-    return c.db.users.find({}, { projection: { _id: 0, password_hash: 0 }, limit: 500 });
+    return c.db.users.find({}, { projection: { password_hash: 0 }, limit: 500 });
   });
 }

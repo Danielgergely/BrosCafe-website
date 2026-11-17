@@ -5,8 +5,8 @@ import { HttpError, type Ctx } from './http';
 import { settings } from './config';
 import type { Doc } from './db';
 
-export const TOKEN_STAFF = 'access';
-export const TOKEN_CUSTOMER = 'customer';
+const TOKEN_STAFF = 'access';
+const TOKEN_CUSTOMER = 'customer';
 
 export const hashPassword = (password: string) => bcrypt.hashSync(password, 12);
 export function verifyPassword(plain: string, hashed: string) {
@@ -30,14 +30,14 @@ async function hmacKey(secret: string) {
   return crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
 
-export async function encodeJwt(payload: Doc, secret: string) {
+async function encodeJwt(payload: Doc, secret: string) {
   const head = `${b64urlJson({ alg: 'HS256', typ: 'JWT' })}.${b64urlJson(payload)}`;
   const sig = new Uint8Array(await crypto.subtle.sign('HMAC', await hmacKey(secret), new TextEncoder().encode(head)));
   return `${head}.${b64url(sig)}`;
 }
 
 /** PyJWT's decode: signature, then `exp`. Throws 'expired' or 'invalid'. */
-export async function decodeJwt(token: string, secret: string): Promise<Doc> {
+async function decodeJwt(token: string, secret: string): Promise<Doc> {
   const parts = token.split('.');
   if (parts.length !== 3) throw new Error('invalid');
   let header: Doc, payload: Doc;
@@ -87,7 +87,7 @@ async function decode(c: Ctx, token: string, expected: string) {
 
 export async function getCurrentUser(c: Ctx): Promise<Doc> {
   const payload = await decode(c, bearer(c), TOKEN_STAFF);
-  const user = await c.db.users.findOne({ id: payload.sub }, { projection: { _id: 0, password_hash: 0 } });
+  const user = await c.db.users.findOne({ id: payload.sub }, { projection: { password_hash: 0 } });
   if (!user) throw new HttpError(401, 'User not found');
   return user;
 }

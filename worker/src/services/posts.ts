@@ -3,8 +3,8 @@
 import { addDays, daysBetween, NORMAL } from './daytypes';
 import { mean, pyRound } from './forecasts';
 
-export const DAYS_AFTER = 1;
-export const MAX_WEEKS = 2;
+const DAYS_AFTER = 1;
+const MAX_WEEKS = 2;
 
 type Days = Record<string, { hours: Record<string, number>; kind?: string }>;
 type Post = Record<string, any>;
@@ -29,7 +29,7 @@ function window(post: Post, days: Days): [string, number][] {
   return out;
 }
 
-export function effect(post: Post, days: Days, blocked: Set<string>): Post {
+function effect(post: Post, days: Days, blocked: Set<string>): Post {
   let actual = 0;
   let expected = 0;
   const compared: string[] = [];

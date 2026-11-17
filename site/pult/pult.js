@@ -1,4 +1,4 @@
-// Bros Cafe · D — the counter scanner (/pult/). Same API calls as the React ScannerPage; session in ../belepes/staff.js.
+// Bros Cafe — the counter scanner (/pult/). Same API calls as the React ScannerPage; session in ../belepes/staff.js.
 (() => {
   const B = window.BROS, S = B.staff, t = B.t, lang = B.lang;
   const $ = (s) => document.querySelector(s);
@@ -203,7 +203,7 @@
   function openingPanel() {
     const m = member;
     if (!(offer || !['none', 'redeemed'].includes(m.opening_status))) return;
-    const p = el('div', 'op wash wash--glow-soft'); p.append(el('p', 'ma__label', t('Nyitónapi ajándék')));
+    const p = el('div', 'op'); p.append(el('p', 'ma__label', t('Nyitónapi ajándék')));
     if (!offer) p.append(btn('sb', t('Ajándék felfedése'), revealOpening));
     else {
       p.append(el('p', 'op__title', t('Kiderült!')));

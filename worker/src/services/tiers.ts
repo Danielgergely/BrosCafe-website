@@ -2,21 +2,20 @@
 import type { Doc } from '../db';
 import type { Settings } from '../config';
 
-export const BASE = 'base';
-export const DIAMOND = 'diamond';
+const DIAMOND = 'diamond';
 
 /** Lowest first. `at` is lifetime coffees purchased. */
-export const EARNED = [
+const EARNED = [
   { key: 'base', at: 0, shorter: 0 },
   { key: 'bronze', at: 50, shorter: 1 },
   { key: 'silver', at: 150, shorter: 2 },
   { key: 'gold', at: 300, shorter: 3 },
 ] as const;
 /** Granted by an admin. Never reached by spending, and never lost by inactivity. */
-export const GRANTED = [DIAMOND] as const;
-export const ALL: string[] = [...EARNED.map((t) => t.key), ...GRANTED];
+const GRANTED = [DIAMOND] as const;
+const ALL: string[] = [...EARNED.map((t) => t.key), ...GRANTED];
 /** A card can never get shorter than this, whatever the tier maths says. */
-export const MIN_STAMPS = 2;
+const MIN_STAMPS = 2;
 
 const spec = (key: string) => EARNED.find((t) => t.key === key) ?? EARNED[0];
 
@@ -30,13 +29,13 @@ function bought(doc: Doc): number {
   return 0;
 }
 
-export function earnedTier(totalCoffees: number): string {
+function earnedTier(totalCoffees: number): string {
   let best: string = EARNED[0].key;
   for (const tier of EARNED) if (totalCoffees >= tier.at) best = tier.key;
   return best;
 }
 
-export function effectiveTier(doc: Doc): string {
+function effectiveTier(doc: Doc): string {
   const granted = doc.tier_override;
   const earned = earnedTier(bought(doc));
   if (!granted || !ALL.includes(granted)) return earned;
@@ -45,7 +44,7 @@ export function effectiveTier(doc: Doc): string {
   return order.indexOf(granted) > order.indexOf(earned) ? granted : earned;
 }
 
-export const alwaysFree = (tier: string) => tier === DIAMOND;
+const alwaysFree = (tier: string) => tier === DIAMOND;
 
 /** How many stamps a free coffee costs this member. 0 means always free. */
 export function stampsRequired(doc: Doc, s: Settings): number {
@@ -55,7 +54,7 @@ export function stampsRequired(doc: Doc, s: Settings): number {
 }
 
 /** The tier above this one and the purchases still needed; [null, 0] for diamond and gold. */
-export function nextTier(doc: Doc): [string | null, number] {
+function nextTier(doc: Doc): [string | null, number] {
   const tier = effectiveTier(doc);
   if (alwaysFree(tier)) return [null, 0];
   const order = EARNED.map((t) => t.key as string);

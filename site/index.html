@@ -21,7 +21,6 @@
 <script src="/i18n.js"></script>
 <link rel="stylesheet" href="/shell.css">
 <link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/glass.css">
 <script src="/glass.js" defer></script>
 <script>
   // "still": no video, no scroll motion (reduced motion, Save-Data, or ?still for testing).
@@ -40,7 +39,7 @@
 <!--
   SCENES, in this order: hero (one screen) · the act (#kavek: a pinned stage, the scroll turns the eight cups and ends on
   the two product cards) · the visit (#hely: the place, the loyalty card, our story; normal flow) · the shared footer.
-  Each is <section class="scene wash--…"> (the wash is its colour, see SHELL.md); home.js adds the "next" tab from data-name.
+  Each is <section class="scene">; home.js adds the "next" tab from data-name.
   MEDIA (docs/media-picks.md, files in /shared/media/): a clip is class="film" + data-film="….mp4" around the still
   (data-film-wide = the clip for desktop). The still shows before the film starts, under reduced motion and on Save-Data.
   MOTION (style.css, "motion"): data-m = moves while its scene enters / leaves; data-s = scrubbed while the act is pinned.
@@ -48,7 +47,7 @@
 <main id="tartalom">
 
   <!-- 01 · Hero -->
-  <section class="scene scene--hero wash--cream" id="kezdes" data-name="Bros Cafe" aria-labelledby="h-hero">
+  <section class="scene scene--hero" id="kezdes" data-name="Bros Cafe" aria-labelledby="h-hero">
     <div class="scene__in" data-m>
       <div class="hero__text">
         <p class="eyebrow" data-m>A higher calling</p>
@@ -61,7 +60,6 @@
           <a class="now" href="/after-hours/" data-now hidden><span class="new">Új</span><span class="now__txt"><b data-now-name></b> · <span data-now-line></span></span><span aria-hidden="true">→</span></a>
         </div>
         <div class="stamp" aria-hidden="true" data-m><svg viewBox="0 0 120 120"><defs><path id="stamp-c" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs><text><textPath href="#stamp-c" textLength="283">Specialty kávé · Budapest · Bros Cafe ·</textPath></text></svg><img src="/shared/img/mark-olive.png" alt="" width="26" height="30"></div>
-        <div class="cut cut--circle hero__side" aria-hidden="true" data-m><picture><source srcset="/shared/media/coffee-cappuccino-1x1.webp" type="image/webp"><img src="/shared/media/coffee-cappuccino-1x1.jpg" alt="" width="1200" height="1200" loading="lazy"></picture></div>
       </div>
       <p class="actions hero__actions">
         <a class="btn" href="/etlap/">Étlap <span aria-hidden="true">→</span></a>
@@ -72,7 +70,7 @@
 
   <!-- 02 · The act: Kávék → Extrák. One more cup = one more <li> (data-id = the product id on the menu) and --n below.
        The two cards use the same texts and photos as the "Extrák" sheet (NAV in shell.js). -->
-  <section class="scene act wash--sage" id="kavek" data-name="Kávék" data-stops="Kávék|Extrák" style="--n: 8">
+  <section class="scene act" id="kavek" data-name="Kávék" data-stops="Kávék|Extrák" style="--n: 8">
     <div class="act__stage">
       <div class="act__wash" aria-hidden="true" data-s></div>
       <p class="ghost" aria-hidden="true" data-s data-en="coffee">kávé</p>
@@ -106,21 +104,21 @@
           <h2 id="h-duo" class="title title--lg" data-s>Este nálunk.<br><em>Napközben nálatok.</em></h2>
         </div>
         <div class="duo">
-          <a class="half half--a wash--blush" href="/after-hours/" data-s>
+          <a class="half half--a" href="/after-hours/" data-s>
             <span class="cut film half__pic" data-vt-click="page-hero" data-film="/shared/media/after-hours-lounge-evening-9x16.mp4"><picture><source srcset="/shared/media/after-hours-lounge-evening-4x5.webp" type="image/webp"><img src="/shared/media/after-hours-lounge-evening-4x5.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span>
             <span class="half__txt">
               <b class="half__name">Bros After Hours</b>
               <span class="half__line">Privát kávézó különleges alkalmakra</span>
-              <span class="sticker sticker--white half__fact">14&nbsp;900&nbsp;Ft-tól</span>
+              <span class="sticker half__fact">14&nbsp;900&nbsp;Ft-tól</span>
               <span class="btn">Estét választok <span aria-hidden="true">→</span></span>
             </span>
           </a>
-          <a class="half half--b wash--glow" href="/delivery/" data-s>
+          <a class="half half--b" href="/delivery/" data-s>
             <span class="cut half__pic" data-vt-click="page-hero"><picture><source srcset="/shared/media/delivery-paper-cup-handwritten-4x5.webp" type="image/webp"><img src="/shared/media/delivery-paper-cup-handwritten-4x5.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span>
             <span class="half__txt">
               <b class="half__name">Bros Delivery</b>
               <span class="half__line">Kávé az irodába</span>
-              <span class="sticker sticker--white half__fact">5 italtól ingyen</span>
+              <span class="sticker half__fact">5 italtól ingyen</span>
               <span class="btn">Rendelek <span aria-hidden="true">→</span></span>
             </span>
           </a>
@@ -130,12 +128,12 @@
   </section>
 
   <!-- 03 · The visit: the place, the loyalty card, our story. Normal flow (as tall as its content). -->
-  <section class="scene visit wash--glow-soft" id="hely" data-name="A hely" aria-labelledby="h-place">
+  <section class="scene visit" id="hely" data-name="A hely" aria-labelledby="h-place">
     <div class="visit__in">
       <div class="place__pics">
         <div class="cut film place__a" data-m data-film="/shared/media/place-serving-table-9x16.mp4"><picture><source srcset="/shared/media/place-serving-table-9x16.webp" type="image/webp"><img src="/shared/media/place-serving-table-9x16.jpg" alt="Két testvér fatálcákon viszi ki a rendelést" width="720" height="1280" loading="lazy"></picture></div>
         <div class="cut place__b" data-m><picture><source srcset="/shared/media/place-counter-baristas-9x16.webp" type="image/webp"><img src="/shared/media/place-counter-baristas-9x16.jpg" alt="A pult két baristával" width="1080" height="1920" loading="lazy"></picture></div>
-        <p class="sticker sticker--white place__tag" data-m>1132 Budapest, Csanády u. 4/b</p>
+        <p class="sticker place__tag" data-m>1132 Budapest, Csanády u. 4/b</p>
       </div>
       <div class="place__text">
         <div class="scene__head place__head">

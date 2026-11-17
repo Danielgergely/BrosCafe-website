@@ -1,15 +1,12 @@
-// Bros Cafe · D · Kollázs — shared script for the subpages (footer, page logic). Header and nav: /shell.js.
+// Bros Cafe — subpage logic (menu, card sign-up, news, contact, game board) and the footer. Header and nav: /shell.js.
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const B = window.BROS || { lang: 'hu', en: false, t: (x, v) => { if (v) for (const k in v) x = x.replace(`{${k}}`, v[k]); return x; }, mount() {}, locale: 'hu-HU' };
+  const B = window.BROS;
   const t = B.t;
-  const S = B.shell;
+  const S = B.shell, { esc, ft } = S;
   const hu = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v[B.lang] ?? v.hu ?? v.en ?? '' : v ?? '');
-  const ft = S.ft;
-  // ids come from the URL: look them up as own keys only, and survive a broken %-escape
-  const own = (o, k) => (Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined);
+  // the hash is user input: survive a broken %-escape
   const hashId = () => { try { return decodeURIComponent(location.hash.slice(1)); } catch (e) { return ''; } };
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const still = calm || !!(navigator.connection && navigator.connection.saveData); // no video: the still shows
@@ -30,17 +27,17 @@
   };
   const ico = (n) => (ICONS[n] ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ICONS[n]}</svg>` : S.icon(n));
 
-  // No photo yet: a small ink drawing on a wash instead (menu cards, /delivery/ rows).
+  // No photo yet: a small line drawing instead (menu cards, /delivery/ rows).
   const ART = {
     cup: '<path d="M12 21h22v7a11 11 0 0 1-22 0z" fill="var(--surface)"/><path d="M34 24h2.5a4.5 4.5 0 0 1 0 9H33M9 42.5h28M19 15c-2-2.200 2-3.800 0-6M27 15c-2-2.200 2-3.800 0-6"/>',
-    tea: '<path d="M12 21h22v7a11 11 0 0 1-22 0z" fill="var(--surface)"/><path d="M34 24h2.5a4.5 4.5 0 0 1 0 9H33M9 42.500h28M22 21v-7.500l6.500-3"/><path d="M28.500 6.500h6.500v8h-6.500z" fill="var(--honey)"/>',
-    bottle: '<path d="M20 5h8v8l4.500 6.500V40a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V19.500L20 13z" fill="var(--surface)"/><path d="M15.500 25h17v9.500h-17z" fill="var(--honey)"/><path d="M19.500 9h9"/>',
-    glass: '<path d="M13 13h22l-2.600 27.200a2 2 0 0 1-2 1.800H17.600a2 2 0 0 1-2-1.800z" fill="var(--surface)"/><path d="M14 21.500h20M27.500 13 32 4h4.500"/><path d="M18.500 26h5.500v5.500h-5.500zM25 32.500h4.500V37H25z" fill="var(--glow)"/>',
+    tea: '<path d="M12 21h22v7a11 11 0 0 1-22 0z" fill="var(--surface)"/><path d="M34 24h2.5a4.5 4.5 0 0 1 0 9H33M9 42.500h28M22 21v-7.500l6.500-3"/><path d="M28.500 6.500h6.500v8h-6.500z" fill="var(--champagne)"/>',
+    bottle: '<path d="M20 5h8v8l4.500 6.500V40a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V19.500L20 13z" fill="var(--surface)"/><path d="M15.500 25h17v9.500h-17z" fill="var(--champagne)"/><path d="M19.500 9h9"/>',
+    glass: '<path d="M13 13h22l-2.600 27.200a2 2 0 0 1-2 1.800H17.600a2 2 0 0 1-2-1.800z" fill="var(--surface)"/><path d="M14 21.500h20M27.500 13 32 4h4.500"/><path d="M18.500 26h5.500v5.500h-5.500zM25 32.500h4.500V37H25z" fill="var(--ivory-2)"/>',
     plate: '<circle cx="24" cy="25" r="16" fill="var(--surface)"/><circle cx="24" cy="25" r="9.500"/><path d="M20 22.500c2.500-2 5.500-2 8 0M20.500 27h7"/>',
   };
   const artKind = (p) => (p.cat === 'bottled' ? 'bottle' : p.cat === 'tea' ? 'tea' : p.cat === 'smoothie' || p.temp === 'iced' ? 'glass' : ['sandwich', 'pastry', 'cake', 'dessert'].includes(p.cat) ? 'plate' : 'cup');
   const art = (p) => { const k = artKind(p); return `<span class="art art--${k}"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">${ART[k]}</svg></span>`; };
-  if (window.BROS) window.BROS.drinkArt = art;
+  B.drinkArt = art; // also used by /delivery/ and the admin
 
   async function api(path) {
     const r = await fetch(`/api/${path}`, { headers: { Accept: 'application/json' } });
@@ -58,11 +55,6 @@
     }
     return data;
   }
-  // The preview and local copies never send e-mails or messages; any other host posts to the API.
-  const PREVIEW = /^(broscafe\.gracelabs\.dev|localhost|127\.0\.0\.1)$/.test(location.hostname);
-  // ?live=1 lifts that guard on the customer forms (sign-up, help) for a real end-to-end test; it sticks for the tab.
-  if (new URLSearchParams(location.search).get('live') === '1') { try { sessionStorage.setItem('bros-live', '1'); } catch (e) { /* */ } }
-  const GUARD = PREVIEW && !(new URLSearchParams(location.search).get('live') === '1' || (() => { try { return sessionStorage.getItem('bros-live') === '1'; } catch (e) { return false; } })());
   const track = S.track; // funnel events as on the live site: page_view on the menu and contact pages, wallet_added (customer.js)
   const previewPanel = (text, back) => `<span class="done__ico">${ico('mail')}</span><h2>${t('Előnézet')}</h2><p>${t(text)}</p><button class="link" type="button" data-back>${t(back)}</button>`;
   const store = {
@@ -84,13 +76,6 @@
     if (calm || !('IntersectionObserver' in window)) return els.forEach((el) => el.classList.add('in'));
     io ??= new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
     els.forEach((el) => io.observe(el));
-  }
-
-  function toast(msg) {
-    let el = $('.toast');
-    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); document.body.append(el); }
-    el.textContent = msg; el.classList.add('show');
-    clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
   }
 
   // A form that posts to the API: busy button, inline error, success panel in place of the form.
@@ -322,7 +307,7 @@
     liveForm(form, {
       async send() {
         const addr = email.value.trim();
-        if (GUARD) return previewPanel('Ez egy előnézet: a valódi oldalon itt elküldjük a belépő linket az e-mail-címedre, és elkészül a kártyád.', 'Másik e-mail-címet adok meg');
+        if (S.guard) return previewPanel('Ez egy előnézet: a valódi oldalon itt elküldjük a belépő linket az e-mail-címedre, és elkészül a kártyád.', 'Másik e-mail-címet adok meg');
         const data = await post('auth/request-link', { email: addr, first_name: name.value.trim(), lang: B.lang, ref: new URLSearchParams(location.search).get('ref') || undefined });
         // a new address: nothing was created or sent yet, ask for the name first
         if (data && data.needs_name) { nameBox.hidden = false; name.required = true; name.focus(); return null; }
@@ -382,7 +367,7 @@
       const photo = own || `/shared/media/${TAG_PHOTO[(p.tags || []).find((x) => TAG_PHOTO[x])] || 'place-dining-room-daylight-4x5'}.jpg`;
       const linked = (p.product_ids || []).filter((id) => names[id]);
       return `<article class="post" id="${esc(p.id)}">
-        <div class="post__top"><span class="cut post__pic" style="--tilt: ${i % 2 ? 2.5 : -2.5}deg">${pic(photo, 'alt="" loading="lazy" width="400" height="500"')}</span>
+        <div class="post__top"><span class="cut post__pic">${pic(photo, 'alt="" loading="lazy" width="400" height="500"')}</span>
           <div><p class="post__meta"><span>${esc(date(p.date))}</span>${(p.tags || []).filter((x) => TAGS[x]).map((x) => `<span class="tag">${TAGS[x]}</span>`).join('')}</p><h3>${esc(hu(p.title))}</h3></div></div>
         <p class="post__blurb">${esc(hu(p.blurb))}</p>
         ${hu(p.body) ? `<details class="fold"><summary>Elolvasom</summary>${hu(p.body).split(/\n\s*\n/).map((x) => `<p>${esc(x)}</p>`).join('')}</details>` : ''}
@@ -405,7 +390,7 @@
       tooMany: 'Már küldtél néhány üzenetet — hagyj egy kis időt, hogy válaszolni tudjunk.',
       async send() {
         const f = form.elements;
-        if (PREVIEW) { form.reset(); return previewPanel('Ez egy előnézet: a valódi oldalon itt elküldjük az üzeneted a Bros Cafe csapatának.', 'Írok még egyet'); }
+        if (S.preview) { form.reset(); return previewPanel('Ez egy előnézet: a valódi oldalon itt elküldjük az üzeneted a Bros Cafe csapatának.', 'Írok még egyet'); }
         await post('contact', { name: f.name.value.trim(), email: f.email.value.trim(), message: f.message.value.trim(), website: f.website.value }, { 'X-Lang': B.lang });
         form.reset();
         return `<span class="done__ico">${ico('mail')}</span><h2>${t('Köszönjük, elküldtük')}</h2>
@@ -434,119 +419,7 @@
     load('week');
   }
 
-  // ---------- pult (mock-up) ----------
-  const GUESTS = [
-    { name: 'Minta Anna', code: 'MINTA-0001', stamps: 7, tier: 'Ezüst', usual: 'Flat white', total: 162, free: 0 },
-    { name: 'Minta Bence', code: 'MINTA-0002', stamps: 9, tier: 'Bronz', usual: 'Cortado', total: 58, free: 1 },
-    { name: 'Minta Csilla', code: 'MINTA-0003', stamps: 2, tier: 'Klubtag', usual: 'Cappuccino', total: 7, free: 0 },
-  ];
-  function pult() {
-    const finder = $('.finder'), state = $('.finder__state'), startBtn = $('#scan-start');
-    const box = $('#guest'), picker = $('.picker'), pick = $('.picker__grid');
-    let gi = 0, g = { ...GUESTS[0] }, mode = 'add', scanning = false;
-    const drinks = ['Espresso', 'Cortado', 'Cappuccino', 'Flat white', 'Latte', 'Americano', 'Matcha latte'];
-    function draw(pop) {
-      const ready = g.stamps >= 10;
-      box.innerHTML = `<p class="guest__code">${t('Vendég · {code}', { code: g.code })}</p><p class="guest__name">${g.name}</p>
-        <p class="guest__meta"><span class="tier">${g.tier}</span><span>${t('Általában: {d}', { d: g.usual })}</span><span>${t('{n} megvett kávé', { n: g.total })}</span>${g.free ? `<span>${t(g.free === 1 ? '1 ingyen kávé a fiókban' : '{n} ingyen kávé a fiókban', { n: g.free })}</span>` : ''}</p>
-        <div class="dots" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < g.stamps ? 'on' : ''}${pop === i ? ' pop' : ''}"></i>`).join('')}</div>
-        <p class="count"><b>${Math.min(g.stamps, 10)}</b> / 10 kávé</p>
-        <p class="ready" ${ready ? '' : 'hidden'}>Megvan a jutalom — jár az ingyen kávé.</p>
-        <div class="acts">
-          ${ready ? '<button class="b b--main" data-a="redeem" type="button">Ingyen kávé beváltása</button>' : '<button class="b b--main" data-a="add" type="button">Kávé hozzáadása</button>'}
-          ${g.free ? '<button class="b b--olive wide" data-a="banked" type="button">Beváltom most →</button>' : ''}
-          <button class="b" data-a="fix" type="button" ${g.stamps ? '' : 'disabled'}>Elírás javítása (−1 kávé)</button>
-          <button class="b" data-a="next" type="button">Következő vendég</button>
-        </div>`;
-      if (pop != null) setTimeout(() => $$('.dots i', box).forEach((d) => d.classList.remove('pop')), 380);
-    }
-    function showPicker(m) {
-      mode = m; picker.hidden = false;
-      $('h3', picker).textContent = m === 'add' ? 'Melyik ital?' : 'Melyik italt kapja ingyen?';
-      pick.innerHTML = drinks.map((d) => `<button class="b" type="button" data-d="${d}">${d}</button>`).join('') + (m === 'add' ? '<button class="b b--ghost" type="button" data-d="">Nem rögzítem, csak a pecsét</button>' : '');
-      picker.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
-    }
-    box.addEventListener('click', (e) => {
-      const a = e.target.closest('[data-a]')?.dataset.a; if (!a) return;
-      if (a === 'add') showPicker('add');
-      else if (a === 'redeem' || a === 'banked') showPicker(a);
-      else if (a === 'fix') { g.stamps = Math.max(0, g.stamps - 1); g.total--; picker.hidden = true; draw(); toast('Javítva (−1 kávé)'); }
-      else if (a === 'next') { gi = (gi + 1) % GUESTS.length; g = { ...GUESTS[gi] }; picker.hidden = true; draw(); }
-    });
-    pick.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-d]'); if (!b) return;
-      picker.hidden = true;
-      if (mode === 'add') { g.stamps++; g.total++; draw(g.stamps - 1); toast(g.stamps >= 10 ? 'Megvan a jutalom — jár az ingyen kávé.' : 'Kávé hozzáadva'); }
-      else if (mode === 'redeem') { g.stamps = 0; draw(); toast('Ingyen kávé beváltva'); }
-      else { g.free = Math.max(0, g.free - 1); draw(); toast('Ingyen kávé átadva'); }
-    });
-    startBtn.addEventListener('click', () => {
-      scanning = !scanning; finder.classList.toggle('on', scanning);
-      state.textContent = scanning ? 'Olvasás… (minta)' : 'Kamera kikapcsolva'; startBtn.textContent = scanning ? 'Leállítás' : 'Olvasás indítása';
-      if (scanning) setTimeout(() => { if (!scanning) return; startBtn.click(); gi = (gi + 1) % GUESTS.length; g = { ...GUESTS[gi] }; draw(); toast(t('{name} kártyája beolvasva (minta)', { name: t(g.name) })); }, 2200);
-    });
-    $('#code-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const v = $('#code').value.trim().toUpperCase(), i = GUESTS.findIndex((x) => x.code === v);
-      if (i < 0) return toast('Nem találjuk ezt a kártyát — próbáld: MINTA-0002');
-      gi = i; g = { ...GUESTS[i] }; draw();
-    });
-    draw();
-  }
-
-  // ---------- admin (mock-up) ----------
-  const ADMIN_TABS = [['live', 'Élő forgalom'], ['products', 'Étlap'], ['journal', 'Napló'], ['photos', 'Képek'], ['overview', 'Áttekintés'], ['funnel', 'Tölcsér'], ['customers', 'Vendégek'], ['coffee', 'Kávé'], ['rewards', 'Jutalmak'], ['retention', 'Megtartás'], ['segments', 'Szegmensek'], ['transactions', 'Tranzakciók'], ['members', 'Tagok'], ['wallet', 'Pénztárca']];
-  const tiles = (rows) => `<div class="tiles">${rows.map(([l, v, s]) => `<div class="tile"><span>${l}</span><b>${v}</b>${s ? `<small>${s}</small>` : ''}</div>`).join('')}</div>`;
-  const bars = (vals, labels, cls = []) => { const m = Math.max(...vals); return `<div class="chart">${vals.map((v, i) => `<div><i class="${cls[i] || ''}" style="--v:${(v / m) * 100};--i:${i}"></i><span>${labels[i]}</span></div>`).join('')}</div>`; };
-  const hbars = (rows, unit = '') => { const m = Math.max(...rows.map((r) => r[1])); return rows.map(([l, v]) => `<div class="hbar"><span>${l}</span><i style="--v:${(v / m) * 100}"></i><em>${v.toLocaleString('hu-HU')}${t(unit)}</em></div>`).join(''); };
-  const table = (head, rows) => `<div class="scroll"><table class="tbl"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-  const panel = (title, body) => `<div class="panel"><h2>${title}</h2>${body}</div>`;
-  const MEMBERS = [['Minta Anna', 'Ezüst', '7 / 10', 162, 0], ['Minta Bence', 'Bronz', '9 / 10', 58, 1], ['Minta Csilla', 'Klubtag', '2 / 10', 7, 0], ['Minta Dávid', 'Arany', '4 / 10', 318, 2], ['Minta Emma', 'Klubtag', '5 / 10', 5, 0], ['Minta Ferenc', 'Bronz', '10 / 10', 74, 0]];
-  const days14 = Array.from({ length: 14 }, (_, i) => i + 1);
-  const PANELS = {
-    live: () => tiles([['Mai forgalom', ft(184600), 'vs. 8 szokásos nap: +6%'], ['Mai előrejelzés', ft(236000), t('sáv: {a} – {b}', { a: ft(214000), b: ft(258000) })], ['Átlagos kosár', ft(1840), '100 nyugta · általában 1 790 Ft'], ['Nullszaldó', 'megvan', t('napi nullszaldó: {a} (bruttó)', { a: ft(150000) })]])
-      + `<div class="cols">${panel('Ma óránként', bars([9, 22, 31, 26, 18, 21, 24, 17, 12, 5], ['7', '8', '9', '10', '11', '12', '13', '14', '15', '16'], ['', '', '', 'low', 'low', '', '', 'low', '', 'now']) + '<p class="fine" style="margin-top:14px">Világos oszlop: az óra jobb volt egy szokásos ilyen napnál. Halvány: elmaradt. Szaggatott: az éppen futó óra.</p>')}
-        ${panel('Mai legnépszerűbbek', hbars([['Cappuccino', 31], ['Flat white', 24], ['Latte', 19], ['Espresso', 14], ['Croissant', 12], ['Pisztáciás latte', 9]], ' db'))}</div>`,
-    products: async () => {
-      let rows = [];
-      try { rows = (await api('products')).slice(0, 14).map((p) => [esc(nice(hu(p.name))), T.cats[p.cat] || p.cat, ft(p.price_huf), p.active === false ? 'Rejtve' : 'Aktív']); } catch (e) { /* offline */ }
-      return panel('Étlap', rows.length ? table(['Név', 'Kategória', 'Ár', 'Állapot'], rows) + '<p class="fine" style="margin-top:14px">Az első 14 termék az élő étlapról.</p>' : '<p class="fine">Még nincs adat.</p>');
-    },
-    journal: async () => {
-      let rows = [];
-      try { rows = (await api('whats-new')).map((p) => [esc(hu(p.title)), esc(date(p.date)), (p.tags || []).map((x) => TAGS[x]).filter(Boolean).map((x) => t(x)).join(', '), p.active === false ? 'Rejtve' : 'Aktív']); } catch (e) { /* offline */ }
-      return panel('Napló', rows.length ? table(['Bejegyzés', 'Dátum', 'Címkék', 'Állapot'], rows) : '<p class="fine">Még nincs adat.</p>');
-    },
-    photos: () => panel('Képek', `<div class="pics">${['coffee-espresso-1x1', 'coffee-cortado-1x1', 'coffee-cappuccino-1x1', 'coffee-flat-white-1x1', 'coffee-latte-1x1', 'coffee-americano-1x1', 'coffee-matcha-latte-1x1', 'loyalty-logo-cup-top-1x1', 'menu-croissant-sandwich-3x2', 'place-dining-room-daylight-3x2', 'contact-shopfront-day-3x2', 'team-brothers-3x2'].map((n) => pic(`/shared/media/${n}.jpg`, 'alt="" loading="lazy" width="300" height="300"')).join('')}</div>`),
-    overview: () => `<p class="subhead">Ma</p>${tiles([['QR-beolvasás', 46], ['Új vendég', 5], [B.en ? 'Coffees' : 'Kávé', 41], ['Beváltott jutalom', 3]])}<p class="subhead">Összesen, indulás óta</p>${tiles([['Vendég összesen', 612], ['Aktív vendég', 284], ['Kiadott kávé', '4 870'], ['Ingyen kávé', 356]])}${panel('Napi alakulás (utolsó 14 nap)', bars([28, 34, 31, 40, 46, 22, 18, 30, 37, 35, 44, 49, 25, 41], days14))}`,
-    funnel: () => panel('Konverziós tölcsér', hbars([['QR-beolvasás', 1480], ['Regisztráció', 612], ['Első kávé', 498], ['Visszatérő', 301], ['Megszerzett jutalom', 142], ['Beváltott jutalom', 118]])),
-    customers: () => tiles([['Vendég összesen', 612], ['Új (friss)', 48], ['Visszatérő', 301], ['Aktív', 284], ['Inaktív', 127]]) + panel('Legaktívabb vendégek', table(['Vendég', 'Szint', B.en ? 'Coffees' : 'Kávé'], MEMBERS.slice().sort((a, b) => b[3] - a[3]).slice(0, 5).map((m) => [m[0], m[1], m[3]]))),
-    coffee: () => tiles([['Átlagos kávé / vendég', '8,0'], ['Átlagos látogatás', '6,4'], ['Átlag két látogatás közt', '4,2 nap']]) + `<div class="cols">${panel('Vásárlások napszak szerint', bars([6, 19, 27, 22, 14, 17, 20, 13, 9, 4, 2], ['7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17']))}${panel('Mit isznak', hbars([['Cappuccino', 1240], ['Flat white', 980], ['Latte', 870], ['Espresso', 610], ['Cortado', 420], ['Nincs rögzítve', 750]]))}</div>`,
-    rewards: () => tiles([['Megszerzett jutalom', 142], ['Beváltott jutalom', 118], ['Beváltásra vár', 24], ['Beváltási arány', '83%'], ['Átlag a megszerzésig', '31 nap']]) + panel('Ingyen kávék italok szerint', hbars([['Flat white', 34], ['Cappuccino', 31], ['Latte', 22], ['Pisztáciás latte', 17], ['Espresso', 14]])),
-    retention: () => panel('Vendégmegtartás', bars([100, 62, 48, 41, 36, 33, 31, 29], ['0. hét', '1.', '2.', '3.', '4.', '5.', '6.', '7.']) + '<p class="fine" style="margin-top:14px">A regisztráció utáni hetekben visszatérő vendégek aránya (%).</p>'),
-    segments: () => tiles([['Új (friss)', 48], ['Aktív', 284], ['Jutalom közeli', 57], ['Törzsvendég', 39], ['Inaktív', 127]]) + '<p class="fine">A szegmensek átfedhetik egymást — egy vendég lehet Aktív és Jutalom közeli is. A határértékek a beállításokban módosíthatók.</p>',
-    transactions: () => panel('Munkatársi tranzakciók', table(['Mikor', 'Vendég', 'Típus', 'Egyenleg', 'Ki'], [['ma 10:42', 'Minta Anna', 'Kávé hozzáadva', '7 / 10', 'Minta Munkatárs'], ['ma 10:17', 'Minta Ferenc', 'Jutalom megszerezve', '10 / 10', 'Minta Munkatárs'], ['ma 9:58', 'Minta Dávid', 'Jutalom beváltva', '0 / 10', 'Minta Munkatárs'], ['ma 9:31', 'Minta Emma', 'Regisztráció', '5 / 10', '—'], ['ma 8:49', 'Minta Bence', 'Kézi javítás', '9 / 10', 'Minta Admin']])),
-    members: () => panel('Tagok', table(['Név', 'Szint', 'Állás', B.en ? 'Coffees' : 'Kávé', 'Ingyen'], MEMBERS.map((m) => [m[0], `<span class="tier">${m[1]}</span>`, m[2] === '10 / 10' ? `${m[2]} · ${t('Jutalom jár')}` : m[2], m[3], m[4]]))),
-    wallet: () => `<div class="cols cols--even">${panel('Apple Wallet', `<div class="kv"><span>Állapot</span><b data-en="Live">Aktív</b></div><div class="kv"><span>Kiadott kártya</span><b>318</b></div><div class="kv"><span>Regisztrált eszköz</span><b>291</b></div><div class="kv"><span>Sikertelen értesítés</span><b>2</b></div><div class="kv"><span>Utolsó kártyafrissítés</span><b>ma 10:42</b></div>`)}${panel('Google Wallet', `<div class="kv"><span>Állapot</span><b data-en="Live">Aktív</b></div><div class="kv"><span>Kiadott Google kártya</span><b>204</b></div><div class="kv"><span>Sikertelen Google frissítés</span><b>0</b></div>`)}</div><p class="fine" style="margin-top:14px">Privát kulcsot soha ne írj be ezen a képernyőn — a backend titkos beállításai közé tartozik.</p>`,
-  };
-  function admin() {
-    const bar = $('#adm-tabs'), out = $('#adm-out');
-    bar.innerHTML = ADMIN_TABS.map(([k, l]) => `<button class="chip" role="tab" type="button" data-k="${k}" aria-selected="false">${l}</button>`).join('');
-    // Separate mock-up pages for the two new products.
-    if (!$('.adm-more')) bar.insertAdjacentHTML('afterend', '<p class="adm-more" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0"><a class="chip" href="/admin/after-hours/">Bros After Hours ↗</a><a class="chip" href="/admin/delivery/">Bros Delivery ↗</a></p>');
-    async function show(k) {
-      $$('.chip', bar).forEach((c) => c.setAttribute('aria-selected', c.dataset.k === k));
-      out.innerHTML = await PANELS[k]();
-      history.replaceState(null, '', `#${k}`);
-    }
-    bar.addEventListener('click', (e) => { const b = e.target.closest('.chip'); if (b) show(b.dataset.k); });
-    const start = location.hash.slice(1);
-    show(own(PANELS, start) ? start : 'live');
-  }
-
-  // for /customer.js (account, card, sign-in landing, privacy, help)
-  if (window.BROS) window.BROS.site = { $, $$, esc, ico, toast, liveForm, post, store, pic, shot, nice, hu, calm, GUARD, previewPanel };
 
   chrome();
-  ({ etlap, husegkartya, ujdonsagok, kapcsolat, jatek, pult, admin }[page] || (() => {}))();
+  ({ etlap, husegkartya, ujdonsagok, kapcsolat, jatek }[page] || (() => {}))();
 })();

@@ -1,4 +1,4 @@
-// Bros Cafe · D · admin core: text lookup, API (same token and endpoints as the React dashboard), small UI helpers
+// Bros Cafe · admin core: text lookup, API (same token and endpoints as the React dashboard), small UI helpers
 // (toast, dialogs, tables) and the SVG chart kit. The tab files add themselves to BA.tabs. → window.BA
 (() => {
   const B = window.BROS;
@@ -19,7 +19,7 @@
     return v;
   };
   const T = BA.T;
-  BA.esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  BA.esc = B.shell.esc;
   const esc = BA.esc;
   /** Text of a bilingual {hu,en} pair in the page language. */
   BA.pick = (pair) => (pair && (pair[lang] || pair.hu || pair.en)) || '';
@@ -211,5 +211,4 @@
   // ---------- registry ----------
   /** BA.tab('live', { icon, link?: href, render(root, ctx) }) in tab order. */
   BA.tab = (id, def) => { BA.tabs[id] = def; BA.order.push(id); };
-  BA.go = (tab) => { if (BA.navigate) BA.navigate(tab); };
 })();

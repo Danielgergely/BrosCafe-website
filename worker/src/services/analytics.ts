@@ -6,16 +6,17 @@
 import type { Doc } from '../db';
 import type { App } from '../http';
 import * as appSettings from './app_settings';
+import { fsum } from './forecasts';
 
 export const TRACKED_EVENTS = new Set(['qr_scan', 'page_view', 'registration_started', 'registration_completed', 'wallet_added']);
 
 /** A parsed timestamp: microseconds since the epoch, plus the date and hour as written (datetime.date()/.hour). */
-export interface Ts { us: number; date: string; hour: number }
+interface Ts { us: number; date: string; hour: number }
 
 const ISO = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2})(?::?(\d{2})(?::?(\d{2})(?:[.,](\d{1,6}))?)?)?)?(Z|[+-]\d{2}(?::?\d{2})?)?$/;
 
 /** datetime.fromisoformat, or null when it would raise. */
-export function parseTs(value: unknown): Ts | null {
+function parseTs(value: unknown): Ts | null {
   if (typeof value !== 'string') return null;
   const m = ISO.exec(value);
   if (!m) return null;
@@ -32,14 +33,14 @@ export function parseTs(value: unknown): Ts | null {
 }
 
 const nowUs = () => Date.now() * 1000;
-export const since = (days: number) => nowUs() - days * 86_400_000_000;
-export function todayStart(): number {
+const since = (days: number) => nowUs() - days * 86_400_000_000;
+function todayStart(): number {
   const d = new Date();
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()) * 1000;
 }
 
 /** Python's round(x, digits): exact decimal value of the double, ties to even. */
-export function pyRound(x: number, digits = 0): number {
+function pyRound(x: number, digits = 0): number {
   if (!Number.isFinite(x)) return x;
   const scale = 10 ** digits;
   const fixed = Number(x.toFixed(digits)); // exact; ties go away from zero
@@ -60,7 +61,7 @@ export function pyRound(x: number, digits = 0): number {
   return (x < 0 ? -even : even) / scale;
 }
 
-export const pct = (n: number, d: number) => (d ? pyRound((n / d) * 100, 1) : 0.0);
+const pct = (n: number, d: number) => (d ? pyRound((n / d) * 100, 1) : 0.0);
 
 export function parseUserAgent(ua: string | null | undefined): [string, string] {
   const s = (ua || '').toLowerCase();
@@ -130,18 +131,6 @@ function hoursToReward(txs: Doc[], members: Doc[]): number[] {
 function mean(values: number[], digits = 1): number {
   if (!values.length) return 0;
   return pyRound(fsum(values) / values.length, digits);
-}
-
-/** Python 3.12+'s sum() over floats: Neumaier-compensated. */
-function fsum(values: number[]): number {
-  let total = 0;
-  let c = 0;
-  for (const x of values) {
-    const t = total + x;
-    c += Math.abs(total) >= Math.abs(x) ? total - t + x : x - t + total;
-    total = t;
-  }
-  return c && Number.isFinite(c) ? total + c : total;
 }
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0);
@@ -243,7 +232,7 @@ export async function coffee(app: App) {
   // sorted(..., reverse=True) is stable, like Array.prototype.sort
   const top = [...members].sort((a, b) => b.total_coffees - a.total_coffees).slice(0, 5);
 
-  const products = await app.db.products.find({}, { projection: { _id: 0, id: 1, name: 1 }, limit: 500 });
+  const products = await app.db.products.find({}, { projection: { id: 1, name: 1 }, limit: 500 });
   const names = new Map<unknown, unknown>(products.map((p) => [p.id, p.name]));
 
   const mix = (list: Doc[]) => {
@@ -309,7 +298,7 @@ export async function retention(app: App) {
   ];
 }
 
-export const SEGMENT_ORDER = ['New', 'Active', 'Almost Reward', 'Reward Available', 'Inactive', 'Loyal'];
+const SEGMENT_ORDER = ['New', 'Active', 'Almost Reward', 'Reward Available', 'Inactive', 'Loyal'];
 
 export async function segments(app: App) {
   const [txs, members] = await load(app);

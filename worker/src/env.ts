@@ -2,7 +2,7 @@
 export interface Env {
   DB: D1Database;
   MEDIA: R2Bucket; // photos uploaded through /admin (was MEDIA_DIR)
-  ASSETS: Fetcher; // the React build
+  ASSETS: Fetcher; // the static site (site/)
   APNS_CERT?: Fetcher; // mTLS binding with the Apple pass certificate, for Wallet pushes
   CF_VERSION?: { id: string; tag?: string; timestamp?: string }; // the deployed version
 
@@ -50,7 +50,6 @@ export interface Env {
   APPLE_CERTIFICATE?: string; // pass certificate, PEM (signing)
   APPLE_PRIVATE_KEY?: string; // its key, PEM (signing; pushes go through APNS_CERT)
   APPLE_WWDR_CERTIFICATE?: string; // Apple WWDR intermediate, PEM
-  // The Python version could also read these from files (*_PATH) or a .p12; on Workers they are PEM strings only.
   APNS_HOST?: string;
 
   // Google Wallet

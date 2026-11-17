@@ -1,11 +1,10 @@
-// Bros Cafe · D — Bros After Hours: the public booking page, the guest's cancel page and the admin mock-up.
+// Bros After Hours: the public booking page, the guest's cancel page and the admin page.
 // Spec: docs/after-hours.md · backend contract: docs/after-hours-api.md
 (() => {
-  const B = window.BROS || { t: (s) => s, en: false, lang: 'hu', locale: 'hu-HU' };
+  const B = window.BROS, { esc, ft } = B.shell;
   const t = B.t, loc = B.locale;
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const still = calm || !!(navigator.connection && navigator.connection.saveData); // no video: the still shows
 
@@ -19,9 +18,6 @@
     extraGuest: 1990,                    // DRAFT amount: per person above baseGuests (7–12)
     extraHour: 5900,                     // DRAFT amount: per hour above baseHours
     draft: true, windowMonths: 3,
-    closedDays: ['12-24', '12-25', '12-26', '12-31', '01-01'], // 'MM-DD', blocked every year unless the admin opens the day
-    voucher: { AFTER25: 25 },            // % off the base fee only; the server is authoritative (the mock mirrors it)
-    groupDiscount: [{ from: 4, to: 7, pct: 25 }, { from: 8, pct: 35 }], // on food only, information: how food is paid is not decided
     packages: [ // the three food selections: placeholders, contents and prices TBD, paid on site
       { id: 'food1', name: '1. ételválogatás' }, { id: 'food2', name: '2. ételválogatás' }, { id: 'food3', name: '3. ételválogatás' },
     ],
@@ -35,7 +31,6 @@
   // deposit = base + surcharges: 6 p/2 h 14 900 · 8 p/2 h 18 880 · 6 p/3 h 20 800 · 12 p/4 h 38 640
   const extraGuests = (guests) => Math.max(0, guests - CONFIG.baseGuests), extraHours = (hours) => Math.max(0, hours - CONFIG.baseHours);
   const total = (guests, hours) => CONFIG.base + CONFIG.extraGuest * extraGuests(guests) + CONFIG.extraHour * extraHours(hours);
-  const ft = (n) => `${new Intl.NumberFormat('hu-HU', { useGrouping: 'always' }).format(n)} Ft`;
   const hoursTxt = (n) => t('{n} óra', { n });
   // '14 900 Ft + 2 × 1 990 Ft + 1 × 5 900 Ft', or nothing when only the base was paid
   const breakdown = (b) => (extraGuests(b.guests) || extraHours(b.hours) || b.discount ? `<small>${ft(CONFIG.base)}${extraGuests(b.guests) ? ` + ${extraGuests(b.guests)} × ${ft(CONFIG.extraGuest)}` : ''}${extraHours(b.hours) ? ` + ${extraHours(b.hours)} × ${ft(CONFIG.extraHour)}` : ''}${b.discount ? ` − ${ft(b.discount)} (${esc(b.voucher_code)})` : ''}</small>` : '');
@@ -76,7 +71,7 @@
 
   // ---------- data access: everything the pages read or write goes through `api` ----------
   // The worker: worker/src/routers/after_hours.ts, docs/after-hours-api.md.
-  const http = (() => {
+  const api = (() => {
     const base = '/api/after-hours';
     const call = async (path, opts) => {
       // admin calls carry the staff token (belepes/staff.js); a dead session goes back to the login
@@ -104,61 +99,6 @@
     };
   })();
 
-  // MOCK: in-memory sample data generated from today, so the preview always has open evenings. Nothing is saved or sent.
-  const mock = (() => {
-    const wait = (v) => new Promise((res) => setTimeout(() => res(v), calm ? 0 : 280));
-    const overrides = new Map(); // date -> open (what the admin toggled)
-    const closedDay = (d) => CONFIG.closedDays.includes(iso(d).slice(5));
-    // Mon–Sat are open unless blocked (a fixed pattern stands in for the admin's choices); Sundays and the closed days are off.
-    const defaultOpen = (d) => d.getUTCDay() !== 0 && !closedDay(d) && (iso(d) === LAUNCH_DATE || (d.getUTCDate() * 7 + d.getUTCMonth() * 3) % 5 !== 0);
-    const isOpen = (s) => (overrides.has(s) ? overrides.get(s) : defaultOpen(parse(s)));
-    const sample = [ // days after the first bookable evening, name, guests, start, hours, …
-      [1, 'Minta Anna', 8, '18:30', 3, 'birthday', 'paid', ['food2'], 'Egy vendég laktózérzékeny.'],
-      [4, 'Minta Bence', 10, '18:00', 4, 'team', 'paid', ['food1', 'food3'], '', 'Minta Kft.', '12345678-1-42'],
-      [8, 'Minta Csilla', 4, '19:00', 2, 'friends', 'cancelled', [], ''],
-      [10, 'Minta Dávid', 6, '18:00', 2, 'family', 'paid', ['food1'], 'Két gyerek is jön.'],
-      [15, 'Minta Emma', 5, '20:00', 2, 'friends', 'refunded', [], ''],
-    ];
-    const used = new Set();
-    const bookings = sample.map(([off, name, guests, start, hours, occasion, status, packages, note, company, tax], i) => {
-      let d = addDays(WIN.min, off); // days after the first bookable evening; never a Sunday or a closed day
-      while (d.getUTCDay() === 0 || closedDay(d) || used.has(iso(d))) d = addDays(d, 1);
-      used.add(iso(d));
-      const first = name.split(' ')[1].toLowerCase().normalize('NFD').replace(/[^a-z]/g, '');
-      if (status === 'paid') overrides.set(iso(d), true);
-      return {
-        id: `AH-${String(i + 1).padStart(4, '0')}`, date: iso(d), start, hours, guests, name, email: `minta.${first}@example.com`, phone: `+36 30 000 000${i + 1}`,
-        billing: { zip: '0000', city: 'Mintaváros', street: `Minta utca ${i + 1}.`, company: company || '', tax_number: tax || '' },
-        occasion, note, packages, status, cake: i === 0, voucher_code: i === 0 ? 'AFTER25' : null, discount: i === 0 ? Math.round(CONFIG.base * .25) : 0, amount: total(guests, hours) - (i === 0 ? Math.round(CONFIG.base * .25) : 0),
-        cancelled_at: status === 'paid' ? null : new Date(Date.now() - 864e5).toISOString(), refund_percent: status === 'refunded' ? 100 : null,
-      };
-    });
-    const mockVoucher = (c) => { const k = String(c).trim().toUpperCase(), pct = CONFIG.voucher[k]; return pct ? { valid: true, code: k, percent: pct, discount: Math.round(CONFIG.base * pct / 100) } : { valid: false }; };
-    const taken = (s) => bookings.find((b) => b.date === s && b.status === 'paid');
-    const range = (from, to, fn) => { const out = []; for (let d = parse(from), e = parse(to); d <= e; d = addDays(d, 1)) { const r = fn(iso(d)); if (r) out.push(r); } return out; };
-    const find = (id) => { const b = bookings.find((x) => x.id === id); if (!b) throw Object.assign(new Error('not_found'), { status: 404, code: 'not_found' }); return b; };
-    const refund = (b) => { const p = refundPercent(b); return { booking: { ...b }, refund_percent: p, refund_huf: Math.round(b.amount * p / 100) }; };
-    return {
-      // Only opened days are returned; a booked evening stays in the list as 'booked'.
-      availability: (from, to, code) => wait({ ...(code ? { voucher: mockVoucher(code) } : {}), days: range(from, to, (s) => (isOpen(s) || taken(s)) && parse(s) >= WIN.min && parse(s) <= WIN.max && { date: s, status: taken(s) ? 'booked' : 'open' }) }),
-      book: (p) => wait().then(() => { if (taken(p.date) || !isOpen(p.date)) throw Object.assign(new Error('day_taken'), { status: 409, code: 'day_taken' }); const v = p.voucher ? mockVoucher(p.voucher) : null; if (p.voucher && !v.valid) throw Object.assign(new Error('invalid_voucher'), { status: 400, code: 'invalid_voucher' }); return { preview: true, booking_id: 'AH-0000', amount: total(p.guests, p.hours) - (v ? v.discount : 0) }; }),
-      // The guest's own cancel link (signed token in the confirmation email). The mock always shows the first sample booking.
-      cancelInfo: () => wait(refund(bookings[0])),
-      cancelConfirm: () => wait().then(() => { const b = bookings[0], r = refund(b); b.status = 'refunded'; b.cancelled_at = new Date().toISOString(); b.refund_percent = r.refund_percent; return { ...r, booking: { ...b } }; }),
-      admin: {
-        days: (from, to) => wait({ days: range(from, to, (s) => ({ date: s, open: isOpen(s) || !!taken(s), booking_id: taken(s)?.id || null })) }),
-        setDay: (date, open) => { overrides.set(date, open); return wait({ date, open }); },
-        bookings: () => wait({ bookings: bookings.map((b) => ({ ...b })) }),
-        cancel: (id) => wait().then(() => { const b = find(id); b.status = 'cancelled'; b.cancelled_at = new Date().toISOString(); return { ...b }; }),
-        refund: (id, percent) => wait().then(() => { const b = find(id); b.status = 'refunded'; b.refund_percent = percent; return { ...b }; }),
-      },
-    };
-  })();
-
-  // Real API by default. Mock data for local work without the worker: open the page once with ?mock=1 (kept in this browser), ?mock=0 switches back.
-  const USE_MOCK = (() => { try { const q = new URLSearchParams(location.search).get('mock'); if (q === '1') localStorage.setItem('bros-mock', '1'); if (q === '0') localStorage.removeItem('bros-mock'); return localStorage.getItem('bros-mock') === '1'; } catch (e) { return false; } })();
-  // real pages: no "sample" labels (the markup carries them for the mock)
-  if (!USE_MOCK) { document.title = document.title.replace(' (minta)', '').replace(' (sample)', ''); $$('.aha__sample, [data-mock-only]').forEach((el) => el.remove()); }
   // Online payment is not switched on yet (the worker answers 503 payments_not_configured): say so instead of failing at the end.
   const NOT_READY = 'Az online fizetés még nincs bekapcsolva, ezért itt most nem lehet foglalni. Írj nekünk, és megbeszéljük: hello@broscafe.hu';
   function notReady(anchor) {
@@ -175,7 +115,6 @@
     const head = $('#foglalas-cim'); if (head) { head.textContent = t('Az online foglalás hamarosan indul.'); const intro = head.nextElementSibling; if (intro && intro.matches('p.body')) intro.hidden = true; }
     form.insertAdjacentHTML('beforebegin', `<div class="ah-return" id="ah-closed" role="status"><p>${t('Addig írj nekünk, és egyeztetünk.')}</p><p style="margin-top:14px"><a class="btn" href="/kapcsolat/">${t('Írj nekünk')}</a></p></div>`);
   }
-  const api = USE_MOCK ? mock : http;
 
   // ---------- month calendar (shared by both pages) ----------
   // o: range() -> { min, max } (Date) · start (Date) · legend [{s, label}] · day(iso) -> { s, label, disabled, pressed } · pick(iso)
@@ -254,7 +193,6 @@
     ['Baráti és családi alkalmak', ico('<circle cx="16" cy="16" r="5"/><circle cx="33" cy="18" r="4"/><path d="M6 38c0-8 4-12 10-12s10 4 10 12M27 38c0-6 3-9 7-9s8 3 8 9"/>')],
     ['Csak egy különleges élményért', ico('<path d="M24 7l4.5 10.5L40 19l-8.5 7.5L34 38l-10-6-10 6 2.5-11.5L8 19l11.5-1.5z"/>')],
   ];
-  const check = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
   const openWide = () => { if (matchMedia('(min-width: 980px)').matches) $$('details[data-open-wide]').forEach((d) => { d.open = true; }); };
   // a link to a folded block (#lemondas, #aszf, #csomagok) opens it
   function openTarget() { const el = location.hash.length > 1 && document.getElementById(location.hash.slice(1)); if (el && el.tagName === 'DETAILS') { el.open = true; el.scrollIntoView({ block: 'start' }); $('summary', el).focus({ preventScroll: true }); } }
@@ -268,7 +206,7 @@
     // the offer: one price, what is in it, what costs extra
     const C = CONFIG, eg = (g, h) => `${t('{n} fő', { n: g })}, ${hoursTxt(h)}: <b>${ft(total(g, h))}</b>`;
     $('#ah-inc4').innerHTML = INC.map(([txt, svg]) => `<li>${svg}<span>${t(txt)}</span></li>`).join('');
-    $('#ah-occ').innerHTML = OCC_TILES.map(([txt, svg], i) => `<li class="ah-occ__tile" style="--tilt:${[-1.5, 1, -.8, 1.6, -1.2, .8, -1][i]}deg">${svg}<span>${t(txt)}</span></li>`).join('');
+    $('#ah-occ').innerHTML = OCC_TILES.map(([txt, svg]) => `<li class="ah-occ__tile">${svg}<span>${t(txt)}</span></li>`).join('');
     $('#ah-tiers').innerHTML = `
       <article class="ah-offer">
         <div class="ah-price">
@@ -300,14 +238,13 @@
     const form = $('#ah-form'), guests = $('#ah-guests'), sum = $('#ah-sum'), result = $('#ah-result'), calRoot = $('#ah-cal'), ret = $('#ah-return');
     const F = (n) => form.elements[n];
     let days = new Map(), picked = null, cal = null, nGuests = Number(guests.value) || CONFIG.minGuests, start = STARTS[0], hours = CONFIG.baseHours, sending = false, vch = null;
-    $('#ah-cal-mock').hidden = !USE_MOCK;
 
     // back from Stripe: ?booking=<id>&paid=1 or ?cancelled=1 (docs/after-hours-api.md)
     (() => {
       const q = new URLSearchParams(location.search), paid = q.get('paid') === '1' && q.get('booking'), cancelled = q.get('cancelled') === '1';
       if (!paid && !cancelled) return;
       ret.innerHTML = paid
-        ? `<h3>${t('Köszönjük, a foglalás végleges!')}</h3><p>${t('Azonosító')}: <b>${esc(paid)}</b>. ${t('A visszaigazolást és a számlát e-mailben küldjük.')}</p>${USE_MOCK ? `<p class="fine">${t('Előnézet: valójában nem történt foglalás és fizetés.')}</p>` : ''}`
+        ? `<h3>${t('Köszönjük, a foglalás végleges!')}</h3><p>${t('Azonosító')}: <b>${esc(paid)}</b>. ${t('A visszaigazolást és a számlát e-mailben küldjük.')}</p>`
         : `<h3>${t('A fizetés megszakadt.')}</h3><p>${t('Nem történt terhelés, és a foglalás nem jött létre. Ha szeretnétek, kezdjétek újra.')}</p>`;
       ret.hidden = false; ret.dataset.s = paid ? 'paid' : 'cancelled';
       ['booking', 'paid', 'cancelled'].forEach((k) => q.delete(k));
@@ -475,9 +412,7 @@
       try {
         const res = await api.book(payload);
         if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
-        if (!USE_MOCK || !res.preview) throw new Error('no_checkout_url');
-        const back = (q) => `${location.pathname}?${q}`;
-        result.innerHTML = `${t('Ez egy előnézet: a valódi oldalon itt a fizetés következne (Stripe).')} ${t('Nézd meg, mi jön utána:')} <a href="${back(`booking=${res.booking_id}&paid=1`)}">${t('sikeres fizetés')}</a> · <a href="${back('cancelled=1')}">${t('megszakított fizetés')}</a>`;
+        throw new Error('no_checkout_url');
       } catch (err) {
         if (err.code === 'bookings_closed') bookingsClosed();
         else if (err.code === 'payments_not_configured') { notReady(ret); result.textContent = t(NOT_READY); }
@@ -496,7 +431,8 @@
 
   // ---------- admin ----------
   async function adminPage() {
-    if (!USE_MOCK) { if (!B.staff) return; await B.staff.guard({ adminOnly: true }); } // refunds: admins only
+    if (!B.staff) return;
+    await B.staff.guard({ adminOnly: true }); // refunds: admins only
     const root = $('#ah-admin');
     const ST = { pending: 'fizetésre vár', paid: 'fizetve', cancelled: 'lemondva', refunded: 'visszatérítve', expired: 'lejárt' };
     const OCC = { birthday: 'Születésnap', friends: 'Baráti este', team: 'Céges este, csapatépítő', family: 'Családi alkalom', other: 'Egyéb' };
@@ -570,7 +506,7 @@
           ${b.status === 'paid' ? `<button type="button" class="btn btn--ghost" data-act="cancel">${t('Foglalás lemondása')}</button>` : ''}
           ${b.status === 'cancelled' ? `<button type="button" class="btn" data-act="refund" data-pct="${pct}">${t('Előleg visszatérítése')} · ${pct}%</button>` : ''}
         </div>
-        <p class="fine" style="margin-top:14px">${USE_MOCK ? t('Minta: a gombok csak itt, a képernyőn változtatnak, pénz nem mozog.') : b.invoice_no ? `${t('Számla')}: ${esc(b.invoice_no)}` : b.status === 'paid' ? t('Számla még nincs kiállítva.') : ''}</p>`;
+        <p class="fine" style="margin-top:14px">${b.invoice_no ? `${t('Számla')}: ${esc(b.invoice_no)}` : b.status === 'paid' ? t('Számla még nincs kiállítva.') : ''}</p>`;
       if (!dlg.open) dlg.showModal();
       (focusSel && $(focusSel, dlg) || $('[data-close]', dlg)).focus();
     }
@@ -579,7 +515,7 @@
       if (e.target === dlg || e.target.closest('[data-close]')) return dlg.close();
       const act = e.target.closest('[data-act]'); if (!act || working) return;
       const id = $('.aha__dl', dlg).dataset.id;
-      if (!USE_MOCK && !confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég e-mailt kap róla.', { id }) : t('{id}: visszautaljuk az előleg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
+      if (!confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég e-mailt kap róla.', { id }) : t('{id}: visszautaljuk az előleg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
       working = true; act.setAttribute('aria-busy', 'true'); act.textContent = t('Folyamatban…');
       try {
         await (act.dataset.act === 'cancel' ? api.admin.cancel(id) : api.admin.refund(id, Number(act.dataset.pct)));
@@ -591,10 +527,10 @@
     refresh();
   }
 
-  // ---------- the guest's cancel page (mock-up of the signed link in the confirmation email) ----------
+  // ---------- the guest's cancel page (the signed link in the confirmation email) ----------
   async function cancelPage() {
     const root = $('#ah-cancel');
-    const token = new URLSearchParams(location.search).get('t') || (USE_MOCK ? 'minta' : '');
+    const token = new URLSearchParams(location.search).get('t') || '';
     const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
     let working = false;
     const view = (r, done, error) => {
@@ -605,7 +541,7 @@
           ${row(t('Azonosító'), esc(b.id))}${row(t('Dátum'), longDate.format(parse(b.date)))}${row(t('Időpont'), `${slot(b)} · ${hoursTxt(b.hours)}`)}${row(t('Vendégszám'), t('{n} fő', { n: b.guests }))}${row(t('Kifizetett előleg'), `${ft(b.amount)}${breakdown(b)}`)}
           ${row(t('Visszatérítés'), `<b>${ft(r.refund_huf)}</b> (${r.refund_percent}%)`)}
         </dl>
-        ${done ? `<p class="ah-preview" role="status" tabindex="-1">${t('A foglalást lemondtuk.')} ${r.refund_huf ? t('A visszatérítés {sum}, néhány napon belül érkezik a fizetéshez használt kártyára.', { sum: ft(r.refund_huf) }) : ''} ${USE_MOCK ? t('Ez egy előnézet: valójában nem történt lemondás és visszatérítés.') : ''}</p>`
+        ${done ? `<p class="ah-preview" role="status" tabindex="-1">${t('A foglalást lemondtuk.')} ${r.refund_huf ? t('A visszatérítés {sum}, néhány napon belül érkezik a fizetéshez használt kártyára.', { sum: ft(r.refund_huf) }) : ''}</p>`
           : `<p class="aha__hint">${t('A visszatérítés a lemondás időpontjától függ: legalább 7 nappal előtte 100%, legkésőbb 48 órával előtte 50%, azon belül 0%.')}</p>
         ${error ? `<p class="ah-err" role="alert">${t('Most nem sikerült lemondani. Próbáld újra egy perc múlva, vagy írj nekünk: hello@broscafe.hu')}</p>` : ''}
         <div class="aha__actions"><button type="button" class="btn" data-confirm>${t('Lemondom a foglalást')}</button><a class="btn btn--ghost" href="../">${t('Mégsem, megtartom')}</a></div>`}`;
