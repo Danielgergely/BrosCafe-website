@@ -18,8 +18,11 @@ export const config = (env: Env) => ({
   dlDrinkVat: s(env, 'DL_DRINK_VAT', '27'), // delivered drinks (on-site service may differ)
   dlFeeVat: s(env, 'DL_FEE_VAT', '27'),    // delivery fee
   prefix: s(env, 'SZAMLAZZ_PREFIX'),       // invoice number prefix, empty = the account's default
+  // Preview: payment requests (díjbekérő) only, never reported to NAV and never e-mailed; no storno for them.
+  proforma: s(env, 'SZAMLAZZ_PROFORMA') === 'true',
 });
-export const ready = (env: Env) => !!config(env).key;
+// SZAMLAZZ_OFF=true pauses invoicing (and its retries) without removing the key.
+export const ready = (env: Env) => !!config(env).key && s(env, 'SZAMLAZZ_OFF') !== 'true';
 export const MAX_TRIES = 6;
 
 export interface Buyer { name: string; zip: string; city: string; street: string; email: string; taxNumber?: string | null }
@@ -49,11 +52,11 @@ export function invoiceXml(app: App, inv: Invoice) {
     `<fejlec><keltDatum>${day}</keltDatum><teljesitesDatum>${day}</teljesitesDatum><fizetesiHataridoDatum>${day}</fizetesiHataridoDatum>` +
     `<fizmod>bankkártya</fizmod><penznem>HUF</penznem><szamlaNyelve>${inv.lang === 'en' ? 'en' : 'hu'}</szamlaNyelve><megjegyzes>${x(inv.comment)}</megjegyzes>` +
     `<arfolyamBank></arfolyamBank><arfolyam>0</arfolyam><rendelesSzam>${x(inv.ref)}</rendelesSzam><dijbekeroSzamlaszam></dijbekeroSzamlaszam>` +
-    `<elolegszamla>${inv.type === 'elolegszamla'}</elolegszamla><vegszamla>false</vegszamla><helyesbitoszamla>false</helyesbitoszamla><helyesbitettSzamlaszam></helyesbitettSzamlaszam>` +
-    `<dijbekero>false</dijbekero><szamlaszamElotag>${x(cfg.prefix)}</szamlaszamElotag><fizetve>true</fizetve></fejlec>` +
+    `<elolegszamla>${!cfg.proforma && inv.type === 'elolegszamla'}</elolegszamla><vegszamla>false</vegszamla><helyesbitoszamla>false</helyesbitoszamla><helyesbitettSzamlaszam></helyesbitettSzamlaszam>` +
+    `<dijbekero>${cfg.proforma}</dijbekero><szamlaszamElotag>${x(cfg.prefix)}</szamlaszamElotag><fizetve>${!cfg.proforma}</fizetve></fejlec>` +
     `<elado><emailReplyto>${x(settings(app.env).cafe.email)}</emailReplyto><emailTargy>${x(inv.subject)}</emailTargy><emailSzoveg>${x(inv.body)}</emailSzoveg></elado>` +
     `<vevo><nev>${x(b.name)}</nev><irsz>${x(b.zip)}</irsz><telepules>${x(b.city)}</telepules><cim>${x(b.street)}</cim>` +
-    `<email>${x(b.email)}</email><sendEmail>true</sendEmail>${b.taxNumber ? `<adoszam>${x(b.taxNumber)}</adoszam>` : ''}</vevo>` +
+    `<email>${x(b.email)}</email><sendEmail>${!cfg.proforma}</sendEmail>${b.taxNumber ? `<adoszam>${x(b.taxNumber)}</adoszam>` : ''}</vevo>` +
     `<tetelek>${inv.lines.map(lineXml).join('')}</tetelek></xmlszamla>`;
 }
 
@@ -116,7 +119,7 @@ export async function issueFor(app: App, table: 'ah_bookings' | 'dl_payers', id:
 
 /** Storno after a full refund. Never throws; returns the storno number or null. */
 export async function stornoFor(app: App, table: 'ah_bookings' | 'dl_payers', id: string, invoiceNo: string | null, buyerEmail: string): Promise<string | null> {
-  if (!invoiceNo || !ready(app.env)) return null;
+  if (!invoiceNo || !ready(app.env) || config(app.env).proforma) return null;
   try {
     const no = await storno(app, invoiceNo, buyerEmail);
     await app.db.d1.prepare(`UPDATE ${table} SET storno_no = ? WHERE id = ?`).bind(no, id).run();

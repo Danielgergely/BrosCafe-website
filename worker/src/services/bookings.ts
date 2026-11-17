@@ -19,6 +19,10 @@ export const handle = (h: (c: Ctx) => Promise<unknown>) => async (c: Ctx) => {
   }
 };
 export const invalid = (fields: string[]) => new ApiError(400, 'invalid', { fields });
+export const bookingsOpen = (app: App) => settings(app.env).bookings_open;
+export function assertBookingsOpen(app: App) {
+  if (!bookingsOpen(app)) throw new ApiError(503, 'bookings_closed', { message: 'Online booking opens soon. Until then write to hello@broscafe.hu.' });
+}
 
 // ---- Budapest time: a day is 'YYYY-MM-DD', a time 'HH:MM' ----
 export const tz = (app: App) => settings(app.env).cafe_tz;
@@ -66,11 +70,11 @@ export function safeEqual(a: string, b: string) {
   return d === 0;
 }
 
-/** Stripe may only send people back to our own pages: `/after-hours/` live, `/d/after-hours/` on the preview. */
+/** Stripe may only send people back to our own pages. */
 export function returnPath(v: unknown, allowed: string[], def: string) {
   if (typeof v !== 'string') return def;
-  const p = v.endsWith('/') ? v : `${v}/`;
-  return allowed.includes(p) || allowed.map((a) => `/d${a}`).includes(p) ? p : def;
+  const p = (v.endsWith('/') ? v : `${v}/`).replace(/^\/d\//, '/'); // old rows saved while the site lived under /d/
+  return allowed.includes(p) ? p : def;
 }
 export const siteUrl = (app: App, path: string) => `${settings(app.env).frontend_url}${path}`;
 

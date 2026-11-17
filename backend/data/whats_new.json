@@ -1,30 +1,30 @@
 {
-  "_comment": "Single source of truth for the On Tap & In Rotation feed. The guest-origin post is the one to edit whenever the rotation changes. Seed with: python -m app.seed --content",
+  "_comment": "Single source of truth for the news feed (Újdonságok). Seed with: python -m app.seed --content",
   "posts": [
     {
-      "id": "guest-origin",
+      "id": "brazil-colombia",
       "order": 1,
       "image": "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1200&q=85",
       "title": {
-        "en": "Meet this month's guest roast.",
-        "hu": "Itt a hónap vendégkávéja."
+        "en": "Meet our Brazilian–Colombian.",
+        "hu": "Bemutatjuk a brazil–kolumbiai kávénkat."
       },
       "blurb": {
-        "en": "Alongside our signature Brazilian espresso, we're currently pouring a vibrant, fruit-forward origin. Ask your barista about the flavour profile.",
-        "hu": "A jellegzetes brazil espressónk mellett most egy élénk, gyümölcsös kávét mérünk. Kérdezd a barista kollégát az ízjegyekről."
+        "en": "Next to our Brazilian there's a second coffee on the bar: a Brazilian–Colombian blend, roasted lighter, with a fruitier taste.",
+        "hu": "A brazil mellett van egy második kávénk is: egy brazil–kolumbiai blend, világosabb pörköléssel és gyümölcsösebb ízzel."
       },
       "body": {
-        "en": "Every few weeks we hand one side of the bar over to a different roaster. The house Brazilian stays exactly where it is — cocoa, hazelnut, caramel, the profile you can order without thinking. The guest slot is for the opposite: something bright, acidic and a little unfamiliar.\n\nRight now that means a fruit-forward washed lot, brewed as filter by default and pulled as espresso if you ask. The tasting notes go up on the board each morning, and whoever is on bar will happily talk you through it. If you like it, we bag it — while it lasts.",
-        "hu": "Néhány hetente átadjuk a pult egyik oldalát egy másik pörkölőnek. A házi brazil pontosan ott marad, ahol van: kakaó, mogyoró, karamell — az a profil, amit gondolkodás nélkül lehet rendelni. A vendéghely pont az ellenkezőjéről szól: valami élénk, savas és kicsit szokatlan.\n\nÉppen most egy gyümölcsös, mosott tétel van soron, alapból filterként főzve, kérésre espressóként. Az ízjegyeket minden reggel felírjuk a táblára, és aki a pultnál áll, szívesen mesél róla. Ha bejön, csomagoljuk is — amíg tart."
+        "en": "Our Brazilian is the base of every drink: cocoa, hazelnut, caramel, the cup you can order without thinking. The Brazilian–Colombian is its counterpart: a lighter roast with a fruitier taste, for when you want something a little brighter.\n\nBoth come from a Hungarian roaster who roasts in-house. Two characters, one standard — whichever you pick, we make it with the same care. Ask for it at the bar, or take it home in whole beans.",
+        "hu": "A brazil kávénk minden italunk alapja: kakaó, mogyoró, karamell — az a csésze, amit gondolkodás nélkül lehet rendelni. A brazil–kolumbiai a párja: világosabb pörkölés, gyümölcsösebb íz, ha valami kicsit élénkebbre vágysz.\n\nMindkettő egy magyar pörkölőtől érkezik, aki saját maga pörköli a kávéit. Két karakter, egy mérce: bármelyiket választod, ugyanazzal a gondossággal készítjük. Kérd a pultnál, vagy vidd haza szemesen."
       },
       "tags": [
-        "guest",
-        "origin"
+        "origin",
+        "house"
       ],
-      "date": "2026-09-10",
+      "date": "2026-11-17",
       "product_ids": [
-        "v60",
-        "bros-beans"
+        "espresso",
+        "impresso-classic-beans"
       ]
     },
     {
@@ -32,16 +32,16 @@
       "order": 2,
       "image": "https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=1200&q=85",
       "title": {
-        "en": "Why Brazil is the house roast.",
-        "hu": "Miért brazil a házi pörkölésünk?"
+        "en": "Why Brazil is the base of every drink.",
+        "hu": "Miért a brazil minden italunk alapja?"
       },
       "blurb": {
         "en": "Low acidity, heavy body, and a chocolate note that survives milk. The one coffee that never has a bad morning.",
         "hu": "Alacsony savtartalom, testes karakter, és egy csokoládés jegy, ami a tejet is túléli. Az a kávé, aminek sosincs rossz reggele."
       },
       "body": {
-        "en": "A house roast has a harder job than a guest coffee. It has to work as a straight espresso at seven in the morning, hold its shape under a cappuccino's worth of milk, and taste the same on a Tuesday as it did on a Saturday.\n\nBrazil does all three. Naturally low in acidity, heavy in the cup, and reliably chocolatey — it is forgiving of a slightly long shot and generous with milk. We roast it medium, locally, and never serve it more than a week off the roaster. It is the baseline everything else on this bar is measured against.",
-        "hu": "Egy házi pörkölésnek nehezebb dolga van, mint egy vendégkávénak. Működnie kell tiszta espressóként reggel hétkor, meg kell tartania magát egy cappuccinónyi tej alatt, és kedden ugyanúgy kell szólnia, mint szombaton.\n\nA brazil mindhármat tudja. Természetesen alacsony savtartalmú, testes, és megbízhatóan csokoládés — megbocsátja a kicsit hosszabb shotot, és jól bírja a tejet. Közepesre pörköljük, helyben, és sosem adjuk ki egy hétnél régebben. Ez az a mérce, amihez a pulton minden mást mérünk."
+        "en": "The coffee behind every drink has a hard job. It has to work as a straight espresso at seven in the morning, hold its shape under a cappuccino's worth of milk, and taste the same on a Tuesday as it did on a Saturday.\n\nBrazil does all three. Naturally low in acidity, heavy in the cup, and reliably chocolatey — it is forgiving of a slightly long shot and generous with milk. It comes from a Hungarian roaster who roasts in-house, and it is the baseline everything else on this bar is measured against.",
+        "hu": "Annak a kávénak, amire minden italunk épül, nehéz dolga van. Működnie kell tiszta espressóként reggel hétkor, meg kell tartania magát egy cappuccinónyi tej alatt, és kedden ugyanúgy kell szólnia, mint szombaton.\n\nA brazil mindhármat tudja. Természetesen alacsony savtartalmú, testes, és megbízhatóan csokoládés — megbocsátja a kicsit hosszabb shotot, és jól bírja a tejet. Egy magyar pörkölőtől érkezik, aki saját maga pörköli a kávéit, és ez az a mérce, amihez a pulton minden mást mérünk."
       },
       "tags": [
         "house"
@@ -61,12 +61,12 @@
         "hu": "Mandulás croissant, minden nap frissen."
       },
       "blurb": {
-        "en": "Buttery, flaky, and out of the oven before we open. The standing pairing for the house Brazilian.",
-        "hu": "Vajas, leveles, és még nyitás előtt kijön a sütőből. A házi brazil állandó párja."
+        "en": "Buttery, flaky, and out of the oven before we open. The standing pairing for our Brazilian.",
+        "hu": "Vajas, leveles, és még nyitás előtt kijön a sütőből. A brazil kávénk állandó párja."
       },
       "body": {
-        "en": "Layered by hand, filled with almond frangipane and dusted with toasted flakes. Best warm, and best with something milky — the caramel in the house roast and the almond do most of the work for you.\n\nThey come out early and they go fast. If the tray is empty by ten, that is not bad planning, that is just how many we can make.",
-        "hu": "Kézzel hajtogatva, mandulás frangipane töltelékkel, pirított mandulapehellyel megszórva. Melegen a legjobb, és valami tejessel — a házi pörkölés karamelles jegye és a mandula elvégzi helyetted a munkát.\n\nKorán jönnek ki, és gyorsan fogynak. Ha tízre üres a tálca, az nem rossz tervezés, csak ennyit tudunk sütni."
+        "en": "Layered by hand, filled with almond frangipane and dusted with toasted flakes. Best warm, and best with something milky — the caramel in our Brazilian and the almond do most of the work for you.\n\nThey come out early and they go fast. If the tray is empty by ten, that is not bad planning, that is just how many we can make.",
+        "hu": "Kézzel hajtogatva, mandulás frangipane töltelékkel, pirított mandulapehellyel megszórva. Melegen a legjobb, és valami tejessel — a brazil kávénk karamelles jegye és a mandula elvégzi helyetted a munkát.\n\nKorán jönnek ki, és gyorsan fogynak. Ha tízre üres a tálca, az nem rossz tervezés, csak ennyit tudunk sütni."
       },
       "tags": [
         "pastry"

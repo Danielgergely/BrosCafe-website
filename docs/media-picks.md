@@ -1,7 +1,7 @@
 # Media picks — variant D
 
 Status: **v2 (final)** — every file named below exists. Photos are JPEG + WebP (same name), max 2000 px, metadata stripped. Videos are silent H.264, faststart, 1.1–1.7 MB, 7–10 s; each has a poster `.jpg` = its first frame.
-All files: `variants/shared/media/` → served as `/shared/media/...`. Photos also as `.webp` (same name).
+All files: `site/shared/media/` → served as `/shared/media/...`. Photos also as `.webp` (same name).
 Suffix = aspect ratio (`3x2` landscape, `4x5` / `2x3` / `9x16` portrait, `1x1` square).
 
 ## Palette (sampled from the dining-room, counter and cup photos, lifted a little for softness)

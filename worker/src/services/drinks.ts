@@ -1,13 +1,17 @@
-// Which drink a stamp was for. Port of backend/app/services/drinks.py. Bottled drinks are left out on purpose.
+// Which drink a stamp was for. Port of backend/app/services/drinks.py.
 import type { App } from '../http';
 import type { Doc, Filter } from '../db';
 import { COFFEE_ADDED, REWARD_REDEEMED } from './members';
 
-export const DRINK_CATEGORIES = ['coffee', 'specialty', 'tea', 'smoothie'];
+// Only coffees earn a stamp (owners, 2026-11-17): the coffee group plus the coffee-based specials. Matcha, hot
+// chocolate, tea, smoothies and bottled drinks don't. A new coffee special must be added to COFFEE_SPECIALS.
+export const COFFEE_SPECIALS = ['pistachio-latte', 'caramel-latte', 'pumpkin-spice-latte', 'espresso-tonic'];
+const STAMPED = { $or: [{ cat: 'coffee' }, { id: { $in: COFFEE_SPECIALS } }] };
+export const earnsStamp = (id: string, cat: string) => cat === 'coffee' || COFFEE_SPECIALS.includes(id);
 
 export async function choices(app: App): Promise<Doc[]> {
   return app.db.products.find(
-    { active: { $ne: false }, cat: { $in: DRINK_CATEGORIES } },
+    { active: { $ne: false }, ...STAMPED },
     { projection: { _id: 0, id: 1, name: 1, cat: 1 }, sort: [['order', 1]], limit: 50 },
   );
 }
@@ -15,7 +19,7 @@ export async function choices(app: App): Promise<Doc[]> {
 /** Archived drinks still pass: a stamp mid-shift shouldn't fail because someone tidied the menu. */
 export async function known(app: App, drink: string | null): Promise<boolean> {
   if (drink === null) return true;
-  return (await app.db.products.countDocuments({ id: drink, cat: { $in: DRINK_CATEGORIES } })) > 0;
+  return (await app.db.products.countDocuments({ id: drink, ...STAMPED })) > 0;
 }
 
 /** The drink they've had most since their last free coffee; a tie goes to the most recent. */

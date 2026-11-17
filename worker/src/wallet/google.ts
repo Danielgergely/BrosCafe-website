@@ -42,7 +42,7 @@ export function configStatus(env: Env) {
   const missing: string[] = [];
   if (!enabled) missing.push('GOOGLE_WALLET_CONFIGURED="true"');
   if (!issuerId) missing.push('GOOGLE_ISSUER_ID');
-  if (!hasKey) missing.push('GOOGLE_SERVICE_ACCOUNT_JSON (or GOOGLE_SERVICE_ACCOUNT_PATH)');
+  if (!hasKey) missing.push('GOOGLE_SERVICE_ACCOUNT_JSON');
   return { enabled_flag: enabled, issuer_id: !!issuerId, service_account: hasKey, configured: enabled && !!issuerId && hasKey, missing };
 }
 

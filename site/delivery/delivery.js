@@ -1,0 +1,879 @@
+// Bros Cafe · D — Bros Delivery: the order page (delivery/), the group order page (delivery/csoport/)
+// and the admin mock-up (admin/delivery/). Spec: docs/delivery.md · backend contract: docs/delivery-api.md
+(() => {
+  const B = window.BROS || { t: (s, v) => { let o = s; if (v) for (const k in v) o = o.replace(`{${k}}`, v[k]); return o; }, en: false, lang: 'hu', locale: 'hu-HU' };
+  const t = B.t, loc = B.locale;
+  const tn = (key, n, vars) => t(B.en && n === 1 ? `${key}|1` : key, { n, ...vars }); // English singular: "1 drink"
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const phone = matchMedia('(max-width: 619.98px)');
+
+  // ---------- CONFIG: every open point of the spec is one value here (all DRAFT until the proposal is agreed) ----------
+  const CONFIG = {
+    draft: true,
+    freeFrom: 5,            // drinks from which delivery is free
+    fee: 490,               // Ft below that
+    slots: [                // defaults; the admin edits them (time, cutoff, capacity)
+      { id: 's0900', time: '09:00', cutoffMin: 45, capacity: 8 },
+      { id: 's1030', time: '10:30', cutoffMin: 45, capacity: 12 },
+      { id: 's1400', time: '14:00', cutoffMin: 45, capacity: 12 },
+    ],
+    slotHours: ['07:30', '18:00'], // a slot must be inside the opening hours
+    days: [1, 2, 3, 4, 5],  // delivery weekdays (0 = Sunday, when the café is closed)
+    daysAhead: 5,           // how many delivery days the picker offers
+    // Hungarian public holidays: no delivery. Extend each year; other closed days are closed per date in the admin.
+    holidays: ['2026-12-25', '2026-12-26', '2027-01-01', '2027-03-15', '2027-03-26', '2027-03-29', '2027-05-01', '2027-05-17', '2027-08-20', '2027-10-23', '2027-11-01', '2027-12-25', '2027-12-26'],
+    rush: { maxDrinks: 8, etaMin: 30, autoOffMin: 45 }, // "amint lehet": staff switch, off by default, switches itself off
+    cats: ['coffee', 'specialty', 'tea', 'smoothie', 'bottled'], // every drink category (Daniel 2026-11-17: no exclusions)
+    excludeIds: [],         // Daniel 2026-11-17: offices may order any drink
+    stampSpecials: ['pistachio-latte', 'caramel-latte', 'pumpkin-spice-latte', 'espresso-tonic'], // + every 'coffee': COFFEE_SPECIALS in worker/src/services/drinks.ts
+    milkExtra: 0,           // Ft for plant milk; not in the catalogue yet
+    group: { fee: 'organiser', unpaid: 'dropped' }, // fee below 5 at cutoff: 'organiser' | 'split' | 'cancel'; unpaid drinks are not made
+    recurring: { mode: 'reminder' }, // 'reminder' = payment link by email before each delivery, no stored card
+    zone: { radiusM: 500, areas: ['Váci út', 'Lehel utca, Lehel tér', 'Duna-parti irodák'] },
+    menuShow: 4,            // drinks listed per category on a phone before "show all"
+  };
+
+  // The fee rule shown and used on the pages comes from the API (GET /slots, GET /groups/:code); CONFIG is only the mock server's value.
+  const RULES = { freeFrom: CONFIG.freeFrom, fee: CONFIG.fee };
+  const FEE_TEXT = { chip: '{n} italtól ingyenes kiszállítás, alatta {fee}', how: 'Ami addig ki van fizetve, azt visszük. {n} italtól ingyenes a kiszállítás.' };
+  function setRules(freeFrom, fee) {
+    if (Number.isFinite(freeFrom)) RULES.freeFrom = freeFrom;
+    if (Number.isFinite(fee)) RULES.fee = fee;
+    $$('[data-fee]').forEach((el) => { el.textContent = t(FEE_TEXT[el.dataset.fee], { n: RULES.freeFrom, fee: ft(RULES.fee) }); });
+  }
+
+  const ft = (n) => `${new Intl.NumberFormat('hu-HU', { useGrouping: 'always' }).format(n)} Ft`;
+  const COFFEE_SET = new Set('espresso espresso-macchiato cortado cappuccino flat-white latte americano matcha-latte'.split(' ')); // /shared/media/coffee-<id>-1x1
+  const hm = (s) => s.replace(/^0/, '');
+  const feeFor = (n) => (n >= RULES.freeFrom ? 0 : RULES.fee);
+  const draftPill = (text) => (CONFIG.draft ? `<span class="dl-draft dl-draft--wrap">${t(text || 'Tervezet')}</span>` : '');
+  const taxFmt = (v) => { const d = v.replace(/\D/g, ''); return d.length === 11 ? `${d.slice(0, 8)}-${d[8]}-${d.slice(9)}` : v.trim(); }; // 11 digits -> 12345678-1-12
+
+  // ---------- dates: Europe/Budapest everywhere, never the device clock's zone ----------
+  // A day is 'YYYY-MM-DD'; as a Date it is 00:00 UTC of that day (only for day arithmetic and formatting).
+  const TZ = 'Europe/Budapest';
+  const bpFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  const bp = (ms = Date.now()) => { const p = {}; for (const x of bpFmt.formatToParts(ms)) p[x.type] = x.value; return { date: `${p.year}-${p.month}-${p.day}`, time: `${p.hour}:${p.minute}` }; };
+  const bpInstant = (date, time) => { const g = Date.parse(`${date}T${time}:00Z`), w = bp(g); return g - (Date.parse(`${w.date}T${w.time}:00Z`) - g); }; // ms of a Budapest wall time
+  const parse = (s) => new Date(`${s}T00:00:00Z`);
+  const addDays = (s, n) => new Date(parse(s).getTime() + n * 864e5).toISOString().slice(0, 10);
+  const today = () => bp().date;
+  const dShort = new Intl.DateTimeFormat(loc, { month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const dWk = new Intl.DateTimeFormat(loc, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  const dLong = new Intl.DateTimeFormat(loc, { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+  const clockFmt = new Intl.DateTimeFormat(loc, { hour: '2-digit', minute: '2-digit', timeZone: TZ });
+  const clock = (isoTime) => hm(clockFmt.format(new Date(isoTime)));
+  const dayLabel = (s) => { const diff = Math.round((parse(s) - parse(today())) / 864e5); return diff === 0 ? `${t('Ma')}, ${dShort.format(parse(s))}` : diff === 1 ? `${t('Holnap')}, ${dShort.format(parse(s))}` : dWk.format(parse(s)); };
+  // run fn when the Budapest day changes in an open tab
+  function watchDay(fn) {
+    let last = today();
+    const tick = () => { if (today() !== last) { last = today(); fn(); } };
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+    setInterval(tick, 60000);
+  }
+  const EVERY = B.en
+    ? ['every Sunday', 'every Monday', 'every Tuesday', 'every Wednesday', 'every Thursday', 'every Friday', 'every Saturday']
+    : ['minden vasárnap', 'minden hétfőn', 'minden kedden', 'minden szerdán', 'minden csütörtökön', 'minden pénteken', 'minden szombaton'];
+  const WD = B.en ? ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'] : ['V', 'H', 'K', 'Sze', 'Cs', 'P', 'Szo'];
+
+  // ---------- the menu: live products, every drink ----------
+  const CATS = { coffee: 'Kávék', specialty: 'Különlegességek', tea: 'Teák', smoothie: 'Smoothie-k', bottled: 'Italok' };
+  const MILKS = { Oat: 'Zabtej', CoconutRice: 'Kókusz-rizs tej', Pea: 'Borsótej' };
+  const nice = (s) => (s && s === s.toUpperCase() ? s.charAt(0) + s.slice(1).toLocaleLowerCase(loc) : s || '');
+  const menu = new Map();
+  async function loadMenu() {
+    const r = await fetch('/api/products', { headers: { Accept: 'application/json' } });
+    if (!r.ok) throw new Error('products');
+    const list = await r.json();
+    menu.clear();
+    for (const p of Array.isArray(list) ? list : list.products || []) {
+      if (p.active === false || !CONFIG.cats.includes(p.cat) || CONFIG.excludeIds.includes(p.id)) continue;
+      const own = (p.images || []).find((s) => typeof s === 'string' && s.startsWith('/images/products/')); // never a third-party image
+      const sizes = ((p.sizes && (p.sizes[B.lang] || p.sizes.hu)) || []).map((s) => { const [label, price] = s.split('—'); return { label: label.trim(), price: Number((price || '').replace(/\D/g, '')) || p.price_huf }; });
+      menu.set(p.id, { id: p.id, cat: p.cat, name: nice(p.name[B.lang] || p.name.hu), price: p.price_huf, photo: COFFEE_SET.has(p.id) ? `/shared/media/coffee-${p.id}-1x1.jpg` : own ? own.replace('/images/products/', '/shared/photos/') : null, milks: p.milks || [], sizes, temp: p.temp });
+    }
+    return menu;
+  }
+  // a cup: { id, who, milk, size, iced }
+  const newCup = (id) => ({ uid: Math.random().toString(36).slice(2, 9), id, who: '', milk: '', size: 0, iced: false });
+  const cupPrice = (c) => { const d = menu.get(c.id); return (d.sizes[c.size] ? d.sizes[c.size].price : d.price) + (c.milk ? CONFIG.milkExtra : 0); };
+  const cupLabel = (c) => { const d = menu.get(c.id); return [d.name, d.sizes[c.size] && d.sizes[c.size].label, c.milk && t(MILKS[c.milk] || c.milk), c.iced && t('jeges')].filter(Boolean).join(' · '); };
+  const cupItem = (c) => ({ product_id: c.id, who: c.who.trim(), milk: c.milk, size: c.size, iced: c.iced });
+  function optionSelects(d, c) {
+    const sel = (k, label, opts) => `<select data-k="${k}" aria-label="${esc(`${t(label)}: ${d.name}`)}">${opts.map(([v, l]) => `<option value="${esc(v)}"${String(c[k]) === String(v) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    return (d.sizes.length ? sel('size', 'Méret', d.sizes.map((s, i) => [i, `${s.label} · ${ft(s.price)}`])) : '') +
+      (d.milks.length ? sel('milk', 'Tej', [['', t('Tehéntej')], ...d.milks.map((m) => [m, t(MILKS[m] || m)])]) : '') +
+      (d.temp === 'both' ? sel('iced', 'Forró vagy jeges', [['false', t('Forró')], ['true', t('Jeges')]]) : '');
+  }
+  const readOpt = (c, el) => { const k = el.dataset.k; c[k] = k === 'size' ? Number(el.value) : k === 'iced' ? el.value === 'true' : el.value; };
+
+  // ---------- data access: everything the pages read or write goes through `api` ----------
+  // The worker: worker/src/routers/delivery.ts, docs/delivery-api.md.
+  const http = (() => {
+    const base = '/api/delivery';
+    const call = async (path, opts) => {
+      // admin calls carry the staff token (belepes/staff.js); a dead session goes back to the login
+      const headers = { 'Content-Type': 'application/json' }, staff = path.startsWith('/admin') && B.staff;
+      if (staff && staff.token()) headers.Authorization = `Bearer ${staff.token()}`;
+      const r = await fetch(base + path, { credentials: 'same-origin', headers, ...opts });
+      const body = await r.json().catch(() => ({}));
+      if (r.status === 401 && staff) staff.toLogin();
+      if (!r.ok) throw Object.assign(new Error(body.error || r.statusText), { status: r.status, code: body.error, left: body.left });
+      return body;
+    };
+    const post = (path, data) => call(path, { method: 'POST', body: JSON.stringify(data || {}) });
+    const put = (path, data) => call(path, { method: 'PUT', body: JSON.stringify(data || {}) });
+    return {
+      slots: () => call(`/slots?days=${CONFIG.daysAhead}`),
+      checkAddress: (address) => post('/address-check', { address }),
+      order: (payload) => post('/orders', payload), // -> { checkout_url }
+      recurring: (orderId, rule, token) => post(`/orders/${encodeURIComponent(orderId)}/recurring`, { rule, token }),
+      createGroup: (payload) => post('/groups', payload), // -> { code, url, checkout_url }
+      group: (code) => call(`/groups/${encodeURIComponent(code)}`),
+      join: (code, payload) => post(`/groups/${encodeURIComponent(code)}/participants`, payload), // -> { checkout_url }
+      admin: {
+        board: (date) => call(`/admin/board?date=${date}`),
+        setStatus: (id, status) => put(`/admin/orders/${id}/status`, { status }),
+        setRush: (on) => put('/admin/rush', { on }),
+        settings: () => call('/admin/settings'),
+        saveSettings: (s) => put('/admin/settings', s),
+        closeSlot: (date, slotId, closed) => put(`/admin/days/${date}/slots/${slotId}`, { closed }),
+        recurring: () => call('/admin/recurring'),
+        setRecurring: (id, active) => put(`/admin/recurring/${id}`, { active }),
+        cancelOrder: (id) => post(`/admin/orders/${id}/cancel`),
+      },
+    };
+  })();
+
+  // MOCK: sample data built from today; what you change is kept in this browser only (localStorage), nothing is sent.
+  const mock = (() => {
+    const KEY = 'bros-delivery-mock';
+    const wait = (v) => new Promise((res) => setTimeout(() => res(v), calm ? 0 : 240));
+    const fail = (code, extra) => Object.assign(new Error(code), { status: 409, code, ...extra });
+    const fresh = () => ({ v: 3, rushUntil: 0, slots: CONFIG.slots.map((s) => ({ ...s })), days: [...CONFIG.days], closed: {}, groups: {}, status: {}, paused: {} });
+    let mem = null;
+    const get = () => { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 3) return s; } catch (e) { /* private mode */ } return mem || (mem = fresh()); };
+    const set = (fn) => { const s = get(); fn(s); mem = s; try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) { /* memory only */ } return s; };
+    const sorted = (st) => [...st.slots].sort((a, b) => a.time.localeCompare(b.time));
+    const rushOn = (st) => Date.now() < st.rushUntil;
+
+    // sample orders for today's board: [slot index, company, contact, type, cups, address, note, status]
+    const SAMPLE = [
+      [0, 'Minta Kft.', 'Minta Anna', 'company', ['Minta Anna · Flat white', 'Minta Bence · Cappuccino · Zabtej', 'Minta Csilla · Latte', 'Minta Dávid · Americano', 'Minta Emma · Matcha latte', 'Minta Félix · Cortado'], 'Minta utca 1., 4. emelet', 'A recepción kell szólni.', 'delivered'],
+      [0, 'Minta Stúdió', 'Minta Gréta', 'group', ['Minta Gréta · Latte', 'Minta Hanna · Cappuccino'], 'Minta köz 2., 1. emelet', '', 'delivered'],
+      [1, 'Minta Zrt.', 'Minta Júlia', 'company', ['Latte', 'Latte', 'Cappuccino', 'Cappuccino · Zabtej', 'Flat white', 'Americano'], 'Minta út 3., 6. emelet', 'Tárgyaló a lift mellett.', 'out'],
+      [1, 'Minta Iroda Bt.', 'Minta Kata', 'group', ['Minta Kata · Pisztáciás latte', 'Minta Lili · Flat white', 'Minta Márk · Cortado', 'Minta Nóra · Latte · Borsótej', 'Minta Olivér · Americano'], 'Minta tér 4., földszint', '', 'making'],
+      [2, 'Minta Kft.', 'Minta Anna', 'company', ['Flat white', 'Cappuccino', 'Latte', 'Mangó smoothie · 3 dl'], 'Minta utca 1., 4. emelet', 'A recepción kell szólni.', 'new'],
+    ];
+    const orders = (st) => { const sl = sorted(st); return SAMPLE.filter((o) => sl[o[0]]).map(([i, company, contact, type, cups, address, note, status], n) => { const id = `BD-${String(n + 1).padStart(4, '0')}`; return { id, slot_id: sl[i].id, type, company, contact, address, note, cups, drinks: cups.length, status: st.status[id] || status }; }); };
+    const RECURRING = [['R-1', 'Minta Kft.', 'weekdays', 1, 6], ['R-2', 'Minta Stúdió', 1, 0, 4], ['R-3', 'Minta Zrt.', 5, 2, 8]];
+
+    const drinksOf = (g) => g.participants.reduce((n, p) => n + (p.paid ? p.items.length : 0), 0);
+    function booked(st, date, id) {
+      const own = Object.values(st.groups).filter((g) => g.date === date && g.slot_id === id).reduce((n, g) => n + drinksOf(g), 0);
+      if (date === today()) return own + orders(st).filter((o) => o.slot_id === id).reduce((n, o) => n + o.drinks, 0);
+      return own + (parse(date).getUTCDate() * 5 + [...id].reduce((n, c) => n + c.charCodeAt(0), 0) * 7) % 9; // made-up load for the other days (labelled on the page)
+    }
+    function slotInfo(st, date, s) {
+      const cutoff = bpInstant(date, s.time) - s.cutoffMin * 60000, left = Math.max(0, s.capacity - booked(st, date, s.id));
+      const status = (st.closed[date] || []).includes(s.id) ? 'closed' : Date.now() >= cutoff ? 'past' : left <= 0 ? 'full' : 'open';
+      return { id: s.id, time: s.time, cutoff_min: s.cutoffMin, cutoff_at: new Date(cutoff).toISOString(), capacity: s.capacity, left, status };
+    }
+    const deliveryDay = (st, date) => st.days.includes(parse(date).getUTCDay()) && !CONFIG.holidays.includes(date);
+    // the next delivery days that can still be ordered for: no holidays, and not today once its last cutoff has passed
+    function days(st) {
+      const out = [];
+      for (let i = 0; i < 40 && out.length < CONFIG.daysAhead; i++) {
+        const date = addDays(today(), i); if (!deliveryDay(st, date)) continue;
+        const slots = sorted(st).map((s) => slotInfo(st, date, s));
+        if (slots.length && slots.every((s) => s.status === 'past')) continue;
+        out.push({ date, slots });
+      }
+      return out;
+    }
+    const rushView = (st) => ({ on: rushOn(st), until: rushOn(st) ? new Date(st.rushUntil).toISOString() : null, max_drinks: CONFIG.rush.maxDrinks, eta_min: CONFIG.rush.etaMin });
+    const slotsView = (st) => ({ free_from: CONFIG.freeFrom, fee: CONFIG.fee, rush: rushView(st), days: days(st) });
+    const findSlot = (st, p) => (days(st).find((d) => d.date === p.date) || { slots: [] }).slots.find((s) => s.id === p.slot_id);
+    function checkSlot(st, p, n) {
+      if (!n) throw Object.assign(fail('invalid'), { status: 400 });
+      if (p.rush) { if (!rushOn(st)) throw fail('rush_off'); if (n > CONFIG.rush.maxDrinks) throw fail('slot_full', { left: CONFIG.rush.maxDrinks }); return null; }
+      const s = findSlot(st, p);
+      if (!s || s.status === 'closed' || s.status === 'past') throw fail('slot_closed');
+      if (s.left < n) throw fail('slot_full', { left: s.left });
+      return s;
+    }
+    const part = (name, cups) => ({ name, paid: true, items: cups.map((c) => (typeof c === 'string' ? { label: c, price: 0 } : { label: cupLabel(c), price: cupPrice(c) })) });
+    const cup = (id, o) => (menu.has(id) ? { ...newCup(id), ...o } : menu.size ? newCup(menu.keys().next().value) : 'Latte');
+    // two built-in demo groups so a shared link works in any browser: MINTA (open) and ZARVA (locked 20 minutes ago)
+    function demo(st, code) {
+      const base = { sample: true, company: 'Minta Kft.', address: { street: 'Minta utca 1.', floor: '4. emelet' }, organiser: 'Minta Anna' };
+      const three = () => [part('Minta Anna', [cup('flat-white')]), part('Minta Bence', [cup('cappuccino', { milk: 'Oat' })]), part('Minta Csilla', [cup('matcha-latte')])];
+      if (code === 'ZARVA') {
+        const cutoff = Date.now() - 20 * 60000, at = bp(Math.ceil((cutoff + 45 * 60000) / 3e5) * 3e5);
+        return { ...base, code, date: at.date, slot_id: 'x', time: at.time, cutoff_at: new Date(cutoff).toISOString(), participants: [...three(), part('Minta Dávid', [cup('americano')]), part('Minta Emma', [cup('latte')]), part('Minta Félix', [cup('cortado')])] };
+      }
+      const g = st.groups.MINTA;
+      if (g && Date.now() < new Date(g.cutoff_at)) return g;
+      let pick = null; for (const d of days(st)) { const s = d.slots.find((x) => x.status === 'open'); if (s) { pick = { date: d.date, s }; break; } }
+      const made = { ...base, code: 'MINTA', date: pick ? pick.date : today(), slot_id: pick ? pick.s.id : 'x', time: pick ? pick.s.time : bp(Date.now() + 2 * 3600e3).time, cutoff_at: pick ? pick.s.cutoff_at : new Date(Date.now() + 2 * 3600e3).toISOString(), participants: three() };
+      set((s) => { s.groups.MINTA = made; });
+      return made;
+    }
+    const findGroup = (st, code) => (code === 'MINTA' || code === 'ZARVA' ? demo(st, code) : st.groups[code]);
+    function groupView(g) {
+      const n = drinksOf(g);
+      return { code: g.code, sample: !!g.sample, status: Date.now() >= new Date(g.cutoff_at) ? 'locked' : 'open', date: g.date, time: g.time, cutoff_at: g.cutoff_at, company: g.company, address: g.address, organiser: g.organiser,
+        drinks: n, free_from: CONFIG.freeFrom, fee: CONFIG.fee, fee_due: n >= CONFIG.freeFrom ? 0 : CONFIG.fee, fee_rule: CONFIG.group.fee, participants: g.participants.map((p) => ({ name: p.name, paid: p.paid, items: p.items.map((i) => i.label) })) };
+    }
+    const cups = (items) => items.map((i) => ({ ...newCup(i.product_id), ...i }));
+
+    return {
+      slots: () => wait().then(() => slotsView(get())),
+      checkAddress: () => wait({ status: 'confirm' }), // real: 'in_zone' | 'out_of_zone' | 'confirm'
+      order: (p) => wait().then(() => { checkSlot(get(), p, p.items.length); return { preview: true, order_id: 'BD-0000' }; }),
+      recurring: (id, rule) => wait({ id: 'R-0', order_id: id, rule, active: true }),
+      createGroup: (p) => wait().then(() => {
+        const st = get(), s = checkSlot(st, p, p.items.length);
+        const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', code = Array.from({ length: 6 }, () => abc[Math.floor(Math.random() * abc.length)]).join('');
+        set((x) => { x.groups[code] = { code, date: p.date, slot_id: s.id, time: s.time, cutoff_at: s.cutoff_at, company: p.address.company, address: { street: p.address.street, floor: p.address.floor }, organiser: p.contact.name, participants: [part(p.contact.name, cups(p.items))] }; });
+        return { code, url: new URL(`csoport/?g=${code}`, location.href).href, preview: true };
+      }),
+      group: (code) => wait().then(() => { const g = findGroup(get(), String(code || '').toUpperCase()); if (!g) throw Object.assign(new Error('not_found'), { status: 404, code: 'not_found' }); return groupView(g); }),
+      join: (code, p) => wait().then(() => {
+        const st = get(), g = findGroup(st, code);
+        if (!g) throw fail('not_found');
+        if (Date.now() >= new Date(g.cutoff_at)) throw fail('locked');
+        const s = findSlot(st, g); if (s && s.left < p.items.length) throw fail('slot_full', { left: s.left });
+        set((x) => { x.groups[g.code] = g; g.participants.push(part(p.name, cups(p.items))); });
+        return { preview: true };
+      }),
+      admin: {
+        board: (date) => wait().then(() => { const st = get(), all = date === today() ? orders(st) : []; return { date, rush: rushOn(st), rush_until: rushView(st).until, slots: sorted(st).map((s) => { const own = all.filter((o) => o.slot_id === s.id), info = slotInfo(st, date, s); return { ...info, drinks: info.capacity - info.left, orders: own }; }) }; }),
+        setStatus: (id, status) => wait().then(() => { set((s) => { s.status[id] = status; }); return { id, status }; }),
+        setRush: (on) => wait().then(() => { set((s) => { s.rushUntil = on ? Date.now() + CONFIG.rush.autoOffMin * 60000 : 0; }); return rushView(get()); }),
+        settings: () => wait().then(() => { const st = get(); return { slots: sorted(st).map((s) => ({ ...s })), days: [...st.days] }; }),
+        saveSettings: (v) => wait().then(() => { set((s) => { s.slots = v.slots.map((x) => ({ ...x })); s.days = [...v.days]; }); return v; }),
+        closeSlot: (date, id, closed) => wait().then(() => { set((s) => { const l = new Set(s.closed[date] || []); closed ? l.add(id) : l.delete(id); s.closed[date] = [...l]; }); return { date, slot_id: id, closed }; }),
+        recurring: () => wait().then(() => { const st = get(), sl = sorted(st); return { recurring: RECURRING.filter((r) => sl[r[3]]).map(([id, company, rule, i, drinks]) => ({ id, company, rule, time: sl[i].time, drinks, active: !st.paused[id] && id !== 'R-3' || st.paused[id] === false })) }; }),
+        setRecurring: (id, active) => wait().then(() => { set((s) => { s.paused[id] = !active; }); return { id, active }; }),
+        days: () => wait().then(() => { const st = get(), out = []; for (let i = 0; i < 40 && out.length < CONFIG.daysAhead + 1; i++) { const d = addDays(today(), i); if (i === 0 || deliveryDay(st, d)) out.push(d); } return out; }),
+        reset: () => { mem = null; try { localStorage.removeItem(KEY); } catch (e) { /* */ } return wait({}); },
+      },
+    };
+  })();
+
+  // Real API by default. Mock data for local work without the worker: open the page once with ?mock=1 (kept in this browser), ?mock=0 switches back.
+  const USE_MOCK = (() => { try { const q = new URLSearchParams(location.search).get('mock'); if (q === '1') localStorage.setItem('bros-mock', '1'); if (q === '0') localStorage.removeItem('bros-mock'); return localStorage.getItem('bros-mock') === '1'; } catch (e) { return false; } })();
+  // real pages: no "sample" labels and no mock-only controls (the markup carries them for the mock)
+  if (!USE_MOCK) { document.title = document.title.replace(' (minta)', '').replace(' (sample)', ''); $$('.dla__sample, .dla__note, #dla-reset, [data-mock-only]').forEach((el) => el.remove()); }
+  // Online payment is not switched on yet (the worker answers 503 payments_not_configured): say so instead of failing at the end.
+  const NOT_READY = 'Az online fizetés még nincs bekapcsolva, ezért itt most nem lehet rendelni. Írj nekünk: hello@broscafe.hu';
+  function notReady(anchor, where = 'afterend') {
+    if ($('#dl-notready') || !anchor) return;
+    anchor.insertAdjacentHTML(where, `<div class="dl-return" id="dl-notready" data-s="cancelled" role="status"><p>${t(NOT_READY)}</p></div>`);
+  }
+  // Online ordering switched off on this server (BOOKINGS_OPEN): the information stays, the form becomes a contact block.
+  const CLOSED = 'Az online rendelés hamarosan indul. Addig írj nekünk, és egyeztetünk.';
+  function ordersClosed(form) {
+    CONFIG.draft = false; $$('.dl-draft:not(.dl-g__tags .dl-draft), #dl-notready').forEach((el) => el.remove());
+    if (!form || $('#dl-closed')) return;
+    form.hidden = true;
+    // the section's own heading and intro talk about ordering now: the closed message takes their place
+    const head = $('#rendeles-cim'); if (head && form.id === 'dl-form') { head.textContent = t('Az online rendelés hamarosan indul.'); const intro = head.nextElementSibling; if (intro && intro.matches('p.body')) intro.hidden = true; }
+    form.insertAdjacentHTML('beforebegin', `<div class="dl-return" id="dl-closed" role="status"><p>${t('Addig írj nekünk, és egyeztetünk.')}</p><p style="margin-top:14px"><a class="btn" href="/kapcsolat/">${t('Írj nekünk')}</a></p></div>`);
+  }
+  const api = USE_MOCK ? mock : http;
+
+  // ---------- shared bits ----------
+  const PREVIEW = 'Ez egy előnézet: a valódi oldalon itt a fizetés következne (Stripe).';
+  const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const LAST = 'bros-delivery-last'; // what was ordered, kept for the thank-you view after the Stripe round trip
+  const cross = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+  // one segment per drink up to the free-delivery threshold + the sentence under it
+  function progress(n) {
+    const need = RULES.freeFrom, left = Math.max(0, need - n);
+    const text = left ? tn('Még {n} ital az ingyenes kiszállításig.', left) : t('Megvan: a kiszállítás ingyenes.');
+    return `<div class="dl-prog" role="img" aria-label="${esc(`${tn('{n} ital', n)} / ${need}. ${text}`)}">${Array.from({ length: need }, (_, i) => `<i${i < n ? ' class="on"' : ''}></i>`).join('')}</div><p class="dl-prog__text">${text}</p>`;
+  }
+  // error under a field (creates the <p> on first use), shared by both forms
+  function errors(form) {
+    return (name, msg) => {
+      const input = form.elements[name] instanceof Element ? form.elements[name] : null;
+      let el = $(`#err-${name}`, form);
+      if (!el && input) { el = document.createElement('p'); el.className = 'dl-err'; el.id = `err-${name}`; el.hidden = true; (input.closest('.dl-check') || input).after(el); }
+      if (!el) return;
+      el.textContent = msg; el.hidden = !msg;
+      if (input) { if (msg) { input.setAttribute('aria-invalid', 'true'); input.setAttribute('aria-describedby', el.id); } else { input.removeAttribute('aria-invalid'); input.removeAttribute('aria-describedby'); } }
+    };
+  }
+  const busy = (btn, on) => { if (on) btn.setAttribute('aria-busy', 'true'); else btn.removeAttribute('aria-busy'); btn.disabled = !!on; };
+  const show = (el, html) => { el.innerHTML = html; el.hidden = false; el.focus({ preventScroll: true }); el.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' }); };
+  // Stripe return parameters, removed from the address bar once read
+  function returned(keys) {
+    const q = new URLSearchParams(location.search), out = {};
+    keys.forEach((k) => { out[k] = q.get(k); q.delete(k); });
+    if (keys.some((k) => out[k] != null)) history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash);
+    return out;
+  }
+  const openWide = () => { if (matchMedia('(min-width: 980px)').matches) $$('details[data-open-wide]').forEach((d) => { d.open = true; }); };
+  // a link to a folded block (#zona, #csoportos, #aszf) opens it
+  function openTarget() { const el = location.hash.length > 1 && document.getElementById(location.hash.slice(1)); if (el && el.tagName === 'DETAILS') { el.open = true; el.scrollIntoView({ block: 'start' }); $('summary', el).focus({ preventScroll: true }); } }
+
+  // ---------- order page ----------
+  function orderPage() {
+    const video = $('.dl-hero__video video');
+    if (video && !calm) { video.autoplay = true; video.play().catch(() => {}); }
+    openWide(); addEventListener('hashchange', openTarget); openTarget();
+    $('#dl-slots-mock').hidden = !USE_MOCK;
+
+    // zone list + address check
+    $('#dl-areas').innerHTML = CONFIG.zone.areas.map((a) => `<li>${esc(t(a))}</li>`).join('');
+    const zf = $('#dl-zone-form'), zr = $('#dl-zone-result');
+    zf.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const v = zf.elements.address.value.trim(), zb = zf.querySelector('button');
+      if (zb.disabled) return;
+      if (v.length < 4) { zr.textContent = t('Írd be az utcát és a házszámot.'); zr.hidden = false; zf.elements.address.focus(); return; }
+      busy(zb, true);
+      const res = await api.checkAddress(v).catch(() => ({ status: 'confirm' }));
+      busy(zb, false);
+      zr.textContent = res.status === 'in_zone' ? t('Ide szállítunk.') : res.status === 'out_of_zone' ? t('Ez a cím sajnos kívül esik a zónán.') : USE_MOCK ? t('Előnézet: a valódi oldalon itt rögtön megmondjuk, hogy a cím a zónában van-e. Addig a rendelés után visszaigazoljuk.') : t('Ezt a címet a rendelés után igazoljuk vissza.');
+      zr.hidden = false;
+    });
+
+    const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
+    const menuEl = $('#dl-menu'), moreEl = $('#dl-more'), catsEl = $('#dl-cats'), cupsEl = $('#dl-cups'), daysEl = $('#dl-days'), slotsEl = $('#dl-slots'), sum = $('#dl-sum'), result = $('#dl-result'), after = $('#dl-after'), ret = $('#dl-return'), payBtn = $('#dl-pay');
+    let cups = [], cat = CONFIG.cats[0], showAll = false, data = null, day = null, slot = null, capShown = false, sending = false, liveTimer = null; // slot: a slot id or 'rush'
+    const kind = () => F('pay').value;
+
+    // back from Stripe: ?order=<id>&paid=1[&t=<token>] or ?cancelled=1 (docs/delivery-api.md)
+    (() => {
+      const r = returned(['order', 'paid', 'cancelled', 't']);
+      if (r.cancelled === '1') { ret.innerHTML = `<h3>${t('A fizetés megszakadt.')}</h3><p>${t('Nem történt terhelés, és a rendelés nem jött létre. Ha szeretnéd, kezdd újra.')}</p>`; ret.dataset.s = 'cancelled'; }
+      else if (r.paid === '1' && r.order) {
+        let last = null; try { last = JSON.parse(sessionStorage.getItem(LAST)); sessionStorage.removeItem(LAST); } catch (e) { /* no storage */ }
+        ret.innerHTML = `<h3>${t('Köszönjük, megvan a rendelés!')}</h3>
+          <p>${t('Azonosító')}: <b>${esc(r.order)}</b>${last ? `<br>${tn('{n} ital', last.n)} · ${esc(last.text)} · ${esc(last.company)}` : ''}</p><p>${t('A visszaigazolást és a számlát e-mailben küldjük.')}</p>
+          ${USE_MOCK ? `<p class="fine">${t('Előnézet: valójában nem történt rendelés és fizetés.')}</p>` : ''}
+          ${last && !last.rush ? `<fieldset class="dl-repeat"><legend>${t('Ismételd minden…')} ${draftPill('Tervezet · a módja még nyitott')}</legend>
+            <div class="dl-repeat__row"><label class="dl-pill"><input type="radio" name="repeat" value="weekdays" checked><span>${t('munkanapon')}</span></label><label class="dl-pill"><input type="radio" name="repeat" value="${last.wd}"><span>${EVERY[last.wd].split(' ').pop()}</span></label>
+            <button type="button" class="btn btn--ghost" data-repeat>${t('Ismétlés beállítása')}</button></div>
+            <p class="dl-preview" data-repeat-out role="status" hidden></p></fieldset>` : ''}`;
+        ret.dataset.s = 'paid';
+        ret.addEventListener('click', async (e) => {
+          const b = e.target.closest('[data-repeat]'); if (!b || b.disabled) return;
+          const rule = $('input[name="repeat"]:checked', ret).value, out = $('[data-repeat-out]', ret);
+          busy(b, true);
+          try {
+            await api.recurring(r.order, rule, r.t);
+            const when = rule === 'weekdays' ? t('minden munkanapon') : EVERY[rule];
+            out.textContent = USE_MOCK ? t('Előnézet: a valódi oldalon {when} {time}-ra előkészítjük ezt a rendelést, és előtte e-mailben küldünk egy fizetési linket. Bármikor leállíthatod.', { when, time: hm(last.time) })
+              : t('Beállítva: {when} {time}-ra előkészítjük ezt a rendelést, és előtte e-mailben küldünk egy fizetési linket. Bármikor leállíthatod.', { when, time: hm(last.time) });
+          } catch (err) { out.textContent = t('Most nem sikerült beállítani. Próbáld újra egy perc múlva.'); }
+          busy(b, false); out.hidden = false;
+        });
+      } else return;
+      ret.hidden = false;
+      requestAnimationFrame(() => { ret.scrollIntoView({ block: 'center' }); ret.focus({ preventScroll: true }); });
+    })();
+
+    // 1 · drinks
+    const count = (id) => cups.filter((c) => c.id === id).length;
+    function renderMenu() {
+      const cats = CONFIG.cats.filter((c) => [...menu.values()].some((d) => d.cat === c));
+      if (!cats.includes(cat)) cat = cats[0];
+      catsEl.innerHTML = cats.map((c) => `<button type="button" class="chip" data-cat="${c}" aria-pressed="${c === cat}">${t(CATS[c] || c)}</button>`).join('');
+      const all = [...menu.values()].filter((d) => d.cat === cat), cut = phone.matches && !showAll && all.length > CONFIG.menuShow + 1;
+      const list = cut ? all.filter((d, i) => i < CONFIG.menuShow || count(d.id)) : all;
+      menuEl.innerHTML = list.map((d) => `
+        <li class="dl-item" data-id="${d.id}">
+          ${d.photo ? `<img src="${d.photo}" alt="" loading="lazy" width="96" height="96">` : `<span class="dl-item__ph">${B.drinkArt ? B.drinkArt(d) : ''}</span>`}
+          <span class="dl-item__txt"><b>${esc(d.name)}</b><small>${d.sizes.length ? d.sizes.map((x) => ft(x.price)).join(' / ') : ft(d.price)}</small></span>
+          <span class="dl-qty"><button type="button" data-step="-1" aria-label="${esc(`${t('Eggyel kevesebb')}: ${d.name}`)}">−</button><output aria-label="${esc(`${d.name}: ${t('darab')}`)}">0</output><button type="button" data-step="1" aria-label="${esc(`${t('Eggyel több')}: ${d.name}`)}">+</button></span>
+        </li>`).join('');
+      moreEl.hidden = list.length === all.length;
+      $('button', moreEl).textContent = t('Mind a(z) {n} ital ebben a kategóriában', { n: all.length });
+      syncMenu();
+    }
+    function syncMenu() {
+      $$('.dl-item', menuEl).forEach((li) => { const n = count(li.dataset.id); $('output', li).textContent = n; li.classList.toggle('is-on', n > 0); $('[data-step="-1"]', li).setAttribute('aria-disabled', n ? 'false' : 'true'); });
+    }
+    function renderCups() {
+      $('#dl-cups-wrap').hidden = !cups.length;
+      cupsEl.innerHTML = cups.map((c, i) => { const d = menu.get(c.id); return `
+        <li class="dl-cup" data-uid="${c.uid}">
+          <span class="dl-cup__no" aria-hidden="true">${i + 1}</span>
+          <span class="dl-cup__name"><b>${esc(d.name)}</b><small data-price>${ft(cupPrice(c))}</small></span>
+          <button type="button" class="dl-cup__del" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">${cross}</button>
+          <div class="dl-cup__opts"><input type="text" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" placeholder="${t('Név a pohárra')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}">${optionSelects(d, c)}</div>
+        </li>`; }).join('');
+    }
+    catsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; showAll = false; renderMenu(); $(`[data-cat="${cat}"]`, catsEl).focus(); });
+    moreEl.addEventListener('click', () => { const n = $$('.dl-item', menuEl).length; showAll = true; renderMenu(); $$('.dl-item [data-step="1"]', menuEl)[n]?.focus(); });
+    menuEl.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-step]'); if (!b) return;
+      const id = b.closest('.dl-item').dataset.id;
+      if (b.dataset.step === '1') cups.push(newCup(id));
+      else { const i = cups.map((c) => c.id).lastIndexOf(id); if (i < 0) return; cups.splice(i, 1); }
+      setErr('cups', ''); syncMenu(); renderCups(); summary();
+    });
+    cupsEl.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-del]'); if (!b) return;
+      const i = cups.findIndex((c) => c.uid === b.closest('.dl-cup').dataset.uid);
+      cups.splice(i, 1); syncMenu(); renderCups(); summary();
+      ($$('[data-del]', cupsEl)[Math.min(i, cups.length - 1)] || $('[data-step="1"]', menuEl))?.focus();
+    });
+    cupsEl.addEventListener('input', (e) => {
+      const li = e.target.closest('.dl-cup'); if (!li || !e.target.dataset.k) return;
+      const c = cups.find((x) => x.uid === li.dataset.uid); readOpt(c, e.target);
+      $('[data-price]', li).textContent = ft(cupPrice(c)); summary();
+    });
+
+    // 2 · when
+    const curSlot = () => (slot === 'rush' ? null : (data?.days.find((d) => d.date === day) || { slots: [] }).slots.find((s) => s.id === slot));
+    const slotText = () => (slot === 'rush' ? t('Rush — amint lehet') : curSlot() ? `${dayLabel(day)} · ${hm(curSlot().time)}` : '');
+    function renderSlots() {
+      if (!data) return;
+      const rush = data.rush.on;
+      daysEl.innerHTML = data.days.map((d) => `<button type="button" class="chip" data-day="${d.date}" aria-pressed="${d.date === day && slot !== 'rush'}">${dayLabel(d.date)}</button>`).join('');
+      const d = data.days.find((x) => x.date === day);
+      const why = { past: t('Erre már nem lehet rendelni'), full: t('Betelt'), closed: t('Ezen a napon ekkor nem szállítunk') };
+      slotsEl.innerHTML = (rush ? `<label class="dl-slot dl-slot--rush"><input type="radio" name="slot" value="rush"${slot === 'rush' ? ' checked' : ''}><span><b>${t('Rush — amint lehet')}</b><small>${t('Most ráérünk: kb. {m} percen belül visszük. Legfeljebb {n} ital.', { m: data.rush.eta_min, n: data.rush.max_drinks })}</small></span></label>` : '') +
+        (d ? d.slots.map((s) => `<label class="dl-slot${s.status === 'open' ? '' : ' is-off'}"><input type="radio" name="slot" value="${s.id}"${s.id === slot ? ' checked' : ''}${s.status === 'open' ? '' : ' disabled'}><span><b>${hm(s.time)}</b><small>${s.status === 'open' ? `${t('Rendelés {t}-ig', { t: clock(s.cutoff_at) })} · ${tn('még {n} pohár fér', s.left)}` : why[s.status]}</small></span></label>`).join('') : '') ||
+        `<p class="dl-state">${t('Most nincs rendelhető időpont. Nézz vissza később!')}</p>`;
+    }
+    async function loadSlots() {
+      if (!data) slotsEl.innerHTML = `<p class="dl-state" role="status">${t('Időpontok betöltése…')}</p>`;
+      try {
+        data = await api.slots();
+        if (data.bookings_open === false) ordersClosed(form);
+        else if (data.payments_ready === false) notReady(ret);
+        setRules(data.free_from, data.fee);
+        // a day whose every slot is already past is not offered at all
+        data.days = data.days.filter((d) => !d.slots.length || d.slots.some((s) => s.status !== 'past'));
+        const open = (d) => d.slots.some((s) => s.status === 'open');
+        if (!day || !data.days.some((d) => d.date === day)) { day = (data.days.find(open) || data.days[0] || {}).date || null; if (slot !== 'rush') slot = null; }
+        if (slot === 'rush' ? !data.rush.on : !curSlot() || curSlot().status !== 'open') slot = null;
+        renderSlots();
+        const times = [...new Set(data.days.flatMap((d) => d.slots.map((s) => hm(s.time))))].sort((a, b) => a.padStart(5, '0').localeCompare(b.padStart(5, '0'))).join(' · ');
+        $('#dl-fact-slots').textContent = times ? `${t('Időpontok')}: ${times}` : t('Időpontok hamarosan');
+      } catch (e) { data = null; slotsEl.innerHTML = `<p class="dl-state" role="alert">${t('Az időpontok most nem érhetők el. Próbáld újra egy perc múlva.')}</p>`; }
+      summary();
+    }
+    daysEl.addEventListener('click', (e) => { const b = e.target.closest('[data-day]'); if (!b) return; day = b.dataset.day; slot = null; renderSlots(); summary(); $(`[data-day="${day}"]`, daysEl).focus(); });
+    slotsEl.addEventListener('change', (e) => { if (e.target.name !== 'slot') return; slot = e.target.value; setErr('slot', ''); capShown = false; $$('[data-day]', daysEl).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.day === day && slot !== 'rush'))); summary(); });
+    // the basket no longer fits the chosen time: say so right away, not only on submit
+    const capMsg = () => (!data || !slot ? '' : slot === 'rush' ? (cups.length > data.rush.max_drinks ? t('Rush rendelésben legfeljebb {n} ital lehet.', { n: data.rush.max_drinks }) : '') : curSlot() && cups.length > curSlot().left ? tn('Erre az időpontra már csak {n} pohár fér.', curSlot().left) : '');
+
+    // 4 · who pays
+    function mode() {
+      const g = kind() === 'group';
+      $('#dl-inv').hidden = g; $('#dl-group-hint').hidden = !g;
+      if (g) INV.forEach((n) => setErr(n, ''));
+      payBtn.textContent = g ? t('Csoportos rendelés indítása') : t('Fizetés');
+      setErr('slot', ''); capShown = false; summary();
+    }
+    form.addEventListener('change', (e) => { if (e.target.name === 'pay') mode(); });
+    F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
+
+    // summary + the phone bar
+    const bar = $('#dl-bar'), barBtn = $('#dl-bar-btn');
+    function summary() {
+      const n = cups.length, sub = cups.reduce((s, c) => s + cupPrice(c), 0), fee = n ? feeFor(n) : 0;
+      const lines = new Map(); cups.forEach((c) => { const k = cupLabel(c), l = lines.get(k) || { n: 0, sum: 0 }; l.n++; l.sum += cupPrice(c); lines.set(k, l); });
+      const row = (k, v, cls) => `<div${cls ? ` class="${cls}"` : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
+      sum.innerHTML =
+        (n ? [...lines].map(([k, l]) => row(`${l.n} × ${esc(k)}`, ft(l.sum), 'dl-sum__cup')).join('') : row(t('Italok'), `<span class="is-empty">${t('Még nincs kiválasztva')}</span>`)) +
+        row(t('Kiszállítás'), n ? (fee ? `${ft(fee)}<small>${t('{n} italtól ingyenes', { n: RULES.freeFrom })}</small>` : t('ingyenes')) : `<span class="is-empty">${t('{n} italtól ingyenes, alatta {fee}', { n: RULES.freeFrom, fee: ft(RULES.fee) })}</span>`) +
+        `<div class="dl-sum__prog">${progress(n)}</div>` +
+        row(t('Időpont'), slotText() || `<span class="is-empty">${t('Még nincs kiválasztva')}</span>`) +
+        row(t('Fizetendő'), ft(sub + fee), 'dl-sum__total');
+      const cap = capMsg();
+      if (cap) { setErr('slot', cap); capShown = true; } else if (capShown) { setErr('slot', ''); capShown = false; }
+      $('#dl-bar-sum').textContent = n ? ft(sub + fee) : t('{n} italtól ingyenes', { n: RULES.freeFrom });
+      $('#dl-bar-txt').textContent = n ? `${tn('{n} ital', n)}${slotText() ? ` · ${slotText()}` : ''}` : t('alatta {fee} a kiszállítás', { fee: ft(RULES.fee) });
+      barBtn.textContent = n ? t('Tovább') : t('Rendelek');
+      barBtn.setAttribute('href', !n ? '#rendeles' : !slot ? '#dl-days' : '#dl-sum-card');
+      // screen readers hear the total once the basket settles, not on every keystroke
+      clearTimeout(liveTimer); liveTimer = setTimeout(() => { $('#dl-sum-live').textContent = n ? `${tn('{n} ital', n)}, ${t('Fizetendő')}: ${ft(sub + fee)}` : ''; }, 900);
+    }
+    const heroBtn = $('.dl-hero__actions'), sumCard = $('#dl-sum-card');
+    const placeBar = () => { bar.hidden = heroBtn.getBoundingClientRect().bottom > 60 || sumCard.getBoundingClientRect().top < innerHeight - 80; };
+    addEventListener('scroll', placeBar, { passive: true }); addEventListener('resize', placeBar); placeBar();
+    phone.addEventListener('change', () => { if (menu.size) renderMenu(); });
+
+    // validation
+    const BASE = ['cups', 'slot', 'company', 'street', 'floor', 'name', 'email', 'phone'], INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
+    const rules = {
+      cups: (v, k) => (cups.length ? '' : k === 'group' ? t('Add hozzá a saját italodat: a csoportos rendelést is egy itallal indítod.') : t('Válassz legalább egy italt.')),
+      slot: (v, k) => (!slot ? t('Válassz időpontot.') : k === 'group' && slot === 'rush' ? t('Csoportos rendeléshez válassz időpontot, ne a rusht.') : capMsg()),
+      company: (v) => (v.length >= 2 ? '' : t('Add meg a cég vagy az iroda nevét.')),
+      street: (v) => (v.length >= 4 ? '' : t('Add meg az utcát és a házszámot.')),
+      floor: (v) => (v.length >= 1 ? '' : t('Add meg az emeletet.')),
+      name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
+      email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
+      phone: (v) => (v.replace(/\D/g, '').length >= 7 ? '' : t('Adj meg egy telefonszámot, amin elérünk.')),
+      inv_name: (v) => (v.length >= 2 ? '' : t('Add meg a cég nevét.')),
+      tax_number: (v) => (/^\d{8}-\d-\d{2}$/.test(taxFmt(v)) ? '' : t('Az adószám formátuma: 12345678-1-12.')),
+      zip: (v) => (/^\d{4}$/.test(v) ? '' : t('A magyar irányítószám 4 számjegy.')),
+      city: (v) => (v.length >= 2 ? '' : t('Add meg a várost.')),
+      inv_street: (v) => (v.length >= 4 ? '' : t('Add meg az utcát és a házszámot.')),
+      terms: () => (F('terms').checked ? '' : t('A rendeléshez el kell fogadnod a feltételeket.')),
+    };
+    const val = (n) => (F(n) instanceof Element && F(n).type !== 'checkbox' ? F(n).value.trim() : '');
+    const check1 = (n, k) => { const msg = rules[n](val(n), k); setErr(n, msg); return !msg; };
+    form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n); });
+    F('terms').addEventListener('change', () => check1('terms'));
+    const focusBad = (n) => (n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
+
+    function payload(k) {
+      const s = curSlot();
+      return { kind: k, date: slot === 'rush' ? today() : day, slot_id: s ? s.id : null, rush: slot === 'rush', items: cups.map(cupItem),
+        address: { company: val('company'), street: val('street'), floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: val('phone') },
+        invoice: k === 'company' ? { name: val('inv_name'), tax_number: val('tax_number'), zip: val('zip'), city: val('city'), street: val('inv_street') } : null, terms: true, lang: B.lang,
+        return_path: location.pathname }; // Stripe sends the payer back under this page, wherever the site is mounted
+    }
+    const problem = (err) => (err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'slot_full' ? tn('Erre az időpontra már csak {n} pohár fér.', err.left ?? 0) : err.code === 'slot_closed' || err.code === 'rush_off' ? t('Ez az időpont közben lezárult. Válassz másikat.') : t('Most nem sikerült elküldeni a rendelést. Próbáld újra egy perc múlva.'));
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (sending) return;
+      const k = kind();
+      result.hidden = true; after.hidden = true;
+      F('tax_number').value = taxFmt(F('tax_number').value);
+      const bad = [...BASE, ...(k === 'company' ? INV : []), 'terms'].filter((n) => !check1(n, k));
+      if (bad.length) return focusBad(bad[0]);
+      sending = true; busy(payBtn, true);
+      const p = payload(k), text = slotText();
+      try {
+        const res = k === 'company' ? await api.order(p) : await api.createGroup(p);
+        try { sessionStorage.setItem(LAST, JSON.stringify({ n: p.items.length, text, company: p.address.company, wd: parse(p.date).getUTCDay(), time: curSlot() ? curSlot().time : '', rush: p.rush })); } catch (err) { /* no storage: the thank-you view is shorter */ }
+        if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
+        if (!USE_MOCK || !res.preview) throw new Error('no_checkout_url'); // a 200 without a payment link is a failure
+        const back = (q) => `${location.pathname}?${q}`;
+        show(after, k === 'company'
+          ? `<p class="dl-preview">${t(PREVIEW)} ${t('Nézd meg, mi jön utána:')} <a href="${back(`order=${res.order_id}&paid=1`)}">${t('sikeres fizetés')}</a> · <a href="${back('cancelled=1')}">${t('megszakított fizetés')}</a></p>`
+          : shareHtml(res, text));
+      } catch (err) {
+        result.textContent = problem(err); result.hidden = false; result.focus();
+        if (err.code) loadSlots();
+      }
+      sending = false; busy(payBtn, false);
+    });
+
+    function shareHtml(res, text) {
+      return `<p class="dl-preview">${t('Előnézet: a valódi oldalon előbb a saját italodat fizeted ki (Stripe), utána jön ez.')}</p>
+        <h3>${t('Kész a csoportos rendelés')}</h3>
+        <p>${t('{slot}. Küldd át ezt a linket a kollégáknak: mindenki hozzáadja és kifizeti a saját italát.', { slot: esc(text) })}</p>
+        ${shareBox(res.url)}
+        <p class="dl-after__actions"><a class="btn" href="${esc(res.url)}">${t('A csoport oldala')} <span aria-hidden="true">→</span></a></p>
+        <p class="fine">${t('Előnézet: ez a link most csak ebben a böngészőben él.')}</p>`;
+    }
+
+    mode(); renderCups();
+    loadSlots();
+    menuEl.innerHTML = `<li class="dl-state" role="status">${t('Itallap betöltése…')}</li>`;
+    loadMenu().then(() => { if (!menu.size) throw new Error('empty'); renderMenu(); }).catch(() => { menuEl.innerHTML = `<li class="dl-state" role="alert">${t('Az itallap most nem érhető el. Próbáld újra egy perc múlva.')}</li>`; });
+    addEventListener('storage', (e) => { if (e.key === 'bros-delivery-mock') loadSlots(); }); // the admin mock-up in another tab
+    watchDay(loadSlots);
+    setInterval(() => { if (!document.hidden && !sending) loadSlots(); }, 60000); // cutoffs pass and rush switches itself off while the page is open
+  }
+
+  // link + copy button, used on both pages
+  function shareBox(url) {
+    return `<div class="dl-share"><label class="visually-hidden" for="dl-share-url">${t('A csoportos rendelés linkje')}</label><input id="dl-share-url" type="text" readonly value="${esc(url)}"><button type="button" class="btn btn--ghost" data-copy>${t('Link másolása')}</button></div><p class="visually-hidden" role="status" data-copied></p>`;
+  }
+  document.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-copy]'); if (!b) return;
+    const input = b.parentNode.querySelector('input');
+    let ok = false; try { await navigator.clipboard.writeText(input.value); ok = true; } catch (err) { input.focus(); input.select(); }
+    b.textContent = ok ? t('Kimásolva') : t('Jelöld ki és másold');
+    const live = b.parentNode.parentNode.querySelector('[data-copied]'); if (live) live.textContent = b.textContent;
+    if (ok) setTimeout(() => { b.textContent = t('Link másolása'); }, 2500);
+  });
+  document.addEventListener('focusin', (e) => { if (e.target.id === 'dl-share-url') e.target.select(); });
+
+  // ---------- group order page ----------
+  function groupPage() {
+    const root = $('#dl-group-root'), code = (new URLSearchParams(location.search).get('g') || '').toUpperCase();
+    const back = returned(['paid', 'cancelled']);
+    let g = null, timer = null, cup = null, sending = false;
+    const FEE_RULE = {
+      organiser: 'Ha a határidőig nem gyűlik össze {n} ital, a {fee} kiszállítási díjat a szervező fizeti.',
+      split: 'Ha a határidőig nem gyűlik össze {n} ital, a {fee} kiszállítási díjat a résztvevők között osztjuk el.',
+      cancel: 'Ha a határidőig nem gyűlik össze {n} ital, a rendelést töröljük, és mindenki visszakapja a pénzét.',
+    };
+    const left = () => new Date(g.cutoff_at) - Date.now();
+    function countdown() {
+      const el = $('#dl-count'); if (!el) return;
+      const s = Math.max(0, Math.floor(left() / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+      el.textContent = h ? t('{h} óra {m} perc', { h, m }) : t('{m} perc {s} mp', { m, s: String(s % 60).padStart(2, '0') });
+      if (s <= 0 && g.status === 'open') load();
+    }
+    const who = () => (g.participants.length ? `<ul class="dl-who">${g.participants.map((p) => `<li><span><b>${esc(p.name)}</b><small>${p.items.map(esc).join(', ')}</small></span><span class="dl-tag" data-st="${p.paid ? 'paid' : 'wait'}">${p.paid ? t('fizetve') : t('fizetésre vár')}</span></li>`).join('')}</ul>` : `<p class="dl-state">${t('Még senki nem adott hozzá italt. Legyél te az első!')}</p>`);
+    // the left column is redrawn on every change; the join form is built once, so a poll never wipes what someone typed
+    function view() {
+      const open = g.status === 'open', addr = [g.company, g.address.street, g.address.floor].filter(Boolean).map(esc).join(', ');
+      setRules(g.free_from, g.fee);
+      let main = $('#dl-g-main'); if (!main) { root.innerHTML = '<div class="dl-g__main" id="dl-g-main"></div>'; main = $('#dl-g-main'); }
+      main.innerHTML = `
+          <section class="dl-card" aria-labelledby="dl-g-title">
+            <p class="dl-g__tags"><span class="dl-tag dl-tag--big" data-st="${open ? 'open' : 'locked'}">${open ? t('Nyitva') : t('Lezárva')}</span>${g.sample || USE_MOCK ? `<span class="dl-draft">${g.sample ? t('Minta · kitalált nevek és italok') : t('Előnézet · minta adatok')}</span>` : ''}</p>
+            <h2 id="dl-g-title">${dayLabel(g.date)} · ${hm(g.time)}</h2>
+            <p class="dl-g__addr">${addr}<br>${t('Szervező')}: ${esc(g.organiser)}</p>
+            ${open ? `<p class="dl-g__count"><span>${t('Lezárásig')}</span><b id="dl-count" role="timer"></b></p>` : `<p class="dl-g__locked">${t('A rendelés lezárult, már készítjük. {time}-kor visszük.', { time: hm(g.time) })}</p>`}
+            <div class="dl-g__prog"><div id="dl-g-prog">${progress(g.drinks)}</div><p class="fine">${open && g.drinks < g.free_from ? `${t(FEE_RULE[g.fee_rule] || FEE_RULE.organiser, { n: g.free_from, fee: ft(g.fee) })} ${draftPill()}` : !open && g.fee_due ? t('Kiszállítási díj: {fee}.', { fee: ft(g.fee_due) }) : ''}</p></div>
+          </section>
+          <section class="dl-card" aria-labelledby="dl-who-title">
+            <h2 id="dl-who-title">${t('Kik vannak benne')} <span class="dl-g__n">${tn('{n} ital', g.drinks)}</span></h2>
+            <div id="dl-who">${who()}</div>
+            <p class="visually-hidden" role="status">${tn('{n} ital', g.drinks)}</p>
+          </section>
+          ${open ? `<section class="dl-card dl-card--tint" aria-labelledby="dl-inv-title"><h2 id="dl-inv-title">${t('Hívd meg a kollégákat')}</h2>${shareBox(`${location.origin}${location.pathname}?g=${g.code}`)}</section>` : ''}`;
+      clearInterval(timer);
+      const form = $('#dl-join');
+      if (open) { countdown(); timer = setInterval(countdown, 1000); if (!form) { root.insertAdjacentHTML('beforeend', joinForm()); bindForm(); } }
+      else form?.remove();
+    }
+    function joinForm() {
+      const groups = CONFIG.cats.map((c) => [c, [...menu.values()].filter((d) => d.cat === c)]).filter(([, l]) => l.length);
+      return `<form class="dl-card dl-join" id="dl-join" novalidate aria-labelledby="dl-join-title">
+        <h2 id="dl-join-title">${t('Add hozzá a tiédet')}</h2>
+        <div class="dl-fields">
+          <div class="dl-field dl-field--wide"><label for="dl-j-name">${t('A neved')}</label><input id="dl-j-name" name="name" type="text" autocomplete="name" required></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-drink">${t('Ital')}</label><select id="dl-j-drink" name="drink"><option value="">${t('Válassz…')}</option>${groups.map(([c, l]) => `<optgroup label="${t(CATS[c] || c)}">${l.map((d) => `<option value="${d.id}">${esc(d.name)} · ${ft(d.sizes.length ? d.sizes[0].price : d.price)}</option>`).join('')}</optgroup>`).join('')}</select></div>
+          <div class="dl-join__opts dl-field--wide" id="dl-join-opts" hidden></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-email">${t('E-mail')} <i>(${t('ide küldjük a számlát')})</i></label><input id="dl-j-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-loyalty">${t('Hűségkártyád e-mail-címe')} <i>(${t('nem kötelező')})</i></label><input id="dl-j-loyalty" name="loyalty_email" type="email" autocomplete="email" inputmode="email"><small id="dl-stamp">${t('Ha megadod, a kávéd pecsétet ér a kártyádon.')}</small></div>
+        </div>
+        <label class="dl-check"><input type="checkbox" name="terms" required><span>${t('Elfogadom az')} <a href="../#aszf">${t('általános szerződési feltételeket')}</a> ${t('(tervezet).')}</span></label>
+        <button class="btn dl-join__btn" type="submit">${t('Hozzáadom és fizetek')}</button>
+        <p class="dl-preview" id="dl-join-result" role="alert" tabindex="-1" hidden></p>
+        <p class="fine">${t('Mindenki a saját italát fizeti, online: bankkártyával, Apple Pay-jel vagy Google Pay-jel. A számlát e-mailben kapod.')}</p>
+      </form>`;
+    }
+    function bindForm() {
+      const form = $('#dl-join'), setErr = errors(form), F = (n) => form.elements[n], opts = $('#dl-join-opts'), btn = $('.dl-join__btn', form), out = $('#dl-join-result');
+      const price = () => { btn.textContent = cup ? `${t('Hozzáadom és fizetek')} · ${ft(cupPrice(cup))}` : t('Hozzáadom és fizetek'); };
+      cup = null;
+      const drink = () => {
+        cup = F('drink').value && menu.has(F('drink').value) ? newCup(F('drink').value) : null; setErr('drink', '');
+        const d = cup && menu.get(cup.id), html = d ? optionSelects(d, cup) : '';
+        opts.innerHTML = html; opts.hidden = !html; price();
+        $('#dl-stamp').textContent = d && d.cat !== 'coffee' && !CONFIG.stampSpecials.includes(d.id) ? t('Ezért az italért nem jár pecsét.') : t('Ha megadod, a kávéd pecsétet ér a kártyádon.');
+      };
+      F('drink').addEventListener('change', drink);
+      opts.addEventListener('input', (e) => { if (e.target.dataset.k && cup) { readOpt(cup, e.target); price(); } });
+      const rules = {
+        name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
+        drink: (v) => (cup && cup.id === v ? '' : t('Válassz egy italt.')), // the cup must be the one the select shows
+        email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
+        loyalty_email: (v) => (!v || EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
+        terms: () => (F('terms').checked ? '' : t('A rendeléshez el kell fogadnod a feltételeket.')),
+      };
+      const check1 = (n) => { const msg = rules[n](F(n).type === 'checkbox' ? '' : F(n).value.trim()); setErr(n, msg); return !msg; };
+      form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['drink', 'terms'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n); });
+      F('terms').addEventListener('change', () => check1('terms'));
+      const say = (msg) => { out.textContent = msg; out.hidden = false; out.focus({ preventScroll: true }); out.scrollIntoView({ block: 'nearest' }); };
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault(); if (sending) return; out.hidden = true;
+        const bad = Object.keys(rules).filter((n) => !check1(n));
+        if (bad.length) return F(bad[0]).focus();
+        sending = true; busy(btn, true);
+        try {
+          const res = await api.join(g.code, { name: F('name').value.trim(), email: F('email').value.trim(), loyalty_email: F('loyalty_email').value.trim(), items: [{ ...cupItem(cup), who: F('name').value.trim() }], terms: true, lang: B.lang, return_path: location.pathname });
+          if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
+          if (!USE_MOCK || !res.preview) throw new Error('no_checkout_url');
+          form.reset(); drink(); await load();
+          if ($('#dl-join')) say(`${t(PREVIEW)} ${t('A mintában az italod már a listán van.')}`);
+        } catch (err) {
+          say(err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'locked' ? t('A rendelés közben lezárult.') : err.code === 'slot_full' ? t('Erre az időpontra sajnos betelt a hely.') : t('Most nem sikerült hozzáadni. Próbáld újra egy perc múlva.'));
+          if (err.code === 'locked') load();
+        }
+        sending = false; busy(btn, false);
+      });
+      if (back.paid === '1') say(t('Köszönjük, kifizetve: az italod a listán van. A számlát e-mailben küldjük.'));
+      else if (back.cancelled === '1') say(t('A fizetés megszakadt, nem történt terhelés. Az italod nincs a listán: add hozzá újra, ha kéred.'));
+      back.paid = back.cancelled = null;
+    }
+    async function load(soft) {
+      try {
+        const next = await api.group(code);
+        if (soft && g && JSON.stringify(next) === JSON.stringify(g)) return;
+        g = next; view();
+        if (g.bookings_open === false) ordersClosed($('#dl-join'));
+        else if (g.payments_ready === false && g.status === 'open') notReady(root, 'beforebegin');
+      } catch (err) {
+        if (soft) return;
+        clearInterval(timer);
+        root.innerHTML = `<section class="dl-card dl-g__none"><h2>${err.code === 'not_found' ? t('Ez a csoportos rendelés nem található.') : t('A csoportos rendelés most nem érhető el.')}</h2><p>${t('Lehet, hogy a link hibás vagy már lejárt. Kérj újat a szervezőtől.')}</p>
+          <p class="actions">${USE_MOCK ? `<a class="btn" href="?g=MINTA">${t('Minta csoport')}</a>` : ''}<a class="link" href="../">Bros Delivery</a></p></section>`;
+      }
+    }
+    root.innerHTML = `<p class="dl-state" role="status">${t('Csoportos rendelés betöltése…')}</p>`;
+    loadMenu().catch(() => {}).then(() => load());
+    setInterval(() => { if (!document.hidden) load(true); }, 8000); // "live" list: poll; the real page may use the same poll
+    addEventListener('storage', (e) => { if (e.key === 'bros-delivery-mock') load(true); });
+    watchDay(() => { if (g) view(); }); // "Ma" / "Holnap" labels
+  }
+
+  // ---------- admin ----------
+  async function adminPage() {
+    if (!USE_MOCK) { if (!B.staff) return; await B.staff.guard(); } // the board is counter work; saving settings and cancelling need the admin role
+    const root = $('#dl-admin'), live = $('#dla-live');
+    const ST = ['new', 'making', 'out', 'delivered'], ST_HU = { new: 'új', making: 'készül', out: 'úton', delivered: 'kézbesítve' };
+    const NEXT = { new: 'Elkezdem készíteni', making: 'Elindultam vele', out: 'Kézbesítve' };
+    const pill = (st) => `<span class="dla__pill" data-st="${esc(st)}">${t(ST_HU[st] || st)}</span>`;
+    const openIds = new Set();
+    let date = today(), dayList = [date], board = null, settings = null, rec = [], working = false;
+    const say = (s) => { live.textContent = ''; setTimeout(() => { live.textContent = s; }, 30); };
+    const FAIL = 'Nem sikerült. Próbáld újra egy perc múlva.';
+    // one admin action at a time; a failure is said out loud and the screen goes back to what the server has
+    async function act(fn, ok, part) {
+      if (working) return false;
+      working = true;
+      try { await fn(); await refresh(part); if (ok) say(ok); return true; } catch (e) { await refresh(part).catch(() => {}); say(t(e.code === 'payments_not_configured' ? 'Az online fizetés (Stripe) nincs beállítva, ezért innen nem indítható visszatérítés.' : FAIL)); return false; } finally { working = false; }
+    }
+
+    root.innerHTML = `
+      <section class="dla__rush" id="dla-rush" aria-labelledby="dla-rush-title"></section>
+      <section class="dla__panel dla__panel--board" aria-labelledby="dla-board-title"><h2 id="dla-board-title">${t('Tábla')} <small id="dla-board-date"></small></h2>
+        <div class="chips dla__dates" id="dla-dates" role="group" aria-label="${t('Nap')}"></div>
+        <p class="fine">${t('Egy későbbi napot választva előre lezárhatsz egy időpontot arra a napra. Ünnepnapokon nincs kiszállítás.')}</p>
+        <div class="dla__board" id="dla-board"></div></section>
+      <section class="dla__panel" aria-labelledby="dla-slots-title"><h2 id="dla-slots-title">${t('Időpontok')}</h2><p class="fine">${t('Idő, rendelési határidő és hány pohár fér egy körbe. A változás azonnal él a rendelési oldalon.')}</p><div id="dla-slots"></div><p class="dla__msg" id="dla-slots-msg" role="alert"></p></section>
+      <section class="dla__panel" aria-labelledby="dla-rec-title"><h2 id="dla-rec-title">${t('Ismétlődő rendelések')}</h2><div class="dla__list" id="dla-rec"></div></section>`;
+    const rushEl = $('#dla-rush'), boardEl = $('#dla-board'), datesEl = $('#dla-dates'), slotsEl = $('#dla-slots'), recEl = $('#dla-rec'), slotsMsg = $('#dla-slots-msg');
+
+    function renderRush() {
+      const on = board.rush, mins = on && board.rush_until ? Math.max(1, Math.ceil((new Date(board.rush_until) - Date.now()) / 60000)) : 0;
+      const sw = $('.dla__switch', rushEl), had = sw && document.activeElement === sw;
+      rushEl.innerHTML = `<div><h2 id="dla-rush-title">Rush</h2><p>${on ? `${t('Bekapcsolva: az oldalon most rendelhető „amint lehet” kiszállítás.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Kikapcsolva. Kapcsold be, ha ráértek: ketten vagytok, és egyikőtök el tud indulni. {m} perc után magától kikapcsol.', { m: CONFIG.rush.autoOffMin })}</p></div>
+        <button type="button" class="dla__switch" role="switch" aria-checked="${on}" aria-labelledby="dla-rush-title"><i aria-hidden="true"></i><span>${on ? t('BE') : t('KI')}</span></button>`;
+      rushEl.classList.toggle('is-on', on);
+      if (had) $('.dla__switch', rushEl).focus();
+    }
+    function renderBoard() {
+      const isToday = date === today();
+      $('#dla-board-date').textContent = dLong.format(parse(date));
+      datesEl.innerHTML = dayList.map((d) => `<button type="button" class="chip" data-date="${d}" aria-pressed="${d === date}">${dayLabel(d)}</button>`).join('');
+      boardEl.innerHTML = board.slots.length ? board.slots.map((s) => `
+        <div class="dla__col${s.status === 'closed' ? ' is-closed' : ''}">
+          <div class="dla__col-head"><h3>${s.rush ? 'Rush' : hm(s.time)}</h3><p>${tn('{n} ital', s.drinks)}${s.rush ? '' : ` / ${s.capacity} · ${t('határidő')} ${clock(s.cutoff_at)}`}</p>
+            <div class="dla__bar" aria-hidden="true"><i style="width:${Math.min(100, Math.round(s.drinks / Math.max(1, s.capacity) * 100))}%"></i></div>
+            ${s.rush ? '' : `<button type="button" class="dla__mini" data-close="${s.id}" aria-pressed="${s.status === 'closed'}">${s.status === 'closed' ? t('Lezárva · megnyitom') : isToday ? t('Lezárom mára') : t('Lezárom erre a napra')}</button>`}</div>
+          ${s.orders.length ? s.orders.map((o) => `
+            <details class="dla__order" data-id="${o.id}"${openIds.has(o.id) ? ' open' : ''}>
+              <summary><span><b>${esc(o.company)}</b><small>${o.id} · ${tn('{n} ital', o.drinks)} · ${o.type === 'company' ? t('cég fizet') : t('csoportos')}</small></span>${pill(o.status)}</summary>
+              <ul>${o.cups.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
+              <p>${esc(o.address)} · ${esc(o.contact)}${o.note ? `<br>${esc(t(o.note))}` : ''}</p>
+              ${NEXT[o.status] ? `<button type="button" class="btn" data-next="${o.id}" data-to="${ST[ST.indexOf(o.status) + 1]}">${t(NEXT[o.status])}</button>` : ''}
+              ${NEXT[o.status] && api.admin.cancelOrder ? `<button type="button" class="dla__mini" data-cancel="${o.id}">${t('Törlés és teljes visszatérítés')}</button>` : ''}
+            </details>`).join('') : `<p class="dla__empty">${isToday || !USE_MOCK ? t('Erre az időpontra még nincs rendelés.') : t('A minta csak a mai rendeléseket mutatja.')}</p>`}
+        </div>`).join('') : `<p class="dla__empty">${t('Nincs beállított időpont.')}</p>`;
+    }
+    function renderSlots(focus) {
+      slotsEl.innerHTML = `<div class="dla__slots">${settings.slots.map((s, i) => `
+        <fieldset class="dla__slot" data-i="${i}"><legend class="visually-hidden">${t('Időpont')} ${hm(s.time)}</legend>
+          <label><span>${t('Idő')}</span><input type="time" data-f="time" value="${s.time}" min="${CONFIG.slotHours[0]}" max="${CONFIG.slotHours[1]}" required></label>
+          <label><span>${t('Határidő (perc)')}</span><input type="number" data-f="cutoffMin" value="${s.cutoffMin}" min="0" max="600" step="5" inputmode="numeric"></label>
+          <label><span>${t('Pohár')}</span><input type="number" data-f="capacity" value="${s.capacity}" min="0" max="99" inputmode="numeric"></label>
+          <button type="button" class="dla__del" data-del="${i}" aria-label="${esc(`${t('Időpont törlése')}: ${hm(s.time)}`)}">${cross}</button>
+        </fieldset>`).join('')}</div>
+        <button type="button" class="btn btn--ghost" data-add>${t('Új időpont')}</button>
+        <fieldset class="dla__days"><legend>${t('Szállítási napok')} <small>${t('(vasárnap zárva a kávézó)')}</small></legend>${[1, 2, 3, 4, 5, 6].map((d) => `<label class="dl-pill"><input type="checkbox" data-day="${d}"${settings.days.includes(d) ? ' checked' : ''}><span>${WD[d]}</span></label>`).join('')}</fieldset>`;
+      if (focus) $(focus, slotsEl)?.focus();
+    }
+    const ruleText = (r) => (r === 'weekdays' ? t('minden munkanapon') : EVERY[r]);
+    function renderRec() {
+      recEl.innerHTML = rec.map((r) => `<div class="dla__rec${r.active ? '' : ' is-paused'}"><span><b>${esc(r.company)}</b><small>${ruleText(r.rule)} · ${hm(r.time)} · ${tn('{n} ital', r.drinks)}</small></span>
+        <span class="dla__pill" data-st="${r.active ? 'on' : 'off'}">${r.active ? t('aktív') : t('szünetel')}</span><button type="button" class="dla__mini" data-rec="${r.id}" data-to="${!r.active}">${r.active ? t('Szüneteltetés') : t('Folytatás')}</button></div>`).join('') || `<p class="dla__empty">${t('Még nincs ismétlődő rendelés.')}</p>`;
+    }
+    // the days the board can show: today and the next delivery days (the real admin derives them from GET /slots)
+    const loadDays = async () => { dayList = api.admin.days ? await api.admin.days() : [...new Set([today(), ...(await api.slots()).days.map((d) => d.date)])].sort(); if (!dayList.includes(date)) date = dayList[0]; };
+    async function refresh(part) {
+      if (!part) await loadDays();
+      if (!part || part === 'board') { board = await api.admin.board(date); renderRush(); renderBoard(); }
+      if (!part || part === 'settings') { settings = await api.admin.settings(); if (!part) renderSlots(); rec = (await api.admin.recurring()).recurring; renderRec(); }
+    }
+
+    rushEl.addEventListener('click', async (e) => {
+      if (!e.target.closest('.dla__switch')) return;
+      const on = !board.rush;
+      if (await act(() => api.admin.setRush(on), on ? t('Rush bekapcsolva, {m} perc múlva magától kikapcsol', { m: CONFIG.rush.autoOffMin }) : t('Rush kikapcsolva'), 'board')) $('.dla__switch', rushEl).focus();
+    });
+    datesEl.addEventListener('click', async (e) => { const b = e.target.closest('[data-date]'); if (!b || working) return; date = b.dataset.date; await act(async () => {}, '', 'board'); $(`[data-date="${date}"]`, datesEl)?.focus(); });
+    boardEl.addEventListener('toggle', (e) => { const d = e.target.closest('.dla__order'); if (d) d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }, true);
+    boardEl.addEventListener('click', async (e) => {
+      const next = e.target.closest('[data-next]'), close = e.target.closest('[data-close]'), cancel = e.target.closest('[data-cancel]');
+      if (cancel) {
+        const id = cancel.dataset.cancel;
+        if (!confirm(t('{id}: töröljük a rendelést, és mindenki visszakapja a teljes összeget?', { id }))) return;
+        busy(cancel, true);
+        await act(() => api.admin.cancelOrder(id), t('{id}: törölve, visszatérítve', { id }), 'board');
+      } else if (next) {
+        const id = next.dataset.next, to = next.dataset.to; busy(next, true);
+        await act(() => api.admin.setStatus(id, to), `${id}: ${t(ST_HU[to])}`, 'board');
+        ($(`[data-next="${id}"]`, boardEl) || $(`[data-id="${id}"] summary`, boardEl))?.focus();
+      } else if (close) {
+        const id = close.dataset.close, closed = close.getAttribute('aria-pressed') !== 'true';
+        await act(() => api.admin.closeSlot(date, id, closed), `${dayLabel(date)} · ${hm(board.slots.find((s) => s.id === id).time)}: ${closed ? t('lezárva') : t('nyitva')}`, 'board');
+        $(`[data-close="${id}"]`, boardEl)?.focus();
+      }
+    });
+    // a slot must be inside the opening hours and no two slots may share a time
+    const slotProblem = () => { const times = settings.slots.map((s) => s.time); return times.some((x) => x < CONFIG.slotHours[0] || x > CONFIG.slotHours[1]) ? t('Az időpont a nyitvatartáson belül legyen ({a}–{b}).', { a: hm(CONFIG.slotHours[0]), b: CONFIG.slotHours[1] }) : new Set(times).size !== times.length ? t('Két időpont nem lehet ugyanakkor.') : ''; };
+    async function save(focus) {
+      const bad = slotProblem();
+      slotsMsg.textContent = bad;
+      if (bad) return; // nothing is saved until it is valid; the fields keep what was typed
+      const ok = await act(() => api.admin.saveSettings(settings), t('Mentve'), 'settings');
+      if (!ok) { slotsMsg.textContent = t('Nem sikerült menteni. Próbáld újra.'); renderSlots(focus); } else { board = await api.admin.board(date).catch(() => board); renderBoard(); }
+    }
+    slotsEl.addEventListener('change', (e) => {
+      const f = e.target.dataset.f, day = e.target.dataset.day;
+      if (f) {
+        const s = settings.slots[e.target.closest('[data-i]').dataset.i];
+        if (f === 'time') { if (!/^\d\d:\d\d$/.test(e.target.value)) { e.target.value = s.time; return; } s.time = e.target.value; }
+        else { const n = Math.max(0, Math.round(Number(e.target.value)) || 0); s[f] = n; e.target.value = n; }
+      } else if (day != null) settings.days = $$('[data-day]:checked', slotsEl).map((c) => Number(c.dataset.day));
+      else return;
+      save();
+    });
+    slotsEl.addEventListener('click', (e) => {
+      const del = e.target.closest('[data-del]');
+      if (del) { settings.slots.splice(Number(del.dataset.del), 1); renderSlots('[data-add]'); save('[data-add]'); }
+      else if (e.target.closest('[data-add]')) {
+        // the first free half hour after the last slot, inside the opening hours
+        const used = new Set(settings.slots.map((s) => s.time)), last = settings.slots[settings.slots.length - 1], toMin = (x) => Number(x.slice(0, 2)) * 60 + Number(x.slice(3)), toStr = (m) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+        let m = last ? toMin(last.time) + 60 : toMin(CONFIG.slots[0].time);
+        const lo = toMin(CONFIG.slotHours[0]), hi = toMin(CONFIG.slotHours[1]);
+        for (let i = 0; i < 48 && (m > hi || m < lo || used.has(toStr(m))); i++) m = m + 30 > hi ? lo : m + 30;
+        settings.slots.push({ id: `s${Date.now().toString(36)}`, time: toStr(m), cutoffMin: last ? last.cutoffMin : CONFIG.slots[0].cutoffMin, capacity: last ? last.capacity : CONFIG.slots[0].capacity });
+        const sel = `[data-i="${settings.slots.length - 1}"] input`; renderSlots(sel); save(sel);
+      }
+    });
+    recEl.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-rec]'); if (!b) return;
+      const id = b.dataset.rec, on = b.dataset.to === 'true';
+      await act(() => api.admin.setRecurring(id, on), on ? t('aktív') : t('szünetel'), 'settings'); $(`[data-rec="${id}"]`, recEl)?.focus();
+    });
+    $('#dla-reset')?.addEventListener('click', () => act(async () => { if (api.admin.reset) await api.admin.reset(); openIds.clear(); date = today(); slotsMsg.textContent = ''; }, t('Minta visszaállítva')));
+    const first = () => refresh().catch(() => { boardEl.innerHTML = `<p class="dla__empty" role="alert">${t('Az adatok most nem érhetők el. Próbáld újra egy perc múlva.')}</p>`; });
+    first();
+    watchDay(() => { date = today(); first(); }); // the board left open overnight moves to the new day
+    // new orders, cutoffs, the rush countdown: redraw only what changed, so the poll never steals the focus
+    setInterval(async () => {
+      if (document.hidden || working || !board) return;
+      try { const next = await api.admin.board(date), same = JSON.stringify(next.slots) === JSON.stringify(board.slots); if (working) return; board = next; renderRush(); if (!same) renderBoard(); } catch (e) { /* next round */ }
+    }, 20000);
+  }
+
+  const view = document.body.dataset.dl;
+  if (view === 'order') orderPage();
+  else if (view === 'group') groupPage();
+  else if (view === 'admin') adminPage();
+})();

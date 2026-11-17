@@ -11,13 +11,14 @@ the **After Hours + Delivery backends** too. Everything live on Cloudflare **bef
 - API: the Cloudflare Worker port in `worker/src` (same 72 routes and shapes as the FastAPI `backend/`).
   Preview: https://broscafe.gracelabs.dev (env `preview`, D1 with real-ish data, noindex). Deploy is done by the
   lead, not you: `sh worker/scripts/deploy-preview.sh`.
-- New design D: `variants/d/` served at `/d/` (shared media `/shared/`). Read `variants/d/SHELL.md` (tokens, look,
+- New design D: `site/`, served at `/` (it was `/d/` until 17 Nov; shared media `/shared/`). Read `site/SHELL.md` (tokens, look,
   motion, NAV, i18n), `docs/media-picks.md`, `~/.agents/skills/apple-design/SKILL.md`.
 - Inventory and parity table: `docs/migration-checklist.md` (Frontend section lists every live route/feature).
-- Local: serve `variants/` with `python3 -m http.server <port>` (pick a free port; stop it when done). For `/api`,
+- Local: serve `site/` with `python3 -m http.server <port>` (pick a free port; stop it when done). For `/api`,
   either proxy read-only to the preview or test on the preview after the lead deploys.
 
-## URL plan (D moves from `/d/` to `/` at the end; build under `/d/` now, use relative-to-`/d/` paths like the
+## URL plan (DONE: D moved from `/d/` to `/`; the Worker redirects the old React URLs, see `legacyRedirect` in `worker/src/index.ts`; the `/d/` columns below are history)
+(was: build under `/d/`, use relative-to-`/d/` paths like the
 existing pages so the final move is one mechanical prefix strip)
 | Function | New D page (now) | Final path | Old live path (301 later) |
 |---|---|---|---|

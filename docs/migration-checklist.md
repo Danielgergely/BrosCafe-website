@@ -215,6 +215,14 @@ Total about 6–7 agent days, 18–26 Nov.
 - [ ] 27 Nov [agent] After switch B: every old URL in the redirect table answers 301 to the right page; `www` → apex; `http` → `https`.
 - [ ] 28 Nov [Daniel] Search Console: submit the sitemap; update the Google Business Profile hours and link, the Instagram bio link.
 
+### Side-by-side phase (from 17 Nov)
+- [x] Production Worker `broscafe` on **https://new.broscafe.hu** with a copy of the live data (dry run 1, 17 Nov 15:27).
+  Temporary settings in `worker/wrangler.jsonc`: FRONTEND_URL/CORS = new.broscafe.hu, APPLE_PASS_CONFIGURED and
+  GOOGLE_WALLET_CONFIGURED = "false" (no pass may embed new.broscafe.hu), route new.broscafe.hu only.
+- [ ] Switch night, before the DNS/route change: fresh export + import, then FRONTEND_URL/CORS back to
+  https://broscafe.hu, both Wallet flags "true", routes broscafe.hu + www.broscafe.hu (remove new.broscafe.hu),
+  `sh worker/scripts/deploy-prod.sh`, then the phone checks below.
+
 ### Cut-over A: API + current site to Cloudflare (Sat 21 Nov, after 17:00; fallback Tue 24 Nov after 18:00)
 
 - [ ] **CP** 21 Nov morning [agent] Go/no-go: zone active, dry run 2 clean, Wallet phone test passed, secrets set, artwork and photos in R2.

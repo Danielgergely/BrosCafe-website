@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Étlap · Bros Cafe</title>
+<meta name="description" content="A Bros Cafe étlapja: minden, ami ma a pulton van, a mai árakkal.">
+<meta name="theme-color" content="#25251C">
+<link rel="canonical" href="https://broscafe.hu/etlap/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Bros Cafe">
+<meta property="og:title" content="Étlap · Bros Cafe"><meta property="og:description" content="A Bros Cafe étlapja: minden, ami ma a pulton van, a mai árakkal.">
+<meta property="og:url" content="https://broscafe.hu/etlap/"><meta property="og:image" content="https://broscafe.hu/shared/img/terrace-tables.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest">
+<link rel="preload" href="/shared/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/fraunces-latin-ext-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="expect" href="#site-header" blocking="render">
+<link rel="expect" href="#page-ready" blocking="render">
+<script src="/i18n.js"></script>
+<link rel="stylesheet" href="/shell.css">
+<link rel="stylesheet" href="/pages.css">
+<link rel="stylesheet" href="/glass.css">
+<script src="/glass.js" defer></script>
+</head>
+<body class="sub" data-page="etlap">
+<script src="/shell.js"></script>
+<main id="tartalom">
+<section class="phero wash--glow-soft">
+    <div class="wrap phero__row">
+      <div class="phero__text">
+        <p class="eyebrow">A pulton</p>
+        <h1 data-vt="page-title"><em>Étlap</em></h1>
+        <p class="phero__lead">Koppints bármelyikre: összetevők, allergének, méretek.</p>
+      </div>
+      <div class="phero__pics">
+        <span class="cut phero__pic" data-vt="page-hero" style="--tilt: 3deg"><picture><source srcset="/shared/media/menu-croissant-sandwich-4x5.webp" type="image/webp"><img src="/shared/media/menu-croissant-sandwich-4x5.jpg" alt="Prosciuttós croissant szendvics palatálon" width="1600" height="2000" fetchpriority="high"></picture></span>
+        <span class="cut cut--circle phero__pic2" style="--tilt: -6deg" aria-hidden="true"><picture><source srcset="/shared/media/coffee-cappuccino-1x1.webp" type="image/webp"><img src="/shared/media/coffee-cappuccino-1x1.jpg" alt="" width="1200" height="1200"></picture></span>
+      </div>
+    </div>
+  </section>
+  <div class="menubar">
+    <div class="wrap menubar__row">
+      <div class="seg" id="menu-tabs" role="group" aria-label="Az étlap részei"></div>
+      <button class="search-toggle" id="menu-search" type="button" aria-label="Keresés az étlapon" aria-expanded="false" aria-controls="menu-q"><span data-ico="search"></span></button>
+      <div class="search">
+        <span data-ico="search"></span>
+        <input id="menu-q" type="search" placeholder="Keresés: latte, matcha, croissant…" aria-label="Keresés az étlapon" autocomplete="off" enterkeyhint="search">
+        <button id="menu-clear" type="button" aria-label="Keresés törlése" hidden><span data-ico="close"></span></button>
+      </div>
+    </div>
+  </div>
+  <div class="wrap menu">
+    <div id="menu"><p class="state"><i class="spinner" aria-hidden="true"></i></p></div>
+  </div>
+  <dialog class="detail" id="detail" aria-labelledby="detail-title"><div class="sheet__grab" aria-hidden="true"></div><div class="detail__box" id="detail-box"></div></dialog>
+</main>
+<!-- not deferred: an item opened from another page must be on screen before the first paint, so its photo can morph -->
+<script src="/site.js"></script>
+<i id="page-ready" hidden></i>
+</body>
+</html>

@@ -5,10 +5,10 @@ import type { Doc } from '../db';
 import { settings } from '../config';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
-  ApiError, EMAIL, TAX, ZIP, addDays, esc, ft, instant, invalid, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
+  ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
   staffAddress, text, today, validDate, weekday,
 } from './bookings';
-import { DRINK_CATEGORIES } from './drinks';
+import { earnsStamp } from './drinks';
 import * as emailService from './email';
 import * as members from './members';
 import * as tiers from './tiers';
@@ -91,7 +91,7 @@ export async function slots(app: App, daysParam: unknown) {
     if (infos.length && infos.every((x) => x.status === 'past')) continue; // today, after its last cutoff
     days.push({ date, slots: infos });
   }
-  return { free_from: s.free_from, fee: s.fee_huf, rush: rushView(s), days, payments_ready: stripe.ready(app.env) };
+  return { free_from: s.free_from, fee: s.fee_huf, rush: rushView(s), days, payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
 }
 
 // ---- pricing from the catalogue ----
@@ -243,10 +243,12 @@ async function place(app: App, v: Place) {
 }
 
 export async function createOrder(app: App, b: Doc) {
+  assertBookingsOpen(app);
   const r = await place(app, await readOrder(app, b, 'company'));
   return { checkout_url: r.checkout_url };
 }
 export async function createGroup(app: App, b: Doc) {
+  assertBookingsOpen(app);
   const r = await place(app, await readOrder(app, b, 'group'));
   return { code: r.code, url: r.url, checkout_url: r.checkout_url };
 }
@@ -268,11 +270,12 @@ export async function groupView(app: App, code: string) {
   return {
     code: o.group_code, status: o.status === 'open' ? 'open' : 'locked', date: o.date, time: o.slot_time, cutoff_at: iso(o.cutoff_at), company: o.company,
     address: { street: o.street, floor: o.floor }, organiser: o.contact_name, drinks, free_from: s.free_from, fee: s.fee_huf, fee_due: feeFor(s, drinks), fee_rule: GROUP_FEE_RULE, participants,
-    payments_ready: stripe.ready(app.env),
+    payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app),
   };
 }
 
 export async function joinGroup(app: App, code: string, b: Doc) {
+  assertBookingsOpen(app);
   const bad: string[] = [];
   const party = checkParty(b, bad, { invoice: 'optional' });
   if (b.terms !== true) bad.push('terms');
@@ -341,7 +344,7 @@ async function grantStamps(app: App, p: Doc) {
   if (!claim.meta.changes) return; // the payer id is the idempotency key
   const member = await app.db.members.findOne({ email: String(p.loyalty_email).toLowerCase() });
   if (!member) return;
-  const s = settings(app.env), cups = (await itemsOf(app, p.id)).filter((i) => DRINK_CATEGORIES.includes(i.cat));
+  const s = settings(app.env), cups = (await itemsOf(app, p.id)).filter((i) => earnsStamp(i.product_id, i.cat));
   let n = 0;
   for (const cup of cups) {
     const required = tiers.stampsRequired(member, s);

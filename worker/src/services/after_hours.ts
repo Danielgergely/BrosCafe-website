@@ -4,7 +4,7 @@ import type { Env } from '../env';
 import type { Doc } from '../db';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
-  ApiError, EMAIL, TAX, ZIP, addDays, addMonths, esc, ft, hm, instant, invalid, lang as langOf, mail, mins, nextId, returnPath, rows,
+  ApiError, EMAIL, TAX, ZIP, addDays, addMonths, assertBookingsOpen, bookingsOpen, esc, ft, hm, instant, invalid, lang as langOf, mail, mins, nextId, returnPath, rows,
   safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday,
 } from './bookings';
 import * as stripe from './stripe';
@@ -23,14 +23,22 @@ export const offer = (env: Env) => ({
   open: '18:00', close: '22:00', lastStart: '20:00', startStep: 30,
   launch: String(env.AH_LAUNCH_DATE ?? '2026-12-01'), noticeDays: 3, windowMonths: 3,
   closedDays: ['12-24', '12-25', '12-26', '12-31', '01-01'], // blocked every year unless the admin opens the day
-  packages: ['buffet', 'dessert', 'drinks'],
+  packages: ['food1', 'food2', 'food3'], // the three food selections (contents TBD, paid on site)
 });
+/** Voucher codes: percent off the BASE fee only (not the surcharges). Keys upper-case. */
+const VOUCHERS: Record<string, { percent: number }> = { AFTER25: { percent: 25 } };
 const PATHS = ['/after-hours/'];
 
 export const price = (env: Env, guests: number, hours: number) => {
   const o = offer(env);
   return o.base + o.extraGuest * Math.max(0, guests - o.baseGuests) + o.extraHour * Math.max(0, hours - o.baseHours);
 };
+
+/** Case-insensitive, trimmed. null = no such code. The discount is a share of the base fee only. */
+export function voucher(env: Env, raw: unknown) {
+  const code = String(raw ?? '').trim().toUpperCase(), v = VOUCHERS[code];
+  return v ? { code, percent: v.percent, discount: Math.round((offer(env).base * v.percent) / 100) } : null;
+}
 
 /** First bookable evening: the later of the launch date and three full days' notice (one more once today's evening has opened). */
 export function bookingWindow(app: App) {
@@ -54,7 +62,7 @@ function view(b: Doc) {
   return {
     id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, tier: b.tier, name: b.name, email: b.email, phone: b.phone,
     billing: { zip: b.zip, city: b.city, street: b.street, company: b.company ?? '', tax_number: b.tax_number ?? '' },
-    occasion: b.occasion ?? '', note: b.note ?? '', packages: JSON.parse(b.packages || '[]'), status: b.status, amount: b.amount_huf,
+    occasion: b.occasion ?? '', note: b.note ?? '', packages: JSON.parse(b.packages || '[]'), cake: !!b.cake, voucher_code: b.voucher_code ?? null, discount: b.discount_huf ?? 0, status: b.status, amount: b.amount_huf,
     created_at: iso(b.created_at), paid_at: iso(b.paid_at), cancelled_at: iso(b.cancelled_at),
     refund_percent: b.refund_percent, refund_huf: b.refund_huf, invoice_no: b.invoice_no, invoice_error: b.invoice_error,
   };
@@ -69,7 +77,7 @@ async function live(app: App, from: string, to: string) {
   return new Map(results.map((r) => [r.date, r]));
 }
 
-export async function availability(app: App, from: unknown, to: unknown) {
+export async function availability(app: App, from: unknown, to: unknown, code?: unknown) {
   const w = bookingWindow(app);
   const a = validDate(from) && from > w.min ? from : w.min, z = validDate(to) && to < w.max ? to : w.max;
   await expireHolds(app);
@@ -79,10 +87,13 @@ export async function availability(app: App, from: unknown, to: unknown) {
     if (taken.has(d)) days.push({ date: d, status: 'booked' });
     else if (ov.get(d) ?? defaultOpen(app.env, d)) days.push({ date: d, status: 'open' });
   }
-  return { days, payments_ready: stripe.ready(app.env) };
+  const res: Record<string, unknown> = { days, payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
+  if (String(code ?? '').trim()) { const v = voucher(app.env, code); res.voucher = v ? { valid: true, ...v } : { valid: false }; }
+  return res;
 }
 
 export async function book(app: App, b: Doc) {
+  assertBookingsOpen(app);
   const o = offer(app.env), bad: string[] = [];
   const need = (ok: boolean, f: string) => { if (!ok) bad.push(f); };
   const billing = b.billing ?? {};
@@ -91,7 +102,7 @@ export async function book(app: App, b: Doc) {
     name: text(b.name, 120), email: text(b.email, 200), phone: text(b.phone, 40),
     zip: text(billing.zip, 4), city: text(billing.city, 80), street: text(billing.street, 160),
     company: text(billing.company, 160), tax: text(billing.tax_number, 13),
-    occasion: text(b.occasion, 40), note: text(b.note, 1000),
+    occasion: text(b.occasion, 40), note: text(b.note, 1000), cake: b.cake === true,
     packages: Array.isArray(b.packages) ? b.packages.filter((p: unknown) => o.packages.includes(p as string)) : [],
   };
   need(validDate(v.date), 'date');
@@ -108,6 +119,8 @@ export async function book(app: App, b: Doc) {
   need(!v.tax || TAX.test(v.tax), 'tax_number');
   need(!v.tax || v.company.length >= 2, 'company');
   need(b.terms === true, 'terms');
+  const vch = String(b.voucher ?? '').trim() ? voucher(app.env, b.voucher) : null;
+  if (String(b.voucher ?? '').trim() && !vch) throw new ApiError(400, 'invalid_voucher');
   if (bad.length) throw invalid(bad);
   if (!stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
 
@@ -116,14 +129,14 @@ export async function book(app: App, b: Doc) {
   const open = (await overrides(app, v.date, v.date)).get(v.date) ?? defaultOpen(app.env, v.date);
   if (v.date < w.min || v.date > w.max || !open) throw new ApiError(409, 'day_taken');
 
-  const id = await nextId(app, 'AH'), amount = price(app.env, v.guests, v.hours), lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
+  const id = await nextId(app, 'AH'), discount = vch?.discount ?? 0, amount = price(app.env, v.guests, v.hours) - discount, lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
   try {
     await app.db.d1.prepare(
       `INSERT INTO ah_bookings (id, date, status, hold_expires, start_time, hours, guests, tier, amount_huf, cancel_token, name, email, phone, zip, city, street,
-        company, tax_number, occasion, note, packages, lang, return_path, created_at)
-       VALUES (?, ?, 'pending', ?, ?, ?, ?, 'base', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        company, tax_number, occasion, note, packages, cake, voucher_code, discount_huf, lang, return_path, created_at)
+       VALUES (?, ?, 'pending', ?, ?, ?, ?, 'base', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(id, v.date, isoAt(new Date(Date.now() + stripe.HOLD_MIN * 60_000)), v.start, v.hours, v.guests, amount, tokenUrlsafe(24), v.name, v.email, v.phone, v.zip, v.city, v.street,
-      v.company || null, v.tax || null, v.occasion || null, v.note || null, JSON.stringify(v.packages), lang, path, nowIso()).run();
+      v.company || null, v.tax || null, v.occasion || null, v.note || null, JSON.stringify(v.packages), v.cake ? 1 : 0, vch?.code ?? null, discount, lang, path, nowIso()).run();
   } catch (e) {
     if (/UNIQUE/i.test(String((e as Error).message))) throw new ApiError(409, 'day_taken'); // ah_one_per_day: someone else holds or has the evening
     throw e;
@@ -132,7 +145,7 @@ export async function book(app: App, b: Doc) {
     const end = hm(mins(v.start) + v.hours * 60);
     const session = await stripe.createCheckout(app, {
       kind: 'ah', ref: id, email: v.email, lang,
-      lines: [{ name: `Bros After Hours · ${v.date} ${v.start}–${end} · ${v.guests} ${lang === 'en' ? 'guests' : 'fő'}`, amountHuf: amount }],
+      lines: [{ name: `Bros After Hours · ${v.date} ${v.start}–${end} · ${v.guests} ${lang === 'en' ? 'guests' : 'fő'}${vch ? ` (${vch.code} −${vch.percent}%)` : ''}`, amountHuf: amount }], // Stripe has no negative lines: the discount is already inside the one amount
       description: `Bros After Hours ${id} · ${v.date} ${v.start}–${end}`,
       successUrl: siteUrl(app, `${path}?booking=${id}&paid=1`), cancelUrl: siteUrl(app, `${path}?cancelled=1`),
     });
@@ -151,7 +164,7 @@ function invoiceOf(app: App, b: Doc): szamlazz.Invoice {
   return {
     ref: b.id, type: cfg.ahInvoiceType, lang: b.lang,
     buyer: { name: b.company || b.name, zip: b.zip, city: b.city, street: b.street, email: b.email, taxNumber: b.tax_number },
-    lines: [{ name: `Bros After Hours ${cfg.ahInvoiceType === 'elolegszamla' ? 'előleg' : 'privát este'} · ${b.date} ${b.start_time}–${end} · ${b.guests} fő`, quantity: 1, grossHuf: b.amount_huf, vat: cfg.ahVat }],
+    lines: [{ name: `Bros After Hours ${cfg.ahInvoiceType === 'elolegszamla' ? 'előleg' : 'privát este'} · ${b.date} ${b.start_time}–${end} · ${b.guests} fő${b.voucher_code ? ` (${b.voucher_code} kupon)` : ''}`, quantity: 1, grossHuf: b.amount_huf, vat: cfg.ahVat }],
     comment: `Foglalás: ${b.id}`,
     subject: en ? `Your Bros After Hours invoice (${b.id})` : `Bros After Hours számla (${b.id})`,
     body: en ? 'Thank you for your booking. Your invoice is attached.' : 'Köszönjük a foglalást! A számlát mellékelten küldjük.',
@@ -172,23 +185,23 @@ function details(b: Doc, en: boolean) {
   const end = hm(mins(b.start_time) + b.hours * 60);
   return rows([
     [en ? 'Booking' : 'Azonosító', b.id], [en ? 'Date' : 'Dátum', b.date], [en ? 'Time' : 'Időpont', `${b.start_time}–${end}`],
-    [en ? 'Guests' : 'Vendégszám', b.guests], [en ? 'Deposit paid' : 'Kifizetett előleg', ft(b.amount_huf)],
+    [en ? 'Guests' : 'Vendégszám', b.guests], ...(b.voucher_code ? [[en ? 'Voucher' : 'Kuponkód', `${b.voucher_code} (−${ft(b.discount_huf)})`] as [string, string]] : []), [en ? 'Deposit paid' : 'Kifizetett előleg', ft(b.amount_huf)],
   ]);
 }
 function staffDetails(b: Doc, extra: [string, string | number | null][] = []) {
   return rows([
     ['Azonosító', b.id], ['Dátum', b.date], ['Időpont', `${b.start_time}–${hm(mins(b.start_time) + b.hours * 60)}`], ['Vendégszám', b.guests], ['Előleg', ft(b.amount_huf)],
     ['Név', b.name], ['E-mail', b.email], ['Telefon', b.phone], ['Számlázás', `${b.company ? `${b.company} (${b.tax_number ?? '–'}), ` : ''}${b.zip} ${b.city}, ${b.street}`],
-    ['Alkalom', b.occasion], ['Csomagok (helyszínen fizetendő)', JSON.parse(b.packages || '[]').join(', ')], ['Megjegyzés', b.note], ...extra,
+    ['Alkalom', b.occasion], ['Ételválogatás (helyszínen fizetendő)', JSON.parse(b.packages || '[]').join(', ')], ['Ünnepi torta (helyszínen fizetendő)', b.cake ? 'IGEN, kérnek tortát' : 'nem'], ['Kuponkód', b.voucher_code ? `${b.voucher_code} (−${ft(b.discount_huf)})` : null], ['Megjegyzés', b.note], ...extra,
   ]);
 }
 
 async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
   const en = b.lang === 'en', d = details(b, en), link = await cancelLink(app, b);
   const intro = en ? 'Your private evening at Bros Cafe is booked. The invoice arrives in a separate email from Számlázz.hu.'
-    : 'A privát estétek a Bros Cafében le van foglalva. A számlát külön e-mailben küldi a Számlázz.hu.';
-  const terms = en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after. Packages and extras are paid on the evening.'
-    : 'Lemondás: legalább 7 nappal előtte 100%, 48 órával előtte 50% jár vissza, azon belül nem tudunk visszatéríteni. A csomagokat és az extrákat a helyszínen fizetitek.';
+    : 'A privát estétek a Bros Caféban le van foglalva. A számlát külön e-mailben küldi a Számlázz.hu.';
+  const terms = en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after. Food, cake and extras are paid on the evening.'
+    : 'Lemondás: legalább 7 nappal előtte a teljes előleg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni. Az ételeket, a tortát és az extrákat a helyszínen fizetitek.';
   await mail(app, {
     to: b.email, lang: b.lang, subject: en ? `Your Bros After Hours booking (${b.id})` : `Bros After Hours foglalás (${b.id})`,
     title: en ? 'Your evening is booked' : 'Megvan a foglalás', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(terms)}</p>`,
@@ -204,7 +217,7 @@ async function sendCancelled(app: App, b: Doc, by: 'guest' | 'staff', note: stri
   const refund = b.refund_huf ? (en ? `Refund: ${ft(b.refund_huf)} (${b.refund_percent}%). It reaches the card you paid with in a few days.` : `Visszatérítés: ${ft(b.refund_huf)} (${b.refund_percent}%). Néhány napon belül érkezik a fizetéshez használt kártyára.`)
     : b.status === 'refunded' ? (en ? 'Under the cancellation terms no refund is due.' : 'A lemondási feltételek szerint visszatérítés nem jár.')
       : (en ? 'We will write to you about the refund.' : 'A visszatérítésről külön értesítünk.');
-  const intro = en ? 'Your Bros After Hours booking has been cancelled.' : 'A Bros After Hours foglalásotokat lemondtuk.';
+  const intro = en ? 'Your Bros After Hours booking has been cancelled.' : 'A Bros After Hours foglalásotok le van mondva.';
   await mail(app, { to: b.email, lang: b.lang, subject: en ? `Booking cancelled (${b.id})` : `Foglalás lemondva (${b.id})`, title: en ? 'Booking cancelled' : 'Foglalás lemondva', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(refund)}</p>`, text: `${intro}\n\n${d.text}\n\n${refund}` });
   const s = staffDetails(b, [['Lemondta', by === 'guest' ? 'a vendég (e-mailes link)' : 'admin'], ['Státusz', b.status], ['Visszatérítés', b.refund_huf != null ? `${ft(b.refund_huf)} (${b.refund_percent}%)` : 'még nincs'], ['Teendő', note]]);
   await mail(app, { to: staffAddress(app), subject: `After Hours lemondás: ${b.date} · ${b.name} (${b.id})`, title: 'Bros After Hours lemondás', html: s.html, text: s.text });

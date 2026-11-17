@@ -1,5 +1,5 @@
-// Bros Cafe on Cloudflare: the React build plus the API that replaces backend/ (FastAPI + MongoDB).
-// /api/* goes to the routes below; everything else is the single-page app, with the headers nginx used to add.
+// Bros Cafe on Cloudflare: the API that replaces backend/ (FastAPI + MongoDB) plus the static site in site/.
+// /api/* goes to the routes below; everything else is a static page, with the headers nginx used to add.
 import { database } from './db';
 import type { Env } from './env';
 import { errorResponse, json, Router, type Ctx } from './http';
@@ -78,14 +78,38 @@ async function handleApi(req: Request, env: Env, exec: ExecutionContext, url: UR
   return withHeaders(res, { ...SECURITY_HEADERS, ...corsHeaders, ...(isPreview(env) ? { 'X-Robots-Tag': 'noindex, nofollow' } : {}) });
 }
 
-/** Preview only (PREVIEW=1): blocked from search engines, and the React app (variant A) gets the variant switcher. */
+/** Preview only (PREVIEW=1): blocked from search engines. */
 const isPreview = (env: Env) => env.PREVIEW === '1';
+
+const redirect = (to: string, url: URL) => new Response(null, { status: 301, headers: { Location: to + url.search } });
+
+/** Old React-site URLs (and emailed / widget links) -> the static site. Query string always kept. */
+function legacyRedirect(url: URL): Response | null {
+  const p = url.pathname.replace(/\/+$/, '') || '/';
+  const exact: Record<string, string> = {
+    '/menu': '/etlap/', '/shop': '/etlap/', '/whats-new': '/ujdonsagok/', '/contact': '/kapcsolat/', '/loyalty': '/husegkartya/',
+    '/account': '/fiok/', '/login': '/belepes/', '/staff': '/pult/', '/game': '/jatek/', '/privacy': '/adatvedelem/', '/help': '/segitseg/',
+    '/admin': '/admin/',
+  };
+  if (exact[p] && exact[p] !== url.pathname) return redirect(exact[p], url);
+  if (/^\/menu\/[^/]+$/.test(p)) return redirect('/etlap/', url);
+  const hash = (id: string) => `#${id}`;
+  let m = p.match(/^\/product\/([^/]+)$/);
+  if (m) return new Response(null, { status: 301, headers: { Location: `/etlap/${url.search}${hash(m[1])}` } });
+  m = p.match(/^\/journal\/([^/]+)$/);
+  if (m) return new Response(null, { status: 301, headers: { Location: `/ujdonsagok/${url.search}${hash(m[1])}` } });
+  return null;
+}
 
 async function handleAssets(req: Request, env: Env, url: URL) {
   const p = url.pathname;
   if (isPreview(env) && p === '/robots.txt') return new Response('User-agent: *\nDisallow: /\n', { headers: { 'Content-Type': 'text/plain' } });
-  // /d/card/<code> is the card page linked from every Wallet pass: one static page, the code is read client-side.
-  if (/^\/d\/card\/[^/.]+\/?$/.test(p)) req = new Request(new URL('/d/card/', url), req);
+  const moved = legacyRedirect(url);
+  if (moved) return moved;
+  // The static-asset layer would 307 /auth/verify to /auth/verify/ and the token would be lost with it: rewrite instead.
+  // /card/<code> is the card page linked from every Wallet pass: one static page, the code is read client-side.
+  if (p === '/auth/verify') req = new Request(new URL('/auth/verify/' + url.search, url), req);
+  else if (/^\/card\/[^/.]+\/?$/.test(p) && p !== '/card/') req = new Request(new URL('/card/', url), req);
   let res = await env.ASSETS.fetch(req);
   // Static assets ignore Range requests, and Safari will not play a video without them: answer them here.
   const range = req.headers.get('Range')?.match(/^bytes=(\d*)-(\d*)$/);
@@ -104,8 +128,7 @@ async function handleAssets(req: Request, env: Env, url: URL) {
   if (isPreview(env)) {
     res = withHeaders(res, { 'X-Robots-Tag': 'noindex, nofollow' });
   }
-  const cache: Record<string, string> = p.startsWith('/static/') ? { 'Cache-Control': 'public, max-age=31536000, immutable' }
-    : p === '/' || p === '/index.html' || !/\.[a-z0-9]+$/i.test(p) ? { 'Cache-Control': 'no-store, must-revalidate' } : {};
+  const cache: Record<string, string> = p === '/' || p === '/index.html' || !/\.[a-z0-9]+$/i.test(p) ? { 'Cache-Control': 'no-store, must-revalidate' } : {};
   return withHeaders(res, { ...SECURITY_HEADERS, ...cache });
 }
 

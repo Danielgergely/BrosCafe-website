@@ -1,5 +1,5 @@
 # Bros Cafe: project status
-Phase: 4 Build (since 2026-11-16): "Kollázs" redesign + review-2 fixes on the preview 2026-11-17 (version ce52bf0d); B/C/switcher removed; next: migration to Cloudflare per docs/migration-checklist.md, waiting for Daniel's decisions (switch dates, hybrid frontend, AH/Delivery at launch, Rackforest, DNS access)
+Phase: 4 Build: design "Üveg" LIVE on new.broscafe.hu (prod d7544968) and the preview (e4272b8f) 2026-11-17, online booking off on prod (BOOKINGS_OPEN); next: Daniel tests on iPhone, prices/products for After Hours + Delivery, then switch broscafe.hu before 2026-12-01 per docs/migration-checklist.md
 Preview: https://broscafe.gracelabs.dev (a copy of the real data; no emails, Wallet or Fruitsys from there)
 Portal: https://portal.gracelabs.dev/p/broscafe
 Domain: broscafe.hu (registrar unchanged; DNS moves to Cloudflare on switch night; owner: HungBros Kft.)
@@ -75,6 +75,31 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-17 (night) full QA by parallel agents: every guest/staff page, flows (sign-up, magic link, card, game score
+  replay, scanner, 16 admin tabs, AH/Delivery up to payment), HU/EN, copy, privacy (cleanup job services/retention.ts:
+  2 y inactive members via members.erase, analytics > 14 months, daily after 03:00), staff skin glass-staff.css, game
+  canvas restyled (drawing only). Open: scanner undo leaves total_coffees + coffee_added row (stats count undone
+  coffees, server change); AH admin calendar shows 17–30 Nov as open though guests can book from 1 Dec; rush can be
+  switched on after closing; guest cancel with a valid token and real Stripe payment untested; game track small on
+  phones (fixed 960x300 world); Safari/iPhone untested (glass bars during page changes, white flash leaving home);
+  bean bag names ("Specialty szemes kávé" = Brazilian?) and claims (low acidity/heavy body, croissant layered by
+  hand, grind to your machine) to confirm; news content stale (only the new Brazilian–Colombian post is fresh);
+  old React app frontend/ still has the old copy (unused after the switch). Local QA test members exist only in the
+  local D1.
+- 2026-11-17 (Daniel): online booking for After Hours + Delivery OFF on production until prices/products are final
+  (switch BOOKINGS_OPEN); After Hours food selections (in the deposit or paid on the evening) and all pricing to be
+  discussed when everything else is ready. Stamps: only coffees + coffee specials (drinks.ts COFFEE_SPECIALS). No guest
+  coffee; two roasts (Brazilian, Brazilian–Colombian, lighter/fruitier) from a Hungarian roaster, never named. "A higher
+  calling" stays English. Privacy: automatic cleanup (2 y inactive members, 14 months analytics) + legal basis/8-year
+  invoice retention + US transfer safeguards.
+- 2026-11-17 (late) Daniel + brothers chose **G · Üveg** (D's structure and motion, his mock-up palette, liquid glass).
+  Solidified: `site/glass.css` + `glass.js` on every page, italic fonts in /shared/fonts, theme-color #25251C; looks E/F/G,
+  the switcher and the worker /looks/ gate removed (backup: iCloud backup/looks-efg-2026-11-17.tgz). Preview 025b2b17.
+  Next: QA of every page/flow/text, then deploy to new.broscafe.hu (his go given).
+- 2026-11-17 (night) feedback: Kollázs looks a bit childish → back to choosing. Two premium alternatives built as
+  "looks" on the preview (site/looks/e = E · Galéria, light photo book; site/looks/f = F · Bársony, Daniel's dark-luxe
+  mock-ups: espresso/olive/ivory/champagne/taupe, serif + real italic). Switcher pill on preview hosts only (?look=d|e|f,
+  shell.js); worker 404s /looks/ in production. Deployed to the preview (a2f78921). G · Üveg (site/looks/g, restyles the D home; D motion + mock-up palette + liquid glass) deployed c529584d. Brief: docs/looks-brief.md (F section superseded by the mock-ups).
 - 2026-11-17 (later) Daniel likes the new "Kollázs" design; images to keep improving when new footage arrives. Remove
   variants A/B/C + switcher; D becomes the real site with ALL live functions (scripts, admin, scanner, game, account…).
   Deadline: switch broscafe.hu to the Cloudflare version before 2026-12-01 (stop paying Rackforest). Checklist:
@@ -104,3 +129,22 @@ server replay.
   refund, Delivery 2 860 Ft paid + refund, declined card not confirmed, Számlázz "not_configured" doesn't block.
   Adaptive pricing switched off (always HUF). Untested: guest cancel link (needs email). Live keys: Daniel puts them in
   himself with wrangler, never via chat. Stripe Tax/Terminal not needed now.
+- 2026-11-17: production D1 `broscafe` created (EU, id 9b2d57ec…), schema + 0001_bookings applied, empty; R2
+  `broscafe-media` exists; Wallet artwork (26 520 PNG) rendered, upload to prod R2 in retrying chunks. Számlázz.hu
+  Agent key set on the preview by Daniel; preview issues díjbekérő only (SZAMLAZZ_PROFORMA) and invoicing is paused
+  (SZAMLAZZ_OFF) because the current Számlázz package refuses díjbekérő via the Agent. Decide package/provider after the
+  accountants answer. Admin booking dialog doesn't show invoice errors yet (todo). Waiting for Daniel's VPS export.
+- 2026-11-17 dry run 1: read-only export from the VPS (root@92.119.123.141, key login) → prod D1: 102 members, 638
+  transactions, 90 wallet registrations, 97 products, 406 game runs, 2 users (counts match). 12 media photos → prod R2.
+  12 prod secrets set on Worker `broscafe` (same JWT_SECRET, Apple/Google certs, Resend, Fruitsys, LIVE_SALES_KEY,
+  admin) — Worker exists but has no code/route yet. Local copies of secrets deleted; data export kept in the session
+  scratchpad until the switch. Next: move D to /, deploy prod to a side-by-side address (e.g. new.broscafe.hu).
+- 2026-11-17 evening: design D moved to the root (`site/`, was variants/d), redirects for all old React URLs, 404,
+  robots/sitemap/OG. Preview = new site at /. Production Worker deployed to **https://new.broscafe.hu** (side by side,
+  real data copy, Wallet off, sign-in links to new.broscafe.hu); switch-night steps in docs/migration-checklist.md.
+- 2026-11-17: After Hours updated from the owners' flyer (hero lines, included: private café 2 h, 3 food selections,
+  1 free drink/guest, optional cake from 10 000 Ft; food group discount 25 % 4–7 / 35 % 8+ shown as info only — how
+  food is chosen/paid is undecided by Daniel; voucher AFTER25 = −25 % of the 14 900 base, server-side). Migration 0002
+  applied to preview + prod D1. Flyer photos are AI images (not used); flyer's Instagram @broscafe is wrong (@broscafe.co).
+  Cost check in docs/after-hours.md needs redoing (free drink per guest).
+- 2026-11-17: all 26 520 Wallet artwork PNGs uploaded to prod R2 (spot-checked). Preview bucket has none (Wallet off there).

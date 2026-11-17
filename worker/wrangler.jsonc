@@ -7,11 +7,11 @@
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
+  "routes": [{ "pattern": "new.broscafe.hu", "custom_domain": true }], // side-by-side phase; switch night: broscafe.hu + www
   "preview_urls": false,
-  // The React build (plus, on the preview, the design variants). The Worker runs first for every request so it can
-  // add the headers nginx used to add.
-  "assets": { "directory": "../frontend/build", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": true },
-  "d1_databases": [{ "binding": "DB", "database_name": "broscafe", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  // The static site in site/ (both envs). The Worker runs first for every request: redirects, headers, Range for video.
+  "assets": { "directory": "../site", "binding": "ASSETS", "not_found_handling": "404-page", "run_worker_first": true },
+  "d1_databases": [{ "binding": "DB", "database_name": "broscafe", "database_id": "9b2d57ec-2b47-4ecf-a93c-a5c28d0d1b3d" }],
   "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "broscafe-media", "jurisdiction": "eu" }],
   // Apple pass certificate for Wallet pushes (uploaded 13 Nov 2026, valid until 3 Oct 2027)
   "mtls_certificates": [{ "binding": "APNS_CERT", "certificate_id": "78002d82-1c8c-47ab-a894-289ea2105cff" }],
@@ -21,12 +21,18 @@
   "version_metadata": { "binding": "CF_VERSION" },
   // Production values as on the old server (read 13 Nov 2026)
   "vars": {
-    "FRONTEND_URL": "https://broscafe.hu",
-    "CORS_ORIGINS": "https://broscafe.hu",
+    // SIDE-BY-SIDE PHASE (from 17 Nov): served on new.broscafe.hu next to the old site. On switch night set these
+    // back to https://broscafe.hu, APPLE_PASS_CONFIGURED/GOOGLE_WALLET_CONFIGURED to "true", and the route to
+    // broscafe.hu + www (docs/migration-checklist.md, Cut-over). Passes store FRONTEND_URL for good, so no pass may be
+    // issued while it points at new.broscafe.hu.
+    "FRONTEND_URL": "https://new.broscafe.hu",
+    "CORS_ORIGINS": "https://new.broscafe.hu",
     "STAMPS_REQUIRED": "10",
     "WELCOME_STAMPS": "5",
     "CUSTOMER_TOKEN_DAYS": "365",
     "SEED_ON_STARTUP": "true",
+    // Online After Hours booking + Delivery ordering: off on production until prices/products are final (Daniel 17 Nov)
+    "BOOKINGS_OPEN": "false",
     "CAFE_TIMEZONE": "Europe/Budapest",
     "CAFE_NAME": "Bros Cafe",
     "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",
@@ -42,10 +48,10 @@
     "BREAK_EVEN_NET_FT": "65000",
     "GROSS_PER_NET": "1.072",
     "MAX_UPLOAD_MB": "20",
-    "APPLE_PASS_CONFIGURED": "true",
+    "APPLE_PASS_CONFIGURED": "false", // side-by-side phase, see FRONTEND_URL
     "APPLE_TEAM_ID": "S6BT656CHX",
     "APPLE_PASS_TYPE_ID": "pass.hu.broscafe.loyalty",
-    "GOOGLE_WALLET_CONFIGURED": "true",
+    "GOOGLE_WALLET_CONFIGURED": "false", // side-by-side phase, see FRONTEND_URL
     "GOOGLE_WALLET_CLASS_SUFFIX": "broscafe_loyalty",
     "GOOGLE_WALLET_LOGO_URL": "https://broscafe.hu/logo512.png"
   },
@@ -71,6 +77,7 @@
         "WELCOME_STAMPS": "5",
         "CUSTOMER_TOKEN_DAYS": "365",
         "SEED_ON_STARTUP": "false",
+        "BOOKINGS_OPEN": "true",
         "CAFE_TIMEZONE": "Europe/Budapest",
         "CAFE_NAME": "Bros Cafe",
         "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",
@@ -84,7 +91,10 @@
         "GROSS_PER_NET": "1.072",
         "MAX_UPLOAD_MB": "20",
         "APPLE_PASS_CONFIGURED": "false",
-        "GOOGLE_WALLET_CONFIGURED": "false"
+        "GOOGLE_WALLET_CONFIGURED": "false",
+        "SZAMLAZZ_PROFORMA": "true",
+        // the free Számlázz.hu package cannot make díjbekérő via the Agent (17 Nov): invoicing paused on the preview
+        "SZAMLAZZ_OFF": "true"
       }
       // Preview secret: JWT_SECRET (its own random value, never the production one).
     }

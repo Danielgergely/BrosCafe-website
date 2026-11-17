@@ -30,6 +30,8 @@ export function settings(env: Env) {
     welcome_stamps: Math.max(0, Math.min(int(env, 'WELCOME_STAMPS', 5), stampsRequired - 1)),
 
     seed_on_startup: s(env, 'SEED_ON_STARTUP', 'false').toLowerCase() === 'true',
+    // Online After Hours booking and Delivery ordering; off on production until prices are final.
+    bookings_open: s(env, 'BOOKINGS_OPEN', 'false').toLowerCase() === 'true',
     max_upload_mb: int(env, 'MAX_UPLOAD_MB', 20),
 
     resend_api_key: s(env, 'RESEND_API_KEY'),

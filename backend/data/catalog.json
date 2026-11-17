@@ -22,34 +22,34 @@
         "hu": "ESPRESSO"
       },
       "desc": {
-        "en": "Our Brazilian house roast, undiluted. Cocoa, toasted hazelnut, a caramel finish — the shot every other drink is built on.",
-        "hu": "A brazil házi pörkölésünk tisztán, egyetlen shotban. Kakaó, pirított mogyoró, karamelles lecsengés — minden más italunk erre épül."
+        "en": "Our Brazilian, undiluted. Cocoa, toasted hazelnut, a caramel finish — the shot every other drink is built on.",
+        "hu": "A brazil kávénk tisztán, egyetlen shotban. Kakaó, pirított mogyoró, karamelles lecsengés — minden más italunk erre épül."
       },
       "tip": {
-        "en": "Best standing at the bar, Italian style. Ask about the guest origin if you want something brighter.",
-        "hu": "A pultnál állva a legjobb, olasz módra. Ha élénkebbet szeretnél, kérdezz rá a vendégkávéra."
+        "en": "Best standing at the bar, Italian style. For a lighter, fruitier cup, ask for it with the Brazilian–Colombian.",
+        "hu": "A pultnál állva a legjobb, olasz módra. Ha könnyedebb, gyümölcsösebb csészére vágysz, kérd brazil–kolumbiai kávéval."
       },
       "ingredients": {
         "en": [
-          "18g Brazilian house roast",
+          "18g of our Brazilian",
           "Water, 93°C",
           "27 seconds"
         ],
         "hu": [
-          "18 g brazil házi pörkölés",
+          "18 g brazil kávé",
           "Víz, 93 °C",
           "27 másodperc"
         ]
       },
       "behind": {
         "en": [
-          "Origin — Brazil, our year-round house profile",
+          "Origin — Brazil, the base of every drink",
           "Grind — fine, 18g dose",
           "Extraction — 27 slow seconds",
           "Your cup — warmed, always"
         ],
         "hu": [
-          "Származás — Brazília, az egész éves házi profilunk",
+          "Származás — Brazília, minden italunk alapja",
           "Őrlés — finom, 18 g adag",
           "Extrakció — 27 lassú másodperc",
           "A csészéd — mindig előmelegítve"
@@ -92,12 +92,12 @@
       },
       "ingredients": {
         "en": [
-          "36g Brazilian house roast",
+          "36g of our Brazilian",
           "Water, 93°C",
           "28 seconds"
         ],
         "hu": [
-          "36 g brazil házi pörkölés",
+          "36 g brazil kávé",
           "Víz, 93 °C",
           "28 másodperc"
         ]
@@ -157,11 +157,11 @@
       },
       "ingredients": {
         "en": [
-          "18g house roast",
+          "18g of our Brazilian",
           "A spoon of dense microfoam"
         ],
         "hu": [
-          "18 g házi pörkölés",
+          "18 g brazil kávé",
           "Egy kanál sűrű tejhab"
         ]
       },
@@ -191,8 +191,8 @@
         "hu": "AMERICANO"
       },
       "desc": {
-        "en": "A double shot lengthened with hot water. It keeps the roast's cocoa backbone, you just get longer with it.",
-        "hu": "Dupla shot, forró vízzel hosszabbítva. Megtartja a pörkölés kakaós gerincét, csak több időd van vele."
+        "en": "A double shot lengthened with hot water. It keeps the Brazilian's cocoa backbone, you just get longer with it.",
+        "hu": "Dupla shot, forró vízzel hosszabbítva. Megtartja a brazil kávé kakaós gerincét, csak több időd van vele."
       },
       "tip": {
         "en": "We pour the water under the shot, not over it, so the crema stays where it belongs.",
@@ -372,8 +372,8 @@
         "hu": "CAPPUCCINO"
       },
       "desc": {
-        "en": "The Brazilian roast at its most forgiving — cocoa and caramel carried by dense, silky microfoam.",
-        "hu": "A brazil pörkölés a legmegengedőbb formájában — kakaó és karamell, sűrű, selymes habbal."
+        "en": "Our Brazilian at its most forgiving — cocoa and caramel carried by dense, silky microfoam.",
+        "hu": "A brazil kávénk a legmegengedőbb formájában — kakaó és karamell, sűrű, selymes habbal."
       },
       "tip": {
         "en": "We don't dust it unless you ask; the foam is sweet enough on its own.",
@@ -891,7 +891,7 @@
       ],
       "name": {
         "en": "FRUIT TEA",
-        "hu": "GYÜMÖLCS TEA"
+        "hu": "GYÜMÖLCSTEA"
       },
       "desc": {
         "en": "Hibiscus, rosehip and dried berries. Caffeine free, tart, and a deep red in the cup.",
@@ -931,12 +931,12 @@
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
       ],
       "name": {
-        "en": "IMPRESSO CLASSIC BEANS 250G",
-        "hu": "IMPRESSO CLASSIC SZEMES KÁVÉ 250 G"
+        "en": "BRAZILIAN–COLOMBIAN BEANS 250G",
+        "hu": "BRAZIL–KOLUMBIAI SZEMES KÁVÉ 250 G"
       },
       "desc": {
-        "en": "The Brazil–Colombia blend we pour at the bar, whole beans to take home.",
-        "hu": "A Brazília–Kolumbia blend, amit a pultnál is főzünk — szemesen, hazavinni."
+        "en": "Our Brazilian–Colombian blend in whole beans, to take home: a lighter roast with a fruitier taste, from a Hungarian roaster.",
+        "hu": "A brazil–kolumbiai blendünk szemesen, hazavinni: világosabb pörkölés, gyümölcsösebb íz, egy magyar pörkölőtől."
       },
       "stock_photos": true
     },
@@ -952,12 +952,12 @@
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
       ],
       "name": {
-        "en": "IMPRESSO SPECIALITY BEANS 250G",
-        "hu": "IMPRESSO SPECIALITY SZEMES KÁVÉ 250 G"
+        "en": "SPECIALITY BEANS 250G",
+        "hu": "SPECIALITY SZEMES KÁVÉ 250 G"
       },
       "desc": {
-        "en": "Impresso's speciality roast, whole beans. Ask at the counter which origin is in this month.",
-        "hu": "Az Impresso specialty pörkölése, szemesen. Kérdezd a pultnál, épp melyik eredet van."
+        "en": "Speciality whole beans to take home, from the same Hungarian roaster whose coffee we brew at the bar.",
+        "hu": "Specialty szemes kávé hazavinni, ugyanattól a magyar pörkölőtől, akinek a kávéját a pultnál is főzzük."
       },
       "stock_photos": true
     },
@@ -2643,27 +2643,27 @@
         "https://images.unsplash.com/photo-1554118811-1e0d58224f24?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwxfHxjYWZlJTIwaW50ZXJpb3IlMjBsaWZlc3R5bGUlMjBwZW9wbGV8ZW58MHx8fHwxNzg3NjYzODU1fDA&ixlib=rb-4.1.0&q=85"
       ],
       "name": {
-        "en": "HOUSE ROAST — 250G",
-        "hu": "HÁZI PÖRKÖLÉS — 250G"
+        "en": "OUR BRAZILIAN — 250 G",
+        "hu": "BRAZIL KÁVÉNK — 250 G"
       },
       "desc": {
-        "en": "The Brazilian we pour every day, bagged for home. Roasted locally, never more than a week old.",
-        "hu": "Az a brazil, amit minden nap kimérünk, otthonra csomagolva. Helyben pörkölve, sosem régebbi egy hétnél."
+        "en": "The Brazilian we brew every day, bagged for home. From a Hungarian roaster.",
+        "hu": "Az a brazil, amit minden nap főzünk, otthonra csomagolva. Egy magyar pörkölőtől."
       },
       "tip": {
-        "en": "Tell us your machine and we'll grind it to match. Guest origins are bagged too, while they last.",
-        "hu": "Mondd meg, milyen géped van, és úgy őröljük. A vendégkávékat is csomagoljuk, amíg tart."
+        "en": "Tell us your machine and we'll grind it to match.",
+        "hu": "Mondd meg, milyen géped van, és úgy őröljük."
       },
       "ingredients": {
         "en": [
-          "100% Brazil, single origin",
-          "Medium roast",
-          "Roasted weekly"
+          "100% Brazil",
+          "Cocoa, hazelnut, caramel",
+          "From a Hungarian roaster"
         ],
         "hu": [
-          "100% brazil, single origin",
-          "Közepes pörkölés",
-          "Hetente pörkölve"
+          "100% brazil",
+          "Kakaó, mogyoró, karamell",
+          "Magyar pörkölőtől"
         ]
       },
       "sizes": {

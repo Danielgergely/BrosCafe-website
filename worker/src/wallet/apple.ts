@@ -85,8 +85,8 @@ export function configStatus(env: Env) {
   if (!enabled) missing.push('APPLE_PASS_CONFIGURED="true"');
   if (!team) missing.push('APPLE_TEAM_ID');
   if (!passType) missing.push('APPLE_PASS_TYPE_ID');
-  if (!pem) missing.push('APPLE_PRIVATE_KEY (or APPLE_KEY_PEM_PATH file, or a .p12)');
-  if (!wwdr) missing.push('APPLE_WWDR_CERTIFICATE (or APPLE_WWDR_CERT_PATH)');
+  if (!pem) missing.push('APPLE_CERTIFICATE + APPLE_PRIVATE_KEY (PEM)');
+  if (!wwdr) missing.push('APPLE_WWDR_CERTIFICATE (PEM)');
   return {
     enabled_flag: enabled, team_id: !!team, pass_type_id: !!passType,
     signing_identity: pem, wwdr,
@@ -196,7 +196,7 @@ export const PASS_STRINGS: Record<string, Strings> = {
   hu: {
     desc: 'Bros Cafe Hűségkártya', club: 'Hűségklub', member: 'Tag',
     reward_label: 'Jutalom', reward_value: '\u{1F389} INGYEN KÁVÉ ELÉRHETŐ',
-    reward_relevant: 'Az ingyen kávéd készen áll a Bros Cafenál!',
+    reward_relevant: 'Az ingyen kávéd készen áll a Bros Cafénál!',
     coffees: 'Kávék', free_coffees: 'Ingyen kávék',
     left_label: 'Még kell',
     since_value: '{year} óta',
@@ -212,7 +212,7 @@ export const PASS_STRINGS: Record<string, Strings> = {
     status_label: 'Állapot', cafe_label: 'Bros Cafe',
     one_more: 'Még egy kávé → INGYEN KÁVÉ',
     many: 'Még {n} kávé az ingyen kávéig',
-    welcome: 'Üdv a Bros Cafenál ☕',
+    welcome: 'Üdv a Bros Cafénál ☕',
   },
 };
 

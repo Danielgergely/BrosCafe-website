@@ -1,7 +1,7 @@
 # Bros Delivery — backend contract (built 2026-11-17; see "As built" at the end)
 
 Spec: `docs/delivery.md`. The pages talk to the backend only through `api` in
-`variants/d/delivery/delivery.js` (real API by default; `?mock=1` switches a browser to the mock data for local work, `?mock=0` back). A Cloudflare Worker on the site's origin under `/api/delivery/*`, with D1. The drinks come from the
+`site/delivery/delivery.js` (real API by default; `?mock=1` switches a browser to the mock data for local work, `?mock=0` back). A Cloudflare Worker on the site's origin under `/api/delivery/*`, with D1. The drinks come from the
 existing `GET /api/products`.
 
 Every number that the spec leaves open is one value in `CONFIG` at the top of `delivery.js` (draft defaults, see
@@ -110,7 +110,7 @@ the last cups.
 
 Stripe returns the payer to `<return_path>?order=<id>&paid=1&t=<token>` or `<return_path>?g=<code>&paid=1`
 (`cancelled=1` instead of `paid=1` when they back out). `return_path` is the path of the page that sent the request
-(`/delivery/` live, `/d/delivery/` on the preview, `…/csoport/` for a group); the worker accepts only paths on its
+(`/delivery/`, `…/csoport/` for a group); the worker accepts only paths on its
 allow-list and builds the absolute URL itself. A group organiser returns to the group page. The pages show these
 states and then remove the parameters from the address bar.
 
@@ -123,8 +123,8 @@ states and then remove the parameters from the address bar.
   - company order → order `new`, confirmation email, counter notification;
   - group order → nothing else until the cutoff.
   - **Stamps:** only for group participants with a `loyalty_email` that matches a loyalty member. One stamp per
-    cup whose `cat` is in `DRINK_CATEGORIES` (`backend/app/services/drinks.py`: coffee, specialty, tea, smoothie;
-    bottled never). Granted through the loyalty backend's existing "add coffee" service call, with the delivery
+    cup that earns a stamp (`earnsStamp` in `worker/src/services/drinks.ts`: coffees + the coffee specials only,
+    since 2026-11-17). Granted through the loyalty backend's existing "add coffee" service call, with the delivery
     payer id as idempotency key. Company-paid orders never earn stamps.
 - `checkout.session.expired` → payer `expired`, capacity released.
 - A payment that lands after the slot filled or locked is refunded in full automatically.

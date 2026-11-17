@@ -9,6 +9,7 @@ import { startup } from './services/startup';
 import { isoAt, nowIso } from './util';
 import * as afterHours from './services/after_hours';
 import * as delivery from './services/delivery';
+import * as retention from './services/retention';
 
 const CRON_MINUTES = 15;
 // Kept in `settings` beside app_settings' document, told apart by `_key` (that document has none).
@@ -59,6 +60,12 @@ export async function scheduled(controller: ScheduledController, env: Env, exec:
     await cleanups(app);
   } catch (e) {
     console.error('TTL cleanup failed', e);
+  }
+
+  try {
+    await retention.daily(app);
+  } catch (e) {
+    console.error('retention cleanup failed', e);
   }
 
   // Bros After Hours + Delivery: group cutoffs, expired holds, invoices that waited, tomorrow's recurring orders

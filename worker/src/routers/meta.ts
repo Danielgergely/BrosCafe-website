@@ -12,5 +12,6 @@ export function register(api: Router) {
     ...settings(c.env).cafe,
     apple_wallet_configured: apple.isConfigured(c.env),
     google_wallet_configured: google.isConfigured(c.env),
+    bookings_open: settings(c.env).bookings_open,
   }));
 }

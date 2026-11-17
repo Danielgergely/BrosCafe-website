@@ -108,7 +108,7 @@ const REWARD: Record<Lang, { subject: string; title: string; body: string }> = {
   hu: {
     subject: 'Megvan az ingyen kávéd',
     title: 'Itt a jutalmad',
-    body: '<p>Jó hír: összegyűlt egy <strong>ingyen kávé</strong> a Bros Cafében.</p>' +
+    body: '<p>Jó hír: összegyűlt egy <strong>ingyen kávé</strong> a Bros Caféban.</p>' +
       '<p>Nyisd meg a hűségkártyád, és mutasd meg a pultnál, amikor legközelebb bejössz.</p>',
   },
 };
@@ -161,31 +161,31 @@ const PLAIN_REFERRAL: Record<Lang, string> = {
   en: '{name} used your invitation and has just had their first coffee with us.\n\n' +
     'That earns you a free coffee. Show your loyalty card at the counter ' +
     'whenever you like.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanady utca 4-B',
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
   hu: '{name} a te meghívásoddal jött be, és most itta meg nálunk az első kávéját.\n\n' +
     'Ezért jár neked egy ingyen kávé. Mutasd meg a hűségkártyád a pultnál, ' +
     'amikor szeretnéd.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanády utca 4-B',
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
 };
 
 const PLAIN_REWARD: Record<Lang, string> = {
   en: 'You have earned a free coffee at Bros Cafe.\n\n' +
     'Open your loyalty card and show it at the counter on your next visit.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanady utca 4-B',
-  hu: 'Összegyűlt egy ingyen kávé a Bros Cafében.\n\n' +
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
+  hu: 'Összegyűlt egy ingyen kávé a Bros Caféban.\n\n' +
     'Nyisd meg a hűségkártyád, és mutasd meg a pultnál, amikor legközelebb bejössz.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanády utca 4-B',
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
 };
 
 const PLAIN_MAGIC: Record<Lang, string> = {
   en: '{intro}\n\nOpen your Bros Cafe account and loyalty card here:\n{link}\n\n' +
     'No password needed — the link works for {minutes} minutes.\n\n' +
     'If you did not ask for this, you can ignore this email.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanady utca 4-B',
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
   hu: '{intro}\n\nItt nyílik meg a fiókod és a hűségkártyád:\n{link}\n\n' +
     'Jelszó nem kell — a link {minutes} percig él.\n\n' +
     'Ha nem te kérted, nyugodtan hagyd figyelmen kívül ezt a levelet.\n\n' +
-    'Bros Cafe, 1132 Budapest, Csanády utca 4-B',
+    'Bros Cafe, 1132 Budapest, Csanády u. 4/b',
 };
 
 export async function sendRewardReady(app: App, email: string, lang: string = DEFAULT_LANG): Promise<void> {

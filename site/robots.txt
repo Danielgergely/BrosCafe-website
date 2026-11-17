@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /pult/
+Disallow: /belepes/
+Disallow: /fiok/
+Disallow: /auth/
+Disallow: /card/
+Disallow: /api/
+Disallow: /delivery/csoport/
+Disallow: /after-hours/lemondas/
+
+Sitemap: https://broscafe.hu/sitemap.xml
