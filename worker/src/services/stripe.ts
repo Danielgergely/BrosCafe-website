@@ -57,6 +57,7 @@ export function createCheckout(app: App, o: Checkout): Promise<{ id: string; url
   const expires = o.expiresAt ?? new Date(Date.now() + SESSION_MIN * 60_000);
   return call(app, 'POST', '/checkout/sessions', {
     mode: 'payment',
+    adaptive_pricing: { enabled: false }, // always charge HUF, never offer the visitor's local currency
     locale: o.lang === 'en' ? 'en' : 'hu',
     customer_email: o.email,
     client_reference_id: o.ref,

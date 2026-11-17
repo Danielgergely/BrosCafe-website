@@ -94,3 +94,13 @@ preview (c2eb1212). Fruitsys pull works on the preview. Preview-only admin seede
 signed-in account (need a customer magic link → Resend key on preview or Daniel signs in). Next: move D to / with redirects; prod env (D1/R2/secrets), DNS at Rackhost/dns24.
 Live React bug found (not fixed, live untouched): RunnerGame.jsx records only ground presses, so boosts never reach the
 server replay.
+
+## 2026-11-17 late: DNS + Stripe
+- broscafe.hu DNS moved to Cloudflare (nameservers elliott/gina.ns.cloudflare.com, registry switched in ~12 min). All
+  records DNS-only, still pointing at the Rackforest VPS (92.119.123.141); mail test to hello@ arrived. Old dns24 records
+  kept at Rackhost as fallback. 66.broscafe.hu dropped (66 runs on 66.gracelabs.dev).
+- Stripe: sandbox account for HungBros "BrosCafé sandbox" (acct_1UVFvf3DMS2xRD4z, HU/HUF). Test secret key + webhook
+  (/api/stripe/webhook, checkout.session.*) set on the preview. Test payments passed: After Hours 24 780 Ft paid + admin
+  refund, Delivery 2 860 Ft paid + refund, declined card not confirmed, Számlázz "not_configured" doesn't block.
+  Adaptive pricing switched off (always HUF). Untested: guest cancel link (needs email). Live keys: Daniel puts them in
+  himself with wrangler, never via chat. Stripe Tax/Terminal not needed now.
