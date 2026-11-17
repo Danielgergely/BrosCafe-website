@@ -131,8 +131,8 @@ class Settings:
             "instagram": os.environ.get("CAFE_INSTAGRAM", ""),
             "phone": os.environ.get("CAFE_PHONE", ""),
             "email": os.environ.get("CAFE_EMAIL", ""),
-            "hours_weekdays": os.environ.get("CAFE_HOURS_WEEKDAYS", "Mon–Fri · 7:30–19:00"),
-            "hours_weekend": os.environ.get("CAFE_HOURS_WEEKEND", "Sat–Sun · 9:00–18:00"),
+            "hours_weekdays": os.environ.get("CAFE_HOURS_WEEKDAYS", "Mon–Fri · 7:30–18:00"),
+            "hours_weekend": os.environ.get("CAFE_HOURS_WEEKEND", "Sat · 8:30–17:00 · Sun closed"),
             "stamps_required": self.stamps_required,
         }
 

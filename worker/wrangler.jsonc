@@ -1,0 +1,92 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Top level = production (broscafe.hu). Not deployable yet on purpose: the database id is a placeholder and there
+  // is no route until switch night (docs/cloudflare-migration.md). The preview is `--env preview`.
+  "name": "broscafe",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  // The React build (plus, on the preview, the design variants). The Worker runs first for every request so it can
+  // add the headers nginx used to add.
+  "assets": { "directory": "../frontend/build", "binding": "ASSETS", "not_found_handling": "single-page-application", "run_worker_first": true },
+  "d1_databases": [{ "binding": "DB", "database_name": "broscafe", "database_id": "00000000-0000-0000-0000-000000000000" }],
+  "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "broscafe-media", "jurisdiction": "eu" }],
+  // Apple pass certificate for Wallet pushes (uploaded 13 Nov 2026, valid until 3 Oct 2027)
+  "mtls_certificates": [{ "binding": "APNS_CERT", "certificate_id": "78002d82-1c8c-47ab-a894-289ea2105cff" }],
+  // Live sales from Fruitsys (was a loop every LIVE_SALES_EVERY_MIN = 15 minutes), TTL cleanups, startup per deploy
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "observability": { "enabled": true },
+  "version_metadata": { "binding": "CF_VERSION" },
+  // Production values as on the old server (read 13 Nov 2026)
+  "vars": {
+    "FRONTEND_URL": "https://broscafe.hu",
+    "CORS_ORIGINS": "https://broscafe.hu",
+    "STAMPS_REQUIRED": "10",
+    "WELCOME_STAMPS": "5",
+    "CUSTOMER_TOKEN_DAYS": "365",
+    "SEED_ON_STARTUP": "true",
+    "CAFE_TIMEZONE": "Europe/Budapest",
+    "CAFE_NAME": "Bros Cafe",
+    "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",
+    "CAFE_INSTAGRAM": "@broscafe.co",
+    "CAFE_EMAIL": "hello@broscafe.hu",
+    "CAFE_HOURS_WEEKDAYS": "Mon-Fri 7:30-18:00",
+    "CAFE_HOURS_WEEKEND": "Sat 8:30-17:00, Sun closed",
+    "EMAIL_FROM": "Bros Cafe <hello@broscafe.hu>",
+    "EMAIL_FROM_NAME": "Bros Cafe",
+    "EMAIL_REPLY_TO": "hello@broscafe.hu",
+    "SUPPORT_EMAIL": "support@broscafe.hu",
+    "CONTACT_PER_HOUR": "5",
+    "BREAK_EVEN_NET_FT": "65000",
+    "GROSS_PER_NET": "1.072",
+    "MAX_UPLOAD_MB": "20",
+    "APPLE_PASS_CONFIGURED": "true",
+    "APPLE_TEAM_ID": "S6BT656CHX",
+    "APPLE_PASS_TYPE_ID": "pass.hu.broscafe.loyalty",
+    "GOOGLE_WALLET_CONFIGURED": "true",
+    "GOOGLE_WALLET_CLASS_SUFFIX": "broscafe_loyalty",
+    "GOOGLE_WALLET_LOGO_URL": "https://broscafe.hu/logo512.png"
+  },
+  // Production secrets (npx wrangler secret put NAME): JWT_SECRET (the SAME value as on the old server, so nobody is
+  // signed out), ADMIN_EMAIL, ADMIN_PASSWORD, RESEND_API_KEY, FRUITSYS_USER, FRUITSYS_PASSWORD, LIVE_SALES_KEY,
+  // APPLE_CERTIFICATE, APPLE_PRIVATE_KEY, APPLE_WWDR_CERTIFICATE (PEM), GOOGLE_ISSUER_ID, GOOGLE_SERVICE_ACCOUNT_JSON.
+
+  "env": {
+    // https://broscafe.gracelabs.dev: a copy of the real data, but nothing that reaches customers. No Wallet
+    // credentials (no passes, no pushes), no Resend key (sign-in links only in the log), no Fruitsys login.
+    "preview": {
+      "name": "broscafe-preview",
+      "version_metadata": { "binding": "CF_VERSION" },
+      "routes": [{ "pattern": "broscafe.gracelabs.dev", "custom_domain": true }],
+      "d1_databases": [{ "binding": "DB", "database_name": "broscafe-preview", "database_id": "e1d2062c-2d0b-4551-b60c-34a416866df1" }],
+      "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "broscafe-media-preview", "jurisdiction": "eu" }],
+      "triggers": { "crons": ["*/15 * * * *"] },
+      "vars": {
+        "PREVIEW": "1",
+        "FRONTEND_URL": "https://broscafe.gracelabs.dev",
+        "CORS_ORIGINS": "https://broscafe.gracelabs.dev",
+        "STAMPS_REQUIRED": "10",
+        "WELCOME_STAMPS": "5",
+        "CUSTOMER_TOKEN_DAYS": "365",
+        "SEED_ON_STARTUP": "false",
+        "CAFE_TIMEZONE": "Europe/Budapest",
+        "CAFE_NAME": "Bros Cafe",
+        "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",
+        "CAFE_INSTAGRAM": "@broscafe.co",
+        "CAFE_EMAIL": "hello@broscafe.hu",
+        "CAFE_HOURS_WEEKDAYS": "Mon-Fri 7:30-18:00",
+        "CAFE_HOURS_WEEKEND": "Sat 8:30-17:00, Sun closed",
+        "SUPPORT_EMAIL": "support@broscafe.hu",
+        "CONTACT_PER_HOUR": "5",
+        "BREAK_EVEN_NET_FT": "65000",
+        "GROSS_PER_NET": "1.072",
+        "MAX_UPLOAD_MB": "20",
+        "APPLE_PASS_CONFIGURED": "false",
+        "GOOGLE_WALLET_CONFIGURED": "false"
+      }
+      // Preview secret: JWT_SECRET (its own random value, never the production one).
+    }
+  }
+}

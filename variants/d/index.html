@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="hu" class="home">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Bros Cafe · Specialty kávé Budapesten</title>
+<meta name="description" content="Bros Cafe, specialty kávé és vendéglátás. 1132 Budapest, Csanády u. 4/b.">
+<meta name="theme-color" content="#F5F0E6">
+<link rel="icon" href="/shared/img/mark-olive.png">
+<link rel="preload" href="/shared/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/fraunces-latin-ext-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="expect" href="#site-header" blocking="render">
+<script src="/d/i18n.js"></script>
+<link rel="stylesheet" href="/d/shell.css">
+<link rel="stylesheet" href="/d/style.css">
+<script>
+  // "still": no video, no scroll motion (reduced motion, Save-Data, or ?still for testing).
+  // "sda" / "no-sda": scroll-driven animations run natively, or home.js drives the same keyframes (?nosda to test that path).
+  (function () {
+    var c = navigator.connection, q = location.search, d = document.documentElement.classList;
+    var still = matchMedia('(prefers-reduced-motion: reduce)').matches || (c && c.saveData) || /[?&]still\b/.test(q);
+    d.add(still ? 'still' : 'live');
+    d.add(!/[?&]nosda\b/.test(q) && window.CSS && CSS.supports('animation-timeline: view()') && CSS.supports('animation-range: entry 0% entry 100%') ? 'sda' : 'no-sda');
+  })();
+</script>
+</head>
+<body data-page="home">
+<script src="/d/shell.js"></script>
+
+<!--
+  SCENES, in this order: hero (one screen) · the act (#kavek: a pinned stage, the scroll turns the eight cups and ends on
+  the two product cards) · the visit (#hely: the place, the loyalty card, our story; normal flow) · the shared footer.
+  Each is <section class="scene wash--…"> (the wash is its colour, see SHELL.md); home.js adds the "next" tab from data-name.
+  MEDIA (docs/media-picks.md, files in /shared/media/): a clip is class="film" + data-film="….mp4" around the still
+  (data-film-wide = the clip for desktop). The still shows before the film starts, under reduced motion and on Save-Data.
+  MOTION (style.css, "motion"): data-m = moves while its scene enters / leaves; data-s = scrubbed while the act is pinned.
+-->
+<main id="tartalom">
+
+  <!-- 01 · Hero -->
+  <section class="scene scene--hero wash--cream" id="kezdes" data-name="Bros Cafe" aria-labelledby="h-hero">
+    <div class="scene__in" data-m>
+      <div class="hero__text">
+        <p class="eyebrow" data-m>Bros Cafe — specialty kávé és vendéglátás</p>
+        <h1 id="h-hero" class="display"><span class="ln ln--a" data-m>Két karakter.</span> <span class="ln ln--b" data-m><em>Egy mérce.</em></span></h1>
+      </div>
+      <div class="hero__stage">
+        <div class="hero__frame" data-m>
+          <div class="cut film" data-film="/shared/media/hero-iced-pour-hands-9x16.mp4" data-film-wide="/shared/media/hero-iced-pour-hands-4x5.mp4"><picture><source media="(min-width: 900px)" srcset="/shared/media/hero-iced-pour-hands-4x5.webp" type="image/webp"><source media="(min-width: 900px)" srcset="/shared/media/hero-iced-pour-hands-4x5.jpg"><source srcset="/shared/media/hero-iced-pour-hands-9x16.webp" type="image/webp"><img src="/shared/media/hero-iced-pour-hands-9x16.jpg" alt="Három kéz jeges lattét készít a zsályazöld fal mögül" width="1080" height="1920" fetchpriority="high"></picture></div>
+          <button class="status" type="button" data-panel="hours" data-status hidden><i aria-hidden="true"></i><span data-status-text></span></button>
+          <a class="now" href="/d/after-hours/" data-now hidden><span class="new">Új</span><span class="now__txt"><b data-now-name></b> · <span data-now-line></span></span><span aria-hidden="true">→</span></a>
+        </div>
+        <div class="stamp" aria-hidden="true" data-m><svg viewBox="0 0 120 120"><defs><path id="stamp-c" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs><text><textPath href="#stamp-c" textLength="283">Specialty kávé · Budapest · Bros Cafe ·</textPath></text></svg><img src="/shared/img/mark-olive.png" alt="" width="26" height="30"></div>
+        <div class="cut cut--circle hero__side" aria-hidden="true" data-m><picture><source srcset="/shared/media/coffee-cappuccino-1x1.webp" type="image/webp"><img src="/shared/media/coffee-cappuccino-1x1.jpg" alt="" width="1200" height="1200" loading="lazy"></picture></div>
+      </div>
+      <p class="actions hero__actions">
+        <a class="btn" href="/d/etlap/">Étlap <span aria-hidden="true">→</span></a>
+        <a class="btn btn--ghost" href="/d/husegkartya/">Hűségkártya</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 02 · The act: Kávék → Extrák. One more cup = one more <li> (data-id = the product id on the menu) and --n below.
+       The two cards use the same texts and photos as the "Extrák" sheet (NAV in shell.js). -->
+  <section class="scene act wash--sage" id="kavek" data-name="Kávék" data-stops="Kávék|Extrák" style="--n: 8">
+    <div class="act__stage">
+      <div class="act__wash" aria-hidden="true" data-s></div>
+      <p class="ghost" aria-hidden="true" data-s data-en="coffee">kávé</p>
+
+      <div class="act__cups" aria-labelledby="h-coffee" role="group">
+        <div class="scene__head act__head" data-s>
+          <p class="eyebrow" data-m>A pulton</p>
+          <h2 id="h-coffee" class="title title--lg" data-m>Fedezd fel <em>a kávét.</em></h2>
+          <p class="fine" data-m>Koppints bármelyikre a részletekért</p>
+        </div>
+        <div class="wheel" data-s>
+          <div class="wheel__slot" data-m>
+            <ul class="cups" id="cups" data-s>
+              <li style="--i:0"><a class="cup" href="/d/etlap/#espresso" data-id="espresso"><picture><source srcset="/shared/media/coffee-espresso-4x5.webp" type="image/webp"><img src="/shared/media/coffee-espresso-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Espresso</span><span class="cup__price"></span></a></li>
+              <li style="--i:1"><a class="cup" href="/d/etlap/#espresso-macchiato" data-id="espresso-macchiato"><picture><source srcset="/shared/media/coffee-espresso-macchiato-4x5.webp" type="image/webp"><img src="/shared/media/coffee-espresso-macchiato-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Espresso macchiato</span><span class="cup__price"></span></a></li>
+              <li style="--i:2"><a class="cup" href="/d/etlap/#cortado" data-id="cortado"><picture><source srcset="/shared/media/coffee-cortado-4x5.webp" type="image/webp"><img src="/shared/media/coffee-cortado-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Cortado</span><span class="cup__price"></span></a></li>
+              <li style="--i:3"><a class="cup" href="/d/etlap/#cappuccino" data-id="cappuccino"><picture><source srcset="/shared/media/coffee-cappuccino-4x5.webp" type="image/webp"><img src="/shared/media/coffee-cappuccino-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Cappuccino</span><span class="cup__price"></span></a></li>
+              <li style="--i:4"><a class="cup" href="/d/etlap/#flat-white" data-id="flat-white"><picture><source srcset="/shared/media/coffee-flat-white-4x5.webp" type="image/webp"><img src="/shared/media/coffee-flat-white-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Flat white</span><span class="cup__price"></span></a></li>
+              <li style="--i:5"><a class="cup" href="/d/etlap/#latte" data-id="latte"><picture><source srcset="/shared/media/coffee-latte-4x5.webp" type="image/webp"><img src="/shared/media/coffee-latte-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Latte</span><span class="cup__price"></span></a></li>
+              <li style="--i:6"><a class="cup" href="/d/etlap/#americano" data-id="americano"><picture><source srcset="/shared/media/coffee-americano-4x5.webp" type="image/webp"><img src="/shared/media/coffee-americano-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Americano</span><span class="cup__price"></span></a></li>
+              <li style="--i:7"><a class="cup" href="/d/etlap/#matcha-latte" data-id="matcha-latte"><picture><source srcset="/shared/media/coffee-matcha-latte-4x5.webp" type="image/webp"><img src="/shared/media/coffee-matcha-latte-4x5.jpg" alt="" width="1200" height="1500" loading="lazy"></picture><span class="cup__name">Matcha latte</span><span class="cup__price"></span></a></li>
+            </ul>
+          </div>
+        </div>
+        <p class="scene__foot act__foot" data-s><a class="link" href="/d/etlap/">A teljes étlap <span aria-hidden="true">→</span></a></p>
+      </div>
+
+      <div class="act__duo" id="extrak" aria-labelledby="h-duo" role="group">
+        <div class="scene__head">
+          <p class="eyebrow" data-s>Új a Brosnál</p>
+          <h2 id="h-duo" class="title title--lg" data-s>Este nálunk.<br><em>Napközben nálatok.</em></h2>
+        </div>
+        <div class="duo">
+          <a class="half half--a wash--blush" href="/d/after-hours/" data-s>
+            <span class="cut film half__pic" data-vt-click="page-hero" data-film="/shared/media/after-hours-lounge-evening-9x16.mp4"><picture><source srcset="/shared/media/after-hours-lounge-evening-4x5.webp" type="image/webp"><img src="/shared/media/after-hours-lounge-evening-4x5.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span>
+            <span class="half__txt">
+              <b class="half__name">Bros After Hours</b>
+              <span class="half__line">Privát este · 18:00–22:00</span>
+              <span class="sticker sticker--white half__fact">14&nbsp;900&nbsp;Ft-tól</span>
+              <span class="btn">Estét választok <span aria-hidden="true">→</span></span>
+            </span>
+          </a>
+          <a class="half half--b wash--glow" href="/d/delivery/" data-s>
+            <span class="cut half__pic" data-vt-click="page-hero"><picture><source srcset="/shared/media/delivery-paper-cup-handwritten-4x5.webp" type="image/webp"><img src="/shared/media/delivery-paper-cup-handwritten-4x5.jpg" alt="" width="1080" height="1350" loading="lazy"></picture></span>
+            <span class="half__txt">
+              <b class="half__name">Bros Delivery</b>
+              <span class="half__line">Kávé az irodába</span>
+              <span class="sticker sticker--white half__fact">5 italtól ingyen</span>
+              <span class="btn">Rendelek <span aria-hidden="true">→</span></span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · The visit: the place, the loyalty card, our story. Normal flow (as tall as its content). -->
+  <section class="scene visit wash--glow-soft" id="hely" data-name="A hely" aria-labelledby="h-place">
+    <div class="visit__in">
+      <div class="place__pics">
+        <div class="cut film place__a" data-m data-film="/shared/media/place-serving-table-9x16.mp4"><picture><source srcset="/shared/media/place-serving-table-9x16.webp" type="image/webp"><img src="/shared/media/place-serving-table-9x16.jpg" alt="Két testvér fatálcákon viszi ki a rendelést" width="720" height="1280" loading="lazy"></picture></div>
+        <div class="cut place__b" data-m><picture><source srcset="/shared/media/place-counter-baristas-9x16.webp" type="image/webp"><img src="/shared/media/place-counter-baristas-9x16.jpg" alt="A pult két baristával" width="1080" height="1920" loading="lazy"></picture></div>
+        <p class="sticker sticker--white place__tag" data-m>1132 Budapest, Csanády u. 4/b</p>
+      </div>
+      <div class="place__text">
+        <div class="scene__head place__head">
+          <p class="eyebrow" data-m>Ugorj be hozzánk.</p>
+          <h2 id="h-place" class="display display--md" data-m>Gyere el <em>hozzánk.</em></h2>
+        </div>
+        <div class="place__foot" data-m>
+          <p><button class="status" type="button" data-panel="hours" data-status hidden><i aria-hidden="true"></i><span data-status-text></span></button></p>
+          <p class="place">Hétfő–péntek 7:30–18:00 · Szombat 8:30–17:00 · Vasárnap zárva</p>
+          <p class="actions">
+            <a class="btn" href="https://www.google.com/maps/search/?api=1&amp;query=Bros%20Cafe%2C%201132%20Budapest%2C%20Csan%C3%A1dy%20u.%204%2Fb" target="_blank" rel="noopener">Útvonal <span aria-hidden="true">↗</span></a>
+            <a class="link" href="/d/kapcsolat/">Kapcsolat <span aria-hidden="true">→</span></a>
+          </p>
+        </div>
+      </div>
+
+      <div class="loy" id="kartya" data-m>
+        <button class="pass" type="button" data-panel="loyalty" aria-label="5 pecsét ajándékba">
+          <span class="pass__top" aria-hidden="true"><img src="/shared/img/mark-cream.png" alt="" width="26" height="30"><b>Bros Cafe</b><span>Hűségkártya</span></span>
+          <span class="pass__grid" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></span>
+          <span class="pass__foot" aria-hidden="true"><b>5 pecsét ajándékba</b><small>Hogyan működik?</small></span>
+        </button>
+        <div class="loy__text">
+          <h3 class="title">10 kávé. <em>A következőt mi álljuk.</em></h3>
+          <p class="actions"><a class="btn" href="/d/husegkartya/">Kérem a kártyám <span aria-hidden="true">→</span></a></p>
+        </div>
+      </div>
+
+      <div class="story" id="tortenet" data-m>
+        <figure class="story__team">
+          <span class="cut"><picture><source srcset="/shared/media/team-brothers-3x2.webp" type="image/webp"><img src="/shared/media/team-brothers-3x2.jpg" alt="A Bros Cafe mögött álló három testvér" width="2000" height="1335" loading="lazy"></picture></span>
+          <figcaption class="sticker">Mi hárman</figcaption>
+        </figure>
+        <div class="story__text">
+          <p class="eyebrow">A történetünk</p>
+          <h3 class="title">Három testvér. <em>Egy közös elhívás.</em></h3>
+          <p class="body">Azt szeretnénk, hogy a Bros Cafe olyan hely legyen, amiért érdemes elindulni: egy ismerős pont, ahol kedvességgel, bátorítással és gondosan elkészített kávéval kezdheted a napodat.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- scene index (desktop rail; filled by home.js) -->
+<nav class="reel" id="reel" aria-label="Jelenetek" hidden></nav>
+
+<!-- detail panel (coffee, opening hours, loyalty) -->
+<dialog class="panel" id="panel" aria-labelledby="panel-title">
+  <div class="sheet__grab panel__grab"></div>
+  <button class="panel__close" type="button" aria-label="Bezárás" data-close></button>
+  <div class="panel__in" id="panel-in"></div>
+</dialog>
+
+<script src="/d/home.js" defer></script>
+</body>
+</html>

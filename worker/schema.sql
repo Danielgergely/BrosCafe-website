@@ -1,0 +1,51 @@
+-- Bros Cafe on D1: one table of JSON documents per former MongoDB collection (see src/db.ts).
+-- Indexes mirror backend/app/db.py ensure_indexes(); the TTL indexes there are a cleanup in the cron job here.
+
+CREATE TABLE IF NOT EXISTS users (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS members (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS transactions (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS analytics_events (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS magic_tokens (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS settings (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS content (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS products (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS media (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS contact_log (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS game_runs (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS wallet_registrations (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS voided_passes (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS wallet_stats (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS sales_days (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS live_sales (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS sales_forecasts (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS special_days (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+CREATE TABLE IF NOT EXISTS social_posts (_id INTEGER PRIMARY KEY, doc TEXT NOT NULL CHECK (json_valid(doc)));
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users(json_extract(doc, '$.email'));
+CREATE INDEX IF NOT EXISTS users_id ON users(json_extract(doc, '$.id'));
+CREATE UNIQUE INDEX IF NOT EXISTS members_code ON members(json_extract(doc, '$.code'));
+CREATE UNIQUE INDEX IF NOT EXISTS members_email ON members(json_extract(doc, '$.email'));
+CREATE INDEX IF NOT EXISTS members_wallet_serial ON members(json_extract(doc, '$.wallet_serial'));
+CREATE INDEX IF NOT EXISTS members_loyalty_token ON members(json_extract(doc, '$.loyalty_token'));
+CREATE INDEX IF NOT EXISTS transactions_at ON transactions(json_extract(doc, '$.at'));
+CREATE INDEX IF NOT EXISTS transactions_code ON transactions(json_extract(doc, '$.code'));
+CREATE INDEX IF NOT EXISTS analytics_events_at ON analytics_events(json_extract(doc, '$.at'));
+CREATE INDEX IF NOT EXISTS analytics_events_type ON analytics_events(json_extract(doc, '$.type'));
+CREATE INDEX IF NOT EXISTS magic_tokens_token_hash ON magic_tokens(json_extract(doc, '$.token_hash'));
+CREATE INDEX IF NOT EXISTS magic_tokens_expires_at ON magic_tokens(json_extract(doc, '$.expires_at'));
+CREATE UNIQUE INDEX IF NOT EXISTS products_id ON products(json_extract(doc, '$.id'));
+CREATE UNIQUE INDEX IF NOT EXISTS content_id ON content(json_extract(doc, '$.id'));
+CREATE UNIQUE INDEX IF NOT EXISTS media_id ON media(json_extract(doc, '$.id'));
+CREATE INDEX IF NOT EXISTS media_uploaded_at ON media(json_extract(doc, '$.uploaded_at'));
+CREATE INDEX IF NOT EXISTS contact_log_at ON contact_log(json_extract(doc, '$.at'));
+CREATE UNIQUE INDEX IF NOT EXISTS game_runs_run_id ON game_runs(json_extract(doc, '$.run_id'));
+CREATE INDEX IF NOT EXISTS game_runs_finished_finished_at_score ON game_runs(json_extract(doc, '$.finished'), json_extract(doc, '$.finished_at'), json_extract(doc, '$.score'));
+CREATE INDEX IF NOT EXISTS game_runs_code_started_at ON game_runs(json_extract(doc, '$.code'), json_extract(doc, '$.started_at'));
+CREATE INDEX IF NOT EXISTS wallet_registrations_device_id_serial ON wallet_registrations(json_extract(doc, '$.device_id'), json_extract(doc, '$.serial'));
+CREATE INDEX IF NOT EXISTS wallet_registrations_serial ON wallet_registrations(json_extract(doc, '$.serial'));
+CREATE INDEX IF NOT EXISTS wallet_registrations_expire_at ON wallet_registrations(json_extract(doc, '$.expire_at'));
+CREATE UNIQUE INDEX IF NOT EXISTS voided_passes_serial ON voided_passes(json_extract(doc, '$.serial'));
+CREATE UNIQUE INDEX IF NOT EXISTS sales_days_date ON sales_days(json_extract(doc, '$.date'));
+CREATE UNIQUE INDEX IF NOT EXISTS sales_forecasts_date ON sales_forecasts(json_extract(doc, '$.date'));
+CREATE UNIQUE INDEX IF NOT EXISTS special_days_date ON special_days(json_extract(doc, '$.date'));
+CREATE UNIQUE INDEX IF NOT EXISTS social_posts_date ON social_posts(json_extract(doc, '$.date'));

@@ -1,0 +1,96 @@
+# Bros Cafe: project status
+Phase: 4 Build (since 2026-11-16): "Kollázs" redesign + review-2 fixes on the preview 2026-11-17 (version ce52bf0d); B/C/switcher removed; next: migration to Cloudflare per docs/migration-checklist.md, waiting for Daniel's decisions (switch dates, hybrid frontend, AH/Delivery at launch, Rackforest, DNS access)
+Preview: https://broscafe.gracelabs.dev (a copy of the real data; no emails, Wallet or Fruitsys from there)
+Portal: https://portal.gracelabs.dev/p/broscafe
+Domain: broscafe.hu (registrar unchanged; DNS moves to Cloudflare on switch night; owner: HungBros Kft.)
+Contact: David and Benjamin (portal), Daniel is co-owner
+
+Two tracks run together: the move of the live site to Cloudflare (docs/cloudflare-migration.md, code in worker/) and
+the design test with the client (variants/). Bros Cafe is Daniel's own company, used to test the full client path.
+
+## Done
+- 0 Setup: portal project created by Daniel (Free + care plan 5 000 Ft/month, forints) and David and Benjamin invited (2026-11-13)
+- 1 Content: the live site is the content (texts in frontend/src/i18n/hu.js, menu in backend/data/catalog.json, 12 photos)
+- 2 Variants built 2026-11-14 with the café's own photos and reel loops: `/` = A Mai (the current app), `/b/` = B Pult
+  (menu board), `/c/` = C Mesekönyv (3D storybook, polished by Fable), `/d/` = D Mozi (cinematic 3D film, Fable);
+  switcher in variants/preview.js. B Napló (editorial) was built and dropped (archived in the session scratchpad)
+- Port: the whole backend runs as a Cloudflare Worker (worker/), deployed to the preview with a copy of the data (2026-11-14)
+
+## Open
+- [x] 2026-11-17 independent review (docs/reviews/2026-11-17-review-1.md) fixed; deployed to the preview /d/ (version 814f2e0f);
+      portal: choice accepted, step "Készül a weboldal" active, status line updated (no notification)
+- [ ] waiting for Daniel's inspection of the preview
+- [ ] later in phase 4: port game, /account + magic link, privacy/help, real scanner/admin into D; After Hours + Delivery
+      backends (Stripe, Számlázz.hu, D1); move D to / and remove variants A–C + preview.js
+- [ ] news content stale (newest 10 Sept); unverified claims to confirm with the brothers (reply within a day, Bros tipp facts)
+- [ ] build D (2026-11-16 plan): 1 shell (light palette, one header + phone bottom bar, view transitions; SHELL.md) →
+      2 in parallel: home (short 3D opener, then ~5 snapping light photo/video scenes, tappable details, hub at the end)
+      and subpages; staff scanner + admin restyled and wired to the real API later in this phase
+- [ ] media: Instagram reels + Photos library footage gathered into iCloud media/; brothers will film more clips later
+- [ ] live site shows old hours (Coolify env CAFE_HOURS_*): real hours Mon–Fri 7:30–18:00, Sat 8:30–17:00, Sun closed;
+      fixed in D, worker/wrangler.jsonc and backend defaults (not committed); live fix needs Daniel's OK
+- [x] 2026-11-16 shell done (variants/d/shell.css, shell.js, SHELL.md): light theme, one nav config, phone tab bar, view transitions
+- [ ] Bros After Hours: spec agreed in docs/after-hours.md; page + admin mock-up being built (mock data); backend later
+      (needs Stripe + Számlázz.hu accounts, accountant on invoice type/VAT, final prices, cancellation terms)
+- [x] 2026-11-16 Bros After Hours page + admin mock-up built (variants/d/after-hours/, admin/after-hours/, docs/after-hours-api.md);
+      2026-11-16 changed: 2.5 h slot 18:00–20:30, flat 24 900 Ft up to 6 + 2 990/extra (draft), bookable from 2026-12-01,
+      cancel via email button/email/admin; page being updated
+- [x] 2026-11-16 subpages rebuilt (étlap, kártya, újdonságok, kapcsolat, játék; pult/admin restyled mock-ups);
+      sign-up + contact wired to the real API (preview data). Still on the old app: /auth/verify, /account, /game,
+      /privacy, /help, staff login, real scanner/admin. Test member minta.dpages.*@example.com left in preview data
+- [ ] /api/cafe data is stale (hours, @broscafe, "4.b"); fix in worker vars at deploy; live site left alone (Daniel)
+- [ ] Bros Delivery: spec in docs/delivery.md (quiz 2026-11-16); proposal (docs/delivery-proposal.md) and page/group
+      order/admin mock-up being built overnight
+- [ ] media: Photos library blocked by macOS privacy (grant Full Disk Access to rerun); IG only gave 12 public reels,
+      all portrait; no clean latte-art clip yet; landscape footage to be shot by the brothers
+- [ ] ours: switch night for the move (needs Daniel: date after closing, production secrets, DNS to Cloudflare)
+- [ ] ours: upload the Wallet artwork to R2 before switch night (worker/scripts/render_wallet_art.py)
+- [ ] before launch: remove preview.js and the unused variants; variants are never deployed to production
+- [ ] delete the customer-data export in the scratchpad after the switch
+
+- 2026-11-14: portal step 3 done, step 4 "Te választasz" active; choice question posted; message to David and Benjamin with one email (Daniel asked for it)
+- 2026-11-14: subpages (étlap, hűségkártya, újdonságok, kapcsolat, játék, pult and admin as sample-data mock-ups) built for C, D and E
+
+- 2026-11-14: variants renamed A–D (Daniel); HU/EN switch on every page of B, C, D (shared bros-lang setting with the app); portal question and a note updated, no email
+
+## Decisions
+- 2026-11-16 (client, via Daniel): **D Mozi**, with changes. Words, brother 1: "Nagyon különleges mindegyik de nekem talán az D
+  tetszik a legjobban, tetszik hogy kép van a háttérben meg az is ami a legalján van hogy ki lehet választani hogy játszani
+  akarsz vagy megnézni mit tudsz vásárolni, viszont így színbe nem annyira illik oda. Meg lehet egy-két helyen más képeket
+  tennék a háttérbe. Vagy az is lehetne hogy ilyen 10 másodperces video menne a háttérben a kávézótól vagy hogy öntjük a
+  latte art-ot. Meg a nyitva tartás nem stimmel." Brother 2: "Nagyon jó a négyes verzió. Tisztább kell legyenek a
+  menüpontok hogy ne vesszen el az ember. Több élet (igazi képek a helyszínről meg KÁVÉK). Túl sokat kell görgetni. Adj
+  több kontrollt, hogy ne csak görgessen, hanem rá tudjon kattintani, megnézni infókat. Könnyedén át tudjon menni egyik
+  oldalról a másikra, hogy látszódjon, hogy nem tűnt el, csak most ebben az ablakban van. Saját fotók, videók, social
+  media videók. Kicsit sötét a D, rossz kedvű, a színek nem olyan puhák és boldogok, mint a kávézónk."
+- 2026-11-16 (Daniel): too much scrolling to reach the next part; top menu inconsistent (hamburger vs list, not quite
+  visible on some phones). Old site stays live until the new one is final. Two new products need room on the site:
+  after-hours table booking (evening with service, drinks, small buffet) and coffee delivery to nearby offices; build
+  them later, plan space now.
+- 2026-11-13 (Daniel): full move to Workers + D1 (approach 1); loyalty must carry over without hiccups
+- 2026-11-13 (Daniel): Daniel runs the client onboarding himself (portal project, invitations, payment)
+- 2026-11-14 (Daniel): three variants like the other clients, plus at least one fun 3D variant; the brothers get the portal messages and email
+- 2026-11-14 (Daniel): use Bros Cafe's own photos (now in iCloud Grace Labs/Clients/broscafe/media), no empty rooms, no team-silly
+- 2026-11-14 (Daniel): keep the four best variants; subpages, admin and game page in each variant's design
+- 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
+
+## Feedback log
+- 2026-11-17 (later) Daniel likes the new "Kollázs" design; images to keep improving when new footage arrives. Remove
+  variants A/B/C + switcher; D becomes the real site with ALL live functions (scripts, admin, scanner, game, account…).
+  Deadline: switch broscafe.hu to the Cloudflare version before 2026-12-01 (stop paying Rackforest). Checklist:
+  docs/migration-checklist.md (Fable agent writing it).
+- 2026-11-17 Daniel on the preview: clearer than the old D but "not as fancy" (wants scroll-driven animation back), image
+  choices not the best, "back to a standard everyday website" → visual redesign. After Hours + Delivery too hidden in
+  the sub menu: make them prominent without obstructing coffee. After Hours price back to ~14 900 with extras, 2 h
+  included, evenings open until 22:00 (docs/after-hours.md updated). Backup before redesign:
+  iCloud backup/variants-d-2026-11-17-before-redesign.tgz.
+
+## Rebuild status 2026-11-17 (evening)
+All five rebuild parts built in variants/d (customer fiok/auth/card/privacy/help/404, staff belepes/pult, admin 16 tabs,
+game jatek with sim parity 400/400, bookings backend in worker + migration 0001 applied to preview D1). Deployed to the
+preview (c2eb1212). Fruitsys pull works on the preview. Preview-only admin seeded via ADMIN_EMAIL/PASSWORD secrets
+(fixed missing version_metadata in env.preview, so startup reruns per deploy). Smoke test on real preview data passed 2026-11-17
+(login, 16 admin tabs, scanner stamp+undo, card, verify, bookings pages); fixes deployed (c538ec51). Not tested: game run +
+signed-in account (need a customer magic link → Resend key on preview or Daniel signs in). Next: move D to / with redirects; prod env (D1/R2/secrets), DNS at Rackhost/dns24.
+Live React bug found (not fixed, live untouched): RunnerGame.jsx records only ground presses, so boosts never reach the
+server replay.

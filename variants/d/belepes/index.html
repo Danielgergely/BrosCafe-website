@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Munkatársi belépés · Bros Cafe</title>
+<meta name="description" content="Belépés a Bros Cafe munkatársainak és adminjainak.">
+<meta name="theme-color" content="#F5F0E6">
+<link rel="icon" href="/shared/img/mark-olive.png">
+<link rel="preload" href="/shared/fonts/fraunces-latin-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/fraunces-latin-ext-full-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/shared/fonts/inter-latin-ext-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="expect" href="#site-header" blocking="render">
+<script src="/d/i18n.js"></script>
+<link rel="stylesheet" href="/d/shell.css">
+<link rel="stylesheet" href="/d/pages.css">
+<link rel="stylesheet" href="/d/belepes/belepes.css">
+</head>
+<body class="sub" data-page="belepes">
+<script src="/d/shell.js"></script>
+<main id="tartalom">
+  <div class="wrap login">
+    <form class="login__card wash wash--sage-mist" id="login-form" novalidate>
+      <span class="sticker sticker--white login__tag" style="--tilt: -3deg">Csak munkatársaknak</span>
+      <h1 class="login__title" data-vt="page-title">Munkatársi belépés</h1>
+      <p class="login__sub">Csak Bros Cafe munkatársaknak és adminoknak — jelentkezz be a kártyák beolvasásához.</p>
+      <label class="field"><span>E-mail</span>
+        <input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" autocorrect="off" spellcheck="false" required></label>
+      <label class="field"><span>Jelszó</span>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+      <p class="login__error" id="login-error" role="alert" hidden></p>
+      <button class="btn login__go" id="login-submit" type="submit">Belépés</button>
+    </form>
+    <p class="login__hint">Vendég vagy? Neked nem kell jelszó — a hűségoldalon megkapod vagy megtalálod a kártyád. <a class="link" href="/d/husegkartya/">Hűségkártya</a></p>
+    <p class="login__back"><a class="link" href="/d/">← Vissza a Bros Cafe oldalra</a></p>
+  </div>
+</main>
+<script src="/d/site.js" defer></script>
+<script src="/d/belepes/staff.js" defer></script>
+<script src="/d/belepes/belepes.js" defer></script>
+</body>
+</html>
