@@ -32,6 +32,8 @@ export function register(api: Router) {
   api.post(`${p}/bookings`,handle(async (c) => ah.book(c, (await c.json()) ?? {})));
   api.get(`${p}/cancel/{token}`, handle((c) => ah.cancelInfo(c, c.params.token)));
   api.post(`${p}/cancel/{token}`, handle((c) => ah.cancelConfirm(c, c.params.token)));
+  api.get(`${p}/change/{token}`, handle((c) => ah.changeInfo(c, c.params.token)));
+  api.post(`${p}/change/{token}`, handle(async (c) => ah.changeConfirm(c, c.params.token, (await c.json()) ?? {})));
 
   // refunds move money: admin role only
   const admin = (h: (c: Ctx) => Promise<unknown>) => handle(async (c) => { await requireAdmin(c); return h(c); });
@@ -39,5 +41,6 @@ export function register(api: Router) {
   api.put(`${p}/admin/days/{date}`, admin(async (c) => ah.setDay(c, c.params.date, (await c.json())?.open)));
   api.get(`${p}/admin/bookings`, admin((c) => ah.adminBookings(c, c.query.get('status'))));
   api.post(`${p}/admin/bookings/{id}/cancel`, admin((c) => ah.adminCancel(c, c.params.id)));
+  api.post(`${p}/admin/bookings/{id}/edit`, admin(async (c) => ah.adminChange(c, c.params.id, (await c.json()) ?? {})));
   api.post(`${p}/admin/bookings/{id}/refund`, admin(async (c) => { const j = await c.json(); return ah.adminRefund(c, c.params.id, j?.percent, j?.waive_fee); }));
 }

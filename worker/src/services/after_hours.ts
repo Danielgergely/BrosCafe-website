@@ -5,7 +5,7 @@ import type { Doc } from '../db';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
   ApiError, EMAIL, TAX, ZIP, addDays, addMonths, assertBookingsOpen, bookingsOpen, esc, ft, hm, instant, invalid, iso, lang as langOf, mail, mins, nextId, returnPath, rows,
-  safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday, CAFE_PHONE, MAP_URL,
+  safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday, card, fine, hero, longDate, para, priceCard,
 } from './bookings';
 import * as stripe from './stripe';
 import * as szamlazz from './szamlazz';
@@ -292,66 +292,61 @@ export async function retryInvoices(app: App) {
 
 // ---- emails ----
 const cancelLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}lemondas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
-/** Package, dishes, extras and the price lines, for both emails; old bookings show their indicative food choice. */
-function orderRows(b: Doc, en: boolean): [string, string | null][] {
+const timeOf = (b: Doc) => `${b.start_time}–${endOf(b)}`;
+/** The highlighted date card: the evening, the time and size, the place. */
+const evening = (b: Doc, en: boolean, map = true) => hero(longDate(b.date, en), [
+  `${timeOf(b)} · ${b.guests} ${en ? 'people' : 'fő'}`, 'Bros Cafe · 1132 Budapest, Csanády u. 4/b',
+], map ? (en ? 'Directions in Google Maps' : 'Útvonal a Google Térképen') : undefined);
+/** What they asked for: package, platters, drinks, cake, occasion, note. Old bookings show their indicative food choice. */
+function orderCard(b: Doc, en: boolean) {
   const p = pkgOf(b), tier = TIERS[b.tier];
-  if (p.legacy) return [[en ? 'Food selection (paid on site)' : 'Ételválogatás (helyszínen fizetendő)', p.legacy.join(', ') || null], [en ? 'Voucher' : 'Kuponkód', b.voucher_code ? `${b.voucher_code} (−${ft(b.discount_huf)})` : null]];
-  const money = (l: QuoteLine) => `${en ? l.en : l.hu}: ${l.qty > 1 ? `${l.qty} × ${ft(l.unit)} = ` : ''}${l.amount < 0 ? '−' : ''}${ft(Math.abs(l.amount))}`;
-  return [
-    [en ? 'Package' : 'Csomag', tier ? `${tier[en ? 'en' : 'hu']} (${ft(p.lines.find((l) => l.kind === 'package')?.unit ?? tier.perPerson)} ${en ? 'per person' : '/ fő'})` : b.tier],
+  const cake = b.cake ? (en ? 'Yes, from 10 000 Ft, paid on the evening' : 'Igen, 10 000 Ft-tól, a helyszínen fizetendő') : null;
+  const occasion = occasionOf(b.occasion, en), note = b.note || null;
+  if (p.legacy) return card(en ? 'Your evening' : 'Az estétek', [[en ? 'Food (paid on site)' : 'Ételek (helyszínen fizetendő)', p.legacy.join(', ') || null], [en ? 'Cake' : 'Torta', cake], [en ? 'Occasion' : 'Alkalom', occasion], [en ? 'Note' : 'Megjegyzés', note]]);
+  return card(en ? 'Your evening' : 'Az estétek', [
+    [en ? 'Package' : 'Csomag', tier ? `${en ? 'Welcome drink' : 'Üdvözlőital'} + ${tier[en ? 'en' : 'hu']}` : b.tier],
     [en ? 'Platters' : 'Tálak', dishNames(p.dishes, en) || null],
     [en ? 'Extra platters' : 'Extra tálak', dishNames(p.extras, en) || null],
-    [en ? 'Drinks' : 'Italok', p.lines.some((l) => l.kind === 'drinks') ? (en ? 'Unlimited drinks we make' : 'Korlátlan saját készítésű italok') : null],
-    [en ? 'Breakdown' : 'Részletezés', p.lines.map(money).join('\n') || null],
-  ];
-}
-const cakeRow = (b: Doc, en: boolean): [string, string] => [en ? 'Celebration cake' : 'Ünnepi torta', b.cake ? (en ? 'requested, from 10 000 Ft, paid on the evening' : 'kérnek, 10 000 Ft-tól, a helyszínen fizetendő') : (en ? 'no' : 'nem')];
-function details(b: Doc, en: boolean) {
-  const end = hm(mins(b.start_time) + b.hours * 60);
-  return rows([
-    [en ? 'Booking' : 'Azonosító', b.id], [en ? 'Date' : 'Dátum', b.date], [en ? 'Time' : 'Időpont', `${b.start_time}–${end}`],
-    [en ? 'Guests' : 'Vendégszám', b.guests], ...orderRows(b, en), cakeRow(b, en), [en ? 'Total paid' : 'Kifizetett összeg', ft(b.amount_huf)],
+    [en ? 'Drinks' : 'Italok', p.lines.some((l) => l.kind === 'drinks') ? (en ? 'Unlimited, made by us' : 'Korlátlan, saját készítésű') : null],
+    [en ? 'Cake' : 'Torta', cake], [en ? 'Occasion' : 'Alkalom', occasion], [en ? 'Note' : 'Megjegyzés', note],
   ]);
 }
-function staffDetails(b: Doc, extra: [string, string | number | null][] = []) {
-  return rows([
-    ['Azonosító', b.id], ['Dátum', b.date], ['Időpont', `${b.start_time}–${hm(mins(b.start_time) + b.hours * 60)}`], ['Vendégszám', b.guests],
-    ...orderRows(b, false), cakeRow(b, false), ['Fizetett összeg', ft(b.amount_huf)],
-    ['Név', b.name], ['E-mail', b.email], ['Telefon', b.phone], ['Számlázás', `${b.company ? `${b.company} (${b.tax_number ?? '–'}), ` : ''}${b.zip} ${b.city}, ${b.street}`],
-    ['Alkalom', occasionOf(b.occasion, false)], ['Megjegyzés', b.note], ...extra,
-  ]);
+/** The price lines and what was paid. */
+function payCard(b: Doc, en: boolean, totalLabel?: string) {
+  const lines = pkgOf(b).lines.map((l): [string, string] => [`${en ? l.en : l.hu}${l.qty > 1 ? ` (${l.qty} × ${ft(l.unit)})` : ''}`, `${l.amount < 0 ? '−' : ''}${ft(Math.abs(l.amount))}`]);
+  return priceCard(en ? 'Payment' : 'Fizetés', lines, [totalLabel ?? (en ? 'Paid' : 'Kifizetve'), ft(b.amount_huf)]);
 }
+const guestCard = (b: Doc) => card('Vendég', [['Név', b.name], ['E-mail', b.email], ['Telefon', b.phone],
+  ['Számlázás', `${b.company ? `${b.company} (${b.tax_number ?? '–'}), ` : ''}${b.zip} ${b.city}, ${b.street}`]]);
 
 async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
-  const en = b.lang === 'en', d = details(b, en), link = await cancelLink(app, b);
-  const intro = en ? 'The café will be all yours for the evening, and we are looking forward to having you.'
-    : 'Az estére csak a tiétek a kávézó, már nagyon várunk titeket.';
-  const practical = en ? [
-    `Arrival: please come at the start time (${b.date}, ${b.start_time}); everything will be ready for you then. The evening ends at ${hm(mins(b.start_time) + b.hours * 60)}.`,
-    'Where: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
-    `Questions, allergies or special wishes: just reply to this email or call us on ${CAFE_PHONE}.`,
-    'Invoices: the advance invoice arrives in a separate email from Számlázz.hu, the final invoice on the day of the evening.',
-  ] : [
-    `Érkezés: kérjük, a kezdés időpontjára érkezzetek (${b.date}, ${b.start_time}), addigra minden készen vár. Az este vége: ${hm(mins(b.start_time) + b.hours * 60)}.`,
-    'Helyszín: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
-    `Kérdés, allergia, különleges kérés: válaszoljatok erre az e-mailre, vagy hívjatok: ${CAFE_PHONE}.`,
-    'Számla: az előlegszámlát külön e-mailben küldi a Számlázz.hu, a végszámlát az est napján.',
-  ];
-  const mapLink = `<p><a href="${MAP_URL}" style="color:#66734A;font-weight:600">${en ? 'Open in Google Maps' : 'Útvonal a Google Térképen'}</a></p>`;
-  const food = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
-    : en ? 'Food and drinks are included in the amount you paid; the cake is paid on the evening.' : 'Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.';
-  const pct = offer(app.env).cancelFeePct;
-  const terms = `${food} ${en ? `Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after; a ${pct}% handling fee of the amount paid is deducted from a refund.`
-    : `Lemondás: legalább 7 nappal előtte a teljes összeg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni; a visszatérítésből a befizetett összeg ${pct}%-át kezelési költségként levonjuk.`}`;
+  const en = b.lang === 'en', link = await cancelLink(app, b), pct = offer(app.env).cancelFeePct;
+  const included = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
+    : en ? 'Food and drinks are included; the cake and anything extra are paid on the evening.' : 'Az étel és az ital benne van; a tortát és az extra fogyasztást a helyszínen fizetitek.';
   await mail(app, {
     to: b.email, lang: b.lang, subject: en ? `Your Bros After Hours booking (${b.id})` : `Bros After Hours foglalás (${b.id})`,
-    title: en ? 'Thank you for your booking' : 'Köszönjük a foglalást!',
-    html: `<p>${esc(intro)}</p>${practical.map((l) => `<p style="margin:6px 0">${esc(l)}</p>`).join('')}${mapLink}${d.html}<p>${esc(terms)}</p>`,
-    text: `${intro}\n\n${practical.join('\n')}\n${MAP_URL}\n\n${d.text}\n\n${terms}\n\n${en ? 'Cancel the booking' : 'Foglalás lemondása'}: ${link}`,
-    button: [en ? 'Cancel the booking' : 'Foglalás lemondása', link],
+    title: en ? 'Thank you for your booking!' : 'Köszönjük a foglalást!',
+    parts: [
+      para(en ? 'The café will be all yours for the evening, and we are looking forward to having you.' : 'Az estére csak a tiétek a kávézó, már nagyon várunk titeket.'),
+      evening(b, en),
+      orderCard(b, en),
+      payCard(b, en),
+      card(en ? 'Good to know' : 'Jó tudni', [
+        [en ? 'Arrival' : 'Érkezés', en ? `At ${b.start_time}: everything will be ready for you.` : `${b.start_time}-kor, addigra minden készen vár.`],
+        [en ? 'Included' : 'Benne van', included],
+        [en ? 'Invoice' : 'Számla', en ? 'Advance invoice now from Számlázz.hu, final invoice on the day.' : 'Előlegszámla most, külön e-mailben a Számlázz.hu-tól; végszámla az est napján.'],
+        [en ? 'Cancellation' : 'Lemondás', en ? `7+ days before: 100% back · until 48 hours before: 50% · after that: none. ${pct}% handling fee from a refund.`
+          : `7+ nappal előtte: 100% · 48 óráig: 50% · utána: nincs visszatérítés. A visszatérítésből ${pct}% kezelési költség.`],
+      ]),
+      fine(en ? `Booking reference: ${b.id}. Allergies or special wishes? Reply to this email.` : `Foglalási azonosító: ${b.id}. Allergia vagy különleges kérés? Válaszoljatok erre az e-mailre.`),
+    ],
+    links: [[en ? 'Change the booking' : 'Foglalás módosítása', await modifyLink(app, b)], [en ? 'Cancel the booking' : 'Foglalás lemondása', link]],
   });
-  const s = staffDetails(b, [['Fizetés', 'kifizetve (Stripe)'], ['Számla', invoiceNo ?? `NINCS KIÁLLÍTVA (${szamlazz.ready(app.env) ? 'hiba, újrapróbáljuk' : 'Számlázz.hu kulcs nincs beállítva'})`]]);
-  await mail(app, { to: staffAddress(app), subject: `Új After Hours foglalás: ${b.date} ${b.start_time} · ${b.name} (${b.id})`, title: 'Új Bros After Hours foglalás', html: s.html, text: s.text });
+  const invoice = invoiceNo ?? `NINCS KIÁLLÍTVA (${szamlazz.ready(app.env) ? 'hiba, újrapróbáljuk' : 'Számlázz.hu kulcs nincs beállítva'})`;
+  await mail(app, {
+    to: staffAddress(app), staff: true, subject: `Új After Hours foglalás: ${b.date} ${b.start_time} · ${b.name} (${b.id})`, title: 'Új After Hours foglalás',
+    parts: [evening(b, false, false), guestCard(b), orderCard(b, false), payCard(b, false), card('Állapot', [['Azonosító', b.id], ['Fizetés', 'kifizetve (Stripe)'], ['Előlegszámla', invoice]])],
+  });
 }
 
 /**
@@ -367,37 +362,46 @@ export async function sendReminders(app: App) {
     const late = !b.paid_at || today(app, parseIso(b.paid_at)).date >= now.date;
     const claim = await d1.prepare('UPDATE ah_bookings SET reminder_sent_at = ? WHERE id = ? AND reminder_sent_at IS NULL').bind(late ? 'skip' : nowIso(), b.id).run();
     if (!claim.meta.changes || late) continue;
-    const en = b.lang === 'en', end = hm(mins(b.start_time) + b.hours * 60);
-    const lines = en ? [
-      `Tomorrow is your evening at Bros Cafe: ${b.date}, ${b.start_time}–${end}, ${b.guests} people.`,
-      `Please arrive at ${b.start_time}; everything will be ready for you.`,
-      'Where: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
-      `Anything to tell us (allergies, a change in numbers, a cake)? Reply to this email or call ${CAFE_PHONE}.`,
-    ] : [
-      `Holnap lesz a privát estétek a Bros Caféban: ${b.date}, ${b.start_time}–${end}, ${b.guests} fő.`,
-      `Kérjük, a kezdés időpontjára (${b.start_time}) érkezzetek, minden készen vár majd.`,
-      'Helyszín: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
-      `Ha valamit jeleznétek (allergia, létszámváltozás, torta), válaszoljatok erre az e-mailre, vagy hívjatok: ${CAFE_PHONE}.`,
-    ];
+    const en = b.lang === 'en';
     await mail(app, {
       to: b.email, lang: b.lang, subject: en ? `See you tomorrow at Bros After Hours (${b.id})` : `Holnap találkozunk: Bros After Hours (${b.id})`,
       title: en ? 'See you tomorrow!' : 'Holnap találkozunk!',
-      html: `${lines.map((l) => `<p style="margin:6px 0">${esc(l)}</p>`).join('')}<p><a href="${MAP_URL}" style="color:#66734A;font-weight:600">${en ? 'Open in Google Maps' : 'Útvonal a Google Térképen'}</a></p>`,
-      text: `${lines.join('\n')}\n${MAP_URL}`,
+      parts: [
+        para(en ? 'Tomorrow is your private evening at Bros Cafe.' : 'Holnap lesz a privát estétek a Bros Caféban.'),
+        evening(b, en),
+        card(en ? 'Good to know' : 'Jó tudni', [
+          [en ? 'Arrival' : 'Érkezés', en ? `At ${b.start_time}: everything will be ready for you.` : `${b.start_time}-kor, addigra minden készen vár.`],
+          [en ? 'Cake' : 'Torta', b.cake ? (en ? 'Paid on the evening' : 'A helyszínen fizetitek') : null],
+        ]),
+        fine(en ? 'Allergies, a change in numbers or anything else to tell us? Reply to this email.' : 'Allergia, létszámváltozás vagy bármi, amit jeleznétek? Válaszoljatok erre az e-mailre.'),
+      ],
     });
   }
 }
 
 async function sendCancelled(app: App, b: Doc, by: 'guest' | 'staff', note: string) {
-  const en = b.lang === 'en', d = details(b, en);
-  const fee = b.cancel_fee_huf ? (en ? `, less a ${ft(b.cancel_fee_huf)} handling fee` : `, levonva ${ft(b.cancel_fee_huf)} kezelési költség`) : '';
-  const refund = b.refund_huf ? (en ? `Refund: ${ft(b.refund_huf)} (${b.refund_percent}%${fee}). It reaches the card you paid with in a few days.` : `Visszatérítés: ${ft(b.refund_huf)} (${b.refund_percent}%${fee}). Néhány napon belül érkezik a fizetéshez használt kártyára.`)
-    : b.status === 'refunded' ? (en ? 'Under the cancellation terms no refund is due.' : 'A lemondási feltételek szerint visszatérítés nem jár.')
-      : (en ? 'We will write to you about the refund.' : 'A visszatérítésről külön értesítünk.');
-  const intro = en ? 'Your Bros After Hours booking has been cancelled.' : 'A Bros After Hours foglalásotok le van mondva.';
-  await mail(app, { to: b.email, lang: b.lang, subject: en ? `Booking cancelled (${b.id})` : `Foglalás lemondva (${b.id})`, title: en ? 'Booking cancelled' : 'Foglalás lemondva', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(refund)}</p>`, text: `${intro}\n\n${d.text}\n\n${refund}` });
-  const s = staffDetails(b, [['Lemondta', by === 'guest' ? 'a vendég (e-mailes link)' : 'admin'], ['Státusz', b.status], ['Visszatérítés', b.refund_huf != null ? `${ft(b.refund_huf)} (${b.refund_percent}%)` : 'még nincs'], ['Teendő', note]]);
-  await mail(app, { to: staffAddress(app), subject: `After Hours lemondás: ${b.date} · ${b.name} (${b.id})`, title: 'Bros After Hours lemondás', html: s.html, text: s.text });
+  const en = b.lang === 'en';
+  const back = b.refund_huf ? ft(b.refund_huf) : b.status === 'refunded' ? (en ? 'No refund under the terms' : 'A feltételek szerint nem jár') : (en ? 'We will write to you' : 'Külön értesítünk');
+  await mail(app, {
+    to: b.email, lang: b.lang, subject: en ? `Booking cancelled (${b.id})` : `Foglalás lemondva (${b.id})`,
+    title: en ? 'Your booking is cancelled' : 'A foglalást lemondtuk',
+    parts: [
+      para(en ? 'We are sorry you cannot make it. This evening is no longer booked:' : 'Sajnáljuk, hogy most nem jön össze. Ez az este már nincs lefoglalva:'),
+      evening(b, en, false),
+      card(en ? 'Refund' : 'Visszatérítés', [
+        [en ? 'Paid' : 'Kifizetve', ft(b.amount_huf)],
+        [en ? 'Handling fee' : 'Kezelési költség', b.cancel_fee_huf ? `−${ft(b.cancel_fee_huf)}` : null],
+        [en ? 'Refunded' : 'Visszajár', b.refund_percent != null && b.refund_huf ? `${back} (${b.refund_percent}%)` : back],
+        [en ? 'When' : 'Mikor', b.refund_huf ? (en ? 'Within a few days, to the card you paid with' : 'Néhány napon belül, a fizetéshez használt kártyára') : null],
+      ]),
+      fine(en ? `Booking reference: ${b.id}. We hope to see you another time!` : `Foglalási azonosító: ${b.id}. Reméljük, máskor találkozunk!`),
+    ],
+  });
+  await mail(app, {
+    to: staffAddress(app), staff: true, subject: `After Hours lemondás: ${b.date} · ${b.name} (${b.id})`, title: 'After Hours lemondás',
+    parts: [evening(b, false, false), card('Lemondás', [['Azonosító', b.id], ['Lemondta', by === 'guest' ? 'a vendég (e-mailes link)' : 'admin'], ['Státusz', b.status],
+      ['Visszatérítés', b.refund_huf != null ? `${ft(b.refund_huf)} (${b.refund_percent}%)${b.cancel_fee_huf ? `, kezelési költség ${ft(b.cancel_fee_huf)}` : ''}` : 'még nincs'], ['Teendő', note]]), guestCard(b)],
+  });
 }
 
 // ---- Stripe webhook ----
@@ -504,6 +508,102 @@ export async function cancelConfirm(app: App, token: string) {
   const fresh = (await get(app, b.id))!;
   app.later(sendCancelled(app, fresh, 'guest', note));
   return { ...cancelView(app, fresh, percent), refund_pending: fresh.status === 'cancelled' };
+}
+
+// ---- changing a booking (nothing that changes the price; for that: cancel without fee and book again) ----
+/** Guests may change these until 48 hours before; admins also name and email, any time, to any free evening. */
+async function change(app: App, b: Doc, body: Doc, who: 'guest' | 'admin') {
+  if (b.status !== 'paid') throw new ApiError(409, 'not_paid');
+  const o = offer(app.env), bad: string[] = [], has = (k: string) => body[k] !== undefined && body[k] !== null;
+  if (who === 'guest' && instant(app, b.date, b.start_time).getTime() - Date.now() < 48 * 3600e3) throw new ApiError(409, 'too_late');
+  const v = {
+    date: has('date') ? String(body.date) : b.date, start: has('start') ? text(body.start, 5) : b.start_time,
+    occasion: has('occasion') ? text(body.occasion, 40) : (b.occasion ?? ''), note: has('note') ? text(body.note, 1000) : (b.note ?? ''),
+    phone: has('phone') ? text(body.phone, 40) : b.phone, cake: has('cake') ? body.cake === true : !!b.cake,
+    name: who === 'admin' && has('name') ? text(body.name, 120) : b.name, email: who === 'admin' && has('email') ? text(body.email, 200) : b.email,
+  };
+  const startOk = /^\d\d:\d\d$/.test(v.start) && mins(v.start) >= mins(o.open) && mins(v.start) <= mins(o.lastStart) && (mins(v.start) - mins(o.open)) % o.startStep === 0;
+  if (!validDate(v.date)) bad.push('date');
+  if (!startOk || mins(v.start) + b.hours * 60 > mins(o.close)) bad.push('start');
+  if (v.occasion && !OCCASIONS[v.occasion]) bad.push('occasion');
+  if (v.phone.replace(/\D/g, '').length < 7) bad.push('phone');
+  if (v.name.length < 2) bad.push('name');
+  if (!EMAIL.test(v.email)) bad.push('email');
+  if (bad.length) throw invalid(bad);
+  if (v.date !== b.date) {
+    await expireHolds(app);
+    const w = bookingWindow(app), open = (await overrides(app, v.date, v.date)).get(v.date) ?? defaultOpen(app.env, v.date);
+    if (who === 'guest' ? v.date < w.min || v.date > w.max || !open : v.date < today(app).date) throw new ApiError(409, 'day_taken');
+    const taken = (await live(app, v.date, v.date)).get(v.date);
+    if (taken && taken.id !== b.id) throw new ApiError(409, 'day_taken');
+  }
+  try {
+    await app.db.d1.prepare(`UPDATE ah_bookings SET date = ?, start_time = ?, occasion = ?, note = ?, phone = ?, cake = ?, name = ?, email = ?,
+      reminder_sent_at = CASE WHEN date = ? THEN reminder_sent_at ELSE NULL END WHERE id = ? AND status = 'paid'`)
+      .bind(v.date, v.start, v.occasion || null, v.note || null, v.phone, v.cake ? 1 : 0, v.name, v.email, v.date, b.id).run();
+  } catch (e) {
+    if (/UNIQUE/i.test(String((e as Error).message))) throw new ApiError(409, 'day_taken');
+    throw e;
+  }
+  const after = (await get(app, b.id))!;
+  app.later(sendChanged(app, b, after, who));
+  return after;
+}
+
+/** What changed, old → new, for both emails. */
+function changes(a: Doc, b: Doc, en: boolean): [string, string][] {
+  const yes = en ? 'yes' : 'igen', no = en ? 'no' : 'nem', out: [string, string][] = [];
+  const add = (label: string, x: unknown, y: unknown) => { if ((x ?? '') !== (y ?? '')) out.push([label, `${x || '–'} → ${y || '–'}`]); };
+  add(en ? 'Date' : 'Dátum', longDate(a.date, en), longDate(b.date, en));
+  add(en ? 'Time' : 'Időpont', timeOf(a), timeOf(b));
+  add(en ? 'Occasion' : 'Alkalom', occasionOf(a.occasion, en), occasionOf(b.occasion, en));
+  add(en ? 'Cake' : 'Torta', a.cake ? yes : no, b.cake ? yes : no);
+  add(en ? 'Note' : 'Megjegyzés', a.note, b.note);
+  add(en ? 'Phone' : 'Telefon', a.phone, b.phone);
+  add(en ? 'Name' : 'Név', a.name, b.name);
+  add('E-mail', a.email, b.email);
+  return out;
+}
+const modifyLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}modositas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
+
+async function sendChanged(app: App, before: Doc, b: Doc, who: 'guest' | 'admin') {
+  const en = b.lang === 'en', diff = changes(before, b, en);
+  if (!diff.length) return;
+  await mail(app, {
+    to: b.email, lang: b.lang, subject: en ? `Your booking has been changed (${b.id})` : `Módosult a foglalásotok (${b.id})`,
+    title: en ? 'Your booking is updated' : 'Módosítottuk a foglalást',
+    parts: [
+      para(en ? 'Here is your evening with the changes:' : 'Így néz ki most az estétek:'),
+      evening(b, en), card(en ? 'What changed' : 'Mi változott', diff), orderCard(b, en),
+      fine(en ? `Booking reference: ${b.id}. The amount paid and the cancellation terms stay the same.` : `Foglalási azonosító: ${b.id}. A kifizetett összeg és a lemondási feltételek nem változnak.`),
+    ],
+    links: [[en ? 'Change the booking' : 'Foglalás módosítása', await modifyLink(app, b)], [en ? 'Cancel the booking' : 'Foglalás lemondása', await cancelLink(app, b)]],
+  });
+  await mail(app, {
+    to: staffAddress(app), staff: true, subject: `After Hours módosítás: ${b.date} ${b.start_time} · ${b.name} (${b.id})`, title: 'After Hours módosítás',
+    parts: [evening(b, false, false), card('Mi változott', changes(before, b, false)), card('Módosította', [['Ki', who === 'guest' ? 'a vendég (e-mailes link)' : 'admin'], ['Azonosító', b.id]]), guestCard(b)],
+  });
+}
+
+/** GET for the guest's change page: the booking, what can be changed, the booking window. */
+export async function changeInfo(app: App, token: string) {
+  const b = await byToken(app, token);
+  if (b.status !== 'paid' || instant(app, b.date, b.start_time).getTime() <= Date.now()) throw new ApiError(410, 'gone');
+  const w = bookingWindow(app);
+  return {
+    booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, occasion: b.occasion ?? '', note: b.note ?? '', phone: b.phone, cake: !!b.cake },
+    editable: instant(app, b.date, b.start_time).getTime() - Date.now() >= 48 * 3600e3, window: w,
+  };
+}
+export async function changeConfirm(app: App, token: string, body: Doc) {
+  const b = await byToken(app, token);
+  await change(app, b, body, 'guest');
+  return changeInfo(app, token);
+}
+export async function adminChange(app: App, id: string, body: Doc) {
+  const b = await get(app, id);
+  if (!b) throw new ApiError(404, 'not_found');
+  return view(await change(app, b, body, 'admin'));
 }
 
 // ---- admin ----

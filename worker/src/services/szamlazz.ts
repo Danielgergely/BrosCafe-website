@@ -16,6 +16,7 @@ export const config = (env: Env) => ({
   dlDrinkVat: s(env, 'DL_DRINK_VAT', '27'), // delivered drinks
   dlFeeVat: s(env, 'DL_FEE_VAT', '27'),     // delivery fee
   prefix: s(env, 'SZAMLAZZ_PREFIX'),       // invoice number prefix, empty = the account's default
+  orderPrefix: s(env, 'SZAMLAZZ_ORDER_PREFIX'), // preview only ('P-'): its order numbers must not clash with production's in the shared test account
   // Preview: payment requests (díjbekérő) only, never reported to NAV and never e-mailed; no final/correction/storno.
   proforma: s(env, 'SZAMLAZZ_PROFORMA') === 'true',
 });
@@ -51,10 +52,10 @@ function invoiceXml(app: App, inv: Invoice) {
   const b = inv.buyer, t = inv.type;
   return '<?xml version="1.0" encoding="UTF-8"?>' +
     '<xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.szamlazz.hu/xmlszamla https://www.szamlazz.hu/szamla/docs/xsds/agent/xmlszamla.xsd">' +
-    `<beallitasok><szamlaagentkulcs>${x(cfg.key)}</szamlaagentkulcs><eszamla>true</eszamla><szamlaLetoltes>false</szamlaLetoltes><valaszVerzio>1</valaszVerzio><aggregator></aggregator><szamlaKulsoAzon>${x(inv.ref)}</szamlaKulsoAzon></beallitasok>` +
+    `<beallitasok><szamlaagentkulcs>${x(cfg.key)}</szamlaagentkulcs><eszamla>true</eszamla><szamlaLetoltes>false</szamlaLetoltes><valaszVerzio>1</valaszVerzio><aggregator></aggregator><szamlaKulsoAzon>${x(cfg.orderPrefix + inv.ref)}</szamlaKulsoAzon></beallitasok>` +
     `<fejlec><keltDatum>${day}</keltDatum><teljesitesDatum>${inv.fulfilled ?? day}</teljesitesDatum><fizetesiHataridoDatum>${day}</fizetesiHataridoDatum>` +
     `<fizmod>bankkártya</fizmod><penznem>HUF</penznem><szamlaNyelve>${inv.lang === 'en' ? 'en' : 'hu'}</szamlaNyelve><megjegyzes>${x(inv.comment)}</megjegyzes>` +
-    `<arfolyamBank></arfolyamBank><arfolyam>0</arfolyam><rendelesSzam>${x(inv.order)}</rendelesSzam><dijbekeroSzamlaszam></dijbekeroSzamlaszam>` +
+    `<arfolyamBank></arfolyamBank><arfolyam>0</arfolyam><rendelesSzam>${x(cfg.orderPrefix + inv.order)}</rendelesSzam><dijbekeroSzamlaszam></dijbekeroSzamlaszam>` +
     `<elolegszamla>${real && t === 'elolegszamla'}</elolegszamla><vegszamla>${t === 'vegszamla'}</vegszamla><elolegSzamlaszam>${t === 'vegszamla' ? x(inv.refersTo) : ''}</elolegSzamlaszam>` +
     `<helyesbitoszamla>${t === 'helyesbito'}</helyesbitoszamla><helyesbitettSzamlaszam>${t === 'helyesbito' ? x(inv.refersTo) : ''}</helyesbitettSzamlaszam>` +
     `<dijbekero>${cfg.proforma}</dijbekero>${cfg.prefix ? `<szamlaszamElotag>${x(cfg.prefix)}</szamlaszamElotag>` : ''}<fizetve>${!cfg.proforma}</fizetve></fejlec>` +

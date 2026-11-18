@@ -39,7 +39,8 @@ async function call<T = any>(app: App, method: string, path: string, params?: Re
   const cfg = config(app.env);
   const headers: Record<string, string> = { Authorization: `Bearer ${cfg.key}` };
   if (params) headers['Content-Type'] = 'application/x-www-form-urlencoded';
-  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  // the preview and production share the Stripe sandbox and number bookings alike: keys carry the site's host
+  if (idempotencyKey) headers['Idempotency-Key'] = `${String(app.env.FRONTEND_URL ?? '').replace(/^https?:\/\//, '').replace(/\/.*$/, '')}/${idempotencyKey}`;
   const r = await fetch(`${cfg.base}/v1${path}`, { method, headers, body: params ? form(params).toString() : undefined, signal: AbortSignal.timeout(20_000) });
   const body = await r.text();
   if (!r.ok) throw new StripeError(r.status, body);

@@ -90,25 +90,99 @@ export const lang = (v: unknown) => (v === 'en' ? 'en' : 'hu');
 // ---- email: the loyalty shell with a neutral footer ----
 export const esc = email.escape;
 export const staffAddress = (app: App) => settings(app.env).cafe.email || 'hello@broscafe.hu';
-interface Mail { to: string; subject: string; title: string; html: string; text: string; button?: [string, string]; lang?: string }
-/** Never throws: an email problem must not undo a payment or a cancellation. */
+/** One block of an email: its HTML (email-safe tables, inline styles) and the same as plain text. */
+export interface Part { html: string; text: string }
+interface Mail {
+  to: string; subject: string; title: string; lang?: string;
+  parts?: Part[];                     // the email body as blocks (cards); or html + text for a plain body
+  html?: string; text?: string;
+  button?: [string, string];          // the main action
+  links?: [string, string][];         // quiet secondary actions (change, cancel)
+  staff?: boolean;                    // internal email: no guest footer
+}
 export const CAFE_PHONE = '+36 20 356 6754';
 export const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Bros+Cafe+Csan%C3%A1dy+u.+4%2Fb+Budapest';
 
+// ---- email building blocks (brand: olive #68704B, espresso #25251C, ivory #F3EBDD) ----
+const C = { olive: '#68704B', espresso: '#25251C', ivory: '#F3EBDD', paper: '#FBF8F2', line: '#E6DDCB', muted: '#7A7566', text: '#3A382E' };
+const FONT = 'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif';
+const block = (inner: string, pad = '0 24px 14px') => `<tr><td style="padding:${pad}">${inner}</td></tr>`;
+
+/** "december 4., péntek" / "Friday, 4 December" from YYYY-MM-DD. */
+export const longDate = (date: string, en = false) =>
+  new Intl.DateTimeFormat(en ? 'en-GB' : 'hu-HU', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+
+export const para = (t: string): Part => ({ html: block(`<p style="margin:0;font-size:15px;line-height:1.6;color:${C.text}">${esc(t)}</p>`), text: t });
+export const fine = (t: string): Part => ({ html: block(`<p style="margin:0;font-size:13px;line-height:1.5;color:${C.muted}">${esc(t)}</p>`), text: t });
+/** The highlighted card: the date big, the rest small; an optional map link under it. */
+export function hero(big: string, small: string[], mapLabel?: string): Part {
+  const map = mapLabel ? `<p style="margin:12px 0 0"><a href="${MAP_URL}" style="color:${C.ivory};font-size:14px;font-weight:600">${esc(mapLabel)} &rarr;</a></p>` : '';
+  return {
+    html: block(`<table role="presentation" width="100%" style="background:${C.olive};border-radius:16px"><tr><td style="padding:18px 20px">` +
+      `<p style="margin:0;font-size:24px;line-height:1.2;font-weight:700;color:${C.ivory}">${esc(big)}</p>` +
+      small.map((l) => `<p style="margin:6px 0 0;font-size:15px;line-height:1.4;color:${C.ivory}">${esc(l)}</p>`).join('') + map + '</td></tr></table>'),
+    text: [big, ...small, ...(mapLabel ? [MAP_URL] : [])].join('\n'),
+  };
+}
+/** A titled card of label/value rows; empty values are left out. */
+export function card(title: string, rowsIn: [string, string | number | null | undefined][]): Part {
+  const kept = rowsIn.filter(([, v]) => v !== null && v !== undefined && v !== '');
+  if (!kept.length) return { html: '', text: '' };
+  const rowsHtml = kept.map(([k, v], i) => `<tr><td style="padding:8px 0;${i ? `border-top:1px solid ${C.line};` : ''}font-size:13px;color:${C.muted};vertical-align:top;width:38%">${esc(k)}</td>` +
+    `<td style="padding:8px 0 8px 12px;${i ? `border-top:1px solid ${C.line};` : ''}font-size:15px;line-height:1.45;color:${C.text};vertical-align:top">${esc(String(v)).replace(/\n/g, '<br>')}</td></tr>`).join('');
+  return {
+    html: block(`<table role="presentation" width="100%" style="background:${C.paper};border:1px solid ${C.line};border-radius:16px"><tr><td style="padding:14px 18px">` +
+      `<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:${C.olive}">${esc(title)}</p>` +
+      `<table role="presentation" width="100%">${rowsHtml}</table></td></tr></table>`),
+    text: `${title.toUpperCase()}\n${kept.map(([k, v]) => `${k}: ${v}`).join('\n')}`,
+  };
+}
+/** Price lines right-aligned and a bold total. */
+export function priceCard(title: string, lines: [string, string][], total: [string, string]): Part {
+  const row = (k: string, v: string, strong = false, top = true) => `<tr><td style="padding:7px 0;${top ? `border-top:1px solid ${C.line};` : ''}font-size:${strong ? 16 : 14}px;${strong ? 'font-weight:700;' : ''}color:${C.text};line-height:1.4">${esc(k)}</td>` +
+    `<td align="right" style="padding:7px 0 7px 12px;${top ? `border-top:1px solid ${C.line};` : ''}font-size:${strong ? 16 : 14}px;${strong ? 'font-weight:700;' : ''}color:${C.text};white-space:nowrap;vertical-align:top">${esc(v)}</td></tr>`;
+  return {
+    html: block(`<table role="presentation" width="100%" style="background:${C.paper};border:1px solid ${C.line};border-radius:16px"><tr><td style="padding:14px 18px">` +
+      `<p style="margin:0 0 4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:${C.olive}">${esc(title)}</p>` +
+      `<table role="presentation" width="100%">${lines.map(([k, v], i) => row(k, v, false, i > 0)).join('')}${row(total[0], total[1], true, true)}</table></td></tr></table>`),
+    text: `${title.toUpperCase()}\n${lines.map(([k, v]) => `${k}: ${v}`).join('\n')}\n${total[0]}: ${total[1]}`,
+  };
+}
+/** A plain bulleted list in a card (drinks of an order). */
+export function listCard(title: string, items: string[]): Part {
+  if (!items.length) return { html: '', text: '' };
+  return {
+    html: block(`<table role="presentation" width="100%" style="background:${C.paper};border:1px solid ${C.line};border-radius:16px"><tr><td style="padding:14px 18px">` +
+      `<p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:${C.olive}">${esc(title)}</p>` +
+      items.map((i) => `<p style="margin:4px 0;font-size:15px;line-height:1.45;color:${C.text}">&bull;&nbsp;${esc(i)}</p>`).join('') + '</td></tr></table>'),
+    text: `${title.toUpperCase()}\n${items.map((i) => `- ${i}`).join('\n')}`,
+  };
+}
+
+/** Never throws: an email problem must not undo a payment or a cancellation. */
 export async function mail(app: App, m: Mail) {
-  const button = m.button
-    ? `<tr><td style="padding:8px 24px 24px"><a href="${m.button[1]}" style="display:inline-block;background:#66734A;color:#F5F0E6;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:600">${esc(m.button[0])}</a></td></tr>`
-    : '';
-  const footer = m.lang === 'en' ? 'Sent by Bros Cafe · 1132 Budapest, Csanády u. 4/b. We never ask for your password or card details by email.'
-    : 'Küldte: Bros Cafe · 1132 Budapest, Csanády u. 4/b. Jelszót és bankkártyaadatot soha nem kérünk e-mailben.';
+  const en = m.lang === 'en';
+  const body = m.parts ? m.parts.map((p) => p.html).join('') : block(`<div style="font-size:15px;line-height:1.6;color:${C.text}">${m.html ?? ''}</div>`);
+  const textBody = m.parts ? m.parts.filter((p) => p.text).map((p) => p.text).join('\n\n') : (m.text ?? '');
+  const button = m.button ? block(`<a href="${m.button[1]}" style="display:inline-block;background:${C.olive};color:${C.ivory};text-decoration:none;padding:13px 24px;border-radius:12px;font-size:15px;font-weight:600">${esc(m.button[0])}</a>`, '4px 24px 10px') : '';
+  const link = m.links?.length ? block(m.links.map(([l, u]) => `<a href="${u}" style="font-size:13px;color:${C.muted}">${esc(l)}</a>`).join('&nbsp;&nbsp;·&nbsp;&nbsp;'), '2px 24px 10px') : '';
+  const linkText = m.links?.length ? `\n\n${m.links.map(([l, u]) => `${l}: ${u}`).join('\n')}` : '';
+  const footer = m.staff ? 'Bros Cafe · belső értesítés'
+    : en ? `Questions? Just reply to this email.<br>Bros Cafe · 1132 Budapest, Csanády u. 4/b · ${CAFE_PHONE}<br>We never ask for your password or card details by email.`
+      : `Kérdésed van? Válaszolj erre az e-mailre.<br>Bros Cafe · 1132 Budapest, Csanády u. 4/b · ${CAFE_PHONE}<br>Jelszót és bankkártyaadatot soha nem kérünk e-mailben.`;
   const html =
-    '<table role="presentation" width="100%" style="background:#F5F0E6;padding:24px 0"><tr><td align="center">' +
-    '<table role="presentation" width="480" style="background:#ffffff;border-radius:20px;font-family:Arial,Helvetica,sans-serif;overflow:hidden">' +
-    `<tr><td style="padding:28px 24px 6px;font-size:22px;font-weight:700;color:#2C3322">${esc(m.title)}</td></tr>` +
-    `<tr><td style="padding:0 24px 8px;font-size:15px;line-height:1.6;color:#5b614f">${m.html}</td></tr>${button}` +
-    `<tr><td style="padding:16px 24px 24px;font-size:12px;color:#9aa08c">${footer}</td></tr></table></td></tr></table>`;
+    '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light only"></head>' +
+    `<body style="margin:0;padding:0;background:${C.ivory}">` +
+    `<table role="presentation" width="100%" style="background:${C.ivory};padding:24px 8px"><tr><td align="center">` +
+    `<table role="presentation" width="100%" style="max-width:520px;background:#ffffff;border-radius:20px;${FONT}">` +
+    `<tr><td style="padding:24px 24px 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:${C.olive}">Bros Cafe</td></tr>` +
+    `<tr><td style="padding:2px 24px 16px;font-size:24px;line-height:1.2;font-weight:700;color:${C.espresso}">${esc(m.title)}</td></tr>` +
+    body + button + link +
+    `<tr><td style="padding:14px 24px 22px;border-top:1px solid ${C.line};font-size:12px;line-height:1.6;color:${C.muted}">${footer}</td></tr>` +
+    '</table></td></tr></table></body></html>';
   try {
-    await email.send(app, m.to, m.subject, html, m.text);
+    await email.send(app, m.to, m.subject, html, textBody + linkText + (m.button ? `\n\n${m.button[0]}: ${m.button[1]}` : ''));
   } catch (e) {
     console.error(`email to ${m.to} failed: ${m.subject}`, e);
   }

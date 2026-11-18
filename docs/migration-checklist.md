@@ -260,15 +260,17 @@ Total about 6–7 agent days, 18–26 Nov.
 
 ### Bookings go live: Stripe + Számlázz.hu (after cut-over B, before the first bookable evening 1 Dec)
 
-The code is done and tested on the preview (`PROJECT.md`, 2026-11-18). The Számlázz.hu account stays in **test mode**
-until the website is fully migrated, and the preview's `SZAMLAZZ_AGENT_KEY` points at that same account. Order matters:
-step 1 must happen before test mode goes off, or preview test bookings become real invoices reported to NAV.
+The code is done and tested on the preview and on new.broscafe.hu (`PROJECT.md`, 2026-11-18). Until the switch, **both**
+the preview and production run on the Stripe **sandbox** (production has its own sandbox webhook to new.broscafe.hu) and
+on the Számlázz.hu account in **test mode** (same Agent key on both). Order matters: step 1 must happen before test
+mode goes off, or test bookings become real invoices reported to NAV.
 
-- [ ] **CP** 1. [agent] Cut the preview off the account: `npx wrangler secret delete SZAMLAZZ_AGENT_KEY --env preview` (the preview then issues no invoices; a separate test account can be added later).
-- [ ] **CP** 2. [Daniel] Számlázz.hu: Vezérlőpult → switch test mode off. Check the test invoices (E-HNG-2026-1…14) are gone or marked as test, and where real numbering starts.
+- [ ] **CP** 1. [agent] Cut both Workers off the test-mode key: `npx wrangler secret delete SZAMLAZZ_AGENT_KEY --env preview` and `npx wrangler secret delete SZAMLAZZ_AGENT_KEY --env=""` (the preview then issues no invoices; a separate test account can be added later).
+- [ ] **CP** 2. [Daniel] Számlázz.hu: Vezérlőpult → switch test mode off. Check the test invoices (E-HNG-2026-1…) are gone or marked as test, and where real numbering starts. If they stay, their order numbers (AH-0001…, BD-…) would block production's: then allow order-number repetition in Beállítások.
+- [ ] **CP** 2b. [agent] Remove the test bookings from the production D1 (`TESZT` names, `hello@broscafe.hu`, 18 Nov onwards: `ah_bookings`, `dl_orders`/`dl_payers`/`dl_items`), so their evenings are free again. Keep `bk_seq` as it is (numbers already used in the test account must not repeat).
 - [ ] **CP** 3. [Daniel] Számlázz.hu: NAV connection (Online Számla technical user) set up; Számla Agent switched on (#free, upgrade to #start if Agent e-invoices are refused); Bros Cafe logo uploaded; accountant has access (invited 18 Nov).
 - [ ] **CP** 4. [Daniel] Generate a **new** Agent key (after test mode is off) and set it on production only: copy it, then `cd worker && pbpaste | npx wrangler secret put SZAMLAZZ_AGENT_KEY`.
-- [ ] **CP** 5. [Daniel] Stripe live mode: account activated; live secret key → `pbpaste | npx wrangler secret put STRIPE_SECRET_KEY`; webhook endpoint `https://broscafe.hu/api/stripe/webhook` with `checkout.session.completed` + `checkout.session.expired`, its signing secret → `STRIPE_WEBHOOK_SECRET`; Apple Pay domain `broscafe.hu` verified; card, Apple Pay, Google Pay on; adaptive pricing off (always HUF).
+- [ ] **CP** 5. [Daniel] Stripe live mode: account activated; live secret key (replaces the sandbox one) → `pbpaste | npx wrangler secret put STRIPE_SECRET_KEY --env=""`; webhook endpoint `https://broscafe.hu/api/stripe/webhook` with `checkout.session.completed` + `checkout.session.expired`, its signing secret → `STRIPE_WEBHOOK_SECRET --env=""` (the sandbox endpoint to new.broscafe.hu can then be deleted); Apple Pay domain `broscafe.hu` verified; card, Apple Pay, Google Pay on; adaptive pricing off (always HUF).
 - [ ] 6. [agent] Production vars: no `SZAMLAZZ_PROFORMA` / `SZAMLAZZ_OFF`, `BOOKINGS_OPEN` true, `AH_LAUNCH_DATE` 2026-12-01; `payments_ready: true` from `/api/after-hours/availability`.
 - [ ] **CP** 7. [Daniel + agent] One real test with a real card: a single-drink Delivery company order → real invoice in Számlázz.hu (proves Agent e-invoices work on the package), then cancel + refund it in the admin → storno. Then a small After Hours booking with a 50 % refund → correcting invoice with the 3 % fee line.
 - [ ] 8. [Daniel] Accountant answers before the first real cancellation: does a kept cancellation (50 % / 0 %) need a végszámla; ÁFA rate of the 3 % fee (`AH_CANCEL_FEE_VAT`, now 27); one read of the ÁSZF (`/aszf/`).

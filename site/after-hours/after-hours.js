@@ -119,11 +119,14 @@
       book: (payload) => post('/bookings', payload), // -> { checkout_url }
       cancelInfo: (token) => call(`/cancel/${encodeURIComponent(token)}`), // -> { booking, refund_percent, refund_huf }
       cancelConfirm: (token) => post(`/cancel/${encodeURIComponent(token)}`),
+      changeInfo: (token) => call(`/change/${encodeURIComponent(token)}`), // -> { booking, editable, window }
+      change: (token, data) => post(`/change/${encodeURIComponent(token)}`, data),
       admin: {
         days: (from, to) => call(`/admin/days?from=${from}&to=${to}`),
         setDay: (date, open) => call(`/admin/days/${date}`, { method: 'PUT', body: JSON.stringify({ open }) }),
         bookings: () => call('/admin/bookings'),
         cancel: (id) => post(`/admin/bookings/${id}/cancel`),
+        edit: (id, data) => post(`/admin/bookings/${id}/edit`, data),
         refund: (id, percent, waive) => post(`/admin/bookings/${id}/refund`, { percent, waive_fee: !!waive }),
       },
     };
@@ -583,6 +586,7 @@
         ${hint ? `<p class="aha__hint">${hint}</p>` : ''}
         ${error ? `<p class="ah-err" role="alert">${error === 'payments_not_configured' ? t('Az online fizetés (Stripe) nincs beállítva, ezért innen nem indítható visszatérítés.') : t('Nem sikerült. Próbáld újra egy perc múlva.')}</p>` : ''}
         <div class="aha__actions">
+          ${b.status === 'paid' ? `<button type="button" class="btn" data-edit>${t('Adatok módosítása')}</button>` : ''}
           ${b.status === 'paid' ? `<button type="button" class="btn btn--ghost" data-act="cancel">${t('Foglalás lemondása')}</button>` : ''}
           ${b.status === 'cancelled' ? `<button type="button" class="btn" data-act="refund" data-pct="${pct}">${t('Visszatérítés')} · ${pct}%${pct ? ` − ${CONFIG.cancelFeePct}% ${t('kezelési költség')}` : ''}</button>` : ''}
           ${b.status === 'cancelled' && pct ? `<button type="button" class="btn btn--ghost" data-act="refund" data-pct="${pct}" data-waive="1">${t('Kezelési költség nélkül')} · ${pct}%</button>` : ''}
@@ -595,6 +599,12 @@
     list.addEventListener('click', (e) => { const r = e.target.closest('[data-id]'); if (r) detail(r.dataset.id); });
     dlg.addEventListener('click', async (e) => {
       if (e.target === dlg || e.target.closest('[data-close]')) return dlg.close();
+      if (e.target.closest('[data-edit]')) {
+        const id = $('.aha__dl', dlg).dataset.id, b = bookings.find((x) => x.id === id);
+        dlg.innerHTML = `<div class="aha__dlg-head"><div><h2 id="aha-dlg-title">${esc(b.name)}</h2><p>${t('Adatok módosítása')} · ${esc(b.id)}</p></div></div>${changeForm(b, { admin: true, min: iso(today) })}`;
+        dlg.dataset.editing = id; $('#chg-date', dlg).focus(); return;
+      }
+      if (e.target.closest('[data-back]')) { const id = dlg.dataset.editing; delete dlg.dataset.editing; return detail(id); }
       const act = e.target.closest('[data-act]'); if (!act || working) return;
       const id = $('.aha__dl', dlg).dataset.id;
       if (!confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég e-mailt kap róla.', { id }) : t('{id}: visszautaljuk a kifizetett összeg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
@@ -605,8 +615,78 @@
       } catch (err) { detail(id, '[data-act]', err.code || true); }
       working = false;
     });
+    dlg.addEventListener('submit', async (e) => {
+      const form = e.target.closest('.ah-change'); if (!form) return;
+      e.preventDefault(); if (working) return;
+      const id = dlg.dataset.editing, btn = $('[type="submit"]', form);
+      working = true; btn.setAttribute('aria-busy', 'true'); btn.disabled = true;
+      try { await api.admin.edit(id, readChange(form, true)); delete dlg.dataset.editing; fresh = id; await refresh(); detail(id); fresh = null; }
+      catch (err) { showChangeError(form, err); btn.removeAttribute('aria-busy'); btn.disabled = false; }
+      working = false;
+    });
     watchDay(() => { cal = null; $('#aha-cal').innerHTML = ''; refresh(); });
     refresh();
+  }
+
+  // ---------- changing a booking: the same form for the guest's link and the admin (nothing that changes the price) ----------
+  const OCC_NAMES = { birthday: 'Születésnap', christmas: 'Karácsonyi összejövetel', romantic: 'Évforduló, különleges randi', games: 'Game night', team: 'Céges összejövetel', workshop: 'Kreatív workshop', graduation: 'Ballagás, diplomaosztó', friends: 'Baráti és családi este', family: 'Családi alkalom', other: 'Egyéb' };
+  function changeForm(b, { admin = false, min = '', max = '' } = {}) {
+    const starts = [];
+    for (let m = mins(CONFIG.open); m <= mins(CONFIG.lastStart); m += CONFIG.startStep) if (m + b.hours * 60 <= mins(CONFIG.close)) starts.push(hm(m));
+    const f = (name, label, input, wide) => `<div class="ah-field${wide ? ' ah-field--wide' : ''}"><label for="chg-${name}">${t(label)}</label>${input}<p class="ah-err" id="chg-err-${name}" hidden></p></div>`;
+    return `<form class="ah-change" novalidate>
+      <div class="ah-fields">
+        ${f('date', 'Dátum', `<input id="chg-date" name="date" type="date" value="${esc(b.date)}"${min ? ` min="${min}"` : ''}${max ? ` max="${max}"` : ''} required>`)}
+        ${f('start', 'Kezdés', `<select id="chg-start" name="start">${starts.map((s) => `<option${s === b.start ? ' selected' : ''}>${s}</option>`).join('')}</select>`)}
+        ${f('occasion', 'Alkalom', `<select id="chg-occasion" name="occasion"><option value="">–</option>${Object.entries(OCC_NAMES).map(([k, v]) => `<option value="${k}"${k === b.occasion ? ' selected' : ''}>${esc(t(v))}</option>`).join('')}</select>`)}
+        ${f('phone', 'Telefonszám', `<input id="chg-phone" name="phone" type="tel" value="${esc(b.phone || '')}" autocomplete="tel">`)}
+        ${admin ? f('name', 'Név', `<input id="chg-name" name="name" value="${esc(b.name)}">`) + f('email', 'E-mail', `<input id="chg-email" name="email" type="email" value="${esc(b.email)}">`) : ''}
+        ${f('note', 'Megjegyzés, allergia', `<textarea id="chg-note" name="note" rows="3">${esc(b.note || '')}</textarea>`, true)}
+      </div>
+      <label class="ah-check"><input type="checkbox" name="cake"${b.cake ? ' checked' : ''}><span>${t('Ünnepi tortát kérünk (10 000 Ft-tól, a helyszínen fizetendő)')}</span></label>
+      <p class="aha__hint">${admin ? t('Létszám, csomag vagy időtartam változásához: mondd le kezelési költség nélkül (100%), és a vendég foglaljon újra.') : t('Létszám, csomag vagy időtartam változásához írj nekünk: ilyenkor a foglalást díjmentesen lemondjuk, és újat foglalhattok.')}</p>
+      <p class="ah-err" data-form-err hidden></p>
+      <div class="aha__actions"><button type="submit" class="btn">${t('Módosítások mentése')}</button>${admin ? `<button type="button" class="btn btn--ghost" data-back>${t('Mégsem')}</button>` : ''}</div>
+    </form>`;
+  }
+  const readChange = (form, admin) => {
+    const v = (n) => form.elements[n].value.trim();
+    return { date: v('date'), start: v('start'), occasion: v('occasion'), note: v('note'), phone: v('phone'), cake: form.elements.cake.checked, ...(admin ? { name: v('name'), email: v('email') } : {}) };
+  };
+  const CHANGE_ERR = { day_taken: 'Ez az este már foglalt vagy nem elérhető. Válassz másik napot.', too_late: '48 órán belül már nem módosítható online. Írj nekünk: hello@broscafe.hu', not_paid: 'Ez a foglalás már nem módosítható.', gone: 'Ez a foglalás már nem módosítható.' };
+  const FIELD_ERR = { date: 'Válassz egy érvényes napot.', start: 'Ez a kezdés nem fér bele az estébe.', phone: 'Adj meg egy telefonszámot.', name: 'Add meg a nevet.', email: 'Adj meg egy érvényes e-mail-címet.', occasion: 'Válassz a listából.' };
+  function showChangeError(form, err) {
+    $$('[id^="chg-err-"]', form).forEach((p) => { p.hidden = true; });
+    $$('[aria-invalid]', form).forEach((el) => el.removeAttribute('aria-invalid'));
+    const box = $('[data-form-err]', form);
+    if (err && err.code === 'invalid' && Array.isArray(err.fields)) {
+      err.fields.forEach((n) => { const p = $(`#chg-err-${n}`, form); if (p) { p.textContent = t(FIELD_ERR[n] || 'Ellenőrizd ezt a mezőt.'); p.hidden = false; form.elements[n]?.setAttribute('aria-invalid', 'true'); } });
+      box.hidden = true; return;
+    }
+    box.textContent = t(CHANGE_ERR[err?.code] || 'Most nem sikerült menteni. Próbáld újra egy perc múlva.'); box.hidden = false;
+  }
+
+  // ---------- the guest's change page (the signed link in the emails) ----------
+  async function changePage() {
+    const root = $('#ah-change'), token = new URLSearchParams(location.search).get('t') || '';
+    let info;
+    try { if (!token) throw new Error('no_token'); info = await api.changeInfo(token); } catch (e) { root.innerHTML = `<p role="alert">${t('Ez a link már nem érvényes. Írj nekünk: hello@broscafe.hu')}</p>`; return; }
+    const render = (done) => {
+      const b = info.booking;
+      root.innerHTML = `<h2 id="ah-change-name">${esc(b.name)}</h2>
+        <p class="body">${esc(longDate.format(parse(b.date)))} · ${slot(b)} · ${t('{n} fő', { n: b.guests })}</p>
+        ${done ? `<p class="ah-preview" role="status" tabindex="-1">${t('Elmentettük a módosítást. Visszaigazolást küldtünk e-mailben.')}</p>` : ''}
+        ${info.editable ? changeForm(b, { min: info.window.min, max: info.window.max }) : `<p class="aha__hint">${t('48 órán belül már nem módosítható online. Írj nekünk: hello@broscafe.hu')}</p>`}`;
+      if (done) $('.ah-preview', root).focus();
+      const form = $('.ah-change', root); if (!form) return;
+      let busy = false;
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault(); if (busy) return; busy = true;
+        const btn = $('[type="submit"]', form); btn.setAttribute('aria-busy', 'true'); btn.disabled = true;
+        try { info = await api.change(token, readChange(form, false)); render(true); } catch (err) { showChangeError(form, err); btn.removeAttribute('aria-busy'); btn.disabled = false; busy = false; }
+      });
+    };
+    render(false);
   }
 
   // ---------- the guest's cancel page (the signed link in the confirmation email) ----------
@@ -644,4 +724,5 @@
   if (page === 'after-hours') publicPage();
   else if (page === 'after-hours-admin') adminPage();
   else if (page === 'after-hours-cancel') cancelPage();
+  else if (page === 'after-hours-change') changePage();
 })();

@@ -6,7 +6,7 @@ import { settings } from '../config';
 import { isoAt, nowIso, tokenUrlsafe } from '../util';
 import {
   ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, iso, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
-  staffAddress, text, today, validDate, weekday, CAFE_PHONE,
+  staffAddress, text, today, validDate, weekday, card, fine, hero, listCard, longDate, para, priceCard,
 } from './bookings';
 import { earnsStamp } from './drinks';
 import * as emailService from './email';
@@ -24,6 +24,7 @@ const RUSH_AUTO_OFF_MIN = 45;
 const SLOT_HOURS = ['07:30', '18:00'];
 const DAYS_AHEAD_MAX = 10;
 const MAX_CUPS = 40;
+const CANCEL_BEFORE_MIN = 90; // free cancellation until this long before the delivery time (ÁSZF)
 const GROUP_FEE_RULE = 'organiser'; // the organiser pays the fee up front; refunded when the group reaches free_from paid cups
 const RECURRING_FROM_HOUR = 18; // the evening before: tomorrow's recurring orders are prepared from this hour
 const MILKS: Record<string, string> = { Oat: 'Zabtej', CoconutRice: 'Kókusz-rizs tej', Pea: 'Borsótej' };
@@ -389,25 +390,34 @@ function list(lines: string[]) {
   return { html: `<ul style="margin:8px 0;padding-left:20px">${lines.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`, text: lines.map((l) => `- ${l}`).join('\n') };
 }
 
+/** The highlighted card: the day big, time and place small. */
+const deliveryHero = (o: Doc, en: boolean) => hero(o.rush ? (en ? 'As soon as possible' : 'Amint lehet') : longDate(o.date, en),
+  [...(o.rush ? [] : [o.slot_time]), `${o.company} · ${o.street}, ${o.floor}`]);
+
 /** The counter's ticket: a new order to make. */
 async function notifyCounter(app: App, o: Doc) {
-  const items = await paidItems(app, o.id), cups = list(items.map(cupLine));
+  const items = await paidItems(app, o.id);
   const payers = await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(o.id));
   const till = payers.filter((p) => !wantsInvoice(p)).map((p) => `${p.name}: ${ft(p.amount_huf - p.refund_huf)}`);
   const noInvoice = payers.filter((p) => wantsInvoice(p) && !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
-  const d = rows([
-    ['Azonosító', o.id], ['Mikor', when(o)], ['Típus', o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Hova', `${o.company}, ${o.street}, ${o.floor}`],
-    ['Megjegyzés', o.note], ['Kapcsolat', `${o.contact_name} · ${o.contact_phone} · ${o.contact_email}`], ['Italok', items.length],
-    ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))], ['Pénztárgépbe ütni (online kártyás fizetés, nyugta)', till.join('; ')], ['Számla hiányzik', noInvoice.join('; ')],
-  ]);
-  await mail(app, { to: staffAddress(app), subject: `Delivery ${o.id}: ${when(o)} · ${o.company} · ${items.length} ital`, title: `Bros Delivery · ${o.id}`, html: `${d.html}${cups.html}`, text: `${d.text}\n\n${cups.text}` });
+  await mail(app, {
+    to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: ${when(o)} · ${o.company} · ${items.length} ital`, title: `Delivery · ${items.length} ital`,
+    parts: [
+      deliveryHero(o, false),
+      listCard('Italok', items.map(cupLine)),
+      card('Rendelés', [['Azonosító', o.id], ['Típus', o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Megjegyzés', o.note],
+        ['Kapcsolat', `${o.contact_name} · ${o.contact_phone} · ${o.contact_email}`], ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))]]),
+      listCard('Pénztárgépbe ütni (online kártyás fizetés, nyugta)', till),
+      listCard('Számla hiányzik', noInvoice),
+    ],
+  });
 }
 
 async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' | 'out' | 'late' | 'cancelled') {
-  const en = p.lang === 'en', items = await itemsOf(app, p.id), cups = list(items.map(cupLine));
+  const en = p.lang === 'en', items = await itemsOf(app, p.id);
   const T = {
-    confirmed: en ? ['Your Bros Delivery order', 'We have your order', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : 'Your order is paid. We are bringing it at the time you chose.']
-      : ['Bros Delivery rendelés', 'Megvan a rendelés', o.kind === 'group' ? 'Az italod ki van fizetve, és a csoport listáján van. Amit a határidőig kifizettek, azt visszük.' : 'A rendelés ki van fizetve. A választott időpontra visszük.'],
+    confirmed: en ? ['Your Bros Delivery order', 'Thank you for your order!', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : 'Your order is paid. We are bringing it at the time you chose.']
+      : ['Bros Delivery rendelés', 'Köszönjük a rendelést!', o.kind === 'group' ? 'Az italod ki van fizetve, és a csoport listáján van. Amit a határidőig kifizettek, azt visszük.' : 'A rendelés ki van fizetve, a választott időpontra visszük.'],
     coming: en ? ['Your group order is closed', 'It is coming', 'The group order is closed and we are making the drinks.'] : ['Lezárult a csoportos rendelés', 'Készül, visszük', 'A csoportos rendelés lezárult, készítjük az italokat.'],
     out: en ? ['Your Bros Delivery is on its way', 'On the way', 'One of us has just left the café with your drinks.'] : ['Úton a Bros Delivery', 'Elindultunk', 'Egyikünk most indult el a kávézóból az italokkal.'],
     late: en ? ['Your payment was refunded', 'Payment refunded', 'Your payment arrived after the order had closed or the delivery time had filled up, so we refunded it in full. Nothing will be delivered for it.']
@@ -415,14 +425,20 @@ async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' 
     cancelled: en ? ['Your Bros Delivery order was cancelled', 'Order cancelled', 'We had to cancel this order. What you paid is refunded in full; it reaches your card in a few days.']
       : ['Töröltük a Bros Delivery rendelést', 'Rendelés törölve', 'Ezt a rendelést törölnünk kellett. A kifizetett összeget teljes egészében visszatérítjük, néhány napon belül megérkezik a kártyádra.'],
   }[kind];
-  const d = rows([[en ? 'Order' : 'Azonosító', o.id], [en ? 'When' : 'Mikor', when(o, en)], [en ? 'Where' : 'Hova', `${o.company}, ${o.street}, ${o.floor}`], [en ? 'Paid' : 'Fizetve', ft(p.amount_huf)],
-    [en ? 'Of which delivery fee' : 'Ebből kiszállítási díj', p.fee_huf ? ft(p.fee_huf) : null]]);
-  const tail = kind !== 'confirmed' ? '' : wantsInvoice(p) ? (en ? 'The invoice arrives in a separate email.' : 'A számlát külön e-mailben küldjük.')
-    : (en ? 'You did not ask for an invoice. If you need one, reply to this email with your billing details.' : 'Számlát nem kértél. Ha mégis kell, válaszolj erre az e-mailre a számlázási adatokkal.');
-  const help = kind !== 'confirmed' ? '' : en ? `Thank you for ordering! Questions or a change: reply to this email or call us on ${CAFE_PHONE}. You can cancel free of charge until the order deadline.`
-    : `Köszönjük a rendelést! Kérdés vagy változtatás: válaszolj erre az e-mailre, vagy hívj minket: ${CAFE_PHONE}. A rendelési határidőig díjmentesen lemondhatod.`;
-  const extra = [tail, help].filter(Boolean);
-  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], html: `<p>${esc(T[2])}</p>${d.html}${cups.html}${extra.map((x) => `<p>${esc(x)}</p>`).join('')}`, text: `${T[2]}\n\n${d.text}\n\n${cups.text}${extra.map((x) => `\n\n${x}`).join('')}` });
+  const parts = [para(T[2]), deliveryHero(o, en), listCard(en ? 'Drinks' : 'Italok', items.map(cupLine))];
+  if (kind === 'confirmed') {
+    const drinks = p.amount_huf - p.fee_huf;
+    parts.push(priceCard(en ? 'Payment' : 'Fizetés', [[en ? 'Drinks' : 'Italok', ft(drinks)], ...(p.fee_huf ? [[en ? 'Delivery fee' : 'Kiszállítási díj', ft(p.fee_huf)] as [string, string]] : [])], [en ? 'Paid' : 'Kifizetve', ft(p.amount_huf)]));
+    // free cancellation until CANCEL_BEFORE_MIN before the delivery time (ÁSZF); a rush order is made at once
+    const by = o.slot_time ? today(app, new Date(instant(app, o.date, o.slot_time).getTime() - CANCEL_BEFORE_MIN * 60_000)) : null;
+    const until = by ? `${by.date === o.date ? '' : `${longDate(by.date, en)}, `}${String(by.hour).padStart(2, '0')}:${String(by.minute).padStart(2, '0')}` : null;
+    parts.push(card(en ? 'Good to know' : 'Jó tudni', [
+      [en ? 'Free cancellation' : 'Díjmentes lemondás', until ? (en ? `Until ${until}, by replying to this email` : `${until}-ig, erre az e-mailre válaszolva`) : null],
+      [en ? 'Invoice' : 'Számla', wantsInvoice(p) ? (en ? 'Arrives in a separate email' : 'Külön e-mailben érkezik') : (en ? 'Not requested; reply with your billing details if you need one' : 'Nem kértél; ha kell, válaszolj a számlázási adatokkal')],
+    ]));
+  }
+  parts.push(fine(en ? `Order reference: ${o.id}` : `Rendelési azonosító: ${o.id}`));
+  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], parts });
 }
 
 // ---- Stripe webhook ----

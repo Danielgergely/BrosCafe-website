@@ -444,3 +444,8 @@
 .ah-incl b { font-weight: 650; }
 .ah-incl span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: var(--r-pill); background: var(--ivory-2); }
 .ah-incl span::before { content: ""; width: 9px; height: 5px; margin-top: -2px; border: solid var(--olive-deep); border-width: 0 0 2px 2px; transform: rotate(-45deg); }
+
+/* ---- changing a booking (guest link + admin dialog) ---- */
+.ah-change { margin-top: 18px; }
+.ah-change .aha__hint { margin-top: 12px; }
+.ah-change [data-form-err] { margin-top: 10px; }

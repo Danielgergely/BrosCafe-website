@@ -93,7 +93,8 @@
         "APPLE_PASS_CONFIGURED": "false",
         "GOOGLE_WALLET_CONFIGURED": "false",
         // the preview's SZAMLAZZ_AGENT_KEY belongs to a Számlázz.hu account in test mode (2026-11-18): test invoices only
-        "SZAMLAZZ_PROFORMA": "false"
+        "SZAMLAZZ_PROFORMA": "false",
+        "SZAMLAZZ_ORDER_PREFIX": "P-"
       }
       // Preview secret: JWT_SECRET (its own random value, never the production one).
     }
