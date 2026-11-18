@@ -140,8 +140,15 @@
 
   document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png">`);
 
+  // staff admin pages: no site header, tab bar or footer, only a small floating way back to the site
+  const BARE = ['admin-app', 'after-hours-admin', 'delivery-admin'].includes(page);
+  if (BARE) {
+    document.body.classList.add('is-bare');
+    document.body.insertAdjacentHTML('beforeend', `<a class="staff-back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>${L('Vissza az oldalra', 'Back to the site')}</span></a>`);
+  }
+
   // Asked once, on the first visit; both answers weigh the same. Changing your mind: /adatvedelem/.
-  if (consent.read() === null && !['scanner', 'belepes', 'admin-app'].includes(page)) {
+  if (consent.read() === null && !['scanner', 'belepes', 'admin-app', 'after-hours-admin', 'delivery-admin'].includes(page)) {
     document.body.insertAdjacentHTML('beforeend', `<div class="consent" role="dialog" aria-live="polite" aria-label="${L('Beleszámíthatjuk a látogatásod?', 'Can we count your visit?')}">
   <div><b>${L('Beleszámíthatjuk a látogatásod?', 'Can we count your visit?')}</b>
     <p>${L('Saját, egyszerű statisztikát vezetünk arról, melyik oldalt használják valóban. Nincs reklám, nincs külső követő, és nem azonosítunk téged név szerint. A belépés és a nyelvválasztás ettől függetlenül működik.', 'We use our own basic analytics to see which pages people actually use. No advertising, no third-party trackers, and nothing that identifies you by name. Signing in and your language choice work either way.')}
@@ -337,7 +344,7 @@
   // The one footer, on every page: call once, when the page's own content is in place.
   const MAP = 'https://www.google.com/maps/search/?api=1&amp;query=Bros%20Cafe%2C%201132%20Budapest%2C%20Csan%C3%A1dy%20u.%204%2Fb';
   const footer = () => {
-    if ($('footer.end')) return;
+    if ($('footer.end') || document.body.classList.contains('is-bare')) return;
     const end = document.createElement('footer');
     end.className = 'end';
     end.innerHTML = `<div class="wrap">

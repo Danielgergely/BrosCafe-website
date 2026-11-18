@@ -387,3 +387,12 @@ html:active-view-transition-type(page-nav)::view-transition-new(root) { animatio
 .consent__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .consent__btns .btn { min-height: 46px; padding-inline: 14px; }
 @media (min-width: 760px) { .consent { grid-template-columns: 1fr auto; align-items: center; gap: 22px; padding: 18px 22px; } .consent__btns { grid-template-columns: auto auto; } }
+
+/* staff admin pages: no site chrome, a floating way back (shell.js BARE) */
+body.is-bare { --header-h: 12px; --tabbar-h: 0px; --bottom-h: 0px; }
+body.is-bare .site-header, body.is-bare .tabbar, body.is-bare footer.end, body.is-bare .skip { display: none; }
+.staff-back { position: fixed; left: max(14px, env(safe-area-inset-left)); bottom: max(14px, env(safe-area-inset-bottom)); z-index: 60; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 8px 14px 8px 10px; border-radius: 999px; background: rgb(var(--espresso-rgb) / .62); color: var(--ivory); font: 600 13.5px/1 var(--sans); text-decoration: none; -webkit-backdrop-filter: blur(12px) saturate(1.4); backdrop-filter: blur(12px) saturate(1.4); box-shadow: 0 6px 20px rgb(20 20 14 / .18); opacity: .82; transition: opacity .15s, transform .12s; }
+.staff-back svg { width: 16px; height: 16px; }
+.staff-back:hover, .staff-back:focus-visible { opacity: 1; }
+.staff-back:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .staff-back { transition: none; } }

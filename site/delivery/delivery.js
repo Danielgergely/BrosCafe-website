@@ -615,7 +615,7 @@
     function renderRush() {
       const on = board.rush, mins = on && board.rush_until ? Math.max(1, Math.ceil((new Date(board.rush_until) - Date.now()) / 60000)) : 0;
       const sw = $('.dla__switch', rushEl), had = sw && document.activeElement === sw;
-      rushEl.innerHTML = `<div><h2 id="dla-rush-title">Rush</h2><p>${on ? `${t('Bekapcsolva: az oldalon most rendelhető „amint lehet” kiszállítás.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Kikapcsolva. Kapcsold be, ha ráértek: ketten vagytok, és egyikőtök el tud indulni. {m} perc után magától kikapcsol.', { m: CONFIG.rushOffMin })}</p></div>
+      rushEl.innerHTML = `<div><h2 id="dla-rush-title">${t('Azonnali kiszállítás')}</h2><p>${on ? `${t('Bekapcsolva: a vendégek most „amint lehet” kiszállítást is rendelhetnek, nem csak a fix időpontokra.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Alapból csak a fix időpontokra lehet rendelni. Ha most csendes a kávézó és egyikőtök el tud indulni, kapcsold be: {m} percig a vendégek „amint lehet” kiszállítást is kérhetnek (kb. fél órán belül visszük). Utána magától kikapcsol.', { m: CONFIG.rushOffMin })}</p></div>
         <button type="button" class="dla__switch" role="switch" aria-checked="${on}" aria-labelledby="dla-rush-title"><i aria-hidden="true"></i><span>${on ? t('BE') : t('KI')}</span></button>`;
       rushEl.classList.toggle('is-on', on);
       if (had) $('.dla__switch', rushEl).focus();
@@ -673,7 +673,7 @@
     rushEl.addEventListener('click', async (e) => {
       if (!e.target.closest('.dla__switch')) return;
       const on = !board.rush;
-      if (await act(() => api.admin.setRush(on), on ? t('Rush bekapcsolva, {m} perc múlva magától kikapcsol', { m: CONFIG.rushOffMin }) : t('Rush kikapcsolva'), 'board')) $('.dla__switch', rushEl).focus();
+      if (await act(() => api.admin.setRush(on), on ? t('Azonnali kiszállítás bekapcsolva, {m} perc múlva magától kikapcsol', { m: CONFIG.rushOffMin }) : t('Azonnali kiszállítás kikapcsolva'), 'board')) $('.dla__switch', rushEl).focus();
     });
     datesEl.addEventListener('click', async (e) => { const b = e.target.closest('[data-date]'); if (!b || working) return; date = b.dataset.date; await act(async () => {}, '', 'board'); $(`[data-date="${date}"]`, datesEl)?.focus(); });
     boardEl.addEventListener('toggle', (e) => { const d = e.target.closest('.dla__order'); if (d) d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }, true);

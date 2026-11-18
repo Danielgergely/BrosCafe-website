@@ -18,24 +18,26 @@
 <link rel="stylesheet" href="/pages.css">
 <link rel="stylesheet" href="/after-hours/after-hours.css">
 <script src="/glass.js" defer></script>
+<link rel="stylesheet" href="/admin/admin-nav.css">
 </head>
 <body class="sub" data-page="after-hours-admin">
 <script src="/shell.js"></script>
 <main id="tartalom" class="aha">
   <div class="wrap">
+    <div data-admin-nav="after-hours"></div>
     <div class="aha__head">
       <div>
         <p class="eyebrow">Admin · Bros Cafe</p>
         <h1>Bros <em>After Hours</em></h1>
       </div>
       <div class="aha__tools">
-        <a class="link" href="/admin/">Hűségprogram admin</a>
         <a class="link" href="/after-hours/">A foglalási oldal</a>
       </div>
     </div>
     <div class="aha__grid" id="ah-admin"></div>
   </div>
 </main>
+<script src="/admin/admin-nav.js" defer></script>
 <script src="/site.js" defer></script>
 <script src="/belepes/staff.js" defer></script>
 <script src="/after-hours/after-hours.js" defer></script>

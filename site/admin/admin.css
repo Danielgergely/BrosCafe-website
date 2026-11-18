@@ -20,24 +20,6 @@
 
 .ad-layout { display: grid; gap: 18px; align-items: start; }
 
-/* navigation: a row of menus, under it the open menu's pages; "Foglalások" (After Hours, Delivery) stands apart */
-.ad-nav { display: grid; gap: 10px; }
-.ad-nav__row { display: flex; gap: 8px; overflow-x: auto; padding: 2px; margin: 0 -2px; scrollbar-width: none; }
-.ad-nav__row::-webkit-scrollbar { display: none; }
-.ad-nav > .ad-nav__row:first-child { flex-wrap: wrap; overflow: visible; } /* every menu visible, also on a phone */
-.ad-nav__grp, .ad-nav__sub a { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 16px; border: 0; border-radius: var(--r-pill); background: var(--ivory-hi); color: var(--text); font: 600 14.5px/1.2 var(--sans); text-decoration: none; cursor: pointer; box-shadow: inset 0 0 0 1px var(--line); transition: transform var(--tap), background .15s; }
-.ad-nav__grp:active, .ad-nav__sub a:active { transform: scale(.96); }
-.ad-nav__grp[aria-expanded="true"] { background: var(--btn-fill); color: var(--ivory); box-shadow: var(--st-lit); }
-.ad-nav__grp--book { margin-left: auto; background: var(--champagne, #C6A875); color: var(--espresso, #25251C); box-shadow: none; }
-.ad-nav__grp--book[aria-expanded="true"] { background: var(--espresso, #25251C); color: var(--ivory); }
-.ad-nav__grp svg { width: 14px; height: 14px; }
-.ad-nav__sub { padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-.ad-nav__sub a { min-height: 38px; padding: 6px 14px; background: transparent; box-shadow: none; font-weight: 560; font-size: 14px; color: var(--text-soft); }
-.ad-nav__sub a[aria-current="page"] { background: rgb(var(--espresso-rgb) / .08); color: var(--text); }
-@media (hover: hover) { .ad-nav__sub a:hover { color: var(--text); background: rgb(var(--espresso-rgb) / .05); } }
-.ad-nav__sub[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .ad-nav__grp, .ad-nav__sub a { transition: none; } }
-
 .ad-panel { display: grid; gap: var(--ad-gap); min-width: 0; }
 .ad-panel > * { min-width: 0; }
 .ad-hint { font-size: 14px; line-height: 1.5; color: var(--text-soft); max-width: 70ch; }
