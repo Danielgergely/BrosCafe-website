@@ -439,3 +439,8 @@
 .ah-req { margin-left: 2px; color: var(--err); font-weight: 600; }
 .ah-step.is-invalid { box-shadow: 0 0 0 2px var(--err), 0 0 0 6px rgb(var(--err-rgb) / .12); }
 .ah-step, .ah-field input, .ah-check input { scroll-margin-top: calc(var(--header-h) + 16px); scroll-margin-bottom: calc(var(--bottom-h, 0px) + 96px); }
+/* what the price includes, above step 1 */
+.ah-incl { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 14px; font-size: 14.5px; }
+.ah-incl b { font-weight: 650; }
+.ah-incl span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 9px; border-radius: var(--r-pill); background: var(--ivory-2); }
+.ah-incl span::before { content: ""; width: 9px; height: 5px; margin-top: -2px; border: solid var(--olive-deep); border-width: 0 0 2px 2px; transform: rotate(-45deg); }

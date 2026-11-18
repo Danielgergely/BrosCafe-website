@@ -326,7 +326,7 @@
     return { open: false, day, text: B.t('Zárva') };
   };
   // which extra fits the moment: weekday mornings (6–11h in Budapest) the office delivery, otherwise the private evening
-  const extraNow = () => { const { day, min } = budapest(); return extras[day >= 1 && day <= 5 && min >= 360 && min < 660 ? 1 : 0]; };
+  const extraNow = () => extras.find((n) => n.id === 'after-hours'); // the home hero chip advertises After Hours (Daniel 2026-11-18)
   // [data-open-status]: the live line; [data-day="1 2 3"]: marked when today is one of those days
   const paintStatus = () => {
     const s = status();

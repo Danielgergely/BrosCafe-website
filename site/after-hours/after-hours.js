@@ -248,7 +248,7 @@
     dishBox.innerHTML = C.dishes.map((d) => `<label class="ah-row ah-row--dish">
       <span class="ah-row__ph">${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy" width="112" height="112">` : plate}</span>
       <span class="ah-row__txt"><b>${t(d.name)}</b><small>${t(d.desc)}</small></span><em class="ah-row__tag"></em><input type="checkbox" name="dish" value="${d.id}"></label>`).join('');
-    $('#ah-lead').textContent = t('Üdvözlőital mindenkinek és 1 tál az árban, minden további tál + {p}.', { p: perP(C.tiers.duo.perPerson - C.tiers.alap.perPerson) });
+    $('#ah-lead').textContent = t('Az első tál benne van az árban, minden további + {p}.', { p: perP(C.tiers.duo.perPerson - C.tiers.alap.perPerson) });
     // what a tick costs per person at its place in the order of ticking: the 1st is in the price, every further one +1 500
     const tickPrice = (id, pos) => (pos === 0 ? 0 : pos < 3 ? C.tiers[LADDER[pos]].perPerson - C.tiers[LADDER[pos - 1]].perPerson : DISH[id].extra);
     function drawDishes() {
@@ -353,7 +353,7 @@
     const bar = $('#ah-bar'), barBtn = $('#ah-bar-btn'), barSum = $('#ah-bar-sum');
     // the price: computed here at once, then replaced by the server's quote for the same choice (the amount charged is always the server's)
     let served = null, quoteKey = '', quoteTimer = 0;
-    const drinksOn = () => form.querySelector('[name="drinks"][value="unlimited"]').checked;
+    const drinksOn = () => F('drinks').checked;
     const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: drinksOn(), guests: nGuests, hours, voucher: vch });
     const complete = () => sel.picks.length > 0;
     function askServer(s) {
