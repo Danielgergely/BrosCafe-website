@@ -35,9 +35,13 @@
         <h1 class="display display--md" data-vt="page-title">Bros <em>After Hours</em></h1>
         <p class="body body--lg">A legszebb közös élmények még előttetek vannak.</p>
         <p class="body">Privát kávézóélmény különleges alkalmakra.</p>
+        <ul class="ah-facts">
+          <li>Az egész kávézó csak a tiétek</li>
+          <li>2–12 fő</li>
+          <li>Üdvözlőital és falatok</li>
+        </ul>
         <p class="actions ah-hero__actions">
           <a class="btn" href="#foglalas">Estét választok <span aria-hidden="true">→</span></a>
-          <a class="link" href="#alapdij">Mi van az árban?</a>
         </p>
       </div>
       <div class="ah-hero__media">
@@ -51,20 +55,11 @@
     </div>
   </section>
 
-  <section class="ah-sec" id="alapdij" aria-labelledby="alapdij-cim">
-    <div class="wrap">
-      <h2 class="title" id="alapdij-cim">Ami az estében <em>benne van.</em></h2>
-      <ul class="ah-inc4" id="ah-inc4"></ul>
-      <div class="ah-tiers" id="ah-tiers"></div>
-    </div>
-  </section>
-
   <section class="ah-sec ah-occ" id="alkalmak" aria-labelledby="alkalmak-cim">
     <div class="wrap">
       <h2 class="title" id="alkalmak-cim">Tökéletes <em>választás</em></h2>
+      <p class="ah-occ__lead">Tegyétek különlegessé a következő ünnepléseteket a Bros Caféban.</p>
       <ul class="ah-occ__grid" id="ah-occ"></ul>
-      <p class="ah-occ__close">Tegyétek különlegessé a következő ünnepléseteket a Bros Caféban.</p>
-      <p class="ah-occ__sign">Jó ételek. Remek társaság. Felejthetetlen élmények.</p>
     </div>
   </section>
 
@@ -77,8 +72,42 @@
       <form class="ah-book__grid" id="ah-form" novalidate>
         <div class="ah-steps">
 
+          <fieldset class="ah-step" id="ah-step-guests">
+            <legend><span class="ah-step__no">1</span>Hányan lesztek?</legend>
+            <div class="ah-guests" role="group" aria-label="Vendégek száma">
+              <button class="ah-guests__btn" type="button" data-step="-1" aria-label="Eggyel kevesebb vendég">−</button>
+              <label class="visually-hidden" for="ah-guests">Vendégek száma</label>
+              <input id="ah-guests" name="guests" type="number" inputmode="numeric" min="2" max="12" value="4" aria-describedby="ah-guests-hint">
+              <button class="ah-guests__btn" type="button" data-step="1" aria-label="Eggyel több vendég">+</button>
+              <span class="ah-guests__unit" id="ah-guests-hint"></span>
+            </div>
+          </fieldset>
+
+          <fieldset class="ah-step" id="csomagok">
+            <legend><span class="ah-step__no">2</span>Válasszatok tálakat</legend>
+            <p class="ah-step__lead" id="ah-lead"></p>
+            <div class="ah-rows" id="ah-dishpick" role="group" aria-label="A hat tál"></div>
+            <p class="ah-err" id="err-dishes" role="alert" hidden></p>
+            <p class="ah-ladder__note" id="ah-ladder-note"></p>
+          </fieldset>
+
+          <fieldset class="ah-step" id="ah-step-occ">
+            <legend><span class="ah-step__no">3</span>Milyen alkalomra?</legend>
+            <div class="ah-chips" role="radiogroup" aria-label="Alkalom">
+              <label><input type="radio" name="occasion" value="birthday"><span>Születésnap</span></label>
+              <label><input type="radio" name="occasion" value="romantic"><span>Romantikus este</span></label>
+              <label><input type="radio" name="occasion" value="friends"><span>Baráti összejövetel</span></label>
+              <label><input type="radio" name="occasion" value="team"><span>Céges</span></label>
+              <label><input type="radio" name="occasion" value="family"><span>Családi alkalom</span></label>
+              <label><input type="radio" name="occasion" value="other"><span>Egyéb</span></label>
+            </div>
+            <div class="ah-rows ah-rows--cake">
+              <label class="ah-row"><span class="ah-row__txt"><b>Ünnepi tortát is kérünk</b><small>Az estén, a kávézóban fizetitek.</small></span><em class="ah-row__tag">10&nbsp;000&nbsp;Ft-tól</em><input type="checkbox" name="cake" id="ah-cake"></label>
+            </div>
+          </fieldset>
+
           <fieldset class="ah-step" id="ah-step-date">
-            <legend><span class="ah-step__no">1</span>Melyik este, hányan?</legend>
+            <legend><span class="ah-step__no">4</span>Melyik este?</legend>
             <div class="ah-when">
               <div>
                 <div class="ah-cal" id="ah-cal"></div>
@@ -90,34 +119,12 @@
                 <h3 class="ah-sub" id="ah-hours-title"><span>Meddig maradtok?</span> <small class="ah-plus" id="ah-hours-hint"></small></h3>
                 <div class="ah-opts ah-opts--3" id="ah-hours" role="group" aria-labelledby="ah-hours-title"></div>
                 <p class="ah-slot"><span class="visually-hidden">Időpont:</span> <b id="ah-slot" aria-live="polite"></b> <span class="fine" id="ah-slot-note" aria-live="polite"></span></p>
-                <h3 class="ah-sub" id="ah-guests-title">Hányan jöttök?</h3>
-                <div class="ah-guests" role="group" aria-labelledby="ah-guests-title">
-                  <button class="ah-guests__btn" type="button" data-step="-1" aria-label="Eggyel kevesebb vendég">−</button>
-                  <label class="visually-hidden" for="ah-guests">Vendégek száma</label>
-                  <input id="ah-guests" name="guests" type="number" inputmode="numeric" min="2" max="12" value="4" aria-describedby="ah-guests-hint">
-                  <button class="ah-guests__btn" type="button" data-step="1" aria-label="Eggyel több vendég">+</button>
-                  <span class="ah-guests__unit" id="ah-guests-hint"></span>
-                </div>
               </div>
             </div>
           </fieldset>
 
-          <fieldset class="ah-step" id="csomagok">
-            <legend><span class="ah-step__no">2</span>Csomag és falatok</legend>
-            <div id="ah-pkg">
-              <h3 class="ah-sub ah-sub--first" id="ah-tier-title">Melyik csomag legyen?</h3>
-              <div class="ah-pick ah-pick--tier" id="ah-tierpick" role="radiogroup" aria-labelledby="ah-tier-title"></div>
-              <h3 class="ah-sub"><span id="ah-dish-title"></span> <small class="ah-plus" id="ah-dish-count" aria-live="polite"></small></h3>
-              <div class="ah-pick" id="ah-dishpick" role="group" aria-labelledby="ah-dish-title"></div>
-              <p class="ah-err" id="err-dishes" role="alert" hidden></p>
-              <h3 class="ah-sub" id="ah-extra-title">Extra fogás <small class="ah-plus">nem kötelező</small></h3>
-              <div class="ah-pick" id="ah-extrapick" role="group" aria-labelledby="ah-extra-title"></div>
-            </div>
-            <label class="ah-check"><input type="checkbox" name="cake" id="ah-cake"><span>Ünnepi tortát kérünk (10 000 Ft-tól, a helyszínen fizetendő)</span></label>
-          </fieldset>
-
-          <fieldset class="ah-step">
-            <legend><span class="ah-step__no">3</span>A foglaló adatai</legend>
+          <fieldset class="ah-step" id="ah-step-details">
+            <legend><span class="ah-step__no">5</span>A foglaló adatai</legend>
             <div class="ah-fields">
               <div class="ah-field ah-field--wide"><label for="ah-name">Név</label><input id="ah-name" name="name" type="text" autocomplete="name" required></div>
               <div class="ah-field"><label for="ah-email">E-mail</label><input id="ah-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
@@ -135,19 +142,8 @@
               <div class="ah-field"><label for="ah-tax">Adószám</label><input id="ah-tax" name="tax_number" type="text" inputmode="numeric" pattern="[0-9]{8}-?[0-9]-?[0-9]{2}" placeholder="12345678-1-12" autocomplete="off"></div>
             </div>
             <details class="ah-fold" data-open-wide>
-              <summary><span>Alkalom, megjegyzés <i>(nem kötelező)</i></span></summary>
+              <summary><span>Megjegyzés <i>(nem kötelező)</i></span></summary>
               <div class="ah-fields">
-                <div class="ah-field ah-field--wide"><label for="ah-occasion">Alkalom</label>
-                  <select id="ah-occasion" name="occasion">
-                    <option value="">Válassz…</option>
-                    <option value="birthday">Születésnap</option>
-                    <option value="romantic">Romantikus este</option>
-                    <option value="friends">Baráti összejövetel</option>
-                    <option value="team">Céges</option>
-                    <option value="family">Családi alkalom</option>
-                    <option value="other">Egyéb</option>
-                  </select>
-                </div>
                 <div class="ah-field ah-field--wide"><label for="ah-note">Megjegyzés</label><textarea id="ah-note" name="note" rows="2" placeholder="Allergia, ételérzékenység, különleges kérés…"></textarea></div>
               </div>
             </details>
@@ -158,6 +154,7 @@
         <aside class="ah-sum" id="ah-sum-card" aria-labelledby="ah-sum-title">
           <h3 class="ah-sum__title" id="ah-sum-title">Összegzés</h3>
           <dl class="ah-sum__list" id="ah-sum"></dl>
+          <p class="visually-hidden" id="ah-live" aria-live="polite"></p>
           <div class="ah-code">
             <label for="ah-code">Kuponkód <i>(nem kötelező)</i></label>
             <div class="ah-code__row"><input id="ah-code" name="voucher" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30"><button class="btn btn--ghost" type="button" id="ah-code-btn">Beváltom</button></div>
@@ -193,7 +190,7 @@
         </details>
         <details>
           <summary>Fizetés és számla</summary>
-          <p>Foglaláskor mindent előre, online fizettek: a kávézó díját, a csomagot, az extra fogásokat és a további órákat. A kuponkód csak a kávézó díjából vesz le. Bankkártyával, Apple Pay-jel vagy Google Pay-jel fizethettek.</p>
+          <p>Foglaláskor mindent előre, online fizettek: a kávézó díját, a tálakat és a további órákat. A kuponkód csak a kávézó díjából vesz le. Bankkártyával, Apple Pay-jel vagy Google Pay-jel fizethettek.</p>
           <p>A számlát a sikeres fizetés után e-mailben küldjük, a megadott számlázási adatokra.</p>
           <p>Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő. Az ünnepi tortát és minden további fogyasztást az estén, a kávézóban rendezitek kártyával vagy készpénzzel.</p>
         </details>
@@ -205,9 +202,9 @@
     </div>
   </section>
 
-  <div class="ah-bar" id="ah-bar" hidden>
-    <p><b id="ah-bar-sum"></b><span id="ah-bar-txt"></span></p>
-    <a class="btn" id="ah-bar-btn" href="#foglalas">Estét választok</a>
+  <div class="ah-bar" id="ah-bar" inert>
+    <p><span class="visually-hidden">Most fizetendő:</span> <b id="ah-bar-sum"></b><span id="ah-bar-txt"></span></p>
+    <a class="btn" id="ah-bar-btn" href="#csomagok"></a>
   </div>
 
 </main>

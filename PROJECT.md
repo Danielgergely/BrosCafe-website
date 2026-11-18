@@ -75,6 +75,12 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-18 After Hours booking rebuilt (Daniel: explained twice, messy "what is in it" block, keep all six options as in
+  his phone screenshots, no "menü"/"fogás" wording): steps 1 guests · 2 the six platters as photo cards (placeholders,
+  `photo` per dish) · 3 occasion chips + cake · 4 date/time (hour buttons show the café fee) · 5 details. Price ladder per
+  person: welcome drink + 1 tál 2 500, every further tál +1 500 (2 → 4 000, 3 → 5 500, 4th on stored as extras) (costing: docs/after-hours-costs.md) (tiers
+  alap/duo/menu, server quote updated). Headline stays 17 900 Ft-tól. BOOKINGS_OPEN true for production (no Stripe
+  keys there: nothing can be paid or saved). Preview c70a3493; production not deployed yet.
 - 2026-11-18 Alap 2 400 → 2 500 Ft/person so the headline reads "17 900 Ft-tól" (Daniel); menu stays 3 900. Live on the
   preview (0ba17a98) and new.broscafe.hu (d87e781b).
 - 2026-11-18 After Hours dishes = the brothers' six (Waffle board, Mini pizza bites, Fresh fruit & veggie board, Mini burger

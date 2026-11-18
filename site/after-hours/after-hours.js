@@ -17,18 +17,19 @@
     base: 12900,                         // the private café for 2 hours, any group size
     extraHour: 5900,                     // per hour above baseHours
     draft: false, windowMonths: 3,
-    // one per-person package for the whole group; Alap: welcome drink + one board, menu: welcome drink + 3 dishes (+ extras)
+    // the price ladder per person: welcome drink + 1, 2 or 3 of the six dishes; the 4th dish on is an extra at its own price
     tiers: {
-      alap: { name: 'Alap csomag', short: 'Alap', perPerson: 2500, pick: 1, from: ['waffle', 'veggie'], extras: false },
-      menu: { name: 'Fingerfood menü', short: 'Fingerfood menü', perPerson: 3900, pick: 3, from: ['waffle', 'pizza', 'veggie', 'burger', 'sandwich', 'cheese'], extras: true },
+      alap: { name: '1 tál', short: '1 tál', perPerson: 2500, pick: 1, extras: false },
+      duo: { name: '2 tál', short: '2 tál', perPerson: 4000, pick: 2, extras: false },
+      menu: { name: '3 tál', short: '3 tál', perPerson: 5500, pick: 3, extras: true },
     },
-    dishes: [ // `extra` = per person as an additional dish on the menu
-      { id: 'waffle', name: 'Waffle board', desc: 'Gofri, gyümölcsök, csokoládé és feltétek', extra: 1500 },
-      { id: 'pizza', name: 'Mini pizza bites', desc: 'Mini pizzák paradicsomos szósszal és sajttal', extra: 1500 },
-      { id: 'veggie', name: 'Fresh fruit & veggie board', desc: 'Friss gyümölcsök, zöldségek és mártogatósok', extra: 1500 },
-      { id: 'burger', name: 'Mini burger sliders', desc: 'Mini hamburgerek sajttal és salátával', extra: 1800 },
-      { id: 'sandwich', name: 'Mini sandwich selection', desc: 'Mini szendvicsek változatos töltelékekkel', extra: 1500 },
-      { id: 'cheese', name: 'Cheese & charcuterie board', desc: 'Sajtok, szalámi, kekszek és gyümölcsök', extra: 2000 },
+    dishes: [ // `extra` = per person from the 4th dish on; `photo` = /shared/media/... once the brothers' photos exist
+      { id: 'waffle', name: 'Waffle board', desc: 'Gofri, gyümölcsök, csokoládé és feltétek', extra: 1500, photo: null },
+      { id: 'pizza', name: 'Mini pizza bites', desc: 'Mini pizzák paradicsomos szósszal és sajttal', extra: 1500, photo: null },
+      { id: 'veggie', name: 'Fresh fruit & veggie board', desc: 'Friss gyümölcsök, zöldségek és mártogatósok', extra: 1500, photo: null },
+      { id: 'burger', name: 'Mini burger sliders', desc: 'Mini hamburgerek sajttal és salátával', extra: 1500, photo: null },
+      { id: 'sandwich', name: 'Mini sandwich selection', desc: 'Mini szendvicsek változatos töltelékekkel', extra: 1500, photo: null },
+      { id: 'cheese', name: 'Cheese & charcuterie board', desc: 'Sajtok, szalámi, kekszek és gyümölcsök', extra: 1500, photo: null },
     ],
     legacy: { food1: '1. ételválogatás', food2: '2. ételválogatás', food3: '3. ételválogatás' }, // bookings before 2026-11-17
   };
@@ -43,19 +44,19 @@
   const hoursTxt = (n) => t('{n} óra', { n });
   const names = (ids) => ids.map((d) => t(DISH[d] ? DISH[d].name : d)).join(', ');
   // The same lines as quote() in worker/src/services/after_hours.ts, so the page shows a price before the server answers.
-  // Checks: alap 2 p 2 h 17 900 · alap 6 p 27 900 · menu 6 p 36 300 · menu 12 p 4 h 71 500 · menu 6 p + sajt 48 300 · alap 4 p AFTER25 19 675.
+  // Checks: alap 2 p 2 h 17 900 · alap 6 p 27 900 · duo 6 p 36 900 · menu 6 p 45 900 · menu 12 p 4 h 90 700 · menu 6 p + cheese 54 900 · alap 4 p AFTER25 19 675.
   function localQuote(s) {
     const C = CONFIG, tier = C.tiers[s.tier], lines = [];
     const line = (kind, label, qty, unit) => lines.push({ kind, label, qty, unit, amount: qty * unit });
     line('cafe', t('Privát kávézó, {n} óra', { n: C.baseHours }), 1, C.base);
-    line('package', `${t(tier.name)}${s.dishes.length ? ` (${t('üdvözlőital')} + ${names(s.dishes)})` : ''}`, s.guests, tier.perPerson);
-    if (tier.extras) s.extras.forEach((d) => line('extra', `${t('Extra fogás')}: ${t(DISH[d].name)}`, s.guests, DISH[d].extra));
+    line('package', `${t('Üdvözlőital')} + ${t(tier.name)}${s.dishes.length ? ` (${names(s.dishes)})` : ''}`, s.guests, tier.perPerson);
+    if (tier.extras) s.extras.forEach((d) => line('extra', `${t('Extra tál')}: ${t(DISH[d].name)}`, s.guests, DISH[d].extra));
     if (extraHours(s.hours)) line('hours', t('További óra'), extraHours(s.hours), C.extraHour);
     if (s.voucher) line('voucher', t('Kuponkód {code} (−{p}% a kávézó díjából)', { code: s.voucher.code, p: s.voucher.percent }), 1, -s.voucher.discount);
     return { lines, total: lines.reduce((a, l) => a + l.amount, 0) };
   }
   const lineLabel = (l) => l.label || (B.lang === 'en' ? l.en : l.hu); // server lines carry both languages
-  // 'Fingerfood menü (üdvözlőital + …)' -> the name, with the contents small under it
+  // 'Üdvözlőital + 2 tál (Waffle board, …)' -> the name, with the contents small under it
   const splitLabel = (x) => { const i = x.indexOf(' ('); return i < 0 || !x.endsWith(')') ? esc(x) : `${esc(x.slice(0, i))}<small>${esc(x.slice(i + 2, -1))}</small>`; };
   const money = (n) => (n < 0 ? `−${ft(-n)}` : ft(n));
   // stored price lines of a booking, small, under its total (admin + cancel page); nothing for bookings before 2026-11-17
@@ -204,20 +205,17 @@
   }
   const chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>';
   const ico = (d) => `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-  const INC = [ // the four things in the price
-    ['Az egész kávézó csak a tiétek, 2 órára', ico('<path d="M8 20h32l-3-9H11z"/><path d="M11 20v18h26V20"/><path d="M20 38V28h8v10"/>')],
-    ['Falatok az egész társaságnak: egy tál vagy 3 fogásos menü', ico('<circle cx="24" cy="26" r="12"/><circle cx="24" cy="26" r="6"/><path d="M6 12v10M10 12v10M6 17h4M42 12c-3 3-3 8 0 10v-10z"/>')],
-    ['Üdvözlőital minden vendégnek', ico('<path d="M12 14h24l-3 24H15z"/><path d="M14 22h20"/><path d="M26 14l5-8"/>')],
-    ['Ünnepi torta már 10 000 Ft-tól (opcionális)', ico('<path d="M8 30h32v10H8z"/><path d="M12 30v-8h24v8"/><path d="M24 22v-6M24 8c-2 3-2 5 0 6 2-1 2-3 0-6z"/>')],
-  ];
-  const OCC_TILES = [ // "Tökéletes választás": typographic tiles, no photos
-    ['Születésnapok', ico('<path d="M10 28h28v10H10z"/><path d="M14 28v-6h20v6"/><path d="M19 22v-5M24 22v-7M29 22v-5"/>')],
-    ['Karácsonyi összejövetelek', ico('<path d="M24 6l-9 13h5l-8 12h24l-8-12h5z"/><path d="M24 31v9"/>')],
-    ['Évfordulók és eljegyzések', ico('<circle cx="24" cy="30" r="10"/><path d="M18 14l6-7 6 7-6 6z"/>')],
-    ['Ballagások, diplomaosztók', ico('<path d="M4 18l20-9 20 9-20 9z"/><path d="M12 22v9c4 4 20 4 24 0v-9"/><path d="M42 19v11"/>')],
-    ['Kisvállalati / céges összejövetelek', ico('<rect x="8" y="18" width="32" height="22" rx="3"/><path d="M18 18v-5h12v5M8 28h32"/>')],
-    ['Baráti és családi alkalmak', ico('<circle cx="16" cy="16" r="5"/><circle cx="33" cy="18" r="4"/><path d="M6 38c0-8 4-12 10-12s10 4 10 12M27 38c0-6 3-9 7-9s8 3 8 9"/>')],
-    ['Csak egy különleges élményért', ico('<path d="M24 7l4.5 10.5L40 19l-8.5 7.5L34 38l-10-6-10 6 2.5-11.5L8 19l11.5-1.5z"/>')],
+  // "Tökéletes választás": 8 cards (a swipe row on phones, 4 × 2 on desktop). `photo` = '/shared/media/<name>' (a .webp + .jpg pair)
+  // once the occasion's own image exists; until then each card shows brand-colour art with its icon.
+  const OCC = [
+    ['Születésnap', 'Személyes, vidám és stílusos', null, ico('<path d="M10 28h28v10H10z"/><path d="M14 28v-6h20v6"/><path d="M19 22v-5M24 22v-7M29 22v-5"/>')],
+    ['Karácsonyi összejövetel', 'Ünnepi, meghitt és emlékezetes', null, ico('<path d="M24 6l-9 13h5l-8 12h24l-8-12h5z"/><path d="M24 31v9"/>')],
+    ['Évforduló, különleges randi', 'Romantikus, bensőséges és elegáns', null, ico('<circle cx="19" cy="27" r="9"/><circle cx="29" cy="27" r="9"/>')],
+    ['Game night', 'Játék, nevetés és jó kávé', null, ico('<rect x="8" y="16" width="20" height="20" rx="4"/><rect x="24" y="8" width="16" height="16" rx="3"/><circle cx="14" cy="22" r="1.3"/><circle cx="22" cy="30" r="1.3"/><circle cx="18" cy="26" r="1.3"/><circle cx="32" cy="16" r="1.3"/>')],
+    ['Céges összejövetel', 'Kötetlen, mégis profi', null, ico('<rect x="8" y="18" width="32" height="22" rx="3"/><path d="M18 18v-5h12v5M8 28h32"/>')],
+    ['Kreatív workshop', 'Közös alkotás, nyugodt tempóban', null, ico('<path d="M24 8C14 8 7 15 7 24s7 16 15 16c3 0 4-2 3-4s0-5 3-5h4c5 0 9-4 9-9 0-8-8-14-17-14z"/><circle cx="16" cy="22" r="2"/><circle cx="23" cy="16" r="2"/><circle cx="31" cy="19" r="2"/>')],
+    ['Ballagás, diplomaosztó', 'Büszke pillanatok, együtt', null, ico('<path d="M4 18l20-9 20 9-20 9z"/><path d="M12 22v9c4 4 20 4 24 0v-9"/><path d="M42 19v11"/>')],
+    ['Baráti és családi este', 'Csak úgy, mert jó együtt lenni', null, ico('<circle cx="16" cy="16" r="5"/><circle cx="33" cy="18" r="4"/><path d="M6 38c0-8 4-12 10-12s10 4 10 12M27 38c0-6 3-9 7-9s8 3 8 9"/>')],
   ];
   const openWide = () => { if (matchMedia('(min-width: 980px)').matches) $$('details[data-open-wide]').forEach((d) => { d.open = true; }); };
   // a link to a folded block (#lemondas, #aszf, #csomagok) opens it
@@ -229,71 +227,43 @@
     if (video) { if (still) video.remove(); else { video.autoplay = true; video.play().catch(() => {}); } }
     openWide(); addEventListener('hashchange', openTarget); openTarget();
 
-    // the offer: the café fee, the two packages, the six dishes. Stays visible when online booking is closed.
     const C = CONFIG, perP = (n) => `${ft(n)} ${t('/ fő')}`;
-    const eg = (tier, g, dishes) => `${t(C.tiers[tier].short)}, ${t('{n} fő', { n: g })}: <b>${ft(localQuote({ tier, guests: g, hours: C.baseHours, dishes, extras: [] }).total)}</b>`;
-    $('#ah-inc4').innerHTML = INC.map(([txt, svg]) => `<li>${svg}<span>${t(txt)}</span></li>`).join('');
-    $('#ah-occ').innerHTML = OCC_TILES.map(([txt, svg]) => `<li class="ah-occ__tile">${svg}<span>${t(txt)}</span></li>`).join('');
-    const packCard = (id, items) => `
-      <article class="ah-pack">
-        <p class="ah-price__name">${t(C.tiers[id].name)}</p>
-        <p class="ah-pack__sum">${ft(C.tiers[id].perPerson)} <small>${t('/ fő')}</small></p>
-        <ul class="ah-pack__list">${items.map((x) => `<li>${x}</li>`).join('')}</ul>
-      </article>`;
-    $('#ah-tiers').innerHTML = `
-      <div class="ah-offer">
-        <div class="ah-price">
-          <p class="ah-price__name">${t('Privát kávézó')}</p>
-          <p class="ah-price__sum">${ft(C.base)}</p>
-          <p class="ah-price__for">${hoursTxt(C.baseHours)} · ${t('{a}–{b} fő', { a: C.minGuests, b: C.maxGuests })}</p>
-          <p class="fine ah-price__plus">${t('További óra')}: + ${ft(C.extraHour)} (${t('legfeljebb {t}-ig', { t: C.close })})</p>
-        </div>
-        <div class="ah-offer__more">
-          <p class="ah-offer__lead">${t('Mellé egy csomagot választotok az egész társaságnak:')}</p>
-          <div class="ah-packs">
-            ${packCard('alap', [t('Üdvözlőital minden vendégnek (bármelyik ital az étlapról)'), t('Egy tál a társaságnak: Waffle board vagy Fresh fruit & veggie board')])}
-            ${packCard('menu', [t('Üdvözlőital minden vendégnek (bármelyik ital az étlapról)'), t('3 különböző fogás a hatból, egymás után tálalva'), t('Kérhettek extra fogást is')])}
-          </div>
-        </div>
-      </div>
-      <div class="ah-menu">
-        <h3 class="ah-sub">${t('A hat fogás')}</h3>
-        <dl class="ah-extra__list">${C.dishes.map((d) => `<div><dt><b>${t(d.name)}</b><small>${t(d.desc)}</small></dt><dd>${t('extra')}: + ${perP(d.extra)}</dd></div>`).join('')}</dl>
-        <p class="fine ah-eg">${t('Az extra fogás a Fingerfood menühöz kérhető, a nem választott fogásokból, fejenként.')}</p>
-        <p class="fine ah-eg"><span class="ah-eg__ex">${t('Például')}: ${eg('alap', 2, ['waffle'])} · ${eg('alap', 6, ['waffle'])} · ${eg('menu', 6, ['pizza', 'burger', 'cheese'])}</span></p>
-        <p class="fine ah-eg">${t('Mindent előre, online fizettek; csak az ünnepi tortát (10 000 Ft-tól) fizetitek a helyszínen.')} ${draftPill()}</p>
-      </div>`;
-    $('#ah-hours-hint').textContent = `+ ${ft(C.extraHour)} ${t('/ óra')}`;
-    $('#ah-guests-hint').innerHTML = `<span>${t('{a}–{b} fő', { a: C.minGuests, b: C.maxGuests })}</span><span>${t('A csomag ára fejenként számít.')}</span>`;
+    $('#ah-occ').innerHTML = OCC.map(([title, line, photo, svg], i) => {
+      const pic = photo ? `<picture><source srcset="${photo}.webp" type="image/webp"><img src="${photo}.jpg" alt="" loading="lazy" width="800" height="1000"></picture>` : `<span class="ah-occ__art" data-art="${i}">${svg}</span>`;
+      return `<li class="ah-occ__card">${pic}<span class="ah-occ__txt">${svg}<b>${t(title)}</b><i>${t(line)}</i></span></li>`;
+    }).join('');
+    $('#ah-hours-hint').textContent = t('a kávézó díja');
+    $('#ah-guests-hint').innerHTML = `<span>${t('{a}–{b} fő', { a: C.minGuests, b: C.maxGuests })}</span>`;
 
-    // the package picker in the form: tier cards, then the board (Alap) or 3 dishes (menu), then extras (menu only)
-    const sel = { tier: 'alap', board: 'waffle', dishes: [], extras: [] };
-    const chosen = () => (sel.tier === 'alap' ? [sel.board].filter(Boolean) : sel.dishes);
-    $('#ah-tierpick').innerHTML = Object.entries(C.tiers).map(([id, x]) => `<label><input type="radio" name="tier" value="${id}"${id === sel.tier ? ' checked' : ''}><span><b>${t(x.name)}</b><small>${id === 'alap' ? t('Üdvözlőital + egy tál (Waffle board vagy Fresh fruit & veggie board)') : t('Üdvözlőital + 3 fogás a hatból')}</small></span><em>${perP(x.perPerson)}</em></label>`).join('');
+    // the dishes: one list of six; the first three ticked set the step on the ladder, the 4th on are extras
+    const LADDER = ['alap', 'duo', 'menu'];
+    const sel = { picks: [] };
+    const chosen = () => sel.picks.slice(0, 3);
+    const extrasOf = () => sel.picks.slice(3);
+    const tierOf = () => LADDER[Math.max(0, Math.min(sel.picks.length, 3) - 1)];
+    const plate = ico('<circle cx="24" cy="26" r="13"/><circle cx="24" cy="26" r="7"/><path d="M6 12v10M10 12v10M6 17h4M42 12c-3 3-3 8 0 10v-10z"/>');
+    const dishBox = $('#ah-dishpick');
+    dishBox.innerHTML = C.dishes.map((d) => `<label class="ah-row ah-row--dish">
+      <span class="ah-row__ph">${d.photo ? `<img src="${esc(d.photo)}" alt="" loading="lazy" width="112" height="112">` : plate}</span>
+      <span class="ah-row__txt"><b>${t(d.name)}</b><small>${t(d.desc)}</small></span><em class="ah-row__tag"></em><input type="checkbox" name="dish" value="${d.id}"></label>`).join('');
+    $('#ah-lead').textContent = t('Üdvözlőital mindenkinek és 1 tál az árban, minden további tál + {p}.', { p: perP(C.tiers.duo.perPerson - C.tiers.alap.perPerson) });
+    // what a tick costs per person at its place in the order of ticking: the 1st is in the price, every further one +1 500
+    const tickPrice = (id, pos) => (pos === 0 ? 0 : pos < 3 ? C.tiers[LADDER[pos]].perPerson - C.tiers[LADDER[pos - 1]].perPerson : DISH[id].extra);
     function drawDishes() {
-      const tier = C.tiers[sel.tier], pick = $('#ah-dishpick'), menu = sel.tier === 'menu';
-      $('#ah-dish-title').textContent = menu ? t('Válasszatok 3 fogást') : t('Melyik tál legyen?');
-      $('#ah-dish-count').textContent = menu ? t('{n}/3 kiválasztva', { n: sel.dishes.length }) : '';
-      pick.innerHTML = tier.from.map((id) => {
-        const d = DISH[id], on = chosen().includes(id), full = menu && !on && sel.dishes.length >= tier.pick;
-        return `<label${full ? ' class="is-off"' : ''}><input type="${menu ? 'checkbox' : 'radio'}" name="dish" value="${id}"${on ? ' checked' : ''}${full ? ' disabled' : ''}><span><b>${t(d.name)}</b><small>${t(d.desc)}</small></span></label>`;
-      }).join('');
-      const ex = $('#ah-extrapick');
-      ex.innerHTML = menu
-        ? C.dishes.filter((d) => !sel.dishes.includes(d.id)).map((d) => `<label><input type="checkbox" name="extra" value="${d.id}"${sel.extras.includes(d.id) ? ' checked' : ''}><span><b>${t(d.name)}</b><small>${t(d.desc)}</small></span><em>+ ${perP(d.extra)}</em></label>`).join('')
-        : `<p class="fine">${t('Az Alap csomaghoz nem kérhető extra fogás. Ha több falatot szeretnétek, válasszátok a Fingerfood menüt.')}</p>`;
+      const n = sel.picks.length;
+      $$('.ah-row', dishBox).forEach((row) => {
+        const id = $('input', row).value, i = sel.picks.indexOf(id), price = tickPrice(id, i < 0 ? n : i), tag = $('.ah-row__tag', row);
+        tag.textContent = price ? `+ ${perP(price)}` : t('az árban');
+        tag.classList.toggle('is-in', i >= 0);
+      });
+      const food = C.tiers[tierOf()].perPerson + extrasOf().reduce((a, d) => a + DISH[d].extra, 0);
+      $('#ah-ladder-note').innerHTML = `${t('Tálak és üdvözlőital {n} főre:', { n: nGuests })} <b>${ft(food * nGuests)}</b>`;
     }
-    $('#ah-pkg').addEventListener('change', (e) => {
-      const el = e.target;
-      if (el.name === 'tier') { sel.tier = el.value; if (sel.tier === 'alap') sel.extras = []; }
-      else if (el.name === 'dish') {
-        if (sel.tier === 'alap') sel.board = el.value;
-        else { sel.dishes = el.checked ? [...sel.dishes, el.value].slice(0, 3) : sel.dishes.filter((d) => d !== el.value); sel.extras = sel.extras.filter((d) => !sel.dishes.includes(d)); }
-        setErr('dishes', '');
-      } else if (el.name === 'extra') sel.extras = el.checked ? [...sel.extras, el.value] : sel.extras.filter((d) => d !== el.value);
-      else return;
-      const again = el.name === 'tier' ? `[name="tier"][value="${el.value}"]` : el.name === 'dish' ? `[name="dish"][value="${el.value}"]` : `[name="extra"][value="${el.value}"]`;
-      drawDishes(); $(again, form)?.focus(); summary();
+    dishBox.addEventListener('change', (e) => {
+      const el = e.target; if (el.name !== 'dish') return;
+      sel.picks = el.checked ? [...sel.picks, el.value] : sel.picks.filter((d) => d !== el.value); // an extra moves up when one of the first three goes
+      setErr('dishes', '');
+      summary();
     });
 
     const form = $('#ah-form'), guests = $('#ah-guests'), sum = $('#ah-sum'), result = $('#ah-result'), calRoot = $('#ah-cal'), ret = $('#ah-return');
@@ -350,7 +320,7 @@
       slotNote.textContent = cut ? t('{s}-tól legfeljebb {n} óra fér bele {t}-ig.', { s: start, n: max, t: C.close }) : t('Az este {t}-ig tart.', { t: C.close });
       slotNote.classList.toggle('is-cut', cut);
       startEl.innerHTML = STARTS.map((s) => `<button type="button" class="ah-opt" data-start="${s}" aria-pressed="${s === start}">${s}</button>`).join('');
-      hoursEl.innerHTML = Array.from({ length: C.maxHours - C.baseHours + 1 }, (_, i) => C.baseHours + i).map((h) => `<button type="button" class="ah-opt ah-opt--wide" data-hours="${h}" aria-pressed="${h === hours}"${h > max ? ' disabled' : ''}><b>${hoursTxt(h)}</b><small>${h > max ? t('{t} után már nem', { t: C.close }) : h === C.baseHours ? t('az árban') : `+ ${ft(C.extraHour * extraHours(h))}`}</small></button>`).join('');
+      hoursEl.innerHTML = Array.from({ length: C.maxHours - C.baseHours + 1 }, (_, i) => C.baseHours + i).map((h) => `<button type="button" class="ah-opt ah-opt--wide" data-hours="${h}" aria-pressed="${h === hours}"${h > max ? ' disabled' : ''}><b>${hoursTxt(h)}</b><small>${h > max ? t('{t} után már nem', { t: C.close }) : ft(C.base + C.extraHour * extraHours(h))}</small></button>`).join('');
       slotEl.textContent = `${start}–${endOf(start, hours)} · ${hoursTxt(hours)}`;
     }
     form.addEventListener('click', (e) => {
@@ -378,11 +348,11 @@
     F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
 
     // summary + the phone bar
-    const bar = $('#ah-bar'), barBtn = $('#ah-bar-btn');
+    const bar = $('#ah-bar'), barBtn = $('#ah-bar-btn'), barSum = $('#ah-bar-sum');
     // the price: computed here at once, then replaced by the server's quote for the same choice (the amount charged is always the server's)
     let served = null, quoteKey = '', quoteTimer = 0;
-    const state = () => ({ tier: sel.tier, dishes: chosen(), extras: sel.tier === 'menu' ? sel.extras : [], guests: nGuests, hours, voucher: vch });
-    const complete = () => chosen().length === C.tiers[sel.tier].pick;
+    const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), guests: nGuests, hours, voucher: vch });
+    const complete = () => sel.picks.length > 0;
     function askServer(s) {
       const key = JSON.stringify([s.tier, s.dishes, s.extras, s.guests, s.hours, s.voucher && s.voucher.code]);
       if (key === quoteKey) return;
@@ -401,23 +371,34 @@
       const n = nGuests, s = state(); askServer(s);
       const q = served || localQuote(s);
       const row = (k, v, cls) => `<div${cls ? ` class="${cls}"` : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
-      const left = C.tiers[sel.tier].pick - chosen().length;
+      drawDishes();
       sum.innerHTML =
         row(t('Este'), `${picked ? longDate.format(parse(picked)) : `<span class="is-empty">${t('Még nincs kiválasztva')}</span>`}<small>${start}–${endOf(start, hours)} · ${hoursTxt(hours)} · ${t('{n} fő', { n })}</small>`) +
         q.lines.map((l) => row(splitLabel(lineLabel(l)), `${money(l.amount)}${l.qty > 1 ? `<small>${l.qty} × ${ft(l.unit)}</small>` : ''}`, l.kind === 'voucher' ? 'ah-sum__disc' : '')).join('') +
-        (left > 0 ? row(t('Fogások'), `<span class="is-empty">${t('Válasszatok még {n} fogást', { n: left })}</span>`) : '') +
-        (F('cake').checked ? row(t('Ünnepi torta'), `${t('kérünk')}<small>${t('10 000 Ft-tól, a helyszínen fizetendő')}</small>`) : '') +
+        (complete() ? '' : row(t('Tálak'), `<span class="is-empty">${t('Válasszatok legalább 1 tálat')}</span>`)) +
+        (F('cake').checked ? row(`${t('Ünnepi torta')}<small>${t('a helyszínen fizetendő')}</small>`, `<span class="is-empty">${t('10 000 Ft-tól')}</span>`) : '') +
         row(t('Most fizetendő'), ft(q.total), 'ah-sum__total') +
-        `<div class="ah-sum__terms"><p class="fine">${t('Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.')} ${draftPill()}</p></div>`;
-      $('#ah-bar-sum').textContent = ft(q.total);
-      $('#ah-bar-txt').textContent = `${t('{n} fő', { n })} · ${picked ? `${shortDate.format(parse(picked))}, ` : ''}${start}–${endOf(start, hours)}`;
-      barBtn.textContent = picked ? t('Tovább a fizetéshez') : t('Estét választok');
-      barBtn.setAttribute('href', picked ? '#ah-sum-card' : '#foglalas');
+        (C.draft ? `<div class="ah-sum__terms"><p class="fine">${draftPill()}</p></div>` : '');
+      const np = sel.picks.length, total = ft(q.total);
+      if (barSum.textContent !== total) {
+        if (barSum.textContent) { $('#ah-live').textContent = `${t('Most fizetendő')}: ${total}`; barSum.classList.remove('is-bump'); void barSum.offsetWidth; barSum.classList.add('is-bump'); }
+        barSum.textContent = total;
+      }
+      $('#ah-bar-txt').textContent = [t('{n} fő', { n }), np ? t(np === 1 ? '1 tál' : '{n} tál', { n: np }) : '', picked ? `${shortDate.format(parse(picked))}, ${start}` : hoursTxt(hours)].filter(Boolean).join(' · ');
+      nextStep();
+    }
+    // the bar's button leads to the first step that still misses something, then to the summary
+    const detailsOk = () => ['name', 'email', 'phone', 'zip', 'city', 'street', 'company', 'tax_number'].every((f) => !rules[f](F(f).value.trim()));
+    function nextStep() {
+      const [href, label] = !complete() ? ['#csomagok', 'Tálak'] : !picked ? ['#ah-step-date', 'Este'] : !detailsOk() ? ['#ah-step-details', 'Adatok'] : ['#ah-sum-card', 'Fizetés'];
+      if (barBtn.getAttribute('href') === href && barBtn.firstChild) return;
+      barBtn.setAttribute('href', href); barBtn.innerHTML = `${t(label)} <span aria-hidden="true">→</span>`;
     }
     form.addEventListener('change', (e) => { if (e.target.name === 'cake') summary(); });
+    form.addEventListener('input', () => nextStep());
     // the bar shows between the hero button and the summary card (phones only, see the CSS)
     const heroBtn = $('.ah-hero__actions'), sumCard = $('#ah-sum-card');
-    const placeBar = () => { bar.hidden = heroBtn.getBoundingClientRect().bottom > 60 || sumCard.getBoundingClientRect().top < innerHeight - 80; };
+    const placeBar = () => { const on = !form.hidden && heroBtn.getBoundingClientRect().bottom < 60 && sumCard.getBoundingClientRect().top > innerHeight - 150; bar.classList.toggle('is-on', on); bar.inert = !on; };
     addEventListener('scroll', placeBar, { passive: true }); addEventListener('resize', placeBar); placeBar();
 
     // voucher: the server validates (availability?code=); the base-fee discount shows in the summary
@@ -450,8 +431,8 @@
       if (input) { if (msg) { input.setAttribute('aria-invalid', 'true'); input.setAttribute('aria-describedby', el.id); } else { input.removeAttribute('aria-invalid'); input.removeAttribute('aria-describedby'); } }
     }
     const rules = {
+      dishes: () => (complete() ? '' : t('Válasszatok legalább 1 tálat.')), // in the order of the steps: the first one missing gets the focus
       date: () => (picked ? '' : t('Válassz egy szabad estét a naptárban.')),
-      dishes: () => (complete() ? '' : sel.tier === 'menu' ? t('Válasszatok pontosan 3 fogást.') : t('Válasszatok egy tálat.')),
       name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
       email: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
       phone: (v) => (v.replace(/\D/g, '').length >= 7 ? '' : t('Adj meg egy telefonszámot, amin elérünk.')),
@@ -475,14 +456,14 @@
       const bad = Object.keys(rules).filter((n) => !check1(n));
       if (bad.length) {
         if (bad[0] === 'date') { $('#ah-step-date').scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }); (calRoot.querySelector('.ah-day[tabindex="0"]') || calRoot).focus({ preventScroll: true }); }
-        else if (bad[0] === 'dishes') { $('#csomagok').scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }); $('#ah-dishpick input:not([disabled])', form)?.focus({ preventScroll: true }); }
+        else if (bad[0] === 'dishes') { $('#csomagok').scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }); $('input', dishBox)?.focus({ preventScroll: true }); }
         else F(bad[0]).focus();
         return;
       }
       if (codeIn.value.trim() && !vch && !(await applyCode())) { codeIn.focus(); return; }
       const v = (n) => F(n).value.trim();
       const payload = {
-        date: picked, start, hours, guests: nGuests, tier: sel.tier, dishes: chosen(), extras: sel.tier === 'menu' ? sel.extras : [], name: v('name'), email: v('email'), phone: v('phone'),
+        date: picked, start, hours, guests: nGuests, tier: tierOf(), dishes: chosen(), extras: extrasOf(), name: v('name'), email: v('email'), phone: v('phone'),
         billing: { zip: v('zip'), city: v('city'), street: v('street'), company: toggle.checked ? v('company') : '', tax_number: toggle.checked ? v('tax_number') : '' },
         occasion: v('occasion'), note: v('note'), cake: F('cake').checked, voucher: vch ? vch.code : '', terms: true, lang: B.lang,
         return_path: location.pathname, // Stripe sends the guest back to this page, wherever the site is mounted
@@ -497,7 +478,7 @@
         if (err.code === 'bookings_closed') bookingsClosed();
         else if (err.code === 'payments_not_configured') { notReady(ret); result.textContent = t(NOT_READY); }
         else if (err.code === 'invalid_voucher') { vch = null; voucherMsg(t('Ez a kuponkód nem érvényes. Ellenőrizd, vagy hagyd üresen a mezőt.')); summary(); result.textContent = t('Ez a kuponkód nem érvényes. Ellenőrizd, vagy hagyd üresen a mezőt.'); }
-        else if (err.code === 'invalid' && err.fields && err.fields.includes('dishes')) { check1('dishes'); result.textContent = t('Válasszatok pontosan 3 fogást.'); }
+        else if (err.code === 'invalid' && err.fields && err.fields.includes('dishes')) { check1('dishes'); result.textContent = t('Válasszatok legalább 1 tálat.'); }
         else if (err.code === 'day_taken') { result.textContent = t('Ezt az estét közben lefoglalták. Válassz másikat.'); picked = null; load(); }
         else result.textContent = t('Most nem sikerült elindítani a foglalást. Próbáld újra egy perc múlva.');
       }
@@ -506,7 +487,6 @@
     });
 
     drawTime();
-    drawDishes();
     setGuests(nGuests);
     load();
   }
@@ -570,7 +550,7 @@
       const perPersonOf = (x) => { const l = (x.lines || []).find((y) => y.kind === 'package'); return l ? l.unit : CONFIG.tiers[x.tier].perPerson; }; // the price it was booked at
       const legacy = (b.packages || []).map((p) => t(CONFIG.legacy[p] || p)).join(', ');
       const food = CONFIG.tiers[b.tier]
-        ? row(t('Csomag'), `${tierName(b)} · ${ft(perPersonOf(b))} ${t('/ fő')}`) + row(b.tier === 'alap' ? t('Tál') : t('Fogások'), esc(names(b.dishes || [])) || '–') + row(t('Extra fogások'), esc(names(b.extras || [])) || '–')
+        ? row(t('Csomag'), `${tierName(b)} · ${ft(perPersonOf(b))} ${t('/ fő')}`) + row(t('Tálak'), esc(names(b.dishes || [])) || '–') + row(t('Extra tálak'), esc(names(b.extras || [])) || '–')
         : row(t('Ételválogatás'), legacy ? `${legacy} (${t('a helyszínen fizetendő')})` : '–'); // bookings before 2026-11-17
       // paid: what a cancellation would give back now; cancelled: what the terms gave at the moment of cancelling
       const at = b.status === 'cancelled' && b.cancelled_at ? Date.parse(b.cancelled_at) : Date.now(), pct = refundPercent(b, at), back = ft(Math.round(b.amount * pct / 100));

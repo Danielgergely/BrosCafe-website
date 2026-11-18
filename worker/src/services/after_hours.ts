@@ -28,14 +28,15 @@ export const DISHES: Record<string, { hu: string; en: string; extra: number }> =
   waffle: { hu: 'Waffle board', en: 'Waffle board', extra: 1500 },
   pizza: { hu: 'Mini pizza bites', en: 'Mini pizza bites', extra: 1500 },
   veggie: { hu: 'Fresh fruit & veggie board', en: 'Fresh fruit & veggie board', extra: 1500 },
-  burger: { hu: 'Mini burger sliders', en: 'Mini burger sliders', extra: 1800 },
+  burger: { hu: 'Mini burger sliders', en: 'Mini burger sliders', extra: 1500 },
   sandwich: { hu: 'Mini sandwich selection', en: 'Mini sandwich selection', extra: 1500 },
-  cheese: { hu: 'Cheese & charcuterie board', en: 'Cheese & charcuterie board', extra: 2000 },
+  cheese: { hu: 'Cheese & charcuterie board', en: 'Cheese & charcuterie board', extra: 1500 },
 };
-/** One per-person package for the whole group. Alap: welcome drink + one board; menu: welcome drink + 3 dishes (+ extras). */
+/** Per person (Daniel 2026-11-18): welcome drink + 1 platter 2 500, every further platter +1 500 (the 4th on are stored as extras). */
 export const TIERS: Record<string, { hu: string; en: string; perPerson: number; pick: number; from: string[]; extras: boolean }> = {
-  alap: { hu: 'Alap csomag', en: 'Basic package', perPerson: 2500, pick: 1, from: ['waffle', 'veggie'], extras: false },
-  menu: { hu: 'Fingerfood menü', en: 'Finger food menu', perPerson: 3900, pick: 3, from: Object.keys(DISHES), extras: true },
+  alap: { hu: '1 tál', en: '1 platter', perPerson: 2500, pick: 1, from: Object.keys(DISHES), extras: false },
+  duo: { hu: '2 tál', en: '2 platters', perPerson: 4000, pick: 2, from: Object.keys(DISHES), extras: false },
+  menu: { hu: '3 tál', en: '3 platters', perPerson: 5500, pick: 3, from: Object.keys(DISHES), extras: true },
 };
 /** Voucher codes: percent off the café fee only (never food, drinks or extra hours). Keys upper-case. */
 const VOUCHERS: Record<string, { percent: number }> = { AFTER25: { percent: 25 } };
@@ -51,7 +52,7 @@ export interface Quote { tier: string; dishes: string[]; extras: string[]; guest
 
 /**
  * The price. Throws 400 invalid (fields) for a bad tier, dish set, extras, guests or hours, and 400 invalid_voucher for an unknown code.
- * Checks: alap 2 p 2 h 17 900 · alap 6 p 27 900 · menu 6 p 36 300 · menu 12 p 4 h 71 500 · menu 6 p + cheese 48 300 · alap 4 p AFTER25 19 675.
+ * Checks: alap 2 p 2 h 17 900 · alap 6 p 27 900 · duo 6 p 36 900 · menu 6 p 45 900 · menu 12 p 4 h 90 700 · menu 6 p + cheese 54 900 · alap 4 p AFTER25 19 675.
  */
 export function quote(env: Env, b: Doc): Quote {
   const o = offer(env), bad: string[] = [];
@@ -74,8 +75,8 @@ export function quote(env: Env, b: Doc): Quote {
   const names = (ids: string[], k: 'hu' | 'en') => ids.map((d) => DISHES[d][k]).join(', ');
   const lines: QuoteLine[] = [
     line({ kind: 'cafe', hu: `Privát kávézó, ${o.baseHours} óra`, en: `Private café, ${o.baseHours} hours`, qty: 1, unit: o.base }),
-    line({ kind: 'package', id: tierId, hu: `${tier.hu} (üdvözlőital + ${names(dishes, 'hu')})`, en: `${tier.en} (welcome drink + ${names(dishes, 'en')})`, qty: guests, unit: tier.perPerson }),
-    ...extras.map((d) => line({ kind: 'extra', id: d, hu: `Extra fogás: ${DISHES[d].hu}`, en: `Extra dish: ${DISHES[d].en}`, qty: guests, unit: DISHES[d].extra })),
+    line({ kind: 'package', id: tierId, hu: `Üdvözlőital + ${tier.hu} (${names(dishes, 'hu')})`, en: `Welcome drink + ${tier.en} (${names(dishes, 'en')})`, qty: guests, unit: tier.perPerson }),
+    ...extras.map((d) => line({ kind: 'extra', id: d, hu: `Extra tál: ${DISHES[d].hu}`, en: `Extra platter: ${DISHES[d].en}`, qty: guests, unit: DISHES[d].extra })),
   ];
   if (hours > o.baseHours) lines.push(line({ kind: 'hours', hu: 'További óra', en: 'Extra hour', qty: hours - o.baseHours, unit: o.extraHour }));
   if (vch) lines.push(line({ kind: 'voucher', id: vch.code, hu: `Kuponkód ${vch.code} (−${vch.percent}% a kávézó díjából)`, en: `Voucher ${vch.code} (−${vch.percent}% off the café fee)`, qty: 1, unit: -vch.discount }));
@@ -273,8 +274,8 @@ function orderRows(b: Doc, en: boolean): [string, string | null][] {
   const money = (l: QuoteLine) => `${en ? l.en : l.hu}: ${l.qty > 1 ? `${l.qty} × ${ft(l.unit)} = ` : ''}${l.amount < 0 ? '−' : ''}${ft(Math.abs(l.amount))}`;
   return [
     [en ? 'Package' : 'Csomag', tier ? `${tier[en ? 'en' : 'hu']} (${ft(p.lines.find((l) => l.kind === 'package')?.unit ?? tier.perPerson)} ${en ? 'per person' : '/ fő'})` : b.tier],
-    [en ? (b.tier === 'alap' ? 'Board' : 'Dishes') : (b.tier === 'alap' ? 'Tál' : 'Fogások'), dishNames(p.dishes, en) || null],
-    [en ? 'Extra dishes' : 'Extra fogások', dishNames(p.extras, en) || null],
+    [en ? 'Platters' : 'Tálak', dishNames(p.dishes, en) || null],
+    [en ? 'Extra platters' : 'Extra tálak', dishNames(p.extras, en) || null],
     [en ? 'Breakdown' : 'Részletezés', p.lines.map(money).join('\n') || null],
   ];
 }

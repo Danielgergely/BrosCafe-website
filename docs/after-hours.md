@@ -8,23 +8,22 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 - Group: 2–12 people, one booking per evening, everything **prepaid online** (brother's idea), food always included so
   the advertised price is the real minimum (Daniel: "we lie if we say it only costs x when they must buy some food").
 - **Private café, 2 hours: 12 900 Ft** (flat): the café only for them, setup, staff.
-- Plus one per-person package for the whole group:
-  - **Alap: 2 500 Ft/person**: one welcome drink each (any drink from the menu) + one simple board for the group:
-    **Waffle board** or **Fresh fruit & veggie board**. No extra dishes on Alap (the page points to the menu instead).
-  - **Fingerfood menü: 3 900 Ft/person** (instead of Alap): welcome drink + 3 different dishes of the six, prepared for
-    the whole group and served one after another.
+- Plus food on a price ladder (Daniel 2026-11-18, "no menu wording"; opening price as cheap as possible): every guest
+  gets a welcome drink (any drink from the menu) and the group picks any of the six dishes, prepared for everyone:
+  **1 tál/platter 2 500 Ft/person, every further platter +1 500** (2 tál 4 000 · 3 tál 5 500 · 4 tál 7 000) (Daniel 2026-11-18, after docs/after-hours-costs.md) (Daniel: the general name is tál/platter, never menü or fogás) (tiers `alap`/`duo`/`menu`); from the 4th dish on, each
+  is an extra at its own price (below). The page shows one list of six photo cards; each says what ticking it costs.
   - The six dishes (the brothers' list, Daniel 2026-11-18; titles stay English, descriptions Hungarian): Waffle board
     (gofri, gyümölcsök, csokoládé és feltétek) · Mini pizza bites (mini pizzák paradicsomos szósszal és sajttal) · Fresh
     fruit & veggie board (friss gyümölcsök, zöldségek és mártogatósok) · Mini burger sliders (mini hamburgerek sajttal és
     salátával) · Mini sandwich selection (mini szendvicsek változatos töltelékekkel) · Cheese & charcuterie board (sajtok,
     szalámi, kekszek és gyümölcsök).
-  - **Extra dishes** (menu only, any of the not-chosen ones, per person): waffle, pizza, fruit & veggie, sandwich
-    +1 500 Ft; burger sliders +1 800 Ft; cheese & charcuterie +2 000 Ft (about 20 % below the brother's draft).
+  - **Extra dishes** (4th dish on, per person): waffle, pizza, fruit & veggie, sandwich
+    +1 500 Ft each, like the 2nd and 3rd (Daniel 2026-11-18: keep it simple).
 - **VAT** (Daniel 2026-11-18): café fee and extra hours 27 % (room, `AH_VAT`); package and extra dishes 5 % (food and
   drink served in-house, `AH_FOOD_VAT`). The voucher lowers the café line.
 - **Extra hour: +5 900 Ft** (max 2, until 22:00; start 18:00–20:00). **Cake** from 10 000 Ft (optional).
-- Headline: **"17 900 Ft-tól"** (2 people, 2 hours, drink + food). Examples: Alap 2 p 17 900 · 6 p 27 900 · 12 p 42 900;
-  menu 2 p 20 700 · 6 p 36 300 · 12 p 59 700 · 12 p 4 h 71 500 · 6 p + cheese & charcuterie 48 300; Alap 4 p + AFTER25 19 675. (Daniel's 14 900 base and the brother's 15 000 + 5 900/person = 50 400
+- Headline: **"17 900 Ft-tól"** (2 people, 2 hours, drink + food). Examples: 1 tál 2 p 17 900 · 6 p 27 900 · 12 p 42 900; 2 tál 6 p 36 900;
+  3 tál 2 p 23 900 · 6 p 45 900 · 12 p 78 900 · 12 p 4 h 90 700 · 6 p + 1 extra 54 900; 1 tál 4 p + AFTER25 19 675. (Daniel's 14 900 base and the brother's 15 000 + 5 900/person = 50 400
   for 6 were the two ends.)
 - Voucher **AFTER25**: −25 % of the café fee only (−3 225 Ft), never the food.
 - Occasion field: Születésnap / Romantikus este / Baráti összejövetel / Céges / Családi alkalom / Egyéb.

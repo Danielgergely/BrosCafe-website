@@ -31,8 +31,8 @@
     "WELCOME_STAMPS": "5",
     "CUSTOMER_TOKEN_DAYS": "365",
     "SEED_ON_STARTUP": "true",
-    // Online After Hours booking + Delivery ordering: off on production until prices/products are final (Daniel 17 Nov)
-    "BOOKINGS_OPEN": "false",
+    // Forms open for click-testing (Daniel 18 Nov); no Stripe keys here, so nothing can be paid or saved yet
+    "BOOKINGS_OPEN": "true",
     "CAFE_TIMEZONE": "Europe/Budapest",
     "CAFE_NAME": "Bros Cafe",
     "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",
