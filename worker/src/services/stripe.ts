@@ -52,6 +52,7 @@ interface Checkout {
   kind: 'ah' | 'dl'; ref: string; // metadata: which module and which row the payment belongs to
   lines: CheckoutLine[]; email: string; lang: string; description: string;
   successUrl: string; cancelUrl: string; expiresAt?: Date;
+  authorizeOnly?: boolean; // card held, captured later by capture() or released by cancelIntent() (Delivery rush requests)
 }
 /** Card, Apple Pay and Google Pay: Checkout offers the wallets by itself when they are on in the Stripe dashboard. */
 export function createCheckout(app: App, o: Checkout): Promise<{ id: string; url: string }> {
@@ -66,13 +67,22 @@ export function createCheckout(app: App, o: Checkout): Promise<{ id: string; url
     cancel_url: o.cancelUrl,
     expires_at: Math.floor(expires.getTime() / 1000),
     metadata: { kind: o.kind, ref: o.ref },
-    payment_intent_data: { description: o.description, metadata: { kind: o.kind, ref: o.ref } },
+    payment_intent_data: { description: o.description, metadata: { kind: o.kind, ref: o.ref }, ...(o.authorizeOnly ? { capture_method: 'manual' } : {}) },
     line_items: Object.fromEntries(o.lines.map((l, i) => [i, {
       quantity: l.quantity ?? 1,
       price_data: { currency: 'huf', unit_amount: minor(l.amountHuf), product_data: { name: l.name } },
     }])),
   }, `checkout-${o.ref}`);
 }
+
+/** status "requires_capture" = authorised and waiting for capture() or cancelIntent(). */
+export const paymentIntent = (app: App, id: string): Promise<{ id: string; status: string; amount_capturable: number }> =>
+  call(app, 'GET', `/payment_intents/${encodeURIComponent(id)}`);
+export const capture = (app: App, id: string): Promise<{ id: string; status: string }> =>
+  call(app, 'POST', `/payment_intents/${encodeURIComponent(id)}/capture`, {}, `capture-${id}`);
+/** Releases an authorisation: nothing is charged. */
+export const cancelIntent = (app: App, id: string): Promise<{ id: string; status: string }> =>
+  call(app, 'POST', `/payment_intents/${encodeURIComponent(id)}/cancel`, {}, `cancel-${id}`);
 
 /** Idempotent per (reference, amount): a retry never refunds twice. */
 export const refund = (app: App, paymentIntent: string, amountHuf: number, ref: string): Promise<{ id: string; status: string }> =>

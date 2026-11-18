@@ -22,6 +22,7 @@ const CATS = ['coffee', 'specialty', 'tea', 'smoothie', 'bottled']; // every dri
 /** Hungarian public holidays: never delivery days. Extend each year (the same list as CONFIG.holidays on the page). */
 const HOLIDAYS = ['2026-12-25', '2026-12-26', '2027-01-01', '2027-03-15', '2027-03-26', '2027-03-29', '2027-05-01', '2027-05-17', '2027-08-20', '2027-10-23', '2027-11-01', '2027-12-25', '2027-12-26'];
 const RUSH_AUTO_OFF_MIN = 45;
+const RUSH_ANSWER_MIN = 10; // a rush request nobody answers is declined (and the card released) after this
 const SLOT_HOURS = ['07:30', '18:00'];
 const DAYS_AHEAD_MAX = 10;
 const MAX_CUPS = 40;
@@ -74,6 +75,8 @@ export async function sweep(app: App) {
   ]);
   const due = await all(d1(app).prepare("SELECT * FROM dl_orders WHERE kind = 'group' AND status = 'open' AND cutoff_at <= ? LIMIT 20").bind(now));
   for (const o of due) await lockGroup(app, o);
+  const unanswered = await all(d1(app).prepare("SELECT * FROM dl_orders WHERE status = 'requested' AND answer_by <= ? LIMIT 10").bind(now));
+  for (const o of unanswered) await declineRush(app, o, 'timeout');
 }
 
 // ---- public reads ----
@@ -199,11 +202,11 @@ const itemInserts = (app: App, orderId: string, payerId: string, cups: Cup[]) =>
 ).bind(orderId, payerId, c.product_id, c.cat, c.label, c.who || null, c.milk, c.size, c.iced, c.price, payerId));
 
 /** One Checkout session for one payer; on failure the hold is released. */
-async function checkout(app: App, o: { payerId: string; orderId: string; cups: Cup[]; fee: number; email: string; lang: string; success: string; cancel: string; expiresAt?: Date; what: string }) {
+async function checkout(app: App, o: { payerId: string; orderId: string; cups: Cup[]; fee: number; email: string; lang: string; success: string; cancel: string; expiresAt?: Date; what: string; authorizeOnly?: boolean }) {
   try {
     const lines = o.cups.map((c) => ({ name: c.label, amountHuf: c.price }));
     if (o.fee) lines.push({ name: o.lang === 'en' ? 'Delivery fee' : 'Kiszállítási díj', amountHuf: o.fee });
-    const session = await stripe.createCheckout(app, { kind: 'dl', ref: o.payerId, lines, email: o.email, lang: o.lang, description: `Bros Delivery ${o.orderId} · ${o.what}`, successUrl: o.success, cancelUrl: o.cancel, expiresAt: o.expiresAt });
+    const session = await stripe.createCheckout(app, { kind: 'dl', ref: o.payerId, lines, email: o.email, lang: o.lang, description: `Bros Delivery ${o.orderId} · ${o.what}`, successUrl: o.success, cancelUrl: o.cancel, expiresAt: o.expiresAt, authorizeOnly: o.authorizeOnly });
     await d1(app).prepare('UPDATE dl_payers SET stripe_session = ? WHERE id = ?').bind(session.id, o.payerId).run();
     return session.url;
   } catch (e) {
@@ -237,7 +240,7 @@ async function place(app: App, v: Place) {
   }
   const groupPath = `${v.path}csoport/`;
   const url = await checkout(app, {
-    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.address.company}`,
+    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.address.company}`,
     success: siteUrl(app, code ? `${groupPath}?g=${code}&paid=1` : `${v.path}?order=${orderId}&paid=1&t=${await sign(app, `rec${orderId}`)}`),
     cancel: siteUrl(app, code ? `${groupPath}?g=${code}&cancelled=1` : `${v.path}?cancelled=1`),
   });
@@ -383,7 +386,11 @@ async function grantStamps(app: App, p: Doc) {
 // ---- emails ----
 const getOrder = (app: App, id: string) => d1(app).prepare('SELECT * FROM dl_orders WHERE id = ?').bind(id).first<Doc>();
 const getPayer = (app: App, id: string) => d1(app).prepare('SELECT * FROM dl_payers WHERE id = ?').bind(id).first<Doc>();
-const when = (o: Doc, en = false) => `${o.date} · ${o.rush ? (en ? 'as soon as possible' : 'amint lehet (rush)') : o.slot_time}`;
+const when = (o: Doc, en = false) => `${o.date} · ${o.rush ? (o.eta_hm ? (en ? `about ${o.eta_hm} (rush)` : `kb. ${o.eta_hm} (rush)`) : en ? 'as soon as possible' : 'amint lehet (rush)') : o.slot_time}`;
+/** HH:MM in Budapest of an ISO time. */
+const clockAt = (app: App, at: string) => { const t = today(app, parseIso(at)); return `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`; };
+/** The order with its accepted arrival time as HH:MM (rush), for the emails. */
+const withEta = (app: App, o: Doc): Doc => ({ ...o, eta_hm: o.eta_at ? clockAt(app, o.eta_at) : null });
 const cupLine = (i: Doc) => (i.who ? `${i.who} · ${i.label}` : i.label);
 async function paidItems(app: App, orderId: string) {
   return all<Doc>(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id WHERE i.order_id = ? AND p.status = 'paid' ORDER BY i.id").bind(orderId));
@@ -393,12 +400,12 @@ function list(lines: string[]) {
 }
 
 /** The highlighted card: the day big, time and place small. */
-const deliveryHero = (o: Doc, en: boolean) => hero(o.rush ? (en ? 'As soon as possible' : 'Amint lehet') : longDate(o.date, en),
+const deliveryHero = (o: Doc, en: boolean) => hero(o.rush ? (o.eta_hm ? (en ? `About ${o.eta_hm}` : `Kb. ${o.eta_hm}`) : en ? 'As soon as possible' : 'Amint lehet') : longDate(o.date, en),
   [...(o.rush ? [] : [o.slot_time]), `${o.company} · ${o.street}, ${o.floor}`]);
 
 /** The counter's ticket: a new order to make. */
-async function notifyCounter(app: App, o: Doc) {
-  const items = await paidItems(app, o.id);
+async function notifyCounter(app: App, order: Doc) {
+  const o = withEta(app, order), items = await paidItems(app, o.id);
   const payers = await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(o.id));
   const till = payers.filter((p) => !wantsInvoice(p)).map((p) => `${p.name}: ${ft(p.amount_huf - p.refund_huf)}`);
   const noInvoice = payers.filter((p) => wantsInvoice(p) && !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
@@ -415,10 +422,18 @@ async function notifyCounter(app: App, o: Doc) {
   });
 }
 
-async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' | 'out' | 'late' | 'cancelled') {
-  const en = p.lang === 'en', items = await itemsOf(app, p.id);
+async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'coming' | 'out' | 'late' | 'cancelled' | 'requested' | 'declined' | 'timeout') {
+  const en = p.lang === 'en', items = await itemsOf(app, p.id), o = withEta(app, order);
+  const released = en ? 'The amount was only held on your card and is released now; nothing was charged (some banks show the hold for a few more days). You can still order for the fixed times.'
+    : 'Az összeget csak zároltuk a kártyádon, ezt most feloldottuk, semmit nem terheltünk (egyes bankok még pár napig mutatják a zárolást). A fix időpontokra továbbra is rendelhetsz.';
   const T = {
-    confirmed: en ? ['Your Bros Delivery order', 'Thank you for your order!', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : 'Your order is paid. We are bringing it at the time you chose.']
+    requested: en ? ['We got your rush request', 'Request received', `Within ${RUSH_ANSWER_MIN} minutes we confirm when we can be there. Until then the amount is only held on your card, not charged.`]
+      : ['Megkaptuk az azonnali kérésed', 'Megkaptuk a kérést', `${RUSH_ANSWER_MIN} percen belül visszaigazoljuk, mikorra érünk oda. Addig az összeget csak zároljuk a kártyádon, nem terheljük meg.`],
+    declined: en ? ['We cannot do your rush order now', 'Not possible right now', `Sorry, we cannot bring it right now. ${released}`] : ['Most nem tudjuk vállalni', 'Most nem megy', `Sajnos most nem tudjuk azonnal kivinni. ${released}`],
+    timeout: en ? ['We could not confirm your rush order in time', 'Not possible right now', `We could not answer within ${RUSH_ANSWER_MIN} minutes, so we closed the request. ${released}`]
+      : ['Nem tudtuk időben visszaigazolni', 'Most nem megy', `Nem tudtunk ${RUSH_ANSWER_MIN} percen belül válaszolni, ezért lezártuk a kérést. ${released}`],
+    confirmed: o.rush && o.eta_hm ? (en ? ['Your Bros Delivery is accepted', 'Accepted!', `We will be there at about ${o.eta_hm}. Your order is paid.`] : ['Elfogadtuk a Bros Delivery rendelést', 'Elfogadtuk!', `Kb. ${o.eta_hm}-ra ott vagyunk. A rendelés ki van fizetve.`])
+      : en ? ['Your Bros Delivery order', 'Thank you for your order!', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : 'Your order is paid. We are bringing it at the time you chose.']
       : ['Bros Delivery rendelés', 'Köszönjük a rendelést!', o.kind === 'group' ? 'Az italod ki van fizetve, és a csoport listáján van. Amit a határidőig kifizettek, azt visszük.' : 'A rendelés ki van fizetve, a választott időpontra visszük.'],
     coming: en ? ['Your group order is closed', 'It is coming', 'The group order is closed and we are making the drinks.'] : ['Lezárult a csoportos rendelés', 'Készül, visszük', 'A csoportos rendelés lezárult, készítjük az italokat.'],
     out: en ? ['Your Bros Delivery is on its way', 'On the way', 'One of us has just left the café with your drinks.'] : ['Úton a Bros Delivery', 'Elindultunk', 'Egyikünk most indult el a kávézóból az italokkal.'],
@@ -477,7 +492,9 @@ async function refundPayer(app: App, p: Doc) {
 export async function onPaid(app: App, session: Doc) {
   const id = String(session.metadata?.ref ?? session.client_reference_id ?? '');
   const before = await getPayer(app, id);
-  if (!before || session.payment_status !== 'paid' || !['pending', 'expired'].includes(before.status)) return;
+  if (!before) return;
+  if (session.payment_status !== 'paid') { if (session.status === 'complete' && session.payment_intent) await onAuthorised(app, before, session); return; }
+  if (!['pending', 'expired'].includes(before.status)) return;
   const r = await d1(app).prepare("UPDATE dl_payers SET status = 'paid', paid_at = ?, hold_expires = NULL, stripe_payment_intent = ?, stripe_session = ? WHERE id = ? AND status IN ('pending', 'expired')")
     .bind(nowIso(), String(session.payment_intent ?? ''), session.id ?? before.stripe_session, id).run();
   if (!r.meta.changes) return;
@@ -506,6 +523,101 @@ export async function onPaid(app: App, session: Doc) {
     await settleGroupFee(app, o);
   } else await notifyCounter(app, o);
   await sendPayer(app, p, o, 'confirmed');
+}
+
+// ---- rush requests: the card is authorised at Checkout, staff accept (capture) or decline (release) ----
+/** Checkout finished without a charge: a rush request waiting for the counter's answer. */
+async function onAuthorised(app: App, before: Doc, session: Doc) {
+  if (!['pending', 'expired'].includes(before.status)) return;
+  const o = await getOrder(app, before.order_id);
+  if (!o?.rush) return;
+  const pi = await stripe.paymentIntent(app, String(session.payment_intent)); // Checkout's payment_status alone does not say "authorised"
+  if (pi.status !== 'requires_capture') return;
+  const r = await d1(app).prepare("UPDATE dl_payers SET status = 'authorised', hold_expires = NULL, stripe_payment_intent = ?, stripe_session = ? WHERE id = ? AND status IN ('pending', 'expired')")
+    .bind(pi.id, session.id ?? before.stripe_session, before.id).run();
+  if (!r.meta.changes) return;
+  const answerBy = isoAt(new Date(Date.now() + RUSH_ANSWER_MIN * 60_000));
+  const ok = await d1(app).prepare("UPDATE dl_orders SET status = 'requested', answer_by = ? WHERE id = ? AND status IN ('pending', 'expired')").bind(answerBy, o.id).run();
+  const p = (await getPayer(app, before.id))!;
+  if (!ok.meta.changes) { // cancelled meanwhile: let the card go
+    await stripe.cancelIntent(app, pi.id).catch((e) => console.error(`release of ${p.id} failed`, e));
+    await d1(app).prepare("UPDATE dl_payers SET status = 'released' WHERE id = ?").bind(p.id).run();
+    return;
+  }
+  const req = (await getOrder(app, o.id))!;
+  await notifyRequest(app, req);
+  await sendPayer(app, p, req, 'requested');
+}
+
+/** The counter's alarm: answer within RUSH_ANSWER_MIN minutes on the admin board. */
+async function notifyRequest(app: App, o: Doc) {
+  const items = await all<Doc>(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id WHERE i.order_id = ? AND p.status = 'authorised' ORDER BY i.id").bind(o.id));
+  const by = clockAt(app, o.answer_by);
+  await mail(app, {
+    to: staffAddress(app), staff: true, subject: `AZONNALI kérés ${o.id}: ${items.length} ital · ${o.company}, válasz ${by}-ig`, title: 'Azonnali kérés',
+    parts: [
+      hero(`Válaszolj ${by}-ig`, [`${o.company} · ${o.street}, ${o.floor}`]),
+      listCard('Italok', items.map(cupLine)),
+      card('Rendelés', [['Azonosító', o.id], ['Megjegyzés', o.note], ['Kapcsolat', `${o.contact_name} · ${o.contact_phone}`]]),
+      para(`A táblán: Elfogad (15 / 20 / 30 perc vagy időpont), vagy Most nem megy. ${RUSH_ANSWER_MIN} perc után magától elutasítjuk, és a vendég kártyáján feloldjuk a zárolást.`),
+    ],
+    button: ['Megnyitom a táblát', siteUrl(app, '/admin/delivery/')],
+  });
+}
+
+/** Releases the card of a request that is declined by staff or not answered in time. False when it was no longer open. */
+async function declineRush(app: App, o: Doc, why: 'declined' | 'timeout') {
+  const claim = await d1(app).prepare("UPDATE dl_orders SET status = 'declined' WHERE id = ? AND status = 'requested'").bind(o.id).run();
+  if (!claim.meta.changes) return false;
+  for (const p of await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'authorised'").bind(o.id))) {
+    // a failed release still lapses by itself within 7 days (Stripe); the guest is told either way
+    await stripe.cancelIntent(app, p.stripe_payment_intent).catch((e) => console.error(`release of ${p.id} failed`, e));
+    await d1(app).prepare("UPDATE dl_payers SET status = 'released' WHERE id = ?").bind(p.id).run();
+    await sendPayer(app, p, o, why);
+  }
+  return true;
+}
+
+/** Staff answer: { minutes } or { time: "HH:MM" } accepts (captures, then invoice, counter email, ETA email); { accept: false } declines. */
+export async function answerRush(app: App, id: string, b: Doc) {
+  const o = await getOrder(app, id);
+  if (!o) throw new ApiError(404, 'not_found');
+  if (b.accept === false) {
+    if (!(await declineRush(app, o, 'declined'))) throw new ApiError(409, 'not_requested');
+    return { id, status: 'declined' };
+  }
+  const now = Date.now();
+  let eta: Date;
+  if (Number.isInteger(b.minutes) && b.minutes >= 5 && b.minutes <= 120) eta = new Date(now + b.minutes * 60_000);
+  else if (typeof b.time === 'string' && /^\d\d:\d\d$/.test(b.time)) {
+    eta = instant(app, today(app).date, b.time);
+    if (eta.getTime() <= now || eta.getTime() > now + 3 * 3600e3) throw invalid(['time']);
+  } else throw invalid(['minutes']);
+  const claim = await d1(app).prepare("UPDATE dl_orders SET status = 'new', eta_at = ? WHERE id = ? AND status = 'requested'").bind(isoAt(eta), id).run();
+  if (!claim.meta.changes) throw new ApiError(409, 'not_requested'); // answered meanwhile, or timed out
+  const p = await d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'authorised' LIMIT 1").bind(id).first<Doc>();
+  try {
+    if (!p) throw new Error('no authorised payer');
+    await stripe.capture(app, p.stripe_payment_intent);
+  } catch (e) {
+    console.error(`capture of ${id} failed`, e);
+    await d1(app).prepare("UPDATE dl_orders SET status = 'requested' WHERE id = ? AND status = 'new'").bind(id).run();
+    await declineRush(app, o, 'declined'); // the hold is gone or refused: the guest is told, nothing was charged
+    throw new ApiError(409, 'capture_failed');
+  }
+  await d1(app).prepare("UPDATE dl_payers SET status = 'paid', paid_at = ? WHERE id = ?").bind(nowIso(), p.id).run();
+  const paid = (await getPayer(app, p.id))!, accepted = (await getOrder(app, id))!;
+  app.later((async () => { await issueInvoice(app, paid, accepted); await notifyCounter(app, accepted); await sendPayer(app, paid, accepted, 'confirmed'); })());
+  return { id, status: 'new', eta_at: iso(accepted.eta_at) };
+}
+
+/** The guest's page after Checkout polls this (signed `t` from the return URL): where the order stands. */
+export async function orderStatus(app: App, id: string, token: unknown) {
+  if (typeof token !== 'string' || !safeEqual(token, await recToken(app, id))) throw new ApiError(403, 'forbidden');
+  await sweep(app);
+  const o = await getOrder(app, id);
+  if (!o) throw new ApiError(404, 'not_found');
+  return { id, status: o.status, rush: !!o.rush, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
 }
 
 export async function onExpired(app: App, session: Doc) {
@@ -582,11 +694,11 @@ export async function board(app: App, dateParam: unknown) {
   await sweep(app);
   const date = validDate(dateParam) ? dateParam : today(app).date;
   const [s, list, taken, closed] = await Promise.all([readSettings(app), activeSlots(app), booked(app, date, date), closedSlots(app, date, date)]);
-  const orders = await all(d1(app).prepare(`SELECT * FROM dl_orders WHERE date = ? AND status IN ('new', 'making', 'out', 'delivered') ORDER BY created_at`).bind(date));
-  const items = await all(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id JOIN dl_orders o ON o.id = i.order_id WHERE o.date = ? AND p.status = 'paid' ORDER BY i.id").bind(date));
+  const orders = await all(d1(app).prepare(`SELECT * FROM dl_orders WHERE date = ? AND status IN ('requested', 'new', 'making', 'out', 'delivered') ORDER BY created_at`).bind(date));
+  const items = await all(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id JOIN dl_orders o ON o.id = i.order_id WHERE o.date = ? AND p.status IN ('paid', 'authorised') ORDER BY i.id").bind(date));
   const view = (o: Doc) => {
     const cups = items.filter((i) => i.order_id === o.id).map(cupLine);
-    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, company: o.company, contact: `${o.contact_name} · ${o.contact_phone}`, address: `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status };
+    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, company: o.company, contact: `${o.contact_name} · ${o.contact_phone}`, address: `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
   };
   const cols: Doc[] = list.map((x) => ({ ...slotInfo(app, date, x, taken, closed), orders: orders.filter((o) => o.slot_id === x.id).map(view) }));
   // orders of a slot that was removed since, and rush orders, still have to be made
@@ -664,6 +776,7 @@ export async function pauseRecurring(app: App, id: string, active: unknown) {
 export async function cancelOrder(app: App, id: string) {
   const o = await getOrder(app, id);
   if (!o) throw new ApiError(404, 'not_found');
+  if (o.status === 'requested') { await declineRush(app, o, 'declined'); return { id, status: 'declined', refunded: 0 }; }
   if (!['pending', 'open', 'new', 'making', 'out'].includes(o.status)) throw new ApiError(409, 'not_cancellable');
   const paid = await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(id));
   if (paid.length && !stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
