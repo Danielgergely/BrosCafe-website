@@ -75,6 +75,9 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-18 Signed-in guests (handoff item 2): "Rendeléseim" on /fiok/ (Delivery + After Hours by email, change/cancel
+  links for evenings), "Újra rendelem" (everything but date/time; also from /fiok/), last details pre-filled only when
+  signed in, group stamps automatic. Privacy text says so.
 - 2026-11-18 Delivery zone (handoff item 1): Photon (OpenStreetMap) address suggestions on the order form and the
   "Hova visszük?" check, straight-line 700 m from Csanády u. 4/b (`DELIVERY_RADIUS_M`); outside → refused, not found →
   "írj nekünk", never blocked. Privacy names Photon (komoot GmbH); ÁSZF 500 → 700 m. Not deployed.

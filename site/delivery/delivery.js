@@ -95,6 +95,13 @@
   const readOpt = (c, el) => { const k = el.dataset.k; c[k] = k === 'size' ? Number(el.value) : k === 'iced' ? el.value === 'true' : el.value; };
 
   // ---------- data access: everything the pages read or write goes through `api` ----------
+  const guestToken = () => B.shell.customer?.token() || null; // the loyalty account (magic link), not staff
+  // a signed-in guest's earlier Delivery order (GET /api/customer/reorder): everything but the date and time
+  async function lastOrder(id) {
+    if (!guestToken()) return null;
+    const r = await fetch(`/api/customer/reorder${id ? `?order=${encodeURIComponent(id)}` : ''}`, { headers: { Accept: 'application/json', Authorization: `Bearer ${guestToken()}` } });
+    return r.ok ? (await r.json()).order : null;
+  }
   // The worker: worker/src/routers/delivery.ts, docs/delivery-api.md.
   const api = (() => {
     const base = '/api/delivery';
@@ -102,6 +109,7 @@
       // admin calls carry the staff token (belepes/staff.js); a dead session goes back to the login
       const headers = { 'Content-Type': 'application/json' }, staff = path.startsWith('/admin') && B.staff;
       if (staff && staff.token()) headers.Authorization = `Bearer ${staff.token()}`;
+      else if (!staff && guestToken()) headers.Authorization = `Bearer ${guestToken()}`; // signed in: stamps go on their card
       const r = await fetch(base + path, { credentials: 'same-origin', headers, ...opts });
       const body = await r.json().catch(() => ({}));
       if (r.status === 401 && staff) staff.toLogin();
@@ -507,7 +515,37 @@
     mode(); renderCups();
     loadSlots();
     menuEl.innerHTML = `<li class="dl-state" role="status">${t('Itallap betöltése…')}</li>`;
-    loadMenu().then(() => { if (!menu.size) throw new Error('empty'); renderMenu(); }).catch(() => { menuEl.innerHTML = `<li class="dl-state" role="alert">${t('Az itallap most nem érhető el. Próbáld újra egy perc múlva.')}</li>`; });
+    const menuReady = loadMenu().then(() => { if (!menu.size) throw new Error('empty'); renderMenu(); }).catch(() => { menuEl.innerHTML = `<li class="dl-state" role="alert">${t('Az itallap most nem érhető el. Próbáld újra egy perc múlva.')}</li>`; });
+
+    // signed in: the details of the last order fill the empty fields; "Újra rendelem" (or ?ujra=<id> from /fiok/) also
+    // brings back the drinks. Nothing is remembered for guests without an account.
+    const again = $('#dl-again');
+    function fill(o, all) {
+      const set = (n, v) => { const el = F(n); if (el && v != null && (all || !el.value.trim())) el.value = v; };
+      if (all) { form.elements.pay.value = o.kind; F('inv_want').checked = o.kind === 'group' && !!o.invoice; mode(); }
+      Object.entries({ company: o.address.company, street: o.address.street, floor: o.address.floor, note: o.address.note, name: o.contact.name, email: o.contact.email, phone: o.contact.phone }).forEach(([n, v]) => set(n, v));
+      if (o.invoice && (all || o.kind === kind())) Object.entries({ inv_name: o.invoice.name, tax_number: o.invoice.tax_number, zip: o.invoice.zip, city: o.invoice.city, inv_street: o.invoice.street }).forEach(([n, v]) => set(n, v));
+      if (all) {
+        const known = o.items.filter((i) => menu.has(i.product_id));
+        cups = known.map((i) => { const d = menu.get(i.product_id); return { ...newCup(i.product_id), who: i.who, milk: d.milks.includes(i.milk) ? i.milk : '', size: d.sizes[i.size] ? i.size : 0, iced: d.temp === 'both' && i.iced }; });
+        setErr('cups', ''); syncMenu(); renderCups(); summary();
+        const gone = o.items.length - known.length;
+        again.innerHTML = `<p>${esc(tn('Betöltöttük: {n} ital, {company}. Válassz időpontot, és nézd át a többit.', cups.length, { company: o.address.company }))}${gone ? ` ${esc(tn('{n} ital már nincs az itallapon.', gone))}` : ''}</p>`;
+      }
+      if (val('street')) checkZone();
+    }
+    (async () => {
+      const want = returned(['ujra']).ujra;
+      let o = null;
+      try { o = await lastOrder(want); } catch (e) { return; }
+      if (!o) return;
+      await menuReady;
+      if (want) { fill(o, true); again.hidden = false; again.scrollIntoView({ block: 'center' }); return; }
+      fill(o, false);
+      again.innerHTML = `<p>${esc(tn('Legutóbb: {n} ital, {company}.', o.items.length, { company: o.address.company }))}</p><button type="button" class="btn btn--ghost" data-again>${t('Újra rendelem')}</button>`;
+      again.hidden = false;
+      $('[data-again]', again).addEventListener('click', () => { fill(o, true); again.focus(); });
+    })();
     watchDay(loadSlots);
     setInterval(() => { if (!document.hidden && !sending) loadSlots(); }, 60000); // cutoffs pass and rush switches itself off while the page is open
   }
@@ -596,6 +634,7 @@
     function bindForm() {
       const form = $('#dl-join'), setErr = errors(form), F = (n) => form.elements[n], opts = $('#dl-join-opts'), btn = $('.dl-join__btn', form), out = $('#dl-join-result');
       window.BROS_TERMS?.bind(form, 'dl');
+      if (guestToken()) B.shell.customer.me().then((m) => { if (!m) return; ['name', 'email', 'loyalty_email'].forEach((n) => { if (!F(n).value) F(n).value = n === 'name' ? m.name : m.email; }); }).catch(() => {});
       const price = () => { btn.textContent = cup ? `${t('Hozzáadom és fizetek')} · ${ft(cupPrice(cup))}` : t('Hozzáadom és fizetek'); };
       cup = null;
       const drink = () => {

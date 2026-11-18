@@ -293,7 +293,7 @@ export async function retryInvoices(app: App) {
 }
 
 // ---- emails ----
-const cancelLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}lemondas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
+export const cancelLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}lemondas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
 const timeOf = (b: Doc) => `${b.start_time}–${endOf(b)}`;
 /** The highlighted date card: the evening, the time and size, the place. */
 const evening = (b: Doc, en: boolean, map = true) => hero(longDate(b.date, en), [
@@ -566,7 +566,7 @@ function changes(a: Doc, b: Doc, en: boolean): [string, string][] {
   add('E-mail', a.email, b.email);
   return out;
 }
-const modifyLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}modositas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
+export const modifyLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}modositas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
 
 async function sendChanged(app: App, before: Doc, b: Doc, who: 'guest' | 'admin') {
   const en = b.lang === 'en', diff = changes(before, b, en);

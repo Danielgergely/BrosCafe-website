@@ -47,6 +47,17 @@
 .acct__side .paper:has(> a.link:only-child) { padding: 0; }
 .acct__side .paper > a.link:only-child { display: flex; align-items: center; min-height: 56px; padding: 0 clamp(18px, 2.6vw, 28px); border-radius: inherit; }
 .acct__row { display: flex; flex-wrap: wrap; gap: 10px; }
+.orders { display: grid; margin: 0 0 4px; padding: 0; list-style: none; }
+.order { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.order:last-child { border-bottom: 0; }
+.order__main, .order__end { display: grid; gap: 2px; align-content: start; }
+.order__main b, .order__end b { font-size: 15.5px; font-weight: 650; color: var(--text); }
+.order__main span { font-size: 14px; color: var(--text-soft); }
+.order__end { text-align: right; }
+.order__st { font-size: 13px; font-weight: 600; color: var(--olive-deep); }
+.order__st[data-s="cancelled"], .order__st[data-s="refunded"], .order__st[data-s="expired"] { color: var(--text-soft); }
+.order__acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 14.5px; }
+.order__acts:empty { display: none; }
 .acct__row .btn { flex: 1 1 200px; padding-inline: 16px; }
 .big { display: flex; align-items: center; gap: 10px; font: 420 22px/1.2 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; }
 .big svg, .pill-ico { flex: none; width: 24px; height: 24px; fill: none; stroke: var(--olive-dark); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }

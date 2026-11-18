@@ -150,6 +150,7 @@
   </div>
   <div class="acct__side">
     <div class="paper" data-testid="account-rewards"><h2 class="label">${tx('account.rewardsTitle')}</h2><p class="big">${ico('gift')}${tx('account.rewardsAvailable', { n: m.reward_ready ? 1 : 0 })}</p></div>
+    <div class="paper acct-orders" id="orders" hidden><h2 class="label">${X('RENDELÉSEIM', 'MY ORDERS')}</h2><div id="order-list"></div></div>
     <div class="paper" data-testid="account-invite"><h2 class="label">${tx('account.inviteTitle')}</h2>
       ${m.free_coffees > 0 ? `<p class="banked">${tx('account.bankedFree', { n: m.free_coffees })}</p>` : ''}
       <p>${tx('account.inviteBody')}</p><button class="btn" type="button" data-share>${tx('account.inviteShare')}</button></div>
@@ -167,6 +168,7 @@
 </div></section>`);
 
     wallet(app, m.code);
+    orders();
     $('[data-share]').addEventListener('click', async () => {
       try {
         if (navigator.share) { await navigator.share({ title: 'Bros Cafe', text: tx('account.inviteMessage'), url: invite }); return; }
@@ -198,6 +200,41 @@
       const chips = picks.filter((id) => byId[id]).map((id) => { const n = byId[id].name; return `<a class="chip" href="/etlap/#${encodeURIComponent(id)}">${esc(typeof n === 'object' ? n[B.lang] || n.hu || n.en : n)}</a>`; });
       if (chips.length) { $('#pick-list').innerHTML = chips.join(''); $('#picks').hidden = false; }
     }).catch(() => {});
+  }
+
+  // "Rendeléseim": Delivery orders (as payer) and After Hours bookings of this email, newest first (GET /api/customer/orders)
+  const ST = {
+    open: ['Gyűjtés folyik', 'Collecting'], new: ['Beérkezett', 'Received'], making: ['Készül', 'Being made'], out: ['Úton', 'On the way'],
+    delivered: ['Kézbesítve', 'Delivered'], paid: ['Fizetve', 'Paid'], cancelled: ['Lemondva', 'Cancelled'], refunded: ['Visszatérítve', 'Refunded'],
+    expired: ['Lejárt', 'Expired'],
+  };
+  const SHOW = 5;
+  async function orders() {
+    const box = $('#orders'), out = $('#order-list');
+    let d;
+    try { d = await api('customer/orders', { auth: true }); } catch (e) { return; } // the rest of the account still works
+    const year = new Date().getFullYear();
+    const day = (iso) => { const x = new Date(`${iso}T12:00:00`); return x.toLocaleDateString(B.locale, { month: 'short', day: 'numeric', ...(x.getFullYear() !== year ? { year: 'numeric' } : {}) }); };
+    const link = (href, text) => `<a class="link" href="${esc(href)}">${esc(text)}</a>`;
+    const items = [
+      ...d.delivery.map((o) => ({ date: o.date, html: `
+        <div class="order__main"><b>Bros Delivery · ${esc(X(`${o.drinks} ital`, `${o.drinks} ${o.drinks === 1 ? 'drink' : 'drinks'}`))}</b>
+          <span>${esc([day(o.date), o.rush ? X('azonnali', 'rush') : o.time, o.company].filter(Boolean).join(' · '))}</span></div>
+        <div class="order__end"><b>${S.ft(o.amount)}</b><span class="order__st" data-s="${esc(o.status)}">${esc(X(...(ST[o.status] || [o.status, o.status])))}</span></div>
+        <div class="order__acts">${o.group_code && o.status === 'open' ? link(`/delivery/csoport/?g=${encodeURIComponent(o.group_code)}`, X('A csoportos rendelés', 'The group order')) : ''}${link(`/delivery/?ujra=${encodeURIComponent(o.id)}#rendeles`, X('Újra rendelem', 'Order again'))}</div>` })),
+      ...d.after_hours.map((b) => ({ date: b.date, html: `
+        <div class="order__main"><b>Bros After Hours · ${esc(X(`${b.guests} fő`, `${b.guests} guests`))}</b><span>${esc(`${day(b.date)} · ${b.time}`)}</span></div>
+        <div class="order__end"><b>${S.ft(b.amount)}</b><span class="order__st" data-s="${esc(b.status)}">${esc(X(...(ST[b.status] || [b.status, b.status])))}</span></div>
+        ${b.modify_url || b.cancel_url ? `<div class="order__acts">${b.modify_url ? link(b.modify_url, X('Módosítás', 'Change')) : ''}${b.cancel_url ? link(b.cancel_url, X('Lemondás', 'Cancel')) : ''}</div>` : ''}` })),
+    ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    const paint = (all) => {
+      out.innerHTML = items.length
+        ? `<ul class="orders">${items.slice(0, all ? items.length : SHOW).map((x) => `<li class="order">${x.html}</li>`).join('')}</ul>${!all && items.length > SHOW ? `<button class="link" type="button" data-all>${esc(X(`Mind a(z) ${items.length}`, `All ${items.length}`))}</button>` : ''}`
+        : `<p>${X('Még nincs rendelésed. Itt látod majd a <a class="link" href="/delivery/">Bros Delivery</a> rendeléseidet és az <a class="link" href="/after-hours/">After Hours</a> estéidet.', 'No orders yet. Your <a class="link" href="/delivery/">Bros Delivery</a> orders and <a class="link" href="/after-hours/">After Hours</a> evenings will show up here.')}</p>`;
+      $('[data-all]', out)?.addEventListener('click', () => { paint(true); $$('.order', out)[SHOW]?.querySelector('a')?.focus(); });
+    };
+    paint(false);
+    box.hidden = false;
   }
 
   // =====================================================================================================================

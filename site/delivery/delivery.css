@@ -10,6 +10,10 @@
 .dl-sub { margin: 24px 0 10px; font: 700 12px/1.4 var(--sans); letter-spacing: .16em; text-transform: uppercase; color: var(--accent-text); }
 .dl-preview { margin-top: 14px; padding: 14px 16px; border: 1.5px dashed var(--text); border-radius: var(--r-md); background: var(--ivory-hi); font-size: 15px; line-height: 1.5; color: var(--text); }
 .dl-preview:focus, .dl-return:focus { outline: none; }
+.dl-again { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; margin-top: 20px; padding: 14px 16px 14px 20px; border: var(--hair); border-radius: var(--r-md); background: rgb(var(--olive-rgb) / .08); font-size: 15px; line-height: 1.5; }
+.dl-again p { margin: 0; }
+.dl-again:focus { outline: none; }
+.dl-again[hidden] { display: none; }
 .dl-preview a { color: var(--olive-deep); font-weight: 600; text-underline-offset: 3px; }
 .dl-preview[hidden], .dl-err[hidden], .dl-return[hidden], .dl-bar[hidden], .dl-more[hidden] { display: none; }
 .dl-return { margin-top: 20px; padding: 18px 20px; border: var(--hair); border-radius: var(--r-md); background: var(--ivory-2); font-size: 15px; line-height: 1.55; scroll-margin-top: calc(var(--header-h) + 16px); }

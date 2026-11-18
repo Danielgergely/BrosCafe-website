@@ -98,6 +98,12 @@ export async function requireAdmin(c: Ctx): Promise<Doc> {
   return user;
 }
 
+/** The signed-in customer when a valid customer token is sent, else null (guest checkout pages). */
+export async function optionalCustomer(c: Ctx): Promise<Doc | null> {
+  if (!(c.req.headers.get('Authorization') ?? '').startsWith('Bearer ')) return null;
+  try { return await getCurrentCustomer(c); } catch { return null; }
+}
+
 export async function getCurrentCustomer(c: Ctx): Promise<Doc> {
   const payload = await decode(c, bearer(c), TOKEN_CUSTOMER);
   const member = await c.db.members.findOne({ code: payload.sub });

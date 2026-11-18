@@ -218,6 +218,16 @@ carry `payments_ready`.
 - **Board:** rush orders (and orders of a slot removed since) come as one extra column `{ id: "rush", rush: true }`.
   Open group orders are not listed until they lock; their paid cups count in `drinks`.
 - `PUT /admin/settings` also returns `free_from` and `fee` (read-only for now: edit `dl_settings` in D1).
+- Signed-in guests (2026-11-18, `services/my_orders.ts`, customer token as for `/api/customer/me`):
+  `GET /api/customer/orders` → `{ delivery: [{ id, kind, group_code (organiser only), date, time, rush, company, street,
+  drinks, amount, refund, status, upcoming }], after_hours: [{ id, date, time, hours, guests, amount, refund, status,
+  upcoming, modify_url, cancel_url }] }`: paid/refunded Delivery payers and paid/cancelled/refunded evenings whose email
+  is the account's (case-insensitive), 30 each. `modify_url` until 48 h before, `cancel_url` until the start.
+  `GET /api/customer/reorder[?order=BD-…]` → `{ order: { id, kind, items, address, contact, invoice } | null }`, the
+  latest (or that) paid order without date/time; a group member's order comes back as `kind: "group"` (they become the
+  organiser), contact phone empty. The Delivery page fills the empty fields from the latest order and offers
+  "Újra rendelem"; `/fiok/` links `?ujra=<id>`. `POST /groups` and `/groups/:code/participants` with a customer token
+  and no `loyalty_email` use the account's email for the stamps.
 - Zone (2026-11-18): `services/zone.ts`. Photon is called from the Worker only (the visitor's IP never reaches it),
   generic User-Agent, answers cached a day in the Cloudflare cache. Café point 47.51605, 19.0583. Recurring orders are
   not re-checked. `PHOTON_URL` overrides the base for local tests.

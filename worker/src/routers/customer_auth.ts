@@ -6,6 +6,7 @@ import { settings } from '../config';
 import { createCustomerToken, getCurrentCustomer, hashToken } from '../security';
 import * as emailService from '../services/email';
 import * as members from '../services/members';
+import * as myOrders from '../services/my_orders';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 
 /** Resolve a referral code, ignoring anything that isn't a real other member. */
@@ -99,6 +100,10 @@ export function register(api: Router) {
       session_token: await createCustomerToken(c, member.code, member.email),
     };
   });
+
+  /** "Rendeléseim": the guest's Delivery orders and After Hours bookings; and one order for "Újra rendelem". */
+  api.get('/customer/orders', async (c) => myOrders.list(c, await getCurrentCustomer(c)));
+  api.get('/customer/reorder', async (c) => myOrders.reorder(c, await getCurrentCustomer(c), c.query.get('order')));
 
   api.post('/customer/change-email', async (c) => {
     const member = await getCurrentCustomer(c);
