@@ -112,7 +112,8 @@
     const put = (path, data) => call(path, { method: 'PUT', body: JSON.stringify(data || {}) });
     return {
       slots: () => call(`/slots?days=${CONFIG.daysAhead}`),
-      checkAddress: (address) => post('/address-check', { address }),
+      checkAddress: (address, postcode) => post('/address-check', { address, postcode }), // -> { status, radius_m }
+      suggest: (q) => call(`/address-suggest?q=${encodeURIComponent(q)}`), // -> { items: [{ street, postcode, district, house }] }
       order: (payload) => post('/orders', payload), // -> { checkout_url }
       recurring: (orderId, rule, token) => post(`/orders/${encodeURIComponent(orderId)}/recurring`, { rule, token }),
       createGroup: (payload) => post('/groups', payload), // -> { code, url, checkout_url }
@@ -182,6 +183,54 @@
   // a link to a folded block (#zona, #csoportos, #aszf) opens it
   function openTarget() { const el = location.hash.length > 1 && document.getElementById(location.hash.slice(1)); if (el && el.tagName === 'DETAILS') { el.open = true; el.scrollIntoView({ block: 'start' }); $('summary', el).focus({ preventScroll: true }); } }
 
+  // Address combobox (Photon via the worker): typing suggests Budapest streets and house numbers; a pick stores the
+  // postcode on the input, which tells same-named streets in two districts apart for the zone check.
+  function addressBox(input, onPick) {
+    const id = `${input.id}-list`, list = document.createElement('ul');
+    let items = [], active = -1, timer = 0, seq = 0;
+    list.id = id; list.className = 'dl-sugg'; list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', t('Címjavaslatok')); list.hidden = true;
+    Object.entries({ role: 'combobox', 'aria-autocomplete': 'list', 'aria-expanded': 'false', 'aria-controls': id, autocomplete: 'off' }).forEach(([k, v]) => input.setAttribute(k, v));
+    input.parentElement.classList.add('dl-field--sugg'); input.after(list);
+    const show = () => {
+      list.innerHTML = items.map((x, i) => `<li role="option" id="${id}-${i}" data-i="${i}" aria-selected="${i === active}"><b>${esc(x.street)}</b><small>${esc([x.postcode, x.district].filter(Boolean).join(' · '))}</small></li>`).join('');
+      list.hidden = !items.length; list.style.top = `${input.offsetTop + input.offsetHeight + 6}px`; input.setAttribute('aria-expanded', String(items.length > 0));
+      if (active >= 0) input.setAttribute('aria-activedescendant', `${id}-${active}`); else input.removeAttribute('aria-activedescendant');
+    };
+    const close = () => { active = -1; list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); };
+    const pick = (i) => {
+      const x = items[i]; if (!x) return;
+      close(); items = [];
+      if (!x.house) { input.value = `${x.street} `; delete input.dataset.postcode; return; } // a street (may span postcodes): the house number comes next
+      input.value = x.street; input.dataset.postcode = x.postcode; onPick(x);
+    };
+    input.addEventListener('input', () => {
+      delete input.dataset.postcode; clearTimeout(timer);
+      const q = input.value.trim(), n = ++seq;
+      if (q.length < 3) { items = []; close(); return; }
+      timer = setTimeout(async () => { const r = await api.suggest(q).catch(() => ({ items: [] })); if (n !== seq) return; items = r.items || []; active = -1; show(); }, 250);
+    });
+    input.addEventListener('keydown', (e) => {
+      if (!items.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); active = (active + (e.key === 'ArrowDown' ? 1 : items.length - 1)) % items.length; show(); }
+      else if (e.key === 'Enter' && !list.hidden && active >= 0) { e.preventDefault(); pick(active); }
+      else if (e.key === 'Escape' && !list.hidden) { e.preventDefault(); close(); }
+    });
+    list.addEventListener('mousedown', (e) => e.preventDefault()); // keeps the focus (and the list) in the field
+    list.addEventListener('click', (e) => { const li = e.target.closest('[data-i]'); if (li) pick(Number(li.dataset.i)); });
+    input.addEventListener('blur', close);
+  }
+  const ZONE_OUT = 'Ez a cím sajnos kívül esik a körzetünkön.';
+  // the radius comes from the worker (DELIVERY_RADIUS_M): numbers in [data-zone] follow it, "half" for the inner ring
+  function setZone(m) {
+    if (!Number.isFinite(m)) return;
+    const sub = (s, v) => s.replace(/\d+(?= m)/, v);
+    $$('[data-zone]').forEach((el) => {
+      const v = el.dataset.zone === 'half' ? Math.round(m / 2) : m;
+      if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', sub(el.getAttribute('aria-label'), v));
+      else if (!el.children.length && sub(el.textContent, v) !== el.textContent) el.textContent = sub(el.textContent, v);
+    });
+  }
+
   // ---------- order page ----------
   function orderPage() {
     const video = $('.dl-hero__video video');
@@ -193,15 +242,17 @@
     const zf = $('#dl-zone-form'), zr = $('#dl-zone-result');
     zf.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const v = zf.elements.address.value.trim(), zb = zf.querySelector('button');
+      const input = zf.elements.address, v = input.value.trim(), zb = zf.querySelector('button');
       if (zb.disabled) return;
-      if (v.length < 4) { zr.textContent = t('Írd be az utcát és a házszámot.'); zr.hidden = false; zf.elements.address.focus(); return; }
+      if (v.length < 4) { zr.textContent = t('Írd be az utcát és a házszámot.'); zr.hidden = false; input.focus(); return; }
       busy(zb, true);
-      const res = await api.checkAddress(v).catch(() => ({ status: 'confirm' }));
+      const res = await api.checkAddress(v, input.dataset.postcode).catch(() => ({ status: 'confirm' }));
       busy(zb, false);
-      zr.textContent = res.status === 'in_zone' ? t('Ide szállítunk.') : res.status === 'out_of_zone' ? t('Ez a cím sajnos kívül esik a zónán.') : t('Ezt a címet a rendelés után igazoljuk vissza.');
+      zr.innerHTML = res.status === 'in_zone' ? esc(t('Ide szállítunk.')) : res.status === 'out_of_zone' ? esc(t(ZONE_OUT))
+        : `${esc(t('Ezt a címet nem találtuk a térképen.'))} <a href="/kapcsolat/">${esc(t('Írj nekünk'))}</a>, ${esc(t('és megnézzük.'))}`;
       zr.hidden = false;
     });
+    addressBox(zf.elements.address, () => zf.requestSubmit());
 
     const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
     window.BROS_TERMS?.bind(form, 'dl');
@@ -321,7 +372,7 @@
         data = await api.slots();
         if (data.bookings_open === false) ordersClosed(form);
         else if (data.payments_ready === false) notReady(ret);
-        setRules(data.free_from, data.fee);
+        setRules(data.free_from, data.fee); setZone(data.zone_m);
         // a day whose every slot is already past is not offered at all
         data.days = data.days.filter((d) => !d.slots.length || d.slots.some((s) => s.status !== 'past'));
         const open = (d) => d.slots.some((s) => s.status === 'open');
@@ -385,7 +436,7 @@
       cups: (v, k) => (cups.length ? '' : k === 'group' ? t('Add hozzá a saját italodat: a csoportos rendelést is egy itallal indítod.') : t('Válassz legalább egy italt.')),
       slot: (v, k) => (!slot ? t('Válassz időpontot.') : k === 'group' && slot === 'rush' ? t('Csoportos rendeléshez válassz időpontot, ne a rusht.') : capMsg()),
       company: (v) => (v.length >= 2 ? '' : t('Add meg a cég vagy az iroda nevét.')),
-      street: (v) => (v.length >= 4 ? '' : t('Add meg az utcát és a házszámot.')),
+      street: (v) => (v.length < 4 ? t('Add meg az utcát és a házszámot.') : zone.v === v && zone.status === 'out_of_zone' ? t(ZONE_OUT) : ''),
       floor: (v) => (v.length >= 1 ? '' : t('Add meg az emeletet.')),
       name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
       email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
@@ -399,6 +450,24 @@
     };
     const val = (n) => (F(n) instanceof Element && F(n).type !== 'checkbox' ? F(n).value.trim() : '');
     const check1 = (n, k) => { const msg = rules[n](val(n), k); setErr(n, msg); return !msg; };
+    // zone: checked when an address is picked or the field is left; only "outside" stops the order
+    let zone = { v: '', zip: '', status: null };
+    const zoneNote = $('#dl-street-zone');
+    async function checkZone() {
+      const v = val('street'), zip = F('street').dataset.postcode || '';
+      if (v.length < 4) { zoneNote.hidden = true; return; }
+      if (zone.v !== v || zone.zip !== zip) {
+        const res = await api.checkAddress(v, zip).catch(() => ({ status: 'confirm' }));
+        if (val('street') !== v) return; // typed on meanwhile
+        zone = { v, zip, status: res.status };
+      }
+      zoneNote.innerHTML = zone.status === 'in_zone' ? esc(t('Ide szállítunk.')) : zone.status === 'confirm' ? `${esc(t('Ezt a címet nem találtuk a térképen: rendelhetsz, és visszaigazoljuk. Ha bizonytalan vagy,'))} <a href="/kapcsolat/">${esc(t('írj nekünk'))}</a>.` : '';
+      zoneNote.dataset.s = zone.status; zoneNote.hidden = zone.status === 'out_of_zone';
+      check1('street');
+    }
+    addressBox(F('street'), checkZone);
+    F('street').addEventListener('change', checkZone);
+    F('street').addEventListener('input', () => { zoneNote.hidden = true; });
     form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n, kind()); });
     F('terms').addEventListener('change', () => check1('terms'));
     const focusBad = (n) => (n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
@@ -406,7 +475,7 @@
     function payload(k) {
       const s = curSlot();
       return { kind: k, date: slot === 'rush' ? today() : day, slot_id: s ? s.id : null, rush: slot === 'rush', items: cups.map(cupItem),
-        address: { company: val('company'), street: val('street'), floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: val('phone') },
+        address: { company: val('company'), street: val('street'), postcode: F('street').dataset.postcode || '', floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: val('phone') },
         invoice: needInv(k) ? { name: val('inv_name'), tax_number: val('tax_number'), zip: val('zip'), city: val('city'), street: val('inv_street') } : null, terms: true, lang: B.lang,
         return_path: location.pathname }; // Stripe sends the payer back under this page, wherever the site is mounted
     }
@@ -418,9 +487,10 @@
       const k = kind();
       result.hidden = true;
       F('tax_number').value = taxFmt(F('tax_number').value);
-      const bad = [...BASE, ...(needInv(k) ? INV : []), 'terms'].filter((n) => !check1(n, k));
-      if (bad.length) return focusBad(bad[0]);
       sending = true; busy(payBtn, true);
+      await checkZone();
+      const bad = [...BASE, ...(needInv(k) ? INV : []), 'terms'].filter((n) => !check1(n, k));
+      if (bad.length) { sending = false; busy(payBtn, false); return focusBad(bad[0]); }
       const p = payload(k), text = slotText();
       try {
         const res = k === 'company' ? await api.order(p) : await api.createGroup(p);
@@ -428,8 +498,8 @@
         if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
         throw new Error('no_checkout_url'); // a 200 without a payment link is a failure
       } catch (err) {
-        result.textContent = problem(err); result.hidden = false; result.focus();
-        if (err.code) loadSlots();
+        if (err.code === 'out_of_zone') { zone = { v: val('street'), zip: F('street').dataset.postcode || '', status: 'out_of_zone' }; zoneNote.hidden = true; check1('street'); F('street').focus(); }
+        else { result.textContent = problem(err); result.hidden = false; result.focus(); if (err.code) loadSlots(); }
       }
       sending = false; busy(payBtn, false);
     });

@@ -86,7 +86,7 @@
             <legend><span class="dl-step__no">3</span>Hova?</legend>
             <div class="dl-fields dl-fields--addr">
               <div class="dl-field dl-field--wide"><label for="dl-company">Cég vagy iroda neve</label><input id="dl-company" name="company" type="text" autocomplete="organization" required></div>
-              <div class="dl-field"><label for="dl-street">Utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" required></div>
+              <div class="dl-field"><label for="dl-street">Utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" required><p class="dl-zone-note" id="dl-street-zone" role="status" hidden></p></div>
               <div class="dl-field dl-field--short"><label for="dl-floor">Emelet, ajtó</label><input id="dl-floor" name="floor" type="text" autocomplete="address-line2" required></div>
               <div class="dl-field dl-field--wide"><label for="dl-note">Megjegyzés a recepciónak <i>(nem kötelező)</i></label><input id="dl-note" name="note" type="text" maxlength="200" placeholder="Kit keressünk, hol adjuk le…"></div>
             </div>
@@ -141,9 +141,8 @@
           <summary>Hova visszük?</summary>
           <div class="dl-zone">
             <div>
-              <p>Kb. 500 méteren belül a kávézótól. A Csanády utca 4/b-ből indulunk, gyalog, hőtartó táskával. A környék irodáiba visszük:</p>
+              <p data-zone>Kb. 700 méteren belül a kávézótól. A Csanády utca 4/b-ből indulunk, gyalog, hőtartó táskával. A környék irodáiba visszük:</p>
               <ul class="dl-areas" id="dl-areas"></ul>
-              <p><span class="dl-draft dl-draft--wrap">Tervezet · a pontos épületlista még készül</span></p>
               <form class="dl-zone__form" id="dl-zone-form" novalidate>
                 <div class="dl-field"><label for="dl-zone-address">Az irodátok címe</label><input id="dl-zone-address" name="address" type="text" autocomplete="street-address" placeholder="Utca, házszám"></div>
                 <button class="btn btn--ghost" type="submit">Megnézem</button>
@@ -151,7 +150,7 @@
               <p class="dl-preview" id="dl-zone-result" role="status" hidden></p>
             </div>
             <figure class="dl-map">
-              <svg viewBox="0 0 360 360" role="img" aria-label="Vázlat: a Bros Cafe körül egy kb. 500 méteres kör, benne a Váci út, a Lehel és a Duna-part">
+              <svg viewBox="0 0 360 360" role="img" data-zone aria-label="Vázlat: a Bros Cafe körül egy kb. 700 méteres kör, benne a Váci út, a Lehel és a Duna-part">
                 <circle class="dl-map__zone" cx="180" cy="180" r="150"/>
                 <circle class="dl-map__ring" cx="180" cy="180" r="150"/>
                 <circle class="dl-map__ring dl-map__ring--in" cx="180" cy="180" r="75"/>
@@ -163,8 +162,8 @@
                 <text x="60" y="118" class="dl-map__label">Duna</text>
                 <text x="292" y="112" class="dl-map__label" text-anchor="end">Váci út</text>
                 <text x="262" y="262" class="dl-map__label" text-anchor="end">Lehel</text>
-                <text x="180" y="52" text-anchor="middle" class="dl-map__dist">~500 m</text>
-                <text x="180" y="122" text-anchor="middle" class="dl-map__dist">~250 m</text>
+                <text x="180" y="52" text-anchor="middle" class="dl-map__dist" data-zone>~700 m</text>
+                <text x="180" y="122" text-anchor="middle" class="dl-map__dist" data-zone="half">~350 m</text>
               </svg>
               <figcaption class="fine">Vázlat, nem méretarányos térkép.</figcaption>
             </figure>

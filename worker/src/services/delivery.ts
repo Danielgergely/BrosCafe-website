@@ -15,6 +15,7 @@ import * as tiers from './tiers';
 import { notifyUpdate } from './wallet';
 import * as stripe from './stripe';
 import * as szamlazz from './szamlazz';
+import * as zone from './zone';
 
 // ---- config (DRAFT defaults; the editable part lives in dl_settings / dl_slots) ----
 const CATS = ['coffee', 'specialty', 'tea', 'smoothie', 'bottled']; // every drink (Daniel 2026-11-17)
@@ -90,7 +91,7 @@ export async function slots(app: App, daysParam: unknown) {
     if (infos.length && infos.every((x) => x.status === 'past')) continue; // today, after its last cutoff
     days.push({ date, slots: infos });
   }
-  return { free_from: s.free_from, fee: s.fee_huf, rush: rushView(s), days, payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
+  return { free_from: s.free_from, fee: s.fee_huf, zone_m: zone.radius(app), rush: rushView(s), days, payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
 }
 
 // ---- pricing from the catalogue ----
@@ -161,6 +162,8 @@ async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<P
   if (!rush && !validDate(b.date)) bad.push('date');
   if (bad.length) throw invalid(bad);
   const cups = await priceCups(app, b.items);
+  // only a house the map places outside the radius is refused; an unknown address is confirmed by hand
+  if ((await zone.check(app, address.street, a.postcode)).status === 'out_of_zone') throw new ApiError(409, 'out_of_zone', { fields: ['street'] });
   if (!stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
 
   await sweep(app);

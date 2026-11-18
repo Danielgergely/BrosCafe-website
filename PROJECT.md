@@ -75,6 +75,9 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-18 Delivery zone (handoff item 1): Photon (OpenStreetMap) address suggestions on the order form and the
+  "Hova visszük?" check, straight-line 700 m from Csanády u. 4/b (`DELIVERY_RADIUS_M`); outside → refused, not found →
+  "írj nekünk", never blocked. Privacy names Photon (komoot GmbH); ÁSZF 500 → 700 m. Not deployed.
 - 2026-11-18 After Hours: optional unlimited drinks (drinks we make) +2 500 Ft/person, whole group; bottled drinks not included.
   Steps now: guests · platters · drinks (unlimited, optional) · cake · evening · details; "Az árban" line above step 1
   (café 2 h, welcome drink, 1 platter); home hero chip always After Hours; occasion is an optional

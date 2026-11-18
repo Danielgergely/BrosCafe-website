@@ -99,9 +99,10 @@ the last cups.
 
 | Method, path | Does |
 |---|---|
-| `GET /slots?days=5` | `{ free_from, fee, rush: { on, until, max_drinks, eta_min }, days: [{ date, slots: [{ id, time, cutoff_min, cutoff_at, capacity, left, status }] }] }`. The next `days` delivery days that can still be ordered for (no holidays; today is left out once its last cutoff has passed). The pages take `free_from` and `fee` from here, not from their own config. `status`: `open`, `past` (cutoff gone), `full`, `closed` (closed for that day). |
-| `POST /address-check` | `{ address }` → `{ status: "in_zone" \| "out_of_zone" \| "confirm" }`. Until the building list exists it always answers `confirm`. |
-| `POST /orders` | Company order. Body as built in `delivery.js`: `kind: "company", date, slot_id, rush, items[{ product_id, who, milk, size, iced }], address{ company, street, floor, note }, contact{ name, email, phone }, invoice{ name, tax_number, zip, city, street }, terms, lang, return_path`. Validates, prices the cups from the catalogue, adds the fee below `free_from`, holds the capacity (30 min), creates a Stripe Checkout session, returns `{ checkout_url }` (a `200` without it is treated as a failure by the page). Errors: `400 { error: "invalid", fields }`, `409 { error: "slot_closed" }`, `409 { error: "slot_full", left }`, `409 { error: "rush_off" }`. |
+| `GET /slots?days=5` | `{ free_from, fee, zone_m, rush: { on, until, max_drinks, eta_min }, days: [{ date, slots: [{ id, time, cutoff_min, cutoff_at, capacity, left, status }] }] }`. The next `days` delivery days that can still be ordered for (no holidays; today is left out once its last cutoff has passed). The pages take `free_from`, `fee` and the zone radius `zone_m` from here, not from their own config. `status`: `open`, `past` (cutoff gone), `full`, `closed` (closed for that day). |
+| `GET /address-suggest?q=` | Up to 6 Budapest streets / house numbers from Photon (OpenStreetMap): `{ items: [{ street, postcode, district, house }] }`. Under 3 characters or when Photon is slow (3 s) / down: `{ items: [] }`. |
+| `POST /address-check` | `{ address, postcode? }` → `{ status: "in_zone" \| "out_of_zone" \| "confirm", radius_m }`. Straight-line distance from the café against `DELIVERY_RADIUS_M`. `in_zone`/`out_of_zone` only when Photon knows that exact house number on that street (and postcode, if given); a street without a number, an unknown house, Photon down, or the same street name in two districts on both sides of the radius → `confirm` ("write to us", the order is not blocked). |
+| `POST /orders` | Company order. Body as built in `delivery.js`: `kind: "company", date, slot_id, rush, items[{ product_id, who, milk, size, iced }], address{ company, street, postcode, floor, note }, contact{ name, email, phone }, invoice{ name, tax_number, zip, city, street }, terms, lang, return_path`. `postcode` comes from a picked address suggestion (empty when typed by hand). Validates, prices the cups from the catalogue, adds the fee below `free_from`, holds the capacity (30 min), creates a Stripe Checkout session, returns `{ checkout_url }` (a `200` without it is treated as a failure by the page). Errors: `400 { error: "invalid", fields }`, `409 { error: "slot_closed" }`, `409 { error: "slot_full", left }`, `409 { error: "rush_off" }`, `409 { error: "out_of_zone", fields: ["street"] }` (only a definite `out_of_zone`, see `/address-check`; also on `POST /groups`). |
 | `POST /orders/:id/recurring` | `{ rule, token }` → creates a `dl_recurring` row. Authorised by the signed token `t` from the Stripe return URL or the confirmation email. |
 | `POST /groups` | Organiser opens a group order: same body without `invoice`, `kind: "group"`, rush not allowed. The organiser's own drink is required (`items` ≥ 1, else `400 invalid`). Creates the order as `open` with a 6-character `group_code`; returns `{ code, url, checkout_url }`: the organiser pays like any participant. |
 | `GET /groups/:code` | `{ code, status: "open" \| "locked", date, time, cutoff_at, company, address{ street, floor }, organiser, drinks, free_from, fee, fee_due, fee_rule, participants: [{ name, paid, items: [label] }] }`. `fee` is the configured delivery fee, `fee_due` what applies at the current number of paid drinks (0 from `free_from`). No emails or phone numbers. The page polls it every 8 s. |
@@ -178,7 +179,7 @@ list as a printable ticket. A printed ticket at the counter is open (see `docs/d
 | Group fee below 5 at cutoff | organiser pays (up front, refunded at 5) |
 | Unpaid at cutoff | the drink is dropped |
 | Recurring | reminder email with a payment link, no stored card |
-| Zone | ~500 m, list of areas only, address check answers "we'll confirm" |
+| Zone | 700 m straight line from the café (`DELIVERY_RADIUS_M`), Photon address check (2026-11-18) |
 | Coffee box, reusable cups | shown as drafts in the FAQ, not orderable |
 
 ## Needed before building
@@ -217,4 +218,7 @@ carry `payments_ready`.
 - **Board:** rush orders (and orders of a slot removed since) come as one extra column `{ id: "rush", rush: true }`.
   Open group orders are not listed until they lock; their paid cups count in `drinks`.
 - `PUT /admin/settings` also returns `free_from` and `fee` (read-only for now: edit `dl_settings` in D1).
-- Not built: `split` / `cancel` fee rules, the zone check (always `confirm`), coffee box, reusable cups, a printed ticket.
+- Zone (2026-11-18): `services/zone.ts`. Photon is called from the Worker only (the visitor's IP never reaches it),
+  generic User-Agent, answers cached a day in the Cloudflare cache. Café point 47.51605, 19.0583. Recurring orders are
+  not re-checked. `PHOTON_URL` overrides the base for local tests.
+- Not built: `split` / `cancel` fee rules, coffee box, reusable cups, a printed ticket.

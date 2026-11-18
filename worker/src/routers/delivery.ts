@@ -3,13 +3,14 @@ import type { Ctx, Router } from '../http';
 import { getCurrentUser, requireAdmin } from '../security';
 import { handle } from '../services/bookings';
 import * as dl from '../services/delivery';
+import * as zone from '../services/zone';
 
 export function register(api: Router) {
   const p = '/delivery';
   const body = async (c: Ctx) => (await c.json()) ?? {};
   api.get(`${p}/slots`, handle((c) => dl.slots(c, c.query.get('days'))));
-  // until the building list exists every address is confirmed by hand after the order
-  api.post(`${p}/address-check`, handle(async () => ({ status: 'confirm' })));
+  api.get(`${p}/address-suggest`, handle((c) => zone.suggest(c, c.query.get('q'))));
+  api.post(`${p}/address-check`, handle(async (c) => { const b = await body(c); return zone.check(c, b.address, b.postcode); }));
   api.post(`${p}/orders`, handle(async (c) => dl.createOrder(c, await body(c))));
   api.post(`${p}/orders/{id}/recurring`, handle(async (c) => dl.setRecurring(c, c.params.id, await body(c))));
   api.post(`${p}/groups`, handle(async (c) => dl.createGroup(c, await body(c))));

@@ -1,6 +1,6 @@
 # Bros Delivery — spec (quiz with Daniel 2026-11-16; proposal due 2026-11-17 morning)
 
-Coffee delivered on foot to offices within ~500 m of the café (1132 Budapest, Csanády u. 4/b — Váci út / Lehel /
+Coffee delivered on foot to offices within ~700 m (straight line, `DELIVERY_RADIUS_M`) of the café (1132 Budapest, Csanády u. 4/b — Váci út / Lehel /
 Dunaparti offices). Delivered by one of the team.
 
 ## Order types
@@ -37,7 +37,7 @@ controllable: slots can be closed per day, a max number of drinks per slot, and 
 - Group order: what if someone hasn't paid at cutoff?
 - Coffee box: contents, size, price; batch brew equipment needed?
 - Reusable cups: deposit amount, collection.
-- Delivery zone: exact list of buildings / map polygon; address entry with floor/company/reception notes.
+- Delivery zone: decided 2026-11-18, no building list: Photon address search + straight-line radius (docs/delivery-api.md).
 - Order cutoff per slot (default 45 min before) and max drinks per slot.
 - How the café sees orders (admin tab, email, a printed ticket/sound at the counter).
 - Legal/tax: VAT on delivered drinks vs on-site, invoice per payer, ÁSZF, food-delivery rules (NÉBIH) — flag for the

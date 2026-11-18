@@ -151,6 +151,17 @@
 .dl-field > label { font: 650 14px/1.3 var(--sans); color: var(--text); }
 .dl-field > label i { font-style: normal; font-weight: 400; color: var(--text-soft); }
 .dl-field > small { font-size: 14px; color: var(--text-soft); }
+/* address suggestions (Photon) under the street fields */
+.dl-field--sugg { position: relative; }
+.dl-sugg { position: absolute; left: 0; right: 0; z-index: 20; margin: 0; padding: 6px; list-style: none; max-height: 290px; overflow-y: auto; background: #fff; border: 1px solid var(--line-strong); border-radius: var(--r-sm); box-shadow: var(--shadow-md); }
+.dl-sugg li { display: grid; gap: 2px; padding: 10px 12px; border-radius: calc(var(--r-sm) - 4px); cursor: pointer; }
+.dl-sugg li b { font: 600 15px/1.3 var(--sans); color: var(--text); }
+.dl-sugg li small { font-size: 13px; color: var(--text-soft); }
+.dl-sugg li:hover, .dl-sugg li[aria-selected="true"] { background: rgb(var(--olive-rgb) / .12); }
+.dl-zone-note { margin: 2px 0 0; font-size: 14px; line-height: 1.4; color: var(--text-soft); }
+.dl-zone-note[data-s="in_zone"] { color: var(--olive-deep); font-weight: 600; }
+.dl-zone-note a { color: var(--olive-deep); font-weight: 600; }
+.dl-zone-note[hidden], .dl-sugg[hidden] { display: none; }
 .dl-err { display: flex; gap: 6px; margin-top: 8px; font: 600 14px/1.4 var(--sans); color: var(--err); }
 .dl-field .dl-err { margin-top: 2px; }
 .dl-err::before { content: "!"; flex: none; display: grid; place-items: center; width: 18px; height: 18px; margin-top: 1px; border-radius: 50%; background: var(--err); color: #fff; font-size: 12px; font-weight: 700; }
