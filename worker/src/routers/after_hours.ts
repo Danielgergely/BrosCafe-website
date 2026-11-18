@@ -33,6 +33,7 @@ export function register(api: Router) {
   api.get(`${p}/cancel/{token}`, handle((c) => ah.cancelInfo(c, c.params.token)));
   api.post(`${p}/cancel/{token}`, handle((c) => ah.cancelConfirm(c, c.params.token)));
   api.get(`${p}/change/{token}`, handle((c) => ah.changeInfo(c, c.params.token)));
+  api.get(`${p}/booking/{token}`, handle((c) => ah.bookingInfo(c, c.params.token)));
   api.post(`${p}/change/{token}`, handle(async (c) => ah.changeConfirm(c, c.params.token, (await c.json()) ?? {})));
 
   // refunds move money: admin role only

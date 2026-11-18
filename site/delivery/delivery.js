@@ -652,9 +652,15 @@
       if (focus) $(focus, slotsEl)?.focus();
     }
     const ruleText = (r) => (r === 'weekdays' ? t('minden munkanapon') : EVERY[r]);
+    // pages of 8 so a long list of regular offices stays short; the page survives a refresh
+    let recPage = 0;
+    const REC_PER = 8;
     function renderRec() {
-      recEl.innerHTML = rec.map((r) => `<div class="dla__rec${r.active ? '' : ' is-paused'}"><span><b>${esc(r.company)}</b><small>${ruleText(r.rule)} · ${hm(r.time)} · ${tn('{n} ital', r.drinks)}</small></span>
-        <span class="dla__pill" data-st="${r.active ? 'on' : 'off'}">${r.active ? t('aktív') : t('szünetel')}</span><button type="button" class="dla__mini" data-rec="${r.id}" data-to="${!r.active}">${r.active ? t('Szüneteltetés') : t('Folytatás')}</button></div>`).join('') || `<p class="dla__empty">${t('Még nincs ismétlődő rendelés.')}</p>`;
+      const pages = Math.max(1, Math.ceil(rec.length / REC_PER));
+      recPage = Math.min(recPage, pages - 1);
+      recEl.innerHTML = (rec.slice(recPage * REC_PER, recPage * REC_PER + REC_PER).map((r) => `<div class="dla__rec${r.active ? '' : ' is-paused'}"><span><b>${esc(r.company)}</b><small>${ruleText(r.rule)} · ${hm(r.time)} · ${tn('{n} ital', r.drinks)}</small></span>
+        <span class="dla__pill" data-st="${r.active ? 'on' : 'off'}">${r.active ? t('aktív') : t('szünetel')}</span><button type="button" class="dla__mini" data-rec="${r.id}" data-to="${!r.active}">${r.active ? t('Szüneteltetés') : t('Folytatás')}</button></div>`).join('') || `<p class="dla__empty">${t('Még nincs ismétlődő rendelés.')}</p>`)
+        + (pages > 1 ? `<nav class="dla__pager" aria-label="${t('Oldalak')}"><button type="button" class="dla__mini" data-rec-page="-1"${recPage ? '' : ' disabled'}>‹ ${t('Előző')}</button><span>${recPage + 1} / ${pages}</span><button type="button" class="dla__mini" data-rec-page="1"${recPage < pages - 1 ? '' : ' disabled'}>${t('Következő')} ›</button></nav>` : '');
     }
     // the days the board can show: today and the next delivery days
     const loadDays = async () => { dayList = [...new Set([today(), ...(await api.slots()).days.map((d) => d.date)])].sort(); if (!dayList.includes(date)) date = dayList[0]; };
@@ -721,6 +727,8 @@
       }
     });
     recEl.addEventListener('click', async (e) => {
+      const pg = e.target.closest('[data-rec-page]');
+      if (pg) { recPage += Number(pg.dataset.recPage); renderRec(); return; }
       const b = e.target.closest('[data-rec]'); if (!b) return;
       const id = b.dataset.rec, on = b.dataset.to === 'true';
       await act(() => api.admin.setRecurring(id, on), on ? t('aktív') : t('szünetel'), 'settings'); $(`[data-rec="${id}"]`, recEl)?.focus();

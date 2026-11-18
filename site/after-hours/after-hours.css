@@ -449,3 +449,23 @@
 .ah-change { margin-top: 18px; }
 .ah-change .aha__hint { margin-top: 12px; }
 .ah-change [data-form-err] { margin-top: 10px; }
+
+/* ---- confirmation page after payment ---- */
+.ah-when { display: grid; gap: 4px; margin-top: 14px; padding: 18px 20px; border-radius: var(--r-md); background: var(--olive); color: var(--ivory); }
+.ah-when b { font: 420 26px/1.15 var(--serif); font-variation-settings: var(--soft); }
+.ah-when span { font-size: 15px; opacity: .92; }
+.ah-next { margin-top: 22px; font: 650 17px/1.3 var(--sans); }
+.ah-next__list { margin: 8px 0 0; padding-left: 20px; list-style: disc; display: grid; gap: 6px; font-size: 15px; line-height: 1.5; }
+
+.ah-sent { margin-top: 8px; font-size: 16px; line-height: 1.5; }
+
+/* ---- admin booking list: filter, search, pages ---- */
+.aha__filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.aha__chip { min-height: 38px; padding: 6px 14px; border-radius: var(--r-pill); background: var(--ivory-hi); box-shadow: inset 0 0 0 1px var(--line); font: 600 14px/1.2 var(--sans); color: var(--text); }
+.aha__chip small { margin-left: 4px; font-weight: 500; color: var(--text-soft); }
+.aha__chip[aria-pressed="true"] { background: var(--btn-fill); color: var(--ivory); box-shadow: none; }
+.aha__chip[aria-pressed="true"] small { color: inherit; opacity: .8; }
+.aha__search { width: 100%; min-height: 44px; margin-top: 10px; padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fff; font: 15px/1.3 var(--sans); }
+.aha__rows { display: grid; gap: 8px; margin-top: 12px; }
+.aha__pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; font-size: 14px; color: var(--text-soft); }
+.aha__pager .btn { min-height: 40px; padding: 8px 14px; }

@@ -108,9 +108,11 @@ const C = { olive: '#68704B', espresso: '#25251C', ivory: '#F3EBDD', paper: '#FB
 const FONT = 'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif';
 const block = (inner: string, pad = '0 24px 14px') => `<tr><td style="padding:${pad}">${inner}</td></tr>`;
 
-/** "december 4., péntek" / "Friday, 4 December" from YYYY-MM-DD. */
-export const longDate = (date: string, en = false) =>
-  new Intl.DateTimeFormat(en ? 'en-GB' : 'hu-HU', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+/** "December 4., péntek" / "Friday, 4 December" from YYYY-MM-DD. */
+export const longDate = (date: string, en = false) => {
+  const s = new Intl.DateTimeFormat(en ? 'en-GB' : 'hu-HU', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+  return s.charAt(0).toUpperCase() + s.slice(1); // it opens a line in the emails (Daniel 2026-11-18)
+};
 
 export const para = (t: string): Part => ({ html: block(`<p style="margin:0;font-size:15px;line-height:1.6;color:${C.text}">${esc(t)}</p>`), text: t });
 export const fine = (t: string): Part => ({ html: block(`<p style="margin:0;font-size:13px;line-height:1.5;color:${C.muted}">${esc(t)}</p>`), text: t });

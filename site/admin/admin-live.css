@@ -1,0 +1,112 @@
+/* Bros Cafe — admin, live sales tab (.lv). Dense on purpose: six figures on top, today on the left with the past
+   days in pages, everything else in a side column. Sizes follow the tab's own width (container queries), so it
+   holds whatever frame is around it. Colours come from the shell tokens. */
+.lv { container: lv / inline-size; --ad-gap: 12px; }
+
+/* status line: refresh sits on the time it refreshes */
+.lv-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.lv .ad-ctx { align-items: center; gap: 4px 14px; font-size: 13px; }
+.lv-fresh { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-weight: 560; }
+.lv-bar .ad-btn { min-height: 36px; padding: 6px 14px; font-size: 13px; }
+.lv .ad-banner { padding: 8px 14px; font-size: 13px; }
+
+/* round icon buttons: refresh and the pagers */
+.lv-pg { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ivory-hi); color: var(--text); font: 500 18px/1 var(--sans); box-shadow: var(--st-paper); cursor: pointer; transition: transform var(--dur) var(--ease), background .2s; }
+.lv-pg:active { transform: scale(.92); transition-duration: .1s; }
+.lv-pg[aria-disabled="true"], .lv-pg[disabled] { opacity: .35; cursor: default; }
+.lv-pg[aria-disabled="true"]:active { transform: none; }
+.lv-pg:focus-visible, .lv .ad-seg button:focus-visible, .lv .ad-ib:focus-visible, .lv-how summary:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+@media (hover: hover) { .lv-pg:not([aria-disabled="true"]):hover { background: var(--olive-tint); } }
+.lv-pager { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+.lv-pager__n { min-width: 8ch; text-align: center; font: 560 13px/1 var(--sans); color: var(--text-soft); }
+
+/* figures */
+.lv-kpis { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@container lv (min-width: 620px) { .lv-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container lv (min-width: 1000px) { .lv-kpis { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.lv-kpi { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding: 10px 12px 11px; background: var(--ivory-hi); border-radius: var(--r-sm); box-shadow: var(--st-paper); }
+.lv-kpi__l { font: 600 10.5px/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-soft); }
+.lv-kpi__v { font: 420 clamp(20px, 5.4cqi, 24px)/1.1 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lv-kpi__s { font-size: 12px; line-height: 1.4; color: var(--text-soft); }
+.lv-kpi .ad-prog { height: 6px; margin: 4px 0 5px; }
+
+/* two columns from 900 px of own width */
+.lv-cols, .lv-col { display: grid; gap: var(--ad-gap); min-width: 0; align-content: start; align-items: start; }
+.lv-col > * { min-width: 0; }
+@container lv (min-width: 620px) and (max-width: 899.9px) { .lv-col--side { grid-template-columns: 1fr 1fr; } .lv-col--side > :last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@container lv (min-width: 900px) { .lv-cols { grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); } }
+
+.lv .ad-card { padding: 14px 16px; }
+.lv .ad-card > * + * { margin-top: 10px; }
+.lv-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; min-height: 30px; }
+.lv-head .ad-card__t { margin: 0; font-size: 18px; }
+.lv .ad-seg button { min-height: 30px; padding: 4px 12px; }
+.lv .ad-seg button:active { transform: scale(.96); }
+.lv .ad-legend { font-size: 12px; }
+.lv-foot { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 6px 14px; }
+.lv-foot > .ad-legend { padding-top: 4px; }
+
+/* the small print, one tap away */
+.lv-how { min-width: 0; font-size: 12px; color: var(--text-soft); }
+.lv-how summary { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; border-radius: 6px; cursor: pointer; list-style: none; font-weight: 560; }
+.lv-how summary::-webkit-details-marker { display: none; }
+.lv-how summary::before { content: "i"; display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; box-shadow: inset 0 0 0 1px currentColor; font: 600 10px/1 var(--serif); font-style: italic; }
+.lv-how[open] { flex-basis: 100%; order: 9; }
+.lv-how[open] summary { color: var(--text); }
+.lv-how p { max-width: 80ch; padding: 2px 0 4px; }
+
+/* checkpoints, accuracy, lists */
+.lv .ad-cp { padding: 7px 6px; }
+.lv .ad-cp b { font-size: 18px; }
+.lv-acc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.lv-acc > div { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 10px; padding: 7px 10px; border-radius: var(--r-sm); background: var(--ivory); box-shadow: inset 0 0 0 1px var(--line); }
+.lv-acc small { grid-column: 1; font-size: 11px; color: var(--text-soft); }
+.lv-acc b { grid-column: 1; font: 420 18px/1.2 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; white-space: nowrap; }
+.lv-acc span { grid-column: 2; grid-row: 1 / span 2; font-size: 11.5px; line-height: 1.35; }
+@container lv (max-width: 619.9px) { .lv-acc > div { grid-template-columns: 1fr; padding: 7px 8px; } .lv-acc span { grid-column: 1; grid-row: auto; font-size: 10.5px; } }
+.lv-list { gap: 0; }
+.lv-list li { padding: 6px 0; font-size: 13.5px; }
+.lv-list li:last-child { border-bottom: 0; padding-bottom: 0; }
+.lv-lift b { font: 420 19px/1.2 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; }
+.lv-lift .ad-small { display: block; }
+.lv-month b { font: 420 22px/1.1 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.02em; }
+.lv .ad-card > .ad-prog { margin-top: 6px; height: 7px; }
+.lv .ad-card > p.ad-pos, .lv .ad-card > p.ad-neg { font-size: 13.5px; line-height: 1.4; }
+
+/* past days: short rows, the height of a full page is kept so the pager does not move on the last one */
+.lv-tw { --lv-row: 37px; overflow-x: clip; min-height: calc(var(--rows) * var(--lv-row) + 21px); }
+.lv-t { font-size: 13.5px; }
+.lv-t th { padding: 0 8px 6px 0; }
+.lv-t td { height: var(--lv-row); padding: 2px 8px 2px 0; }
+.lv-t th:last-child, .lv-t td:last-child { padding-right: 0; }
+.lv-day { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 7px; }
+.lv-day__d { white-space: nowrap; }
+.lv-day__w { display: none; white-space: nowrap; font-size: 12px; color: var(--text-soft); }
+.lv-wx { white-space: nowrap; }
+.lv-marks { text-align: right; white-space: nowrap; }
+.lv-t .ad-ib { min-width: 30px; min-height: 30px; font-size: 15px; border-radius: 9px; transition: transform var(--dur) var(--ease); }
+.lv-t .ad-ib:active { transform: scale(.9); transition-duration: .1s; }
+.lv-t .ad-ib[aria-pressed="false"] { opacity: .5; }
+.lv-t .ad-ib[aria-pressed="false"]:hover, .lv-t .ad-ib[aria-pressed="false"]:focus-visible { opacity: 1; }
+/* narrow: the weather moves under the date, which also makes the row a full touch target */
+@container lv (max-width: 619.9px) {
+  .lv-tw { --lv-row: 45px; }
+  .lv .ad-card { padding: 12px; }
+  .lv-wx { display: none; }
+  .lv-day__w { display: inline; order: 2; }
+  .lv-day__d { flex-basis: 100%; }
+  .lv-day > :not(.lv-day__d) { order: 3; }
+  .lv-day > .lv-day__w { order: 2; }
+  .lv-t { font-size: 13px; }
+  .lv-t th, .lv-t td { padding-right: 4px; }
+  .lv-t th { font-size: 10px; letter-spacing: .04em; }
+  .lv-t .ad-ib { min-width: 32px; min-height: 40px; }
+  .lv-pg { width: 40px; height: 40px; }
+  .lv-bar .ad-btn { min-height: 40px; }
+  .lv .ad-seg button { min-height: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lv-pg, .lv-t .ad-ib, .lv .ad-seg button { transition: none; }
+  .lv-pg:active, .lv-t .ad-ib:active, .lv .ad-seg button:active { transform: none; }
+}

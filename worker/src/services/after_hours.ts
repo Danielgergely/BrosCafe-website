@@ -218,12 +218,13 @@ export async function book(app: App, b: Doc) {
 
   const qt = q!, id = await nextId(app, 'AH'), discount = vch?.discount ?? 0, amount = qt.total, lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
   const pkg = JSON.stringify({ tier: qt.tier, dishes: qt.dishes, extras: qt.extras, drinks: qt.drinks, lines: qt.lines, total: qt.total });
+  const cancelToken = tokenUrlsafe(24);
   try {
     await app.db.d1.prepare(
       `INSERT INTO ah_bookings (id, date, status, hold_expires, start_time, hours, guests, tier, amount_huf, cancel_token, name, email, phone, zip, city, street,
         company, tax_number, occasion, note, packages, cake, voucher_code, discount_huf, lang, return_path, created_at)
        VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(id, v.date, isoAt(new Date(Date.now() + stripe.HOLD_MIN * 60_000)), v.start, v.hours, v.guests, qt.tier, amount, tokenUrlsafe(24), v.name, v.email, v.phone, v.zip, v.city, v.street,
+    ).bind(id, v.date, isoAt(new Date(Date.now() + stripe.HOLD_MIN * 60_000)), v.start, v.hours, v.guests, qt.tier, amount, cancelToken, v.name, v.email, v.phone, v.zip, v.city, v.street,
       v.company || null, v.tax || null, v.occasion || null, v.note || null, pkg, v.cake ? 1 : 0, vch?.code ?? null, discount, lang, path, nowIso()).run();
   } catch (e) {
     if (/UNIQUE/i.test(String((e as Error).message))) throw new ApiError(409, 'day_taken'); // ah_one_per_day: someone else holds or has the evening
@@ -235,7 +236,8 @@ export async function book(app: App, b: Doc) {
       kind: 'ah', ref: id, email: v.email, lang,
       lines: chargeLines(qt, lang === 'en').map((l, i) => ({ name: i ? l.name : `Bros After Hours ${v.date} ${v.start}–${end} · ${l.name}`, quantity: l.quantity, amountHuf: l.unit })),
       description: `Bros After Hours ${id} · ${v.date} ${v.start}–${end} · ${v.guests} ${lang === 'en' ? 'guests' : 'fő'}`,
-      successUrl: siteUrl(app, `${path}?booking=${id}&paid=1`), cancelUrl: siteUrl(app, `${path}?cancelled=1`),
+      // the confirmation page reads the booking with the same signed key as the change and cancel links
+      successUrl: siteUrl(app, `${path}koszonjuk/?t=${encodeURIComponent(`${id}.${await sign(app, id + cancelToken)}`)}`), cancelUrl: siteUrl(app, `${path}?cancelled=1`),
     });
     await app.db.d1.prepare('UPDATE ah_bookings SET stripe_session = ? WHERE id = ?').bind(session.id, id).run();
     return { checkout_url: session.url };
@@ -583,6 +585,16 @@ async function sendChanged(app: App, before: Doc, b: Doc, who: 'guest' | 'admin'
     to: staffAddress(app), staff: true, subject: `After Hours módosítás: ${b.date} ${b.start_time} · ${b.name} (${b.id})`, title: 'After Hours módosítás',
     parts: [evening(b, false, false), card('Mi változott', changes(before, b, false)), card('Módosította', [['Ki', who === 'guest' ? 'a vendég (e-mailes link)' : 'admin'], ['Azonosító', b.id]]), guestCard(b)],
   });
+}
+
+/** The confirmation page after Stripe: the booking and its status (pending until the webhook marks it paid). */
+export async function bookingInfo(app: App, token: string) {
+  const b = await byToken(app, token), p = pkgOf(b);
+  return {
+    status: b.status,
+    booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, email: b.email, tier: b.tier, dishes: p.dishes, extras: p.extras,
+      drinks: p.lines.some((l) => l.kind === 'drinks'), cake: !!b.cake, occasion: b.occasion ?? '', note: b.note ?? '', lines: p.lines, amount: b.amount_huf },
+  };
 }
 
 /** GET for the guest's change page: the booking, what can be changed, the booking window. */

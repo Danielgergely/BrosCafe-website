@@ -120,6 +120,7 @@
       cancelInfo: (token) => call(`/cancel/${encodeURIComponent(token)}`), // -> { booking, refund_percent, refund_huf }
       cancelConfirm: (token) => post(`/cancel/${encodeURIComponent(token)}`),
       changeInfo: (token) => call(`/change/${encodeURIComponent(token)}`), // -> { booking, editable, window }
+      bookingInfo: (token) => call(`/booking/${encodeURIComponent(token)}`), // -> { status, booking }
       change: (token, data) => post(`/change/${encodeURIComponent(token)}`, data),
       admin: {
         days: (from, to) => call(`/admin/days?from=${from}&to=${to}`),
@@ -540,6 +541,39 @@
       if (d?.booking_id) { const b = bookings.find((x) => x.id === d.booking_id); return { s: 'booked', label: `${t('foglalt')}: ${b ? b.name : ''}` }; }
       return d?.open ? { s: 'open', label: t('nyitva'), pressed: true } : { s: 'blocked', label: t('zárva'), pressed: false };
     };
+    // the list: a filter (upcoming by default), a search and pages of 10, so a busy season stays one screen
+    const PER = 10, FILTERS = [['upcoming', 'Közelgő'], ['past', 'Elmúlt'], ['cancelled', 'Lemondott'], ['all', 'Mind']];
+    let filter = 'upcoming', query = '', pageNo = 0;
+    const todayIso = () => iso(today);
+    const inFilter = (x, f) => {
+      const gone = x.status === 'cancelled' || x.status === 'refunded';
+      return f === 'all' || (f === 'cancelled' ? gone : !gone && (f === 'upcoming' ? x.date >= todayIso() : x.date < todayIso()));
+    };
+    const row = (x) => `<button type="button" class="aha__row" data-id="${x.id}">
+        <span><b>${esc(x.name)}</b><small>${shortDate.format(parse(x.date))} · ${slot(x)} · ${t('{n} fő', { n: x.guests })}${tierName(x) ? ` · ${tierName(x)}` : ''} · ${ft(x.amount)}${x.voucher_code ? ` · ${esc(x.voucher_code)}` : ''}${x.cake ? ` · ${t('torta')}` : ''}</small></span>${pill(x.status, x.id === fresh)}</button>`;
+    function renderList() {
+      const q = query.trim().toLowerCase();
+      const hits = bookings.filter((x) => inFilter(x, filter) && (!q || `${x.name} ${x.email} ${x.id} ${x.phone}`.toLowerCase().includes(q)));
+      if (filter !== 'upcoming') hits.reverse(); // newest evening first for the past
+      const pages = Math.max(1, Math.ceil(hits.length / PER));
+      pageNo = Math.min(pageNo, pages - 1);
+      const shown = hits.slice(pageNo * PER, pageNo * PER + PER);
+      list.innerHTML = `
+        <div class="aha__filters" role="group" aria-label="${t('Szűrés')}">${FILTERS.map(([f, l]) => `<button type="button" class="aha__chip" data-filter="${f}" aria-pressed="${f === filter}">${t(l)} <small>${bookings.filter((x) => inFilter(x, f)).length}</small></button>`).join('')}</div>
+        <input class="aha__search" type="search" placeholder="${t('Keresés: név, e-mail, azonosító')}" value="${esc(query)}" aria-label="${t('Keresés')}">
+        <div class="aha__rows">${shown.length ? shown.map(row).join('') : `<p class="aha__empty">${bookings.length ? t('Nincs találat.') : t('Még nincs foglalás.')}</p>`}</div>
+        ${pages > 1 ? `<nav class="aha__pager" aria-label="${t('Oldalak')}"><button type="button" class="btn btn--ghost" data-page="-1"${pageNo ? '' : ' disabled'}>‹ ${t('Előző')}</button><span>${pageNo + 1} / ${pages}</span><button type="button" class="btn btn--ghost" data-page="1"${pageNo < pages - 1 ? '' : ' disabled'}>${t('Következő')} ›</button></nav>` : ''}`;
+    }
+    list.addEventListener('click', (e) => {
+      const f = e.target.closest('[data-filter]'), pg = e.target.closest('[data-page]');
+      if (f) { filter = f.dataset.filter; pageNo = 0; renderList(); }
+      else if (pg) { pageNo += Number(pg.dataset.page); renderList(); list.scrollIntoView({ block: 'nearest' }); }
+    });
+    list.addEventListener('input', (e) => {
+      if (!e.target.classList.contains('aha__search')) return;
+      query = e.target.value; pageNo = 0; renderList();
+      const box = $('.aha__search', list); box.focus(); box.setSelectionRange(query.length, query.length);
+    });
     async function refresh() {
       try {
         const r = range(), [d, b] = await Promise.all([api.admin.days(iso(r.min), iso(r.max)), api.admin.bookings()]);
@@ -547,8 +581,7 @@
       } catch (e) { live.textContent = t('Az adatok most nem érhetők el. Próbáld újra egy perc múlva.'); return; }
       cal ? cal.render() : (cal = calendar($('#aha-cal'), { range, start: today, day: dayState, pick,
         legend: [{ s: 'open', label: t('nyitva') }, { s: 'blocked', label: t('zárva') }, { s: 'booked', label: t('foglalt') }] }));
-      list.innerHTML = bookings.length ? bookings.map((x) => `<button type="button" class="aha__row" data-id="${x.id}">
-        <span><b>${esc(x.name)}</b><small>${shortDate.format(parse(x.date))} · ${slot(x)} · ${t('{n} fő', { n: x.guests })}${tierName(x) ? ` · ${tierName(x)}` : ''} · ${ft(x.amount)}${x.voucher_code ? ` · ${esc(x.voucher_code)}` : ''}${x.cake ? ` · ${t('torta')}` : ''}</small></span>${pill(x.status, x.id === fresh)}</button>`).join('') : `<p class="aha__empty">${t('Még nincs foglalás.')}</p>`;
+      renderList();
       fresh = null;
     }
     async function pick(s) {
@@ -644,7 +677,7 @@
         ${f('note', 'Megjegyzés, allergia', `<textarea id="chg-note" name="note" rows="3">${esc(b.note || '')}</textarea>`, true)}
       </div>
       <label class="ah-check"><input type="checkbox" name="cake"${b.cake ? ' checked' : ''}><span>${t('Ünnepi tortát kérünk (10 000 Ft-tól, a helyszínen fizetendő)')}</span></label>
-      <p class="aha__hint">${admin ? t('Létszám, csomag vagy időtartam változásához: mondd le kezelési költség nélkül (100%), és a vendég foglaljon újra.') : t('Létszám, csomag vagy időtartam változásához írj nekünk: ilyenkor a foglalást díjmentesen lemondjuk, és újat foglalhattok.')}</p>
+      <p class="aha__hint">${admin ? t('Létszám, csomag vagy időtartam változásához: mondd le kezelési költség nélkül (100%), és a vendég foglaljon újra.') : t('Létszám, csomag vagy időtartam változásához írj nekünk.')}</p>
       <p class="ah-err" data-form-err hidden></p>
       <div class="aha__actions"><button type="submit" class="btn">${t('Módosítások mentése')}</button>${admin ? `<button type="button" class="btn btn--ghost" data-back>${t('Mégsem')}</button>` : ''}</div>
     </form>`;
@@ -664,6 +697,48 @@
       box.hidden = true; return;
     }
     box.textContent = t(CHANGE_ERR[err?.code] || 'Most nem sikerült menteni. Próbáld újra egy perc múlva.'); box.hidden = false;
+  }
+
+  // ---------- the confirmation page Stripe sends the guest to (signed key, same as the change and cancel links) ----------
+  async function thanksPage() {
+    const root = $('#ah-thanks'), token = new URLSearchParams(location.search).get('t') || '', enc = encodeURIComponent(token);
+    const row = (k, v) => (v ? `<div><dt>${k}</dt><dd>${v}</dd></div>` : '');
+    const fail = (msg) => { root.innerHTML = `<p role="alert">${msg}</p><div class="aha__actions"><a class="btn" href="../">${t('Vissza a foglaláshoz')}</a></div>`; };
+    const show = (r) => {
+      const b = r.booking, tier = CONFIG.tiers[b.tier];
+      root.innerHTML = `
+        <h2 id="ah-thanks-name">${t('A foglalás végleges')}</h2>
+        <p class="ah-sent">${t('Minden részletet e-mailben is elküldtünk ide: {email}', { email: `<b>${esc(b.email)}</b>` })}</p>
+        <div class="ah-when"><b>${esc(longDate.format(parse(b.date)))}</b><span>${slot(b)} · ${t('{n} fő', { n: b.guests })}</span><span>Bros Cafe · 1132 Budapest, Csanády u. 4/b</span></div>
+        <dl class="aha__dl">
+          ${row(t('Azonosító'), esc(b.id))}
+          ${row(t('Csomag'), tier ? esc(t(tier.short)) : '')}${row(t('Tálak'), esc(names(b.dishes || [])))}${row(t('Extra tálak'), esc(names(b.extras || [])))}
+          ${row(t('Italok'), b.drinks ? t('Korlátlan, saját készítésű') : '')}${row(t('Ünnepi torta'), b.cake ? t('kérnek tortát (a helyszínen fizetendő)') : '')}
+          ${row(t('Alkalom'), b.occasion && OCC_NAMES[b.occasion] ? esc(t(OCC_NAMES[b.occasion])) : '')}${row(t('Megjegyzés'), esc(b.note))}
+          ${row(t('Kifizetve'), `<b>${ft(b.amount)}</b>${breakdown(b)}`)}
+        </dl>
+        <h3 class="ah-next">${t('Mi jön most?')}</h3>
+        <ul class="ah-next__list">
+          <li>${t('A visszaigazoló e-mailben megtalálod a módosítás és a lemondás linkjét is.')}</li>
+          <li>${t('Az előlegszámla külön e-mailben érkezik a Számlázz.hu-tól, a végszámla az est napján.')}</li>
+          <li>${t('Az est előtti napon emlékeztetőt küldünk.')}</li>
+        </ul>
+        <div class="aha__actions"><a class="btn" href="../modositas/?t=${enc}">${t('Foglalás módosítása')}</a><a class="btn btn--ghost" href="/">${t('Vissza a főoldalra')}</a></div>
+        <p class="fine" style="margin-top:14px"><a href="../lemondas/?t=${enc}">${t('Foglalás lemondása')}</a></p>`;
+      $('#ah-thanks-name', root).focus?.();
+    };
+    if (!token) return fail(t('Ez a link már nem érvényes. Írj nekünk: hello@broscafe.hu'));
+    root.innerHTML = `<p class="aha__hint" role="status">${t('A fizetést feldolgozzuk, egy pillanat…')}</p>`;
+    // the webhook usually marks the booking paid within a second or two; wait up to ~30 s
+    for (let i = 0; i < 15; i++) {
+      let r;
+      try { r = await api.bookingInfo(token); } catch (e) { return fail(t('Ez a link már nem érvényes. Írj nekünk: hello@broscafe.hu')); }
+      if (r.status === 'paid') return show(r);
+      if (r.status === 'expired') return fail(t('A fizetés nem sikerült, ezért a foglalás nem jött létre. Nem történt terhelés.'));
+      if (r.status === 'cancelled' || r.status === 'refunded') return fail(t('Ez a foglalás már le van mondva.'));
+      await new Promise((ok) => setTimeout(ok, 2000));
+    }
+    fail(t('A fizetés feldolgozása tovább tart a szokásosnál. A visszaigazolás néhány percen belül megérkezik e-mailben; ha nem, írj nekünk: hello@broscafe.hu'));
   }
 
   // ---------- the guest's change page (the signed link in the emails) ----------
@@ -725,4 +800,5 @@
   else if (page === 'after-hours-admin') adminPage();
   else if (page === 'after-hours-cancel') cancelPage();
   else if (page === 'after-hours-change') changePage();
+  else if (page === 'after-hours-thanks') thanksPage();
 })();
