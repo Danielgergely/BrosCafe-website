@@ -222,7 +222,6 @@
     'Privát kávézóélmény különleges alkalmakra.': 'A private café experience for special occasions.',
                     'Tökéletes': 'The perfect', 'választás': 'choice',
 
-
     'Tegyétek különlegessé a következő ünnepléseteket a Bros Caféban.': 'Make your next celebration special at Bros Cafe.',
             'Hamarosan': 'Coming soon',     '1. ételválogatás': '1st food selection', '2. ételválogatás': '2nd food selection', '3. ételválogatás': '3rd food selection',
     'Ételválogatás': 'Food selection',
@@ -260,7 +259,7 @@
     '{n} tál': '{n} platters', 'Adatok': 'Details', 'Most fizetendő:': 'To pay now:',
     '1 tál': '1 platter', '2 tál': '2 platters', '3 tál': '3 platters','az árban': 'included',
     'Üdvözlőital': 'Welcome drink', 'Válasszatok legalább 1 tálat': 'Choose at least 1 platter', 'Válasszatok legalább 1 tálat.': 'Please choose at least 1 platter.',
-    'Alkalom és extrák': 'Occasion and extras', 'Ünnepi tortát is kérünk': 'We would like a celebration cake', 'Melyik este?': 'Which evening?',
+'Melyik este?': 'Which evening?',
     'Üdvözlőital mindenkinek és 1 tál az árban, minden további tál + {p}.': 'A welcome drink for everyone and 1 platter included, every further platter + {p}.',
     'Tálak és üdvözlőital {n} főre:': 'Platters and welcome drinks for {n}:',
     'Személyes, vidám és stílusos': 'Personal, fun and stylish', 'Karácsonyi összejövetel': 'Christmas gathering', 'Ünnepi, meghitt és emlékezetes': 'Festive, cosy and memorable',
@@ -270,6 +269,11 @@
     'Ballagás, diplomaosztó': 'Graduation', 'Büszke pillanatok, együtt': 'Proud moments, together', 'Baráti és családi este': 'Evening with friends or family', 'Csak úgy, mert jó együtt lenni': 'Just because it is good to be together',
     'Korlátlan italok': 'Unlimited drinks', 'Minden saját készítésű ital, az egész társaságnak.': 'Every drink we make, for the whole group.',
     '+ 2 500 Ft / fő': '+ 2 500 Ft / person', 'Korlátlan italok (saját készítésű)': 'Unlimited drinks (made by us)',
+    'Mindenkinek egy ital az étlapról.': 'One drink from the menu for everyone.',
+    'Torta': 'Cake',
+    'Alkalom, megjegyzés': 'Occasion, note',
+    'Néhány kötelező adat hiányzik. Pirossal jelöltük őket.': 'Some required details are missing. We marked them in red.',
+    'Ezt kérjük, ellenőrizd.': 'Please check this.',
     // subpages (étlap, hűségkártya, újdonságok, kapcsolat, játék, pult, admin)
     'Oldalak': 'Pages', 'Adatkezelés': 'Privacy', 'Segítség': 'Help', 'Munkatársaknak': 'For staff', 'Bezárás': 'Close',
     'Bros Cafe · Specialty kávé Budapesten': 'Bros Cafe · Specialty coffee in Budapest',

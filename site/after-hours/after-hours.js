@@ -346,14 +346,15 @@
 
     // company fields
     const company = $('#ah-company'), toggle = $('#ah-company-toggle');
-    toggle.addEventListener('change', () => { company.hidden = !toggle.checked; if (!toggle.checked) ['company', 'tax_number'].forEach((n) => setErr(n, '')); });
+    toggle.addEventListener('change', () => { company.hidden = !toggle.checked; ['company', 'tax_number'].forEach((n) => { F(n).required = toggle.checked; }); if (!toggle.checked) ['company', 'tax_number'].forEach((n) => setErr(n, '')); });
     F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
 
     // summary + the phone bar
     const bar = $('#ah-bar'), barBtn = $('#ah-bar-btn'), barSum = $('#ah-bar-sum');
     // the price: computed here at once, then replaced by the server's quote for the same choice (the amount charged is always the server's)
     let served = null, quoteKey = '', quoteTimer = 0;
-    const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: F('drinks').checked, guests: nGuests, hours, voucher: vch });
+    const drinksOn = () => form.querySelector('[name="drinks"][value="unlimited"]').checked;
+    const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: drinksOn(), guests: nGuests, hours, voucher: vch });
     const complete = () => sel.picks.length > 0;
     function askServer(s) {
       const key = JSON.stringify([s.tier, s.dishes, s.extras, s.drinks, s.guests, s.hours, s.voucher && s.voucher.code]);
@@ -430,6 +431,8 @@
       if (!el && input) { el = document.createElement('p'); el.className = 'ah-err'; el.id = `err-${name}`; el.hidden = true; input.after(el); }
       if (!el) return;
       el.textContent = msg; el.hidden = !msg;
+      const step = { date: '#ah-step-date', dishes: '#csomagok' }[name];
+      if (step) $(step).classList.toggle('is-invalid', !!msg);
       if (input) { if (msg) { input.setAttribute('aria-invalid', 'true'); input.setAttribute('aria-describedby', el.id); } else { input.removeAttribute('aria-invalid'); input.removeAttribute('aria-describedby'); } }
     }
     const rules = {
@@ -457,6 +460,7 @@
       F('tax_number').value = taxFmt(F('tax_number').value);
       const bad = Object.keys(rules).filter((n) => !check1(n));
       if (bad.length) {
+        result.textContent = t('Néhány kötelező adat hiányzik. Pirossal jelöltük őket.'); result.hidden = false;
         if (bad[0] === 'date') { $('#ah-step-date').scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }); (calRoot.querySelector('.ah-day[tabindex="0"]') || calRoot).focus({ preventScroll: true }); }
         else if (bad[0] === 'dishes') { $('#csomagok').scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' }); $('input', dishBox)?.focus({ preventScroll: true }); }
         else F(bad[0]).focus();
@@ -465,7 +469,7 @@
       if (codeIn.value.trim() && !vch && !(await applyCode())) { codeIn.focus(); return; }
       const v = (n) => F(n).value.trim();
       const payload = {
-        date: picked, start, hours, guests: nGuests, tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: F('drinks').checked, name: v('name'), email: v('email'), phone: v('phone'),
+        date: picked, start, hours, guests: nGuests, tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: drinksOn(), name: v('name'), email: v('email'), phone: v('phone'),
         billing: { zip: v('zip'), city: v('city'), street: v('street'), company: toggle.checked ? v('company') : '', tax_number: toggle.checked ? v('tax_number') : '' },
         occasion: v('occasion'), note: v('note'), cake: F('cake').checked, voucher: vch ? vch.code : '', terms: true, lang: B.lang,
         return_path: location.pathname, // Stripe sends the guest back to this page, wherever the site is mounted
@@ -480,7 +484,12 @@
         if (err.code === 'bookings_closed') bookingsClosed();
         else if (err.code === 'payments_not_configured') { notReady(ret); result.textContent = t(NOT_READY); }
         else if (err.code === 'invalid_voucher') { vch = null; voucherMsg(t('Ez a kuponkód nem érvényes. Ellenőrizd, vagy hagyd üresen a mezőt.')); summary(); result.textContent = t('Ez a kuponkód nem érvényes. Ellenőrizd, vagy hagyd üresen a mezőt.'); }
-        else if (err.code === 'invalid' && err.fields && err.fields.includes('dishes')) { check1('dishes'); result.textContent = t('Válasszatok legalább 1 tálat.'); }
+        else if (err.code === 'invalid' && err.fields && err.fields.length) {
+          const map = { tax: 'tax_number', start: 'date', hours: 'date' }, known = err.fields.map((f) => map[f] || f).filter((f) => rules[f]);
+          known.forEach((f) => { if (check1(f)) setErr(f, t('Ezt kérjük, ellenőrizd.')); });
+          result.textContent = t('Néhány kötelező adat hiányzik. Pirossal jelöltük őket.');
+          if (known[0] && F(known[0])) F(known[0]).focus();
+        }
         else if (err.code === 'day_taken') { result.textContent = t('Ezt az estét közben lefoglalták. Válassz másikat.'); picked = null; load(); }
         else result.textContent = t('Most nem sikerült elindítani a foglalást. Próbáld újra egy perc múlva.');
       }
@@ -499,7 +508,7 @@
     await B.staff.guard({ adminOnly: true }); // refunds: admins only
     const root = $('#ah-admin');
     const ST = { pending: 'fizetésre vár', paid: 'fizetve', cancelled: 'lemondva', refunded: 'visszatérítve', expired: 'lejárt' };
-    const OCC = { birthday: 'Születésnap', romantic: 'Romantikus este', friends: 'Baráti összejövetel', team: 'Céges', family: 'Családi alkalom', other: 'Egyéb' };
+    const OCC = { birthday: 'Születésnap', christmas: 'Karácsonyi összejövetel', romantic: 'Évforduló, különleges randi', games: 'Game night', team: 'Céges összejövetel', workshop: 'Kreatív workshop', graduation: 'Ballagás, diplomaosztó', friends: 'Baráti és családi este', family: 'Családi alkalom', other: 'Egyéb' };
     const tierName = (b) => (CONFIG.tiers[b.tier] ? t(CONFIG.tiers[b.tier].short) : '');
     const pill = (st, fresh) => `<span class="aha__pill${fresh ? ' is-new' : ''}" data-st="${esc(st)}">${t(ST[st] || st)}</span>`;
     const range = () => ({ min: monthStart(today), max: WIN.max });

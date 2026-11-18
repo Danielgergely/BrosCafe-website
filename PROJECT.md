@@ -76,7 +76,8 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 
 ## Feedback log
 - 2026-11-18 After Hours: optional unlimited drinks (drinks we make) +2 500 Ft/person, whole group; bottled drinks not included.
-  Row in step 3 ("Alkalom és extrák"), server quote line `drinks`. Costing in docs/after-hours-costs.md.
+  Steps now: guests · platters · drinks (welcome drink or unlimited) · cake · evening · details; occasion is an optional
+  dropdown next to the note (8 occasions incl. Game night). Server quote line `drinks`. Costing in docs/after-hours-costs.md.
 - 2026-11-18 After Hours booking rebuilt (Daniel: explained twice, messy "what is in it" block, keep all six options as in
   his phone screenshots, no "menü"/"fogás" wording): steps 1 guests · 2 the six platters as photo cards (placeholders,
   `photo` per dish) · 3 occasion chips + cake · 4 date/time (hour buttons show the café fee) · 5 details. Price ladder per

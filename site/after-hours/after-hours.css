@@ -397,17 +397,9 @@
 .ah-step__lead { margin: -6px 0 12px; color: var(--text-soft); font-size: 14.5px; line-height: 1.4; }
 .ah-ladder__note { margin-top: 8px; font-size: 13px; line-height: 1.4; color: var(--text-soft); }
 .ah-ladder__note b { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
-/* step 3: occasion chips + the cake */
-.ah-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.ah-chips label { position: relative; cursor: pointer; }
-.ah-chips input { position: absolute; opacity: 0; pointer-events: none; }
-.ah-chips span { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-pill); background: var(--ivory-hi); font-size: 15px; font-weight: 550; }
-.ah-chips input:checked + span { border-color: transparent; background: var(--btn-fill); color: var(--ivory); }
-.ah-chips input:focus-visible + span { outline: 2px solid var(--olive-deep); outline-offset: 3px; }
-.ah-rows--cake { margin-top: 14px; }
+/* steps 3–4: drinks and cake rows share the platter row style */
 @media (max-width: 619.98px) {
   .ah-step__lead { margin: -2px 0 10px; }
-  .ah-chips span { min-height: 40px; padding: 7px 14px; font-size: 14.5px; }
 }
 
 /* "Tökéletes választás": photo cards with the title on a dark fade; phones swipe one row, desktop shows 4 × 2 */
@@ -443,3 +435,7 @@
 .ah-occ__art[data-art="6"] { --a: #BDAA96; --b: #3F4D63; --c: #25272C; --y: 5%; }
 .ah-occ__art[data-art="7"] { --a: #D19A5B; --b: #68704B; --c: #33291F; --x: 60%; --y: 35%; }
 .ah-occ__art ~ .ah-occ__txt svg { display: none; } /* the art already shows the icon large */
+/* required marks and error states */
+.ah-req { margin-left: 2px; color: var(--err); font-weight: 600; }
+.ah-step.is-invalid { box-shadow: 0 0 0 2px var(--err), 0 0 0 6px rgb(var(--err-rgb) / .12); }
+.ah-step, .ah-field input, .ah-check input { scroll-margin-top: calc(var(--header-h) + 16px); scroll-margin-bottom: calc(var(--bottom-h, 0px) + 96px); }

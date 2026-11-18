@@ -43,8 +43,10 @@ export const TIERS: Record<string, { hu: string; en: string; perPerson: number; 
 const VOUCHERS: Record<string, { percent: number }> = { AFTER25: { percent: 25 } };
 const PATHS = ['/after-hours/'];
 const OCCASIONS: Record<string, [string, string]> = {
-  birthday: ['Születésnap', 'Birthday'], romantic: ['Romantikus este', 'Romantic evening'], friends: ['Baráti összejövetel', 'Get-together with friends'],
-  team: ['Céges', 'Company'], family: ['Családi alkalom', 'Family occasion'], other: ['Egyéb', 'Other'],
+  birthday: ['Születésnap', 'Birthday'], christmas: ['Karácsonyi összejövetel', 'Christmas gathering'], romantic: ['Évforduló, különleges randi', 'Anniversary or special date'],
+  games: ['Game night', 'Game night'], team: ['Céges összejövetel', 'Company gathering'], workshop: ['Kreatív workshop', 'Creative workshop'],
+  graduation: ['Ballagás, diplomaosztó', 'Graduation'], friends: ['Baráti és családi este', 'Evening with friends or family'],
+  family: ['Családi alkalom', 'Family occasion'], other: ['Egyéb', 'Other'], // family: bookings before 2026-11-18
 };
 
 /** One priced line; `amount` = qty × unit. The voucher is a negative line. Stored with the booking so old bookings keep their prices. */
