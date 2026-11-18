@@ -14,7 +14,7 @@
     ],
     dl: [
       L('Kávézói árak, online fizetés; 5 italtól ingyenes a kiszállítás, alatta 490 Ft.', 'Café prices, paid online; delivery is free from 5 drinks, 490 Ft below that.'),
-      L('Legkésőbb 90 perccel a kiszállítás előtt díjmentesen lemondhatod, utána már készítjük.', 'You can cancel free of charge up to 90 minutes before delivery; after that we are making it.'),
+      L('A rendelési határidőig díjmentesen lemondhatod (az időpontnál látod), utána már készítjük.', 'You can cancel free of charge until the order deadline (shown with each time); after that we are making it.'),
       L('Csoportos rendelésnél azt visszük, amit a határidőig kifizettek; a késve érkező fizetés teljesen visszajár.', 'In a group order we bring what is paid by the deadline; a late payment is refunded in full.'),
       L('Számla: céges rendelésnél automatikusan, egyébként ha kéred.', 'Invoice: automatic for company orders, otherwise if you ask for one.'),
       L('Ha bármi nem stimmel, szólj, és megoldjuk.', 'If anything is not right, tell us and we will sort it out.'),

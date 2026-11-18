@@ -3,7 +3,7 @@
 import type { App } from '../http';
 import type { Doc } from '../db';
 import { settings } from '../config';
-import { isoAt, nowIso, tokenUrlsafe } from '../util';
+import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
   ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, iso, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
   staffAddress, text, today, validDate, weekday, card, fine, hero, listCard, longDate, para, priceCard,
@@ -24,7 +24,6 @@ const RUSH_AUTO_OFF_MIN = 45;
 const SLOT_HOURS = ['07:30', '18:00'];
 const DAYS_AHEAD_MAX = 10;
 const MAX_CUPS = 40;
-const CANCEL_BEFORE_MIN = 90; // free cancellation until this long before the delivery time (ÁSZF)
 const GROUP_FEE_RULE = 'organiser'; // the organiser pays the fee up front; refunded when the group reaches free_from paid cups
 const RECURRING_FROM_HOUR = 18; // the evening before: tomorrow's recurring orders are prepared from this hour
 const MILKS: Record<string, string> = { Oat: 'Zabtej', CoconutRice: 'Kókusz-rizs tej', Pea: 'Borsótej' };
@@ -429,8 +428,8 @@ async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' 
   if (kind === 'confirmed') {
     const drinks = p.amount_huf - p.fee_huf;
     parts.push(priceCard(en ? 'Payment' : 'Fizetés', [[en ? 'Drinks' : 'Italok', ft(drinks)], ...(p.fee_huf ? [[en ? 'Delivery fee' : 'Kiszállítási díj', ft(p.fee_huf)] as [string, string]] : [])], [en ? 'Paid' : 'Kifizetve', ft(p.amount_huf)]));
-    // free cancellation until CANCEL_BEFORE_MIN before the delivery time (ÁSZF); a rush order is made at once
-    const by = o.slot_time ? today(app, new Date(instant(app, o.date, o.slot_time).getTime() - CANCEL_BEFORE_MIN * 60_000)) : null;
+    // free cancellation until the slot's order deadline (ÁSZF, Daniel 2026-11-18); a rush order is made at once
+    const by = o.cutoff_at ? today(app, parseIso(o.cutoff_at)) : null;
     const until = by ? `${by.date === o.date ? '' : `${longDate(by.date, en)}, `}${String(by.hour).padStart(2, '0')}:${String(by.minute).padStart(2, '0')}` : null;
     parts.push(card(en ? 'Good to know' : 'Jó tudni', [
       [en ? 'Free cancellation' : 'Díjmentes lemondás', until ? (en ? `Until ${until}, by replying to this email` : `${until}-ig, erre az e-mailre válaszolva`) : null],
