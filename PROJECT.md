@@ -75,6 +75,8 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-18 Rush = request (handoff item 3): card authorised only, board beeps, staff accept 15/20/30 min or a time
+  (capture → invoice/till, ETA email) or "Most nem megy"; 10 min unanswered → released. Migration 0006. ÁSZF sentence added.
 - 2026-11-18 Signed-in guests (handoff item 2): "Rendeléseim" on /fiok/ (Delivery + After Hours by email, change/cancel
   links for evenings), "Újra rendelem" (everything but date/time; also from /fiok/), last details pre-filled only when
   signed in, group stamps automatic. Privacy text says so.

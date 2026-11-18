@@ -123,6 +123,7 @@
       checkAddress: (address, postcode) => post('/address-check', { address, postcode }), // -> { status, radius_m }
       suggest: (q) => call(`/address-suggest?q=${encodeURIComponent(q)}`), // -> { items: [{ street, postcode, district, house }] }
       order: (payload) => post('/orders', payload), // -> { checkout_url }
+      status: (orderId, token) => call(`/orders/${encodeURIComponent(orderId)}/status?t=${encodeURIComponent(token)}`), // -> { status, rush, answer_by, eta_at }
       recurring: (orderId, rule, token) => post(`/orders/${encodeURIComponent(orderId)}/recurring`, { rule, token }),
       createGroup: (payload) => post('/groups', payload), // -> { code, url, checkout_url }
       group: (code) => call(`/groups/${encodeURIComponent(code)}`),
@@ -137,6 +138,7 @@
         recurring: () => call('/admin/recurring'),
         setRecurring: (id, active) => put(`/admin/recurring/${id}`, { active }),
         cancelOrder: (id) => post(`/admin/orders/${id}/cancel`),
+        answer: (id, body) => post(`/admin/orders/${id}/answer`, body), // { minutes } | { time } | { accept: false }
       },
     };
   })();
@@ -274,13 +276,14 @@
       if (r.cancelled === '1') { ret.innerHTML = `<h3>${t('A fizetés megszakadt.')}</h3><p>${t('Nem történt terhelés, és a rendelés nem jött létre. Ha szeretnéd, kezdd újra.')}</p>`; ret.dataset.s = 'cancelled'; }
       else if (r.paid === '1' && r.order) {
         let last = null; try { last = JSON.parse(sessionStorage.getItem(LAST)); sessionStorage.removeItem(LAST); } catch (e) { /* no storage */ }
-        ret.innerHTML = `<h3>${t('Köszönjük, megvan a rendelés!')}</h3>
+        ret.innerHTML = `<h3>${last && last.rush ? t('Megkaptuk a kérést!') : t('Köszönjük, megvan a rendelés!')}</h3>
           <p>${t('Azonosító')}: <b>${esc(r.order)}</b>${last ? `<br>${tn('{n} ital', last.n)} · ${esc(last.text)} · ${esc(last.company)}` : ''}</p><p>${t('A visszaigazolást és a számlát e-mailben küldjük.')}</p>
           ${last && !last.rush ? `<fieldset class="dl-repeat"><legend>${t('Ismételd minden…')} ${draftPill('Tervezet · a módja még nyitott')}</legend>
             <div class="dl-repeat__row"><label class="dl-pill"><input type="radio" name="repeat" value="weekdays" checked><span>${t('munkanapon')}</span></label><label class="dl-pill"><input type="radio" name="repeat" value="${last.wd}"><span>${EVERY[last.wd].split(' ').pop()}</span></label>
             <button type="button" class="btn btn--ghost" data-repeat>${t('Ismétlés beállítása')}</button></div>
             <p class="dl-preview" data-repeat-out role="status" hidden></p></fieldset>` : ''}`;
         ret.dataset.s = 'paid';
+        if (r.t) rushState(r.order, r.t);
         ret.addEventListener('click', async (e) => {
           const b = e.target.closest('[data-repeat]'); if (!b || b.disabled) return;
           const rule = $('input[name="repeat"]:checked', ret).value, out = $('[data-repeat-out]', ret);
@@ -296,6 +299,23 @@
       ret.hidden = false;
       requestAnimationFrame(() => { ret.scrollIntoView({ block: 'center' }); ret.focus({ preventScroll: true }); });
     })();
+
+    // a rush order is a request: follow it live until the counter answers (GET /orders/:id/status)
+    async function rushState(id, token) {
+      let st;
+      try { st = await api.status(id, token); } catch (e) { return; }
+      if (!st.rush) return;
+      let box = $('[data-rush]', ret);
+      if (!box) { ret.insertAdjacentHTML('beforeend', '<p class="dl-rush-state" data-rush role="status"></p>'); box = $('[data-rush]', ret); }
+      const done = ['new', 'making', 'out', 'delivered'].includes(st.status);
+      $('h3', ret).textContent = done ? t('Köszönjük, megvan a rendelés!') : t('Megkaptuk a kérést!');
+      box.dataset.s = done ? 'ok' : st.status === 'declined' ? 'no' : 'wait';
+      box.textContent = done ? t('Elfogadva: kb. {time}-ra ott vagyunk.', { time: clock(st.eta_at) })
+        : st.status === 'declined' ? t('Most sajnos nem megy. A zárolást feloldottuk, semmit nem terheltünk a kártyádra.')
+        : st.status === 'requested' ? t('Elküldtük a kérést a kávézónak. {time}-ig visszaigazoljuk, mikorra visszük; addig csak zároltuk az összeget.', { time: clock(st.answer_by) })
+        : t('Várjuk a fizetés visszaigazolását…');
+      if (!done && st.status !== 'declined' && st.status !== 'cancelled') setTimeout(() => rushState(id, token), 5000);
+    }
 
     // 1 · drinks
     const count = (id) => cups.filter((c) => c.id === id).length;
@@ -360,7 +380,7 @@
       // a slot whose order deadline has passed is not shown at all (also between two reloads of the page)
       const d = d0 && { ...d0, slots: d0.slots.filter((s) => !gone(s)) };
       const why = { full: t('Betelt'), closed: t('Ezen a napon ekkor nem szállítunk') };
-      slotsEl.innerHTML = (rush ? `<label class="dl-slot dl-slot--rush"><input type="radio" name="slot" value="rush"${slot === 'rush' ? ' checked' : ''}><span><b>${t('Rush — amint lehet')}</b><small>${t('Most ráérünk: kb. {m} percen belül visszük. Legfeljebb {n} ital.', { m: data.rush.eta_min, n: data.rush.max_drinks })}</small></span></label>` : '') +
+      slotsEl.innerHTML = (rush ? `<label class="dl-slot dl-slot--rush"><input type="radio" name="slot" value="rush"${slot === 'rush' ? ' checked' : ''}><span><b>${t('Rush — amint lehet')}</b><small>${t('Kérésként megy: 10 percen belül visszaigazoljuk, mikorra visszük (általában kb. {m} perc). Addig csak zároljuk az összeget. Legfeljebb {n} ital.', { m: data.rush.eta_min, n: data.rush.max_drinks })}</small></span></label>` : '') +
         (d ? d.slots.map((s) => `<label class="dl-slot${s.status === 'open' ? '' : ' is-off'}"><input type="radio" name="slot" value="${s.id}"${s.id === slot ? ' checked' : ''}${s.status === 'open' ? '' : ' disabled'}><span><b>${hm(s.time)}</b><small>${s.status === 'open' ? `${t('Rendelés {t}-ig', { t: clock(s.cutoff_at) })} · ${tn('még {n} pohár fér', s.left)}` : why[s.status]}</small></span></label>`).join('') : '') ||
         `<p class="dl-state">${t('Most nincs rendelhető időpont. Nézz vissza később!')}</p>`;
     }
@@ -709,7 +729,7 @@
     if (!B.staff) return;
     await B.staff.guard(); // the board is counter work; saving settings and cancelling need the admin role
     const root = $('#dl-admin'), live = $('#dla-live');
-    const ST = ['new', 'making', 'out', 'delivered'], ST_HU = { new: 'új', making: 'készül', out: 'úton', delivered: 'kézbesítve' };
+    const ST = ['new', 'making', 'out', 'delivered'], ST_HU = { requested: 'kérés', new: 'új', making: 'készül', out: 'úton', delivered: 'kézbesítve' };
     const NEXT = { new: 'Elkezdem készíteni', making: 'Elindultam vele', out: 'Kézbesítve' };
     const pill = (st) => `<span class="dla__pill" data-st="${esc(st)}">${t(ST_HU[st] || st)}</span>`;
     const openIds = new Set();
@@ -736,8 +756,10 @@
     function renderRush() {
       const on = board.rush, mins = on && board.rush_until ? Math.max(1, Math.ceil((new Date(board.rush_until) - Date.now()) / 60000)) : 0;
       const sw = $('.dla__switch', rushEl), had = sw && document.activeElement === sw;
-      rushEl.innerHTML = `<div><h2 id="dla-rush-title">${t('Azonnali kiszállítás')}</h2><p>${on ? `${t('Bekapcsolva: a vendégek most „amint lehet” kiszállítást is rendelhetnek, nem csak a fix időpontokra.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Alapból csak a fix időpontokra lehet rendelni. Ha most csendes a kávézó és egyikőtök el tud indulni, kapcsold be: {m} percig a vendégek „amint lehet” kiszállítást is kérhetnek (kb. fél órán belül visszük). Utána magától kikapcsol.', { m: CONFIG.rushOffMin })}</p></div>
+      rushEl.innerHTML = `<div><h2 id="dla-rush-title">${t('Azonnali kiszállítás')}</h2><p>${on ? `${t('Bekapcsolva: a vendégek most „amint lehet” kiszállítást is rendelhetnek, nem csak a fix időpontokra.')} <b>${mins ? t('Még {m} perc, utána magától kikapcsol.', { m: mins }) : ''}</b>` : t('Alapból csak a fix időpontokra lehet rendelni. Ha most csendes a kávézó és egyikőtök el tud indulni, kapcsold be: {m} percig a vendégek „amint lehet” kiszállítást kérhetnek. Minden ilyen rendelés kérés: itt csipog, és 10 percen belül elfogadod (15 / 20 / 30 perc vagy időpont) vagy elutasítod; addig csak zároljuk az összeget. Utána magától kikapcsol.', { m: CONFIG.rushOffMin })}</p></div>
         <button type="button" class="dla__switch" role="switch" aria-checked="${on}" aria-labelledby="dla-rush-title"><i aria-hidden="true"></i><span>${on ? t('BE') : t('KI')}</span></button>`;
+      const reqs = board.slots.flatMap((c) => c.orders).filter((o) => o.status === 'requested');
+      if (reqs.length) rushEl.insertAdjacentHTML('beforeend', `<a class="dla__alert" href="#req-${reqs[0].id}">${tn('Új azonnali kérés: {n}', reqs.length)} · ${t('válasz {time}-ig', { time: clock(reqs[0].answer_by) })} →</a>`);
       rushEl.classList.toggle('is-on', on);
       if (had) $('.dla__switch', rushEl).focus();
     }
@@ -751,10 +773,15 @@
             <div class="dla__bar" aria-hidden="true"><i style="width:${Math.min(100, Math.round(s.drinks / Math.max(1, s.capacity) * 100))}%"></i></div>
             ${s.rush ? '' : `<button type="button" class="dla__mini" data-close="${s.id}" aria-pressed="${s.status === 'closed'}">${s.status === 'closed' ? t('Lezárva · megnyitom') : isToday ? t('Lezárom mára') : t('Lezárom erre a napra')}</button>`}</div>
           ${s.orders.length ? s.orders.map((o) => `
-            <details class="dla__order" data-id="${o.id}"${openIds.has(o.id) ? ' open' : ''}>
-              <summary><span><b>${esc(o.company)}</b><small>${o.id} · ${tn('{n} ital', o.drinks)} · ${o.type === 'company' ? t('cég fizet') : t('csoportos')}</small></span>${pill(o.status)}</summary>
+            <details class="dla__order${o.status === 'requested' ? ' is-request' : ''}" id="req-${o.id}" data-id="${o.id}"${openIds.has(o.id) || o.status === 'requested' ? ' open' : ''}>
+              <summary><span><b>${esc(o.company)}</b><small>${o.id} · ${tn('{n} ital', o.drinks)} · ${o.type === 'company' ? t('cég fizet') : t('csoportos')}${o.eta_at ? ` · ${t('érkezés kb. {time}', { time: clock(o.eta_at) })}` : ''}</small></span>${pill(o.status)}</summary>
               <ul>${o.cups.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>
               <p>${esc(o.address)} · ${esc(o.contact)}${o.note ? `<br>${esc(t(o.note))}` : ''}</p>
+              ${o.status === 'requested' ? `<div class="dla__answer" role="group" aria-label="${t('Mikorra visszük?')}">
+                <p><b>${t('Mikorra visszük?')}</b> ${t('Válasz {time}-ig, utána magától elutasítjuk.', { time: clock(o.answer_by) })}</p>
+                <div class="dla__answer-row">${[15, 20, 30].map((m) => `<button type="button" class="btn" data-ans="${o.id}" data-min="${m}">${t('{m} perc', { m })}</button>`).join('')}</div>
+                <div class="dla__answer-row"><label class="dla__at"><span>${t('vagy ekkorra')}</span><input type="time" data-at="${o.id}"></label><button type="button" class="btn btn--ghost" data-ans="${o.id}" data-time>${t('Elfogadom')}</button></div>
+                <button type="button" class="dla__mini" data-ans="${o.id}" data-no>${t('Most nem megy')}</button></div>` : ''}
               ${NEXT[o.status] ? `<button type="button" class="btn" data-next="${o.id}" data-to="${ST[ST.indexOf(o.status) + 1]}">${t(NEXT[o.status])}</button>` : ''}
               ${NEXT[o.status] ? `<button type="button" class="dla__mini" data-cancel="${o.id}">${t('Törlés és teljes visszatérítés')}</button>` : ''}
             </details>`).join('') : `<p class="dla__empty">${t('Erre az időpontra még nincs rendelés.')}</p>`}
@@ -787,7 +814,7 @@
     const loadDays = async () => { dayList = [...new Set([today(), ...(await api.slots()).days.map((d) => d.date)])].sort(); if (!dayList.includes(date)) date = dayList[0]; };
     async function refresh(part) {
       if (!part) await loadDays();
-      if (!part || part === 'board') { board = await api.admin.board(date); renderRush(); renderBoard(); }
+      if (!part || part === 'board') { board = await api.admin.board(date); renderRush(); renderBoard(); alarm(); }
       if (!part || part === 'settings') { settings = await api.admin.settings(); if (!part) renderSlots(); rec = (await api.admin.recurring()).recurring; renderRec(); }
     }
 
@@ -799,8 +826,22 @@
     datesEl.addEventListener('click', async (e) => { const b = e.target.closest('[data-date]'); if (!b || working) return; date = b.dataset.date; await act(async () => {}, '', 'board'); $(`[data-date="${date}"]`, datesEl)?.focus(); });
     boardEl.addEventListener('toggle', (e) => { const d = e.target.closest('.dla__order'); if (d) d.open ? openIds.add(d.dataset.id) : openIds.delete(d.dataset.id); }, true);
     boardEl.addEventListener('click', async (e) => {
-      const next = e.target.closest('[data-next]'), close = e.target.closest('[data-close]'), cancel = e.target.closest('[data-cancel]');
-      if (cancel) {
+      const next = e.target.closest('[data-next]'), close = e.target.closest('[data-close]'), cancel = e.target.closest('[data-cancel]'), ans = e.target.closest('[data-ans]');
+      if (ans) {
+        const id = ans.dataset.ans;
+        let body, ok;
+        if (ans.hasAttribute('data-no')) {
+          if (!confirm(t('{id}: most nem visszük? A vendég kártyáján feloldjuk a zárolást.', { id }))) return;
+          body = { accept: false }; ok = t('{id}: elutasítva, a zárolás feloldva', { id });
+        } else if (ans.hasAttribute('data-time')) {
+          const v = $(`[data-at="${id}"]`, boardEl).value;
+          if (!/^\d\d:\d\d$/.test(v)) { say(t('Adj meg egy időpontot.')); $(`[data-at="${id}"]`, boardEl).focus(); return; }
+          body = { time: v }; ok = t('{id}: elfogadva, érkezés kb. {time}', { id, time: hm(v) });
+        } else { body = { minutes: Number(ans.dataset.min) }; ok = t('{id}: elfogadva, {m} perc', { id, m: ans.dataset.min }); }
+        busy(ans, true);
+        if (!(await act(() => api.admin.answer(id, body), ok, 'board'))) say(t('{id}: ez a kérés közben lezárult vagy nem sikerült a terhelés. Nézd meg a táblát.', { id }));
+        $(`[data-id="${id}"] summary`, boardEl)?.focus();
+      } else if (cancel) {
         const id = cancel.dataset.cancel;
         if (!confirm(t('{id}: töröljük a rendelést, és mindenki visszakapja a teljes összeget?', { id }))) return;
         busy(cancel, true);
@@ -854,14 +895,27 @@
       const id = b.dataset.rec, on = b.dataset.to === 'true';
       await act(() => api.admin.setRecurring(id, on), on ? t('aktív') : t('szünetel'), 'settings'); $(`[data-rec="${id}"]`, recEl)?.focus();
     });
+    // a new rush request: a short double beep and a marked tab title (the browser allows sound after the first tap)
+    const seen = new Set();
+    let audio = null;
+    addEventListener('pointerdown', () => { try { audio = audio || new AudioContext(); audio.resume(); } catch (e) { /* no audio */ } }, { once: true });
+    function alarm() {
+      const reqs = (board?.slots || []).flatMap((c) => c.orders).filter((o) => o.status === 'requested').map((o) => o.id);
+      const fresh = reqs.filter((id) => !seen.has(id));
+      reqs.forEach((id) => seen.add(id));
+      document.title = `${reqs.length ? '● ' : ''}${document.title.replace(/^● /, '')}`;
+      if (!fresh.length || !audio) return;
+      try { [0, 0.25].forEach((at) => { const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = 880; g.gain.value = 0.2; o.connect(g).connect(audio.destination); o.start(audio.currentTime + at); o.stop(audio.currentTime + at + 0.15); }); } catch (e) { /* no audio */ }
+      say(tn('Új azonnali kérés: {n}', fresh.length));
+    }
     const first = () => refresh().catch(() => { boardEl.innerHTML = `<p class="dla__empty" role="alert">${t('Az adatok most nem érhetők el. Próbáld újra egy perc múlva.')}</p>`; });
     first();
     watchDay(() => { date = today(); first(); }); // the board left open overnight moves to the new day
     // new orders, cutoffs, the rush countdown: redraw only what changed, so the poll never steals the focus
     setInterval(async () => {
-      if (document.hidden || working || !board) return;
-      try { const next = await api.admin.board(date), same = JSON.stringify(next.slots) === JSON.stringify(board.slots); if (working) return; board = next; renderRush(); if (!same) renderBoard(); } catch (e) { /* next round */ }
-    }, 20000);
+      if (working || !board) return; // also in a background tab: a rush request must not wait
+      try { const next = await api.admin.board(date), same = JSON.stringify(next.slots) === JSON.stringify(board.slots); if (working) return; board = next; renderRush(); if (!same) renderBoard(); alarm(); } catch (e) { /* next round */ }
+    }, 15000);
   }
 
   const view = document.body.dataset.dl;

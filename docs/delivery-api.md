@@ -158,7 +158,8 @@ list as a printable ticket. A printed ticket at the counter is open (see `docs/d
 
 | Method, path | Does |
 |---|---|
-| `GET /admin/board?date=YYYY-MM-DD` | `{ date, rush, rush_until, slots: [{ ...slot, drinks, orders: [{ id, slot_id, type, company, contact, address, note, cups[], drinks, status }] }] }` plus rush orders. |
+| `GET /admin/board?date=YYYY-MM-DD` | `{ date, rush, rush_until, slots: [{ ...slot, drinks, orders: [{ id, slot_id, type, company, contact, address, note, cups[], drinks, status, answer_by, eta_at }] }] }` plus rush orders (`requested` ones included, with their authorised cups). |
+| `POST /admin/orders/:id/answer` | Rush request (staff): `{ minutes: 5–120 }` or `{ time: "HH:MM" }` (today, within 3 h) captures the authorised payment, sets `eta_at`, then invoice, counter email and the guest's "accepted, about HH:MM" email → `{ id, status: "new", eta_at }`. `{ accept: false }` releases the authorisation → `{ id, status: "declined" }`. `409 not_requested` when it was answered or timed out meanwhile; `409 capture_failed` when Stripe refuses the capture (the request is then declined and the guest told). |
 | `PUT /admin/orders/:id/status` | `{ status: "new" \| "making" \| "out" \| "delivered" }`. `out` emails "on the way" to the contact. |
 | `PUT /admin/rush` | `{ on }` → `{ on, until }`. The big switch. On sets `rush_until = now + 45 min` (`RUSH_AUTO_OFF_MIN`), after which rush is off again by itself; the board shows the minutes left. Turning it off does not touch rush orders already paid. |
 | `GET /admin/settings` · `PUT /admin/settings` | `{ slots: [{ id, time, cutoffMin, capacity }], days: [1..5] }`. Removing a slot only deactivates it; orders keep their copied time. `400` for a slot outside the opening hours (7:30–18:00), two slots at the same time, or Sunday as a delivery day. |
@@ -173,7 +174,7 @@ list as a printable ticket. A printed ticket at the counter is open (see `docs/d
 | Slots | 9:00 / 10:30 / 14:00, cutoff 45 min, 8 / 12 / 12 drinks |
 | Delivery days | Mon–Fri, no Hungarian public holidays (`CONFIG.holidays`, extend each year) |
 | Days offered in the picker | next 5 delivery days |
-| Rush | off; when on: up to 8 drinks, "about 30 minutes", switches itself off after 45 min |
+| Rush | off; when on: up to 8 drinks, switches itself off after 45 min; every rush order is a request (2026-11-18, below) |
 | Drinks that travel | every drink: coffee, specialty, tea, smoothie, bottled; no product excluded (Daniel 2026-11-17) |
 | Plant milk surcharge | 0 Ft (not in the catalogue) |
 | Group fee below 5 at cutoff | organiser pays (up front, refunded at 5) |
@@ -218,6 +219,16 @@ carry `payments_ready`.
 - **Board:** rush orders (and orders of a slot removed since) come as one extra column `{ id: "rush", rush: true }`.
   Open group orders are not listed until they lock; their paid cups count in `drinks`.
 - `PUT /admin/settings` also returns `free_from` and `fee` (read-only for now: edit `dl_settings` in D1).
+- Rush requests (2026-11-18, migration `0006_rush_requests.sql`): a rush order's Checkout uses `capture_method=manual`.
+  On `checkout.session.completed` with `payment_status` other than `paid`, the Worker reads the PaymentIntent and, at
+  `requires_capture`, sets the payer `authorised` and the order `requested` with `answer_by = now + 10 min`
+  (`RUSH_ANSWER_MIN`); staff get an "AZONNALI kérés" email, the guest a "request received, only held" email. The board
+  beeps (after the first tap on the page), marks the tab title and shows a link to the request; it polls every 15 s, also in
+  a background tab. Accept/decline: `POST /admin/orders/:id/answer`. Unanswered requests are declined by `sweep`
+  (board polls, slot reads, the guest's status poll, the cron) and the hold released (`declined`/`released`); a hold
+  that cannot be released lapses within 7 days by itself. Admin "cancel" on a request = decline. The guest's page after
+  Checkout polls `GET /orders/:id/status?t=<signed t from the return URL>` → `{ status, rush, answer_by, eta_at }` every
+  5 s until it is accepted or declined.
 - Signed-in guests (2026-11-18, `services/my_orders.ts`, customer token as for `/api/customer/me`):
   `GET /api/customer/orders` → `{ delivery: [{ id, kind, group_code (organiser only), date, time, rush, company, street,
   drinks, amount, refund, status, upcoming }], after_hours: [{ id, date, time, hours, guests, amount, refund, status,
