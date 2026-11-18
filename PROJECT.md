@@ -156,6 +156,10 @@ server replay.
   (E-HNG-2026-1…13): advance, final (advance deducted, 0 Ft due), 50 %/0 %/goodwill cancellations, storno, Delivery
   company/organiser invoices, fee correction, till payer. Fixed: empty szamlaszamElotag made Számlázz reject everything.
 - Ask the accountant: when a cancellation keeps money (50 % / 0 %), does the advance invoice need a végszámla?
+- 3 % kezelési költség kept on guest cancellations (fee line at AH_CANCEL_FEE_VAT 27 %, ask the accountant); admin
+  "Kezelési költség nélkül" when we cancel. ÁSZF at /aszf/ (hu+en, customer-texts.js `terms`, effective 2026-12-01);
+  both booking forms only tick the terms through a summary popup (site/shared/terms-dialog.js). After Hours bookable
+  from tomorrow (noticeDays 1). Migration 0004 (cancel_fee_huf) applied to the preview only.
 - Open: NTAK (ask NTAK whether online sales outside the till must be reported; Delivery till entries go through Fruitsys
   anyway), invite the accountant in Számlázz.hu, Számlázz package with Agent, then drop `SZAMLAZZ_OFF` on the preview.
 

@@ -1,4 +1,4 @@
-// Bros Cafe — customer area: /fiok/, /card/<code>, /auth/verify/, /adatvedelem/, /segitseg/, /404.html.
+// Bros Cafe — customer area: /fiok/, /card/<code>, /auth/verify/, /adatvedelem/, /aszf/, /segitseg/, /404.html.
 // Same API calls and storage keys as the old React app; texts in customer-texts.js.
 (() => {
   const B = window.BROS, S = B.shell, { esc, toast } = S, en = B.lang === 'en';
@@ -248,6 +248,16 @@
   }
 
   // =====================================================================================================================
+  // /aszf/ — terms and conditions for After Hours and Delivery (texts in customer-texts.js)
+  function terms() {
+    setTitle('ÁSZF', 'Terms');
+    const T = TX.terms;
+    view(`<section class="phero"><div class="wrap"><p class="eyebrow">${X('ÁSZF', 'Terms')}</p><h1 data-vt="page-title">${esc(T.title)}</h1></div></section>
+<div class="wrap"><div class="legal"><p class="upd">${esc(T.updated)}</p><p class="lead">${esc(T.intro)}</p>
+${T.sections.map((s) => `<section><h2>${esc(s.h)}</h2>${s.p.map((p) => `<p>${esc(p)}</p>`).join('')}</section>`).join('')}
+<p>${esc(T.contactLine)} <a href="mailto:${EMAIL}">${EMAIL}</a></p></div></div>`);
+  }
+
   // /adatvedelem/ — privacy statement + the consent switch
   // =====================================================================================================================
   function privacy() {
@@ -316,5 +326,5 @@ ${sections.map((s) => `<section><h2>${esc(s.h)}</h2>${s.p.map((p) => `<p>${esc(p
     finish();
   }
 
-  ({ fiok, card, verify, adatvedelem: privacy, segitseg: help, 404: notFound }[page] || (() => {}))();
+  ({ fiok, card, verify, adatvedelem: privacy, aszf: terms, segitseg: help, 404: notFound }[page] || (() => {}))();
 })();

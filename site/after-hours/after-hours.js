@@ -11,6 +11,7 @@
   // ---------- the offer (docs/after-hours.md, owner 2026-11-17). The server (POST /quote) is the source of truth; this mirrors it ----------
   const CONFIG = {
     open: '18:00', close: '22:00',       // the evening; a booking is a start time + a number of hours inside it
+    cancelFeePct: 3,                     // handling fee kept from a guest cancellation's refund (server: AH_CANCEL_FEE_PCT)
     lastStart: '20:00', startStep: 30,   // starts: 18:00, 18:30 … 20:00 (minutes between them)
     baseHours: 2, maxHours: 4,
     minGuests: 2, maxGuests: 12,
@@ -77,10 +78,10 @@
   const monthStart = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
   const monthDays = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
   const addMonths = (d, n) => { const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1)); m.setUTCDate(Math.min(d.getUTCDate(), monthDays(m))); return m; }; // 30 Nov + 3 months = 28 Feb
-  // First bookable evening = the later of the launch date and three full days' notice (one more once today's slot has started).
-  const LAUNCH_DATE = '2026-12-01', NOTICE_DAYS = 3;
+  // First bookable evening = the later of the launch date and tomorrow (mirrors the server).
+  const LAUNCH_DATE = '2026-12-01', NOTICE_DAYS = 1;
   let today = parse(bp().date);
-  const win = () => { const notice = addDays(today, NOTICE_DAYS + (bp().time >= CONFIG.open ? 1 : 0)), launch = parse(LAUNCH_DATE); return { min: notice > launch ? notice : launch, max: addMonths(today, CONFIG.windowMonths) }; };
+  const win = () => { const notice = addDays(today, NOTICE_DAYS), launch = parse(LAUNCH_DATE); return { min: notice > launch ? notice : launch, max: addMonths(today, CONFIG.windowMonths) }; };
   let WIN = win();
   // An open tab must notice midnight (and 18:00) in Budapest.
   function watchDay(fn) {
@@ -123,7 +124,7 @@
         setDay: (date, open) => call(`/admin/days/${date}`, { method: 'PUT', body: JSON.stringify({ open }) }),
         bookings: () => call('/admin/bookings'),
         cancel: (id) => post(`/admin/bookings/${id}/cancel`),
-        refund: (id, percent) => post(`/admin/bookings/${id}/refund`, { percent }),
+        refund: (id, percent, waive) => post(`/admin/bookings/${id}/refund`, { percent, waive_fee: !!waive }),
       },
     };
   })();
@@ -269,6 +270,7 @@
     });
 
     const form = $('#ah-form'), guests = $('#ah-guests'), sum = $('#ah-sum'), result = $('#ah-result'), calRoot = $('#ah-cal'), ret = $('#ah-return');
+    window.BROS_TERMS?.bind(form, 'ah');
     const F = (n) => form.elements[n];
     let days = new Map(), picked = null, cal = null, nGuests = Number(guests.value) || CONFIG.minGuests, start = STARTS[0], hours = CONFIG.baseHours, sending = false, vch = null;
 
@@ -564,7 +566,7 @@
         ? row(t('Csomag'), `${tierName(b)} · ${ft(perPersonOf(b))} ${t('/ fő')}`) + row(t('Tálak'), esc(names(b.dishes || [])) || '–') + row(t('Extra tálak'), esc(names(b.extras || [])) || '–')
         : row(t('Ételválogatás'), legacy ? `${legacy} (${t('a helyszínen fizetendő')})` : '–'); // bookings before 2026-11-17
       // paid: what a cancellation would give back now; cancelled: what the terms gave at the moment of cancelling
-      const at = b.status === 'cancelled' && b.cancelled_at ? Date.parse(b.cancelled_at) : Date.now(), pct = refundPercent(b, at), back = ft(Math.round(b.amount * pct / 100));
+      const at = b.status === 'cancelled' && b.cancelled_at ? Date.parse(b.cancelled_at) : Date.now(), pct = refundPercent(b, at), fee = pct ? Math.round(b.amount * CONFIG.cancelFeePct / 100) : 0, back = ft(Math.max(0, Math.round(b.amount * pct / 100) - fee));
       const hint = b.status === 'paid' ? t('Visszatérítés a lemondási feltételek szerint, ha most mondják le: {p}% ({sum}).', { p: pct, sum: back })
         : b.status === 'cancelled' ? t('Lemondva: {when}. A feltételek szerint ekkor {p}% járt vissza ({sum}).', { when: b.cancelled_at ? stamp.format(new Date(b.cancelled_at)) : '–', p: pct, sum: back }) : '';
       dlg.innerHTML = `
@@ -573,7 +575,7 @@
         <dl class="aha__dl" data-id="${esc(b.id)}">
           ${row(t('Azonosító'), esc(b.id))}${row(t('Dátum'), longDate.format(parse(b.date)))}${row(t('Időpont'), `${slot(b)} · ${hoursTxt(b.hours)}`)}${row(t('Vendégszám'), t('{n} fő', { n: b.guests }))}
           ${row(t('Alkalom'), t(OCC[b.occasion] || '–'))}${food}${row(t('Ünnepi torta'), b.cake ? `${t('kérnek tortát')} (${t('a helyszínen fizetendő')})` : '–')}${b.voucher_code ? row(t('Kuponkód'), `${esc(b.voucher_code)} · −${ft(b.discount || 0)}`) : ''}
-          ${row(t('Fizetve'), `${ft(b.amount)}${b.status === 'refunded' ? ` · ${t('visszatérítve')}: ${b.refund_percent ?? 0}%` : ''}${breakdown(b)}`)}
+          ${row(t('Fizetve'), `${ft(b.amount)}${b.status === 'refunded' ? ` · ${t('visszatérítve')}: ${ft(b.refund_huf ?? 0)} (${b.refund_percent ?? 0}%${b.cancel_fee_huf ? `, ${t('kezelési költség')} ${ft(b.cancel_fee_huf)}` : ''})` : ''}${breakdown(b)}`)}
           ${row(t('E-mail'), esc(b.email))}${row(t('Telefonszám'), esc(b.phone))}
           ${row(t('Számlázási cím'), esc(`${b.billing.company ? `${b.billing.company} (${b.billing.tax_number}), ` : ''}${b.billing.zip} ${b.billing.city}, ${b.billing.street}`))}
           ${row(t('Megjegyzés'), esc(t(b.note)) || '–')}
@@ -582,7 +584,8 @@
         ${error ? `<p class="ah-err" role="alert">${error === 'payments_not_configured' ? t('Az online fizetés (Stripe) nincs beállítva, ezért innen nem indítható visszatérítés.') : t('Nem sikerült. Próbáld újra egy perc múlva.')}</p>` : ''}
         <div class="aha__actions">
           ${b.status === 'paid' ? `<button type="button" class="btn btn--ghost" data-act="cancel">${t('Foglalás lemondása')}</button>` : ''}
-          ${b.status === 'cancelled' ? `<button type="button" class="btn" data-act="refund" data-pct="${pct}">${t('Visszatérítés')} · ${pct}%</button>` : ''}
+          ${b.status === 'cancelled' ? `<button type="button" class="btn" data-act="refund" data-pct="${pct}">${t('Visszatérítés')} · ${pct}%${pct ? ` − ${CONFIG.cancelFeePct}% ${t('kezelési költség')}` : ''}</button>` : ''}
+          ${b.status === 'cancelled' && pct ? `<button type="button" class="btn btn--ghost" data-act="refund" data-pct="${pct}" data-waive="1">${t('Kezelési költség nélkül')} · ${pct}%</button>` : ''}
           ${b.status === 'cancelled' ? [50, 100].filter((p) => p > pct).map((p) => `<button type="button" class="btn btn--ghost" data-act="refund" data-pct="${p}">${t('Méltányosságból')} · ${p}%</button>`).join('') : ''}
         </div>
         <p class="fine" style="margin-top:14px">${b.invoice_no ? [[t('Előlegszámla'), b.invoice_no], [t('Végszámla'), b.final_no], [t('Helyesbítő számla'), b.correction_no]].filter((r) => r[1]).map((r) => `${r[0]}: ${esc(r[1])}`).join(' · ') : b.status === 'paid' ? t('Számla még nincs kiállítva.') : ''}</p>`;
@@ -597,7 +600,7 @@
       if (!confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég e-mailt kap róla.', { id }) : t('{id}: visszautaljuk a kifizetett összeg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
       working = true; act.setAttribute('aria-busy', 'true'); act.textContent = t('Folyamatban…');
       try {
-        await (act.dataset.act === 'cancel' ? api.admin.cancel(id) : api.admin.refund(id, Number(act.dataset.pct)));
+        await (act.dataset.act === 'cancel' ? api.admin.cancel(id) : api.admin.refund(id, Number(act.dataset.pct), act.dataset.waive));
         fresh = id; await refresh(); fresh = id; detail(id, '[data-act]'); fresh = null;
       } catch (err) { detail(id, '[data-act]', err.code || true); }
       working = false;
@@ -618,10 +621,11 @@
         <h2 id="ah-cancel-name">${esc(b.name)}</h2>
         <dl class="aha__dl">
           ${row(t('Azonosító'), esc(b.id))}${row(t('Dátum'), longDate.format(parse(b.date)))}${row(t('Időpont'), `${slot(b)} · ${hoursTxt(b.hours)}`)}${row(t('Vendégszám'), t('{n} fő', { n: b.guests }))}${row(t('Kifizetett összeg'), `${ft(b.amount)}${breakdown(b)}`)}
-          ${row(t('Visszatérítés'), `<b>${ft(r.refund_huf)}</b> (${r.refund_percent}%)`)}
+          ${r.fee_huf ? row(t('Kezelési költség'), `−${ft(r.fee_huf)} (${t('a befizetett összeg {p}%-a', { p: r.fee_percent })})`) : ''}
+          ${row(t('Visszatérítés'), `<b>${ft(r.refund_huf)}</b> (${r.refund_percent}%${r.fee_huf ? ` − ${r.fee_percent}%` : ''})`)}
         </dl>
         ${done ? `<p class="ah-preview" role="status" tabindex="-1">${t('A foglalást lemondtuk.')} ${r.refund_huf ? t('A visszatérítés {sum}, néhány napon belül érkezik a fizetéshez használt kártyára.', { sum: ft(r.refund_huf) }) : ''}</p>`
-          : `<p class="aha__hint">${t('A visszatérítés a lemondás időpontjától függ: legalább 7 nappal előtte 100%, legkésőbb 48 órával előtte 50%, azon belül 0%.')}</p>
+          : `<p class="aha__hint">${t('A visszatérítés a lemondás időpontjától függ: legalább 7 nappal előtte 100%, legkésőbb 48 órával előtte 50%, azon belül 0%. A visszatérítésből a befizetett összeg 3%-át kezelési költségként levonjuk.')}</p>
         ${error ? `<p class="ah-err" role="alert">${t('Most nem sikerült lemondani. Próbáld újra egy perc múlva, vagy írj nekünk: hello@broscafe.hu')}</p>` : ''}
         <div class="aha__actions"><button type="button" class="btn" data-confirm>${t('Lemondom a foglalást')}</button><a class="btn btn--ghost" href="../">${t('Mégsem, megtartom')}</a></div>`}`;
       if (done) $('.ah-preview', root).focus(); else if (error) $('[data-confirm]', root).focus();

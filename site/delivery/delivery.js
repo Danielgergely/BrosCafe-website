@@ -204,6 +204,7 @@
     });
 
     const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
+    window.BROS_TERMS?.bind(form, 'dl');
     const menuEl = $('#dl-menu'), moreEl = $('#dl-more'), catsEl = $('#dl-cats'), cupsEl = $('#dl-cups'), daysEl = $('#dl-days'), slotsEl = $('#dl-slots'), sum = $('#dl-sum'), result = $('#dl-result'), ret = $('#dl-return'), payBtn = $('#dl-pay');
     let cups = [], cat = CONFIG.cats[0], showAll = false, data = null, day = null, slot = null, capShown = false, sending = false, liveTimer = null; // slot: a slot id or 'rush'
     const kind = () => F('pay').value;
@@ -504,7 +505,7 @@
           <div class="dl-field"><label for="dl-j-city">${t('Város')}</label><input id="dl-j-city" name="city" type="text" autocomplete="address-level2"></div>
           <div class="dl-field dl-field--wide"><label for="dl-j-inv-street">${t('Számlázási cím: utca, házszám')}</label><input id="dl-j-inv-street" name="inv_street" type="text" autocomplete="off"></div>
         </div>
-        <label class="dl-check"><input type="checkbox" name="terms" required><span>${t('Elfogadom az')} <a href="../#aszf">${t('általános szerződési feltételeket')}</a> ${t('(tervezet).')}</span></label>
+        <label class="dl-check"><input type="checkbox" name="terms" required><span>${t('Elfogadom az')} <a href="/aszf/" target="_blank" rel="noopener">${t('általános szerződési feltételeket')}</a>.</span></label>
         <button class="btn dl-join__btn" type="submit">${t('Hozzáadom és fizetek')}</button>
         <p class="dl-preview" id="dl-join-result" role="alert" tabindex="-1" hidden></p>
         <p class="fine">${t('Mindenki a saját italát fizeti, online: bankkártyával, Apple Pay-jel vagy Google Pay-jel. Ha számlát kérsz, e-mailben kapod; különben a kávézó pénztárgépe ad nyugtát.')}</p>
@@ -512,6 +513,7 @@
     }
     function bindForm() {
       const form = $('#dl-join'), setErr = errors(form), F = (n) => form.elements[n], opts = $('#dl-join-opts'), btn = $('.dl-join__btn', form), out = $('#dl-join-result');
+      window.BROS_TERMS?.bind(form, 'dl');
       const price = () => { btn.textContent = cup ? `${t('Hozzáadom és fizetek')} · ${ft(cupPrice(cup))}` : t('Hozzáadom és fizetek'); };
       cup = null;
       const drink = () => {

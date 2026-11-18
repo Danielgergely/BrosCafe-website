@@ -12,6 +12,7 @@ export const config = (env: Env) => ({
   key: s(env, 'SZAMLAZZ_AGENT_KEY'),
   url: s(env, 'SZAMLAZZ_API_URL') || 'https://www.szamlazz.hu/szamla/', // overridable for local tests against a stub
   ahVat: s(env, 'AH_VAT', '5'),             // After Hours, every line: invoiced as food and drink served on site
+  ahFeeVat: s(env, 'AH_CANCEL_FEE_VAT', '27'), // After Hours cancellation handling fee (ACCOUNTANT: rate to confirm)
   dlDrinkVat: s(env, 'DL_DRINK_VAT', '27'), // delivered drinks
   dlFeeVat: s(env, 'DL_FEE_VAT', '27'),     // delivery fee
   prefix: s(env, 'SZAMLAZZ_PREFIX'),       // invoice number prefix, empty = the account's default

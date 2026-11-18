@@ -21,8 +21,9 @@ const offer = (env: Env) => ({
   drinks: num(env, 'AH_DRINKS_HUF', 2500),          // unlimited drinks we make, per guest for the evening, whole group (docs/after-hours-costs.md)
   minGuests: 2, maxGuests: 12, baseHours: 2, maxHours: 4,
   open: '18:00', close: '22:00', lastStart: '20:00', startStep: 30,
-  launch: String(env.AH_LAUNCH_DATE ?? '2026-12-01'), noticeDays: 3, windowMonths: 3,
+  launch: String(env.AH_LAUNCH_DATE ?? '2026-12-01'), noticeDays: 1, windowMonths: 3,
   closedDays: ['12-24', '12-25', '12-26', '12-31', '01-01'], // blocked every year unless the admin opens the day
+  cancelFeePct: num(env, 'AH_CANCEL_FEE_PCT', 3),   // kept from a guest cancellation's refund (card fees); never on goodwill or when we cancel
 });
 /** The six dishes (the brothers' list); `extra` = per person as an additional dish on the menu. */
 export const DISHES: Record<string, { hu: string; en: string; extra: number }> = {
@@ -114,10 +115,10 @@ function voucher(env: Env, raw: unknown) {
   return v ? { code, percent: v.percent, discount: Math.round((offer(env).base * v.percent) / 100) } : null;
 }
 
-/** First bookable evening: the later of the launch date and three full days' notice (one more once today's evening has opened). */
+/** First bookable evening: the later of the launch date and tomorrow (Daniel 2026-11-18: bookable one day ahead). */
 function bookingWindow(app: App) {
   const o = offer(app.env), now = today(app);
-  const notice = addDays(now.date, o.noticeDays + (now.hour * 60 + now.minute >= mins(o.open) ? 1 : 0));
+  const notice = addDays(now.date, o.noticeDays);
   return { min: notice > o.launch ? notice : o.launch, max: addMonths(now.date, o.windowMonths) };
 }
 const defaultOpen = (env: Env, date: string) => weekday(date) !== 0 && !offer(env).closedDays.includes(date.slice(5));
@@ -138,7 +139,7 @@ function view(b: Doc) {
     billing: { zip: b.zip, city: b.city, street: b.street, company: b.company ?? '', tax_number: b.tax_number ?? '' },
     occasion: b.occasion ?? '', note: b.note ?? '', packages: p.legacy ?? [], dishes: p.dishes, extras: p.extras, lines: p.lines, cake: !!b.cake, voucher_code: b.voucher_code ?? null, discount: b.discount_huf ?? 0, status: b.status, amount: b.amount_huf,
     created_at: iso(b.created_at), paid_at: iso(b.paid_at), cancelled_at: iso(b.cancelled_at),
-    refund_percent: b.refund_percent, refund_huf: b.refund_huf, invoice_no: b.invoice_no, invoice_error: b.invoice_error,
+    refund_percent: b.refund_percent, refund_huf: b.refund_huf, cancel_fee_huf: b.cancel_fee_huf ?? 0, invoice_no: b.invoice_no, invoice_error: b.invoice_error,
     final_no: b.final_no ?? null, final_error: b.final_error ?? null, correction_no: b.correction_no ?? null, correction_error: b.correction_error ?? null,
   };
 }
@@ -271,11 +272,12 @@ function invoiceOf(app: App, b: Doc, type: szamlazz.Kind, extra: Partial<szamlaz
 const issueInvoice = (app: App, b: Doc) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => invoiceOf(app, b, 'elolegszamla'));
 const issueFinal = (app: App, b: Doc) => szamlazz.issueFor(app, 'ah_bookings', b.id,
   () => invoiceOf(app, b, 'vegszamla', { ref: `${b.id}-V`, fulfilled: b.date, refersTo: b.invoice_no }), 'final');
-/** Partial refund: the advance invoice reversed, the kept amount charged again (total = −refund). */
-const issueCorrection = (app: App, b: Doc, refundHuf: number, percent: number, goodwill: string) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => {
+/** Partial refund: the advance invoice reversed, the kept amount charged again (total = −refund); the handling fee is its own line. */
+const issueCorrection = (app: App, b: Doc, refundHuf: number, percent: number, fee: number, goodwill: string) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => {
   const name = `Fennmaradó összeg lemondás után (az eredeti ${ft(b.amount_huf)} ${100 - percent} %-a${goodwill ? ', méltányosságból' : ''})`;
-  return invoiceOf(app, b, 'helyesbito', { ref: `${b.id}-H`, refersTo: b.invoice_no, lines: szamlazz.correctionLines(linesOf(app, b), b.amount_huf - refundHuf, name),
-    comment: `Bros Cafe · Foglalás: ${b.id}${goodwill ? ` · ${goodwill}` : ''}` });
+  const lines = szamlazz.correctionLines(linesOf(app, b), b.amount_huf - refundHuf - fee, name);
+  if (fee) lines.push({ name: `Kezelési költség lemondás miatt (a befizetett ${ft(b.amount_huf)} ${offer(app.env).cancelFeePct} %-a)`, quantity: 1, grossHuf: fee, vat: szamlazz.config(app.env).ahFeeVat });
+  return invoiceOf(app, b, 'helyesbito', { ref: `${b.id}-H`, refersTo: b.invoice_no, lines, comment: `Bros Cafe · Foglalás: ${b.id}${goodwill ? ` · ${goodwill}` : ''}` });
 }, 'correction');
 
 /** Cron: advance invoices that failed or waited for the Agent key, and final invoices once the evening is over. */
@@ -326,8 +328,9 @@ async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
     : 'A privát estétek a Bros Caféban le van foglalva. Az előlegszámlát külön e-mailben küldi a Számlázz.hu, a végszámlát az est napján.';
   const food = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
     : en ? 'Food and drinks are included in the amount you paid; the cake is paid on the evening.' : 'Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.';
-  const terms = `${food} ${en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after.'
-    : 'Lemondás: legalább 7 nappal előtte a teljes összeg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni.'}`;
+  const pct = offer(app.env).cancelFeePct;
+  const terms = `${food} ${en ? `Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after; a ${pct}% handling fee of the amount paid is deducted from a refund.`
+    : `Lemondás: legalább 7 nappal előtte a teljes összeg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni; a visszatérítésből a befizetett összeg ${pct}%-át kezelési költségként levonjuk.`}`;
   await mail(app, {
     to: b.email, lang: b.lang, subject: en ? `Your Bros After Hours booking (${b.id})` : `Bros After Hours foglalás (${b.id})`,
     title: en ? 'Your evening is booked' : 'Megvan a foglalás', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(terms)}</p>`,
@@ -340,7 +343,8 @@ async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
 
 async function sendCancelled(app: App, b: Doc, by: 'guest' | 'staff', note: string) {
   const en = b.lang === 'en', d = details(b, en);
-  const refund = b.refund_huf ? (en ? `Refund: ${ft(b.refund_huf)} (${b.refund_percent}%). It reaches the card you paid with in a few days.` : `Visszatérítés: ${ft(b.refund_huf)} (${b.refund_percent}%). Néhány napon belül érkezik a fizetéshez használt kártyára.`)
+  const fee = b.cancel_fee_huf ? (en ? `, less a ${ft(b.cancel_fee_huf)} handling fee` : `, levonva ${ft(b.cancel_fee_huf)} kezelési költség`) : '';
+  const refund = b.refund_huf ? (en ? `Refund: ${ft(b.refund_huf)} (${b.refund_percent}%${fee}). It reaches the card you paid with in a few days.` : `Visszatérítés: ${ft(b.refund_huf)} (${b.refund_percent}%${fee}). Néhány napon belül érkezik a fizetéshez használt kártyára.`)
     : b.status === 'refunded' ? (en ? 'Under the cancellation terms no refund is due.' : 'A lemondási feltételek szerint visszatérítés nem jár.')
       : (en ? 'We will write to you about the refund.' : 'A visszatérítésről külön értesítünk.');
   const intro = en ? 'Your Bros After Hours booking has been cancelled.' : 'A Bros After Hours foglalásotok le van mondva.';
@@ -383,8 +387,15 @@ export const onExpired = (app: App, session: Doc) =>
 
 // ---- cancelling ----
 /** Refunds a cancelled booking and closes it. Throws ApiError when Stripe cannot do it; the booking then stays `cancelled`. */
-async function refundCancelled(app: App, b: Doc, percent: number) {
-  const amount = Math.round((b.amount_huf * percent) / 100);
+/** What a cancellation pays back: the terms' share minus the handling fee (none on goodwill, when waived, or when nothing is refunded). */
+function refundOf(app: App, b: Doc, percent: number, policy: number, waive = false) {
+  const fee = !waive && percent > 0 && percent <= policy ? Math.round((b.amount_huf * offer(app.env).cancelFeePct) / 100) : 0;
+  return { fee, refund: Math.max(0, Math.round((b.amount_huf * percent) / 100) - fee) };
+}
+const policyOf = (app: App, b: Doc) => refundPercent(app, b, b.cancelled_at ? parseIso(b.cancelled_at) : new Date());
+
+async function refundCancelled(app: App, b: Doc, percent: number, waive = false) {
+  const policy = policyOf(app, b), { fee, refund: amount } = refundOf(app, b, percent, policy, waive);
   if (amount > 0) {
     if (!stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
     if (!b.stripe_payment_intent) throw new ApiError(409, 'not_paid_online');
@@ -395,20 +406,19 @@ async function refundCancelled(app: App, b: Doc, percent: number) {
       throw new ApiError(502, 'refund_failed');
     }
   }
-  await app.db.d1.prepare("UPDATE ah_bookings SET status = 'refunded', refund_huf = ?, refund_percent = ? WHERE id = ? AND status = 'cancelled'").bind(amount, percent, b.id).run();
-  // full refund: storno; partial: correcting invoice (accountant 2026-11-18). After the final invoice it is left to staff.
+  await app.db.d1.prepare("UPDATE ah_bookings SET status = 'refunded', refund_huf = ?, refund_percent = ?, cancel_fee_huf = ? WHERE id = ? AND status = 'cancelled'").bind(amount, percent, fee, b.id).run();
+  // everything back: storno; otherwise a correcting invoice (accountant 2026-11-18). After the final invoice it is left to staff.
   // more than the terms gave (admin goodwill): said on the invoice
-  const policy = refundPercent(app, b, b.cancelled_at ? parseIso(b.cancelled_at) : new Date());
   const goodwill = percent > policy ? `Méltányossági visszatérítés: ${percent} % (a lemondási feltételek szerint ${policy} % járt).` : '';
-  if (!b.final_no && percent === 100) await szamlazz.stornoFor(app, 'ah_bookings', b.id, b.invoice_no, b.email, goodwill);
-  else if (!b.final_no && amount > 0 && b.invoice_no) await issueCorrection(app, b, amount, percent, goodwill);
+  if (!b.final_no && amount === b.amount_huf) await szamlazz.stornoFor(app, 'ah_bookings', b.id, b.invoice_no, b.email, goodwill);
+  else if (!b.final_no && amount > 0 && b.invoice_no) await issueCorrection(app, b, amount, percent, fee, goodwill);
   return amount;
 }
 const invoiceTodo = (b: Doc, percent: number) =>
   !b.invoice_no ? 'Előlegszámla nem volt kiállítva: a Számlázz.hu-ban kézzel kell rendezni.'
     : b.final_no && percent > 0 ? 'A végszámla már ki volt állítva: a helyesbítést kézzel kell elvégezni (könyvelő).'
-      : percent === 100 ? 'Az előlegszámlát sztornóztuk (ellenőrizd a Számlázz.hu-ban).'
-        : percent > 0 ? 'RÉSZLEGES visszatérítés: helyesbítő számlát állítottunk ki (ellenőrizd a Számlázz.hu-ban).' : 'Nincs visszatérítés, az előlegszámla marad.';
+      : b.refund_huf === b.amount_huf ? 'Az előlegszámlát sztornóztuk (ellenőrizd a Számlázz.hu-ban).'
+        : percent > 0 ? 'Visszatérítés: helyesbítő számlát állítottunk ki (ellenőrizd a Számlázz.hu-ban).' : 'Nincs visszatérítés, az előlegszámla marad.';
 
 async function byToken(app: App, token: string) {
   const dot = token.lastIndexOf('.'), id = token.slice(0, dot), sig = token.slice(dot + 1);
@@ -417,16 +427,19 @@ async function byToken(app: App, token: string) {
   if (!b || !safeEqual(sig, await sign(app, b.id + b.cancel_token))) throw new ApiError(404, 'not_found');
   return b;
 }
-const cancelView = (b: Doc, percent: number) => ({
-  booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, amount: b.amount_huf, status: b.status, tier: b.tier, lines: pkgOf(b).lines },
-  refund_percent: percent, refund_huf: Math.round((b.amount_huf * percent) / 100),
-});
+const cancelView = (app: App, b: Doc, percent: number) => {
+  const r = b.status === 'paid' ? refundOf(app, b, percent, percent) : { fee: b.cancel_fee_huf ?? 0, refund: b.refund_huf ?? 0 };
+  return {
+    booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, amount: b.amount_huf, status: b.status, tier: b.tier, lines: pkgOf(b).lines },
+    refund_percent: percent, refund_huf: r.refund, fee_huf: r.fee, fee_percent: offer(app.env).cancelFeePct,
+  };
+};
 
 /** GET: changes nothing, so a mail scanner following the link cannot cancel. */
 export async function cancelInfo(app: App, token: string) {
   const b = await byToken(app, token);
   if (b.status !== 'paid' || instant(app, b.date, b.start_time).getTime() <= Date.now()) throw new ApiError(410, 'gone');
-  return cancelView(b, refundPercent(app, b));
+  return cancelView(app, b, refundPercent(app, b));
 }
 
 export async function cancelConfirm(app: App, token: string) {
@@ -443,7 +456,7 @@ export async function cancelConfirm(app: App, token: string) {
   }
   const fresh = (await get(app, b.id))!;
   app.later(sendCancelled(app, fresh, 'guest', note));
-  return { ...cancelView(fresh, percent), refund_pending: fresh.status === 'cancelled' };
+  return { ...cancelView(app, fresh, percent), refund_pending: fresh.status === 'cancelled' };
 }
 
 // ---- admin ----
@@ -484,15 +497,15 @@ export async function adminCancel(app: App, id: string) {
   return view(b);
 }
 
-export async function adminRefund(app: App, id: string, percent: unknown) {
+export async function adminRefund(app: App, id: string, percent: unknown, waiveFee: unknown = false) {
   const b = await get(app, id);
   if (!b) throw new ApiError(404, 'not_found');
   if (b.status !== 'cancelled') throw new ApiError(409, 'not_cancelled');
   // default: what the terms gave at the moment of cancelling, not now
   const pct = percent === undefined || percent === null ? refundPercent(app, b, b.cancelled_at ? parseIso(b.cancelled_at) : new Date()) : Number(percent);
   if (!Number.isInteger(pct) || pct < 0 || pct > 100) throw invalid(['percent']);
-  await refundCancelled(app, b, pct);
+  await refundCancelled(app, b, pct, waiveFee === true);
   const fresh = (await get(app, id))!;
-  app.later(sendCancelled(app, fresh, 'staff', invoiceTodo(b, pct)));
+  app.later(sendCancelled(app, fresh, 'staff', invoiceTodo(fresh, pct)));
   return view(fresh);
 }

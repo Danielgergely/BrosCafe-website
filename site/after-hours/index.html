@@ -174,7 +174,7 @@
             <div class="ah-code__row"><input id="ah-code" name="voucher" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="30"><button class="btn btn--ghost" type="button" id="ah-code-btn">Beváltom</button></div>
             <p class="ah-err" id="err-voucher" role="alert" hidden></p>
           </div>
-          <label class="ah-check ah-check--terms"><input type="checkbox" name="terms" id="ah-terms" required><span>Elfogadom a <a href="#lemondas">lemondási feltételeket</a> és az <a href="#aszf">általános szerződési feltételeket</a> (tervezet).<span class="ah-req" aria-hidden="true">*</span></span></label>
+          <label class="ah-check ah-check--terms"><input type="checkbox" name="terms" id="ah-terms" required><span>Elfogadom a <a href="#lemondas">lemondási feltételeket</a> és az <a href="/aszf/" target="_blank" rel="noopener">általános szerződési feltételeket</a>.<span class="ah-req" aria-hidden="true">*</span></span></label>
           <p class="ah-err" id="err-terms" role="alert" hidden></p>
           <button class="btn ah-sum__btn" type="submit">Foglalás és fizetés</button>
           <div class="ah-preview" id="ah-result" role="alert" tabindex="-1" hidden></div>
@@ -198,9 +198,9 @@
             <li><b>Legalább 7 nappal előtte</b> a teljes kifizetett összeg visszajár.</li>
             <li><b>Legkésőbb 48 órával előtte</b> a kifizetett összeg 50%-a jár vissza.</li>
             <li><b>48 órán belül</b> már nem tudunk visszatéríteni.</li>
+            <li>A visszatérítésből a befizetett összeg <b>3%-át kezelési költségként</b> levonjuk (a kártyás fizetés díja). Ha mi mondjuk le az estét, a teljes összeg visszajár.</li>
           </ul>
           <p>Lemondani a visszaigazoló e-mail „Foglalás lemondása” gombjával vagy az e-mailre válaszolva lehet. A visszatérítés automatikusan érkezik a fizetéshez használt kártyára.</p>
-          <p class="fine">Az ÁSZF végleges szövege még készül.</p>
         </details>
         <details>
           <summary>Fizetés és számla</summary>
@@ -209,8 +209,8 @@
           <p>Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő. Az ünnepi tortát és minden további fogyasztást az estén, a kávézóban rendezitek kártyával vagy készpénzzel.</p>
         </details>
         <details id="aszf">
-          <summary>Általános szerződési feltételek <span class="ah-draft">Tervezet</span></summary>
-          <p>A végleges szöveg még készül, a foglalás indulásakor kerül ide.</p>
+          <summary>Általános szerződési feltételek</summary>
+          <p>A foglalás, a fizetés, a lemondás és a panaszkezelés minden szabálya egy helyen: <a href="/aszf/">ÁSZF</a>.</p>
         </details>
       </div>
     </div>
@@ -223,6 +223,7 @@
 
 </main>
 <script src="/site.js" defer></script>
+<script src="/shared/terms-dialog.js" defer></script>
 <script src="/after-hours/after-hours.js" defer></script>
 </body>
 </html>

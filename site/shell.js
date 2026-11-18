@@ -351,7 +351,7 @@
           <p class="end__hours"><span>Hétfő–péntek 7:30–18:00</span> <span>Szombat 8:30–17:00</span> <span>Vasárnap zárva</span></p>
           <p><a href="mailto:hello@broscafe.hu">hello@broscafe.hu</a><br><a href="https://instagram.com/broscafe.co" target="_blank" rel="noopener" aria-label="${L('A Bros Cafe az Instagramon', 'Bros Cafe on Instagram')}">@broscafe.co</a></p></div>
       </div>
-      <p class="end__end"><span>© ${budapest().year} Bros Cafe · ${L('Jó kávéval készült', 'Made with good coffee')}</span><a href="/adatvedelem/">Adatkezelés</a><a href="/segitseg/">Segítség</a><a href="/pult/">Munkatársaknak</a></p>
+      <p class="end__end"><span>© ${budapest().year} Bros Cafe · ${L('Jó kávéval készült', 'Made with good coffee')}</span><a href="/adatvedelem/">Adatkezelés</a><a href="/aszf/">ÁSZF</a><a href="/segitseg/">Segítség</a><a href="/pult/">Munkatársaknak</a></p>
     </div>`;
     document.body.append(end);
     paintStatus(); setInterval(paintStatus, 30000);

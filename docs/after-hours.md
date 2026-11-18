@@ -35,7 +35,7 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 
 ## Booking
 - Calendar picker: guests see only days the café has opened. Admin opens/blocks single days (Mon–Sat default
-  candidates, Sundays only if enabled). Booking window: up to 3 months ahead, at least 3 days' notice, never before 2026-12-01 (or the publish day). Booked evenings stay visible as "már foglalt".
+  candidates, Sundays only if enabled). Booking window: up to 3 months ahead, from tomorrow (one day's notice, Daniel 2026-11-18), never before 2026-12-01 (or the publish day). Booked evenings stay visible as "már foglalt".
 - Instant booking, everything prepaid online (café fee, package, extra dishes, extra hours, minus the voucher). Only the cake and anything ordered on the evening is paid on site (Fruitsys, card/cash).
 - Cancellation (agreed by Daniel 2026-11-16, ÁSZF wording pending): full refund ≥ 7 days before, 50 % until 48 h, none after; applies to the whole prepaid total (food and drinks included). Leisure services
   for a specific date have no 14-day withdrawal right in HU, so these terms apply.

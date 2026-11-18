@@ -39,5 +39,5 @@ export function register(api: Router) {
   api.put(`${p}/admin/days/{date}`, admin(async (c) => ah.setDay(c, c.params.date, (await c.json())?.open)));
   api.get(`${p}/admin/bookings`, admin((c) => ah.adminBookings(c, c.query.get('status'))));
   api.post(`${p}/admin/bookings/{id}/cancel`, admin((c) => ah.adminCancel(c, c.params.id)));
-  api.post(`${p}/admin/bookings/{id}/refund`, admin(async (c) => ah.adminRefund(c, c.params.id, (await c.json())?.percent)));
+  api.post(`${p}/admin/bookings/{id}/refund`, admin(async (c) => { const j = await c.json(); return ah.adminRefund(c, c.params.id, j?.percent, j?.waive_fee); }));
 }
