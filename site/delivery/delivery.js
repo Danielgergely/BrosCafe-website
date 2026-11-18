@@ -297,12 +297,24 @@
       if (!data) return;
       const rush = data.rush.on;
       daysEl.innerHTML = data.days.map((d) => `<button type="button" class="chip" data-day="${d.date}" aria-pressed="${d.date === day && slot !== 'rush'}">${dayLabel(d.date)}</button>`).join('');
-      const d = data.days.find((x) => x.date === day);
-      const why = { past: t('Erre már nem lehet rendelni'), full: t('Betelt'), closed: t('Ezen a napon ekkor nem szállítunk') };
+      const d0 = data.days.find((x) => x.date === day);
+      // a slot whose order deadline has passed is not shown at all (also between two reloads of the page)
+      const d = d0 && { ...d0, slots: d0.slots.filter((s) => !gone(s)) };
+      const why = { full: t('Betelt'), closed: t('Ezen a napon ekkor nem szállítunk') };
       slotsEl.innerHTML = (rush ? `<label class="dl-slot dl-slot--rush"><input type="radio" name="slot" value="rush"${slot === 'rush' ? ' checked' : ''}><span><b>${t('Rush — amint lehet')}</b><small>${t('Most ráérünk: kb. {m} percen belül visszük. Legfeljebb {n} ital.', { m: data.rush.eta_min, n: data.rush.max_drinks })}</small></span></label>` : '') +
         (d ? d.slots.map((s) => `<label class="dl-slot${s.status === 'open' ? '' : ' is-off'}"><input type="radio" name="slot" value="${s.id}"${s.id === slot ? ' checked' : ''}${s.status === 'open' ? '' : ' disabled'}><span><b>${hm(s.time)}</b><small>${s.status === 'open' ? `${t('Rendelés {t}-ig', { t: clock(s.cutoff_at) })} · ${tn('még {n} pohár fér', s.left)}` : why[s.status]}</small></span></label>`).join('') : '') ||
         `<p class="dl-state">${t('Most nincs rendelhető időpont. Nézz vissza később!')}</p>`;
     }
+    const gone = (s) => s.status === 'past' || (s.cutoff_at && Date.parse(s.cutoff_at) <= Date.now());
+    // every 15 s: drop slots whose deadline just passed; a chosen one is unselected
+    setInterval(() => {
+      if (!data || document.hidden) return;
+      const d = data.days.find((x) => x.date === day);
+      if (!d || !d.slots.some((s) => s.status !== 'past' && gone(s))) return;
+      d.slots.forEach((s) => { if (gone(s)) s.status = 'past'; });
+      if (slot && slot !== 'rush' && !d.slots.some((s) => s.id === slot && s.status === 'open')) { slot = null; setErr('slot', t('Erre az időpontra közben lezárult a rendelés. Válassz másikat.')); }
+      renderSlots(); summary();
+    }, 15000);
     async function loadSlots() {
       if (!data) slotsEl.innerHTML = `<p class="dl-state" role="status">${t('Időpontok betöltése…')}</p>`;
       try {
