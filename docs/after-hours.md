@@ -19,8 +19,8 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
     szalámi, kekszek és gyümölcsök).
   - **Extra dishes** (4th dish on, per person): waffle, pizza, fruit & veggie, sandwich
     +1 500 Ft each, like the 2nd and 3rd (Daniel 2026-11-18: keep it simple).
-- **VAT** (Daniel 2026-11-18): café fee and extra hours 27 % (room, `AH_VAT`); package and extra dishes 5 % (food and
-  drink served in-house, `AH_FOOD_VAT`). The voucher lowers the café line.
+- **VAT** (accountant 2026-11-18): the whole evening is invoiced as food and drink served on site, not room hire:
+  every line at `AH_VAT` (5 %). The voucher lowers the café line.
 - **Unlimited drinks: +2 500 Ft/person** for the evening, whole group, drinks we make only (bottled drinks not included);
   optional row in step 3, quote line `drinks` at 5 % VAT, `AH_DRINKS_HUF` (Daniel 2026-11-18, costing in docs/after-hours-costs.md).
 - **Extra hour: +5 900 Ft** (max 2, until 22:00; start 18:00–20:00). **Cake** from 10 000 Ft (optional).
@@ -31,7 +31,6 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 - Occasion field: Születésnap / Romantikus este / Baráti összejövetel / Céges / Családi alkalom / Egyéb.
 - Rough cost at 6 p (estimate, confirm with the brothers' real dish costs): staff 7 800 + energy 1 200 + Alap ~1 000/p
   → ~15 000 Ft vs 27 900; menu ~1 800 food + 400 drink per person → ~22 200 Ft vs 36 300.
-- Accountant: on-site food may be 5 % VAT, the room fee 27 %: the invoice probably needs separate lines.
 - History: 24 900 flat up to 6 + 2 990/extra (16 Nov) dropped; 9 900 + 3 490/person dropped.
 
 ## Booking
@@ -47,8 +46,15 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 
 ## Payment and invoice
 - Stripe Checkout (card, Apple/Google Pay), payout to the Gránit account. One line per price line (voucher taken off the café line).
-- Fruitsys can't invoice online payments → Számlázz.hu via API, issued and emailed when the payment succeeds.
-  Accountant to confirm: advance invoice (előlegszámla) vs final invoice, VAT rate for the room fee.
+- Fruitsys can't invoice online payments → Számlázz.hu Agent (accountant 2026-11-18, she is fine with Számlázz.hu or
+  Billingo; invite her as accountant user in Számlázz.hu):
+  - **Előlegszámla** when the payment succeeds, teljesítés = payment day.
+  - **Végszámla** dated the evening (teljesítés = booking date), issued by the cron once the evening is over; the
+    advance is deducted by Számlázz.hu (linked by order number + `elolegSzamlaszam`).
+  - **Cancel:** 100 % refund → storno of the advance invoice; partial (50 %) → **helyesbítő számla**: original lines
+    negative, the kept amount positive, total = −refund. After the végszámla exists, corrections are manual.
+  - Admin may refund more than the terms ("Méltányosságból" 50/100 %); the storno/correcting invoice notes it.
+  - No díjbekérő: guests pay by card at booking (the accountant's díjbekérő step is for bank transfer).
 
 ## Notifications and admin
 - Email to hello@broscafe.hu per booking (details + payment status); confirmation email to the guest.
@@ -59,4 +65,3 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
 - ÁSZF wording and who signs it off. Food selection contents and how food is paid (the owners are still working on them).
 - Confirm the surcharge amounts (extra person, extra hour). Cost check above predates the free drink per guest: redo it.
 - Stripe account for HungBros Kft.; Számlázz.hu account + API key.
-- Accountant: invoice type and VAT.

@@ -26,7 +26,8 @@ controllable: slots can be closed per day, a max number of drinks per slot, and 
 - **Company pays per order:** one person orders for the team, pays by card online, gets a company invoice (name, tax
   number, address).
 - **Group order, each pays:** an organiser opens a group order for a slot and shares a link; colleagues add their
-  drink and pay their own; the order locks at the cutoff. Each payer gets their own e-invoice.
+  drink and pay their own; the order locks at the cutoff. A payer who asks gets their own e-invoice; the rest are rung
+  into the café till (Fruitsys) by staff, receipt only (accountant 2026-11-18).
 - Online payments via Stripe; invoices via Számlázz.hu API (as for Bros After Hours, docs/after-hours.md), not Fruitsys.
 - Loyalty: when individuals pay their own drink and have a loyalty card (same email / logged in), the drink earns
   their stamp (stampable categories only, same rules as in the café). Company-paid orders earn no stamps.

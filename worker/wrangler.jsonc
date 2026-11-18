@@ -92,9 +92,8 @@
         "MAX_UPLOAD_MB": "20",
         "APPLE_PASS_CONFIGURED": "false",
         "GOOGLE_WALLET_CONFIGURED": "false",
-        "SZAMLAZZ_PROFORMA": "true",
-        // the free Számlázz.hu package cannot make díjbekérő via the Agent (17 Nov): invoicing paused on the preview
-        "SZAMLAZZ_OFF": "true"
+        // the preview's SZAMLAZZ_AGENT_KEY belongs to a Számlázz.hu account in test mode (2026-11-18): test invoices only
+        "SZAMLAZZ_PROFORMA": "false"
       }
       // Preview secret: JWT_SECRET (its own random value, never the production one).
     }

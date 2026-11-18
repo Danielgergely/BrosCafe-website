@@ -139,6 +139,7 @@ function view(b: Doc) {
     occasion: b.occasion ?? '', note: b.note ?? '', packages: p.legacy ?? [], dishes: p.dishes, extras: p.extras, lines: p.lines, cake: !!b.cake, voucher_code: b.voucher_code ?? null, discount: b.discount_huf ?? 0, status: b.status, amount: b.amount_huf,
     created_at: iso(b.created_at), paid_at: iso(b.paid_at), cancelled_at: iso(b.cancelled_at),
     refund_percent: b.refund_percent, refund_huf: b.refund_huf, invoice_no: b.invoice_no, invoice_error: b.invoice_error,
+    final_no: b.final_no ?? null, final_error: b.final_error ?? null, correction_no: b.correction_no ?? null, correction_error: b.correction_error ?? null,
   };
 }
 
@@ -244,30 +245,47 @@ export async function book(app: App, b: Doc) {
   }
 }
 
-// ---- invoice ----
-function invoiceOf(app: App, b: Doc): szamlazz.Invoice {
-  const cfg = szamlazz.config(app.env), end = hm(mins(b.start_time) + b.hours * 60), en = b.lang === 'en', p = pkgOf(b);
-  const head = `Bros After Hours ${cfg.ahInvoiceType === 'elolegszamla' ? 'előleg' : 'privát este'} · ${b.date} ${b.start_time}–${end} · ${b.guests} fő`;
-  // VAT: the room (café fee, extra hours) at AH_VAT 27 %, food and drink served in-house at AH_FOOD_VAT 5 % (Daniel 2026-11-18)
-  const lines: szamlazz.Line[] = p.lines.length
-    ? chargeLines(p, false).map((l, i) => ({ name: i ? l.name : `${head} · ${l.name}`, quantity: l.quantity, grossHuf: l.unit, vat: l.kind === 'cafe' || l.kind === 'hours' ? cfg.ahVat : cfg.ahFoodVat, unit: l.kind === 'hours' ? 'óra' : l.kind === 'cafe' ? undefined : 'fő' }))
-    : [{ name: `${head}${b.voucher_code ? ` (${b.voucher_code} kupon)` : ''}`, quantity: 1, grossHuf: b.amount_huf, vat: cfg.ahVat }]; // bookings before 2026-11-17
+// ---- invoices ----
+// Accountant 2026-11-18: advance invoice (előlegszámla) dated the payment, final invoice (végszámla) dated the evening,
+// both as food and drink sold on site (AH_VAT, 5 %); a partial refund gets a correcting invoice (helyesbítő).
+const endOf = (b: Doc) => hm(mins(b.start_time) + b.hours * 60);
+function linesOf(app: App, b: Doc): szamlazz.Line[] {
+  const vat = szamlazz.config(app.env).ahVat, p = pkgOf(b), head = `Bros After Hours · ${b.date} ${b.start_time}–${endOf(b)} · ${b.guests} fő`;
+  return p.lines.length
+    ? chargeLines(p, false).map((l, i) => ({ name: i ? l.name : `${head} · ${l.name}`, quantity: l.quantity, grossHuf: l.unit, vat, unit: l.kind === 'hours' ? 'óra' : l.kind === 'cafe' ? undefined : 'fő' }))
+    : [{ name: `${head}${b.voucher_code ? ` (${b.voucher_code} kupon)` : ''}`, quantity: 1, grossHuf: b.amount_huf, vat }]; // bookings before 2026-11-17
+}
+function invoiceOf(app: App, b: Doc, type: szamlazz.Kind, extra: Partial<szamlazz.Invoice> = {}): szamlazz.Invoice {
+  const en = b.lang === 'en';
+  const what = { elolegszamla: ['előlegszámla', 'az előlegszámlát', 'advance invoice'], vegszamla: ['végszámla', 'a végszámlát', 'final invoice'], helyesbito: ['helyesbítő számla', 'a helyesbítő számlát', 'correcting invoice'], szamla: ['számla', 'a számlát', 'invoice'] }[type];
   return {
-    ref: b.id, type: cfg.ahInvoiceType, lang: b.lang,
+    ref: b.id, order: b.id, type, lang: b.lang,
     buyer: { name: b.company || b.name, zip: b.zip, city: b.city, street: b.street, email: b.email, taxNumber: b.tax_number },
-    lines,
-    comment: `Foglalás: ${b.id}`,
-    subject: en ? `Your Bros After Hours invoice (${b.id})` : `Bros After Hours számla (${b.id})`,
-    body: en ? 'Thank you for your booking. Your invoice is attached.' : 'Köszönjük a foglalást! A számlát mellékelten küldjük.',
+    lines: linesOf(app, b),
+    comment: `Bros Cafe · Foglalás: ${b.id}`,
+    subject: en ? `Your Bros After Hours ${what[2]} (${b.id})` : `Bros After Hours ${what[0]} (${b.id})`,
+    body: en ? `Thank you for your booking. Your ${what[2]} is attached.` : `Köszönjük a foglalást! ${what[1][0].toUpperCase()}${what[1].slice(1)} mellékelten küldjük.`,
+    ...extra,
   };
 }
-const issueInvoice = (app: App, b: Doc) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => invoiceOf(app, b));
+const issueInvoice = (app: App, b: Doc) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => invoiceOf(app, b, 'elolegszamla'));
+const issueFinal = (app: App, b: Doc) => szamlazz.issueFor(app, 'ah_bookings', b.id,
+  () => invoiceOf(app, b, 'vegszamla', { ref: `${b.id}-V`, fulfilled: b.date, refersTo: b.invoice_no }), 'final');
+/** Partial refund: the advance invoice reversed, the kept amount charged again (total = −refund). */
+const issueCorrection = (app: App, b: Doc, refundHuf: number, percent: number, goodwill: string) => szamlazz.issueFor(app, 'ah_bookings', b.id, () => {
+  const name = `Fennmaradó összeg lemondás után (az eredeti ${ft(b.amount_huf)} ${100 - percent} %-a${goodwill ? ', méltányosságból' : ''})`;
+  return invoiceOf(app, b, 'helyesbito', { ref: `${b.id}-H`, refersTo: b.invoice_no, lines: szamlazz.correctionLines(linesOf(app, b), b.amount_huf - refundHuf, name),
+    comment: `Bros Cafe · Foglalás: ${b.id}${goodwill ? ` · ${goodwill}` : ''}` });
+}, 'correction');
 
-/** Cron: invoices that failed or waited for the Agent key. */
+/** Cron: advance invoices that failed or waited for the Agent key, and final invoices once the evening is over. */
 export async function retryInvoices(app: App) {
   if (!szamlazz.ready(app.env)) return;
-  const { results } = await app.db.d1.prepare("SELECT * FROM ah_bookings WHERE status = 'paid' AND invoice_no IS NULL AND invoice_tries < ? LIMIT 10").bind(szamlazz.MAX_TRIES).all<Doc>();
+  const d1 = app.db.d1, max = szamlazz.MAX_TRIES;
+  const { results } = await d1.prepare("SELECT * FROM ah_bookings WHERE status = 'paid' AND invoice_no IS NULL AND invoice_tries < ? LIMIT 10").bind(max).all<Doc>();
   for (const b of results) await issueInvoice(app, b);
+  const due = await d1.prepare("SELECT * FROM ah_bookings WHERE status = 'paid' AND invoice_no IS NOT NULL AND final_no IS NULL AND final_tries < ? AND date <= ? LIMIT 10").bind(max, today(app).date).all<Doc>();
+  for (const b of due.results) if (instant(app, b.date, endOf(b)).getTime() <= Date.now()) await issueFinal(app, b);
 }
 
 // ---- emails ----
@@ -304,8 +322,8 @@ function staffDetails(b: Doc, extra: [string, string | number | null][] = []) {
 
 async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
   const en = b.lang === 'en', d = details(b, en), link = await cancelLink(app, b);
-  const intro = en ? 'Your private evening at Bros Cafe is booked. The invoice arrives in a separate email from Számlázz.hu.'
-    : 'A privát estétek a Bros Caféban le van foglalva. A számlát külön e-mailben küldi a Számlázz.hu.';
+  const intro = en ? 'Your private evening at Bros Cafe is booked. The advance invoice arrives in a separate email from Számlázz.hu, the final invoice on the day of the evening.'
+    : 'A privát estétek a Bros Caféban le van foglalva. Az előlegszámlát külön e-mailben küldi a Számlázz.hu, a végszámlát az est napján.';
   const food = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
     : en ? 'Food and drinks are included in the amount you paid; the cake is paid on the evening.' : 'Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.';
   const terms = `${food} ${en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after.'
@@ -378,12 +396,19 @@ async function refundCancelled(app: App, b: Doc, percent: number) {
     }
   }
   await app.db.d1.prepare("UPDATE ah_bookings SET status = 'refunded', refund_huf = ?, refund_percent = ? WHERE id = ? AND status = 'cancelled'").bind(amount, percent, b.id).run();
-  // ACCOUNTANT: a full refund cancels the invoice (storno); how a 50 % refund is invoiced is open, so that one is left to staff.
-  if (percent === 100) await szamlazz.stornoFor(app, 'ah_bookings', b.id, b.invoice_no, b.email);
+  // full refund: storno; partial: correcting invoice (accountant 2026-11-18). After the final invoice it is left to staff.
+  // more than the terms gave (admin goodwill): said on the invoice
+  const policy = refundPercent(app, b, b.cancelled_at ? parseIso(b.cancelled_at) : new Date());
+  const goodwill = percent > policy ? `Méltányossági visszatérítés: ${percent} % (a lemondási feltételek szerint ${policy} % járt).` : '';
+  if (!b.final_no && percent === 100) await szamlazz.stornoFor(app, 'ah_bookings', b.id, b.invoice_no, b.email, goodwill);
+  else if (!b.final_no && amount > 0 && b.invoice_no) await issueCorrection(app, b, amount, percent, goodwill);
   return amount;
 }
 const invoiceTodo = (b: Doc, percent: number) =>
-  !b.invoice_no ? 'Számla nem volt kiállítva.' : percent === 100 ? 'A számlát sztornóztuk (ellenőrizd a Számlázz.hu-ban).' : percent > 0 ? 'RÉSZLEGES visszatérítés: a számla helyesbítését kézzel kell elvégezni (könyvelő).' : 'Nincs visszatérítés, a számla marad.';
+  !b.invoice_no ? 'Előlegszámla nem volt kiállítva: a Számlázz.hu-ban kézzel kell rendezni.'
+    : b.final_no && percent > 0 ? 'A végszámla már ki volt állítva: a helyesbítést kézzel kell elvégezni (könyvelő).'
+      : percent === 100 ? 'Az előlegszámlát sztornóztuk (ellenőrizd a Számlázz.hu-ban).'
+        : percent > 0 ? 'RÉSZLEGES visszatérítés: helyesbítő számlát állítottunk ki (ellenőrizd a Számlázz.hu-ban).' : 'Nincs visszatérítés, az előlegszámla marad.';
 
 async function byToken(app: App, token: string) {
   const dot = token.lastIndexOf('.'), id = token.slice(0, dot), sig = token.slice(dot + 1);

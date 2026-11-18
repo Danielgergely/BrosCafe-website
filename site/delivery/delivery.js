@@ -328,12 +328,16 @@
     // 4 · who pays
     function mode() {
       const g = kind() === 'group';
-      $('#dl-inv').hidden = g; $('#dl-group-hint').hidden = !g;
-      if (g) INV.forEach((n) => setErr(n, ''));
+      const inv = !g || F('inv_want').checked;
+      $('#dl-inv').hidden = !inv; $('#dl-inv-want').hidden = !g; $('#dl-group-hint').hidden = !g;
+      $('#dl-inv-head').textContent = g ? t('Számlázási adatok') : t('Céges számla');
+      $('#dl-inv-name-label').textContent = g ? t('Név vagy cégnév') : t('Cégnév');
+      if (!inv) INV.forEach((n) => setErr(n, ''));
       payBtn.textContent = g ? t('Csoportos rendelés indítása') : t('Fizetés');
       setErr('slot', ''); capShown = false; summary();
     }
-    form.addEventListener('change', (e) => { if (e.target.name === 'pay') mode(); });
+    form.addEventListener('change', (e) => { if (e.target.name === 'pay' || e.target.name === 'inv_want') mode(); });
+    const needInv = (k) => k === 'company' || F('inv_want').checked; // a group organiser's invoice is optional (private person: till receipt)
     F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
 
     // summary + the phone bar
@@ -373,8 +377,8 @@
       name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
       email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
       phone: (v) => (v.replace(/\D/g, '').length >= 7 ? '' : t('Adj meg egy telefonszámot, amin elérünk.')),
-      inv_name: (v) => (v.length >= 2 ? '' : t('Add meg a cég nevét.')),
-      tax_number: (v) => (/^\d{8}-\d-\d{2}$/.test(taxFmt(v)) ? '' : t('Az adószám formátuma: 12345678-1-12.')),
+      inv_name: (v, k) => (v.length >= 2 ? '' : k === 'group' ? t('Add meg a számlán szereplő nevet.') : t('Add meg a cég nevét.')),
+      tax_number: (v, k) => ((k === 'group' && !v) || /^\d{8}-\d-\d{2}$/.test(taxFmt(v)) ? '' : t('Az adószám formátuma: 12345678-1-12.')),
       zip: (v) => (/^\d{4}$/.test(v) ? '' : t('A magyar irányítószám 4 számjegy.')),
       city: (v) => (v.length >= 2 ? '' : t('Add meg a várost.')),
       inv_street: (v) => (v.length >= 4 ? '' : t('Add meg az utcát és a házszámot.')),
@@ -382,7 +386,7 @@
     };
     const val = (n) => (F(n) instanceof Element && F(n).type !== 'checkbox' ? F(n).value.trim() : '');
     const check1 = (n, k) => { const msg = rules[n](val(n), k); setErr(n, msg); return !msg; };
-    form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n); });
+    form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n, kind()); });
     F('terms').addEventListener('change', () => check1('terms'));
     const focusBad = (n) => (n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
 
@@ -390,7 +394,7 @@
       const s = curSlot();
       return { kind: k, date: slot === 'rush' ? today() : day, slot_id: s ? s.id : null, rush: slot === 'rush', items: cups.map(cupItem),
         address: { company: val('company'), street: val('street'), floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: val('phone') },
-        invoice: k === 'company' ? { name: val('inv_name'), tax_number: val('tax_number'), zip: val('zip'), city: val('city'), street: val('inv_street') } : null, terms: true, lang: B.lang,
+        invoice: needInv(k) ? { name: val('inv_name'), tax_number: val('tax_number'), zip: val('zip'), city: val('city'), street: val('inv_street') } : null, terms: true, lang: B.lang,
         return_path: location.pathname }; // Stripe sends the payer back under this page, wherever the site is mounted
     }
     const problem = (err) => (err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'slot_full' ? tn('Erre az időpontra már csak {n} pohár fér.', err.left ?? 0) : err.code === 'slot_closed' || err.code === 'rush_off' ? t('Ez az időpont közben lezárult. Válassz másikat.') : t('Most nem sikerült elküldeni a rendelést. Próbáld újra egy perc múlva.'));
@@ -401,7 +405,7 @@
       const k = kind();
       result.hidden = true;
       F('tax_number').value = taxFmt(F('tax_number').value);
-      const bad = [...BASE, ...(k === 'company' ? INV : []), 'terms'].filter((n) => !check1(n, k));
+      const bad = [...BASE, ...(needInv(k) ? INV : []), 'terms'].filter((n) => !check1(n, k));
       if (bad.length) return focusBad(bad[0]);
       sending = true; busy(payBtn, true);
       const p = payload(k), text = slotText();
@@ -489,13 +493,21 @@
           <div class="dl-field dl-field--wide"><label for="dl-j-name">${t('A neved')}</label><input id="dl-j-name" name="name" type="text" autocomplete="name" required></div>
           <div class="dl-field dl-field--wide"><label for="dl-j-drink">${t('Ital')}</label><select id="dl-j-drink" name="drink"><option value="">${t('Válassz…')}</option>${groups.map(([c, l]) => `<optgroup label="${t(CATS[c] || c)}">${l.map((d) => `<option value="${d.id}">${esc(d.name)} · ${ft(d.sizes.length ? d.sizes[0].price : d.price)}</option>`).join('')}</optgroup>`).join('')}</select></div>
           <div class="dl-join__opts dl-field--wide" id="dl-join-opts" hidden></div>
-          <div class="dl-field dl-field--wide"><label for="dl-j-email">${t('E-mail')} <i>(${t('ide küldjük a számlát')})</i></label><input id="dl-j-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-email">${t('E-mail')} <i>(${t('ide küldjük a visszaigazolást')})</i></label><input id="dl-j-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
           <div class="dl-field dl-field--wide"><label for="dl-j-loyalty">${t('Hűségkártyád e-mail-címe')} <i>(${t('nem kötelező')})</i></label><input id="dl-j-loyalty" name="loyalty_email" type="email" autocomplete="email" inputmode="email"><small id="dl-stamp">${t('Ha megadod, a kávéd pecsétet ér a kártyádon.')}</small></div>
+        </div>
+        <label class="dl-check"><input type="checkbox" name="inv_want"><span>${t('Számlát kérek')}</span></label>
+        <div class="dl-fields dl-fields--inv" id="dl-j-inv" hidden>
+          <div class="dl-field dl-field--wide"><label for="dl-j-inv-name">${t('Név vagy cégnév')}</label><input id="dl-j-inv-name" name="inv_name" type="text" autocomplete="name"></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-tax">${t('Adószám')} <i>(${t('nem kötelező')})</i></label><input id="dl-j-tax" name="tax_number" type="text" inputmode="numeric" placeholder="12345678-1-12" autocomplete="off"></div>
+          <div class="dl-field dl-field--zip"><label for="dl-j-zip">${t('Irányítószám')}</label><input id="dl-j-zip" name="zip" type="text" autocomplete="postal-code" inputmode="numeric" maxlength="4"></div>
+          <div class="dl-field"><label for="dl-j-city">${t('Város')}</label><input id="dl-j-city" name="city" type="text" autocomplete="address-level2"></div>
+          <div class="dl-field dl-field--wide"><label for="dl-j-inv-street">${t('Számlázási cím: utca, házszám')}</label><input id="dl-j-inv-street" name="inv_street" type="text" autocomplete="off"></div>
         </div>
         <label class="dl-check"><input type="checkbox" name="terms" required><span>${t('Elfogadom az')} <a href="../#aszf">${t('általános szerződési feltételeket')}</a> ${t('(tervezet).')}</span></label>
         <button class="btn dl-join__btn" type="submit">${t('Hozzáadom és fizetek')}</button>
         <p class="dl-preview" id="dl-join-result" role="alert" tabindex="-1" hidden></p>
-        <p class="fine">${t('Mindenki a saját italát fizeti, online: bankkártyával, Apple Pay-jel vagy Google Pay-jel. A számlát e-mailben kapod.')}</p>
+        <p class="fine">${t('Mindenki a saját italát fizeti, online: bankkártyával, Apple Pay-jel vagy Google Pay-jel. Ha számlát kérsz, e-mailben kapod; különben a kávézó pénztárgépe ad nyugtát.')}</p>
       </form>`;
     }
     function bindForm() {
@@ -509,12 +521,20 @@
         $('#dl-stamp').textContent = d && d.cat !== 'coffee' && !CONFIG.stampSpecials.includes(d.id) ? t('Ezért az italért nem jár pecsét.') : t('Ha megadod, a kávéd pecsétet ér a kártyádon.');
       };
       F('drink').addEventListener('change', drink);
+      const inv = () => F('inv_want').checked, INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
+      F('inv_want').addEventListener('change', () => { $('#dl-j-inv').hidden = !inv(); if (!inv()) INV.forEach((n) => setErr(n, '')); });
+      F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
       opts.addEventListener('input', (e) => { if (e.target.dataset.k && cup) { readOpt(cup, e.target); price(); } });
       const rules = {
         name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
         drink: (v) => (cup && cup.id === v ? '' : t('Válassz egy italt.')), // the cup must be the one the select shows
         email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
         loyalty_email: (v) => (!v || EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
+        inv_name: (v) => (!inv() || v.length >= 2 ? '' : t('Add meg a számlán szereplő nevet.')),
+        tax_number: (v) => (!inv() || !v || /^\d{8}-\d-\d{2}$/.test(taxFmt(v)) ? '' : t('Az adószám formátuma: 12345678-1-12.')),
+        zip: (v) => (!inv() || /^\d{4}$/.test(v) ? '' : t('A magyar irányítószám 4 számjegy.')),
+        city: (v) => (!inv() || v.length >= 2 ? '' : t('Add meg a várost.')),
+        inv_street: (v) => (!inv() || v.length >= 4 ? '' : t('Add meg az utcát és a házszámot.')),
         terms: () => (F('terms').checked ? '' : t('A rendeléshez el kell fogadnod a feltételeket.')),
       };
       const check1 = (n) => { const msg = rules[n](F(n).type === 'checkbox' ? '' : F(n).value.trim()); setErr(n, msg); return !msg; };
@@ -527,7 +547,8 @@
         if (bad.length) return F(bad[0]).focus();
         sending = true; busy(btn, true);
         try {
-          const res = await api.join(g.code, { name: F('name').value.trim(), email: F('email').value.trim(), loyalty_email: F('loyalty_email').value.trim(), items: [{ ...cupItem(cup), who: F('name').value.trim() }], terms: true, lang: B.lang, return_path: location.pathname });
+          const res = await api.join(g.code, { name: F('name').value.trim(), email: F('email').value.trim(), loyalty_email: F('loyalty_email').value.trim(),
+            invoice: inv() ? { name: F('inv_name').value.trim(), tax_number: taxFmt(F('tax_number').value.trim()), zip: F('zip').value.trim(), city: F('city').value.trim(), street: F('inv_street').value.trim() } : null, items: [{ ...cupItem(cup), who: F('name').value.trim() }], terms: true, lang: B.lang, return_path: location.pathname });
           if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
           throw new Error('no_checkout_url');
         } catch (err) {

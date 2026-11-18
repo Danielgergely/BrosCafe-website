@@ -109,7 +109,6 @@ states and then removes the parameters from the address bar. The cancel link in 
 ## Needed before building
 
 - Stripe account for HungBros Kft. (keys, webhook secret); Számlázz.hu account + Agent API key.
-- Accountant: advance invoice vs final invoice, VAT rate, how a partial refund is invoiced.
 - Sender address for the emails (Resend is already used by the loyalty backend).
 - Confirm the two surcharge amounts (extra guest, extra hour); the three food selections, how food is paid and the cake price.
 
@@ -134,10 +133,11 @@ tables in `worker/migrations/0001_bookings.sql` (apply it to each D1 before the 
 - **Admin:** all five endpoints need the **admin** role. `GET /admin/bookings` leaves out `expired` holds unless
   `?status=expired`; rows carry `invoice_no`, `invoice_error`, `refund_huf`. `GET /admin/days` adds `held` (a payment in progress).
   `refund` with `percent: 0` just closes the booking as `refunded` with 0 Ft.
-- **Invoices (ACCOUNTANT, config in `services/szamlazz.ts`, overridable as worker vars):** `AH_INVOICE_TYPE`
-  (`elolegszamla` default, or `szamla`), `AH_VAT` (27). A 100 % refund issues a storno automatically; a **50 % refund
-  issues nothing** and the staff email asks for a manual correction until the accountant says how to invoice it.
+- **Invoices (accountant 2026-11-18, `services/szamlazz.ts`):** előlegszámla on payment (`invoice_no`), végszámla dated
+  the evening by the cron after it ends (`final_no`, ref `AH-…-V`), 100 % refund → storno, partial refund →
+  helyesbítő (`correction_no`, ref `AH-…-H`). Each has `<col>_error`/`<col>_tries` (migration 0003). `AH_VAT` = 5 for
+  every line. With `SZAMLAZZ_PROFORMA` (preview) only díjbekérő are made: no végszámla, helyesbítő or storno.
 - **Config** (`offer()` in `services/after_hours.ts`, vars `AH_BASE_HUF`, `AH_EXTRA_HOUR_HUF`,
   `AH_LAUNCH_DATE`): the café fee and extra hour above (package and dish prices are `TIERS` / `DISHES` in code, mirrored by `CONFIG` in `after-hours.js`). The signature secret for cancel links is `JWT_SECRET`.
 - **Local test hooks:** `STRIPE_API_BASE` and `SZAMLAZZ_API_URL` point the worker at a stub; never set them in production.
-- Not built: the final invoice (végszámla) after the evening, add-on package prices.
+- Not built: add-on package prices.

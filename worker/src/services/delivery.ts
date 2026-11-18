@@ -307,25 +307,37 @@ export async function joinGroup(app: App, code: string, b: Doc) {
 async function itemsOf(app: App, payerId: string) {
   return all<Doc>(d1(app).prepare('SELECT * FROM dl_items WHERE payer_id = ? ORDER BY id').bind(payerId));
 }
+// Accountant 2026-11-18: drinks and fee 27 %. A private payer who asks for no invoice is rung into the till (Fruitsys)
+// by staff from the counter email instead (invoice_error = 'pos').
+const wantsInvoice = (p: Doc) => !!(p.zip && p.city && p.inv_street);
+const FEE_LINE = 'Kiszállítási díj';
+function invoiceOf(app: App, p: Doc, o: Doc, items: Doc[], type: szamlazz.Kind = 'szamla', extra: Partial<szamlazz.Invoice> = {}): szamlazz.Invoice {
+  const cfg = szamlazz.config(app.env), en = p.lang === 'en', grouped = new Map<string, szamlazz.Line>();
+  for (const i of items) {
+    const k = `${i.label}|${i.price_huf}`;
+    grouped.set(k, { name: i.label, quantity: (grouped.get(k)?.quantity ?? 0) + 1, grossHuf: i.price_huf, vat: cfg.dlDrinkVat });
+  }
+  const lines = [...grouped.values()];
+  if (p.fee_huf > 0) lines.push({ name: FEE_LINE, quantity: 1, grossHuf: p.fee_huf, vat: cfg.dlFeeVat });
+  const what = type === 'helyesbito' ? ['helyesbítő számla', 'A helyesbítő számlát', 'correcting invoice'] : ['számla', 'A számlát', 'invoice'];
+  return {
+    ref: p.id, order: p.id, type, lang: p.lang, lines, comment: `Bros Cafe · Bros Delivery ${o.id} · ${o.date} ${o.slot_time ?? 'rush'}`,
+    buyer: { name: p.inv_name || p.name, zip: p.zip, city: p.city, street: p.inv_street, email: p.email, taxNumber: p.tax_number },
+    subject: en ? `Your Bros Delivery ${what[2]} (${o.id})` : `Bros Delivery ${what[0]} (${o.id})`,
+    body: en ? `Thank you for your order. Your ${what[2]} is attached.` : `Köszönjük a rendelést! ${what[1]} mellékelten küldjük.`,
+    ...extra,
+  };
+}
 async function issueInvoice(app: App, p: Doc, o: Doc) {
   const items = await itemsOf(app, p.id);
+  return szamlazz.issueFor(app, 'dl_payers', p.id, () => (wantsInvoice(p) ? invoiceOf(app, p, o, items) : null));
+}
+/** The organiser's delivery fee went back: a correcting invoice reverses the fee line. */
+async function issueFeeCorrection(app: App, p: Doc, o: Doc) {
   return szamlazz.issueFor(app, 'dl_payers', p.id, () => {
-    // ACCOUNTANT: a private group payer gives no postal address; without one no invoice is issued (receipt vs invoice is open)
-    if (!p.zip || !p.city || !p.inv_street) return null;
-    const cfg = szamlazz.config(app.env), en = p.lang === 'en', grouped = new Map<string, szamlazz.Line>();
-    for (const i of items) {
-      const k = `${i.label}|${i.price_huf}`;
-      grouped.set(k, { name: i.label, quantity: (grouped.get(k)?.quantity ?? 0) + 1, grossHuf: i.price_huf, vat: cfg.dlDrinkVat });
-    }
-    const lines = [...grouped.values()];
-    if (p.fee_huf > 0) lines.push({ name: 'Kiszállítási díj', quantity: 1, grossHuf: p.fee_huf, vat: cfg.dlFeeVat });
-    return {
-      ref: p.id, type: 'szamla', lang: p.lang, lines, comment: `Bros Delivery ${o.id} · ${o.date} ${o.slot_time ?? 'rush'}`,
-      buyer: { name: p.inv_name || p.name, zip: p.zip, city: p.city, street: p.inv_street, email: p.email, taxNumber: p.tax_number },
-      subject: en ? `Your Bros Delivery invoice (${o.id})` : `Bros Delivery számla (${o.id})`,
-      body: en ? 'Thank you for your order. Your invoice is attached.' : 'Köszönjük a rendelést! A számlát mellékelten küldjük.',
-    };
-  });
+    const inv = invoiceOf(app, p, o, [], 'helyesbito', { ref: `${p.id}-H`, refersTo: p.invoice_no });
+    return { ...inv, lines: szamlazz.correctionLines(inv.lines.filter((l) => l.name === FEE_LINE), 0, '') };
+  }, 'correction');
 }
 export async function retryInvoices(app: App) {
   if (!szamlazz.ready(app.env)) return;
@@ -381,11 +393,12 @@ function list(lines: string[]) {
 async function notifyCounter(app: App, o: Doc) {
   const items = await paidItems(app, o.id), cups = list(items.map(cupLine));
   const payers = await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(o.id));
-  const noInvoice = payers.filter((p) => !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
+  const till = payers.filter((p) => !wantsInvoice(p)).map((p) => `${p.name}: ${ft(p.amount_huf - p.refund_huf)}`);
+  const noInvoice = payers.filter((p) => wantsInvoice(p) && !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
   const d = rows([
     ['Azonosító', o.id], ['Mikor', when(o)], ['Típus', o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Hova', `${o.company}, ${o.street}, ${o.floor}`],
     ['Megjegyzés', o.note], ['Kapcsolat', `${o.contact_name} · ${o.contact_phone} · ${o.contact_email}`], ['Italok', items.length],
-    ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))], ['Számla nélkül', noInvoice.join('; ')],
+    ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))], ['Pénztárgépbe ütni (online kártyás fizetés, nyugta)', till.join('; ')], ['Számla hiányzik', noInvoice.join('; ')],
   ]);
   await mail(app, { to: staffAddress(app), subject: `Delivery ${o.id}: ${when(o)} · ${o.company} · ${items.length} ital`, title: `Bros Delivery · ${o.id}`, html: `${d.html}${cups.html}`, text: `${d.text}\n\n${cups.text}` });
 }
@@ -404,7 +417,8 @@ async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' 
   }[kind];
   const d = rows([[en ? 'Order' : 'Azonosító', o.id], [en ? 'When' : 'Mikor', when(o, en)], [en ? 'Where' : 'Hova', `${o.company}, ${o.street}, ${o.floor}`], [en ? 'Paid' : 'Fizetve', ft(p.amount_huf)],
     [en ? 'Of which delivery fee' : 'Ebből kiszállítási díj', p.fee_huf ? ft(p.fee_huf) : null]]);
-  const tail = kind === 'confirmed' ? (en ? 'The invoice arrives in a separate email.' : 'A számlát külön e-mailben küldjük.') : '';
+  const tail = kind !== 'confirmed' ? '' : wantsInvoice(p) ? (en ? 'The invoice arrives in a separate email.' : 'A számlát külön e-mailben küldjük.')
+    : (en ? 'You did not ask for an invoice. If you need one, reply to this email with your billing details.' : 'Számlát nem kértél. Ha mégis kell, válaszolj erre az e-mailre a számlázási adatokkal.');
   await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], html: `<p>${esc(T[2])}</p>${d.html}${cups.html}${tail ? `<p>${esc(tail)}</p>` : ''}`, text: `${T[2]}\n\n${d.text}\n\n${cups.text}${tail ? `\n\n${tail}` : ''}` });
 }
 
@@ -421,8 +435,10 @@ async function settleGroupFee(app: App, o: Doc) {
   try {
     await stripe.refund(app, org.stripe_payment_intent, org.fee_huf, `${org.id}-fee`);
     await d1(app).prepare('UPDATE dl_orders SET fee_huf = 0 WHERE id = ?').bind(o.id).run();
-    // ACCOUNTANT: the fee is on the organiser's invoice; how its refund is documented is open, staff are told
-    await mail(app, { to: staffAddress(app), subject: `Delivery ${o.id}: kiszállítási díj visszatérítve (${ft(org.fee_huf)})`, title: 'Kiszállítási díj visszatérítve', html: `<p>${esc(`${o.id}: a csoport elérte az ingyenes kiszállítást, a szervező (${org.name}) visszakapta a díjat. A számla helyesbítése kézzel történik.`)}</p>`, text: `${o.id}: a szervező (${org.name}) visszakapta a kiszállítási díjat. A számla helyesbítése kézzel történik.` });
+    const fixed = org.invoice_no ? await issueFeeCorrection(app, org, o) : null;
+    const note = !org.invoice_no ? 'Számla nem volt (pénztárgépbe a díj nélküli összeg kerül).' : fixed ? `Helyesbítő számla: ${fixed}.` : 'A HELYESBÍTŐ SZÁMLA NEM KÉSZÜLT EL: kézzel kell kiállítani a Számlázz.hu-ban.';
+    const msg = `${o.id}: a csoport elérte az ingyenes kiszállítást, a szervező (${org.name}) visszakapta a díjat. ${note}`;
+    await mail(app, { to: staffAddress(app), subject: `Delivery ${o.id}: kiszállítási díj visszatérítve (${ft(org.fee_huf)})`, title: 'Kiszállítási díj visszatérítve', html: `<p>${esc(msg)}</p>`, text: msg });
   } catch (e) {
     console.error(`fee refund for ${o.id} failed`, e);
     await d1(app).prepare('UPDATE dl_payers SET refund_huf = 0 WHERE id = ?').bind(org.id).run(); // tried again at the next payment or at the lock

@@ -31,7 +31,7 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
       fixed in D, worker/wrangler.jsonc and backend defaults (not committed); live fix needs Daniel's OK
 - [x] 2026-11-16 shell done (variants/d/shell.css, shell.js, SHELL.md): light theme, one nav config, phone tab bar, view transitions
 - [ ] Bros After Hours: spec agreed in docs/after-hours.md; page + admin mock-up being built (mock data); backend later
-      (needs Stripe + Számlázz.hu accounts, accountant on invoice type/VAT, final prices, cancellation terms)
+      (needs Stripe + Számlázz.hu accounts, final prices, cancellation terms; accountant answered 2026-11-18)
 - [x] 2026-11-16 Bros After Hours page + admin mock-up built (variants/d/after-hours/, admin/after-hours/, docs/after-hours-api.md);
       2026-11-16 changed: 2.5 h slot 18:00–20:30, flat 24 900 Ft up to 6 + 2 990/extra (draft), bookable from 2026-12-01,
       cancel via email button/email/admin; page being updated
@@ -146,6 +146,18 @@ preview (c2eb1212). Fruitsys pull works on the preview. Preview-only admin seede
 signed-in account (need a customer magic link → Resend key on preview or Daniel signs in). Next: move D to / with redirects; prod env (D1/R2/secrets), DNS at Rackhost/dns24.
 Live React bug found (not fixed, live untouched): RunnerGame.jsx records only ground presses, so boosts never reach the
 server replay.
+
+## 2026-11-18: accountant's answers built in (on the preview; production waits for the live Számlázz key)
+- After Hours: everything as on-site food/drink, `AH_VAT` 5 % on every line (was 27 % café/hours); előlegszámla on payment,
+  végszámla dated the evening (cron, after it ends), 50 % refund → helyesbítő. Delivery: 27 % confirmed; private group
+  payers → till (Fruitsys) unless they tick "Számlát kérek"; refunded group fee → helyesbítő. Migration 0003 (final_*,
+  correction_*) applied to preview + prod D1. Admin can refund above the terms ("Méltányosságból 50/100 %"); the
+  storno/correcting invoice then says so. Tested end to end on the preview against a Számlázz.hu account in test mode
+  (E-HNG-2026-1…13): advance, final (advance deducted, 0 Ft due), 50 %/0 %/goodwill cancellations, storno, Delivery
+  company/organiser invoices, fee correction, till payer. Fixed: empty szamlaszamElotag made Számlázz reject everything.
+- Ask the accountant: when a cancellation keeps money (50 % / 0 %), does the advance invoice need a végszámla?
+- Open: NTAK (ask NTAK whether online sales outside the till must be reported; Delivery till entries go through Fruitsys
+  anyway), invite the accountant in Számlázz.hu, Számlázz package with Agent, then drop `SZAMLAZZ_OFF` on the preview.
 
 ## 2026-11-17 late: DNS + Stripe
 - broscafe.hu DNS moved to Cloudflare (nameservers elliott/gina.ns.cloudflare.com, registry switched in ~12 min). All

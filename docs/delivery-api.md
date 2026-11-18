@@ -184,8 +184,7 @@ list as a printable ticket. A printed ticket at the counter is open (see `docs/d
 ## Needed before building
 
 - Stripe account for HungBros Kft. and Számlázz.hu Agent API key (shared with Bros After Hours).
-- Accountant: VAT on delivered drinks vs on-site, invoice per payer in a group, how the delivery fee and its
-  refund are invoiced, NÉBIH rules for delivery. Not asserted anywhere on the page.
+- NÉBIH rules for delivery. (Accountant answered VAT and invoicing on 2026-11-18, see "As built".)
 - The exact zone (building list or polygon) and the ÁSZF text.
 
 ## As built (2026-11-17) — where the code differs from the text above, and why
@@ -204,11 +203,11 @@ carry `payments_ready`.
   after the lock is refunded in full automatically (email to the payer). Unpaid sessions are also expired through the API at the lock.
 - **Group fee:** `organiser` only. The organiser's Checkout carries the fee; it is refunded when the paid cups reach
   `free_from` (checked after every payment and at the lock). If the organiser never pays, nobody is charged the fee.
-- **Invoices (ACCOUNTANT):** company orders get an invoice (`DL_DRINK_VAT`, `DL_FEE_VAT`, both 27 by default). **Group
-  payers give no postal address, so no invoice is issued for them** (`invoice_error = 'no_billing_address'`, listed in the
-  counter email): the accountant has to say receipt (nyugta) or invoice with address. The API already accepts an optional
-  `invoice{ name, zip, city, street, tax_number }` on `POST /groups` and `…/participants`; the forms do not ask for it yet.
-  A refunded delivery fee is not corrected on the invoice automatically (staff email).
+- **Invoices (accountant 2026-11-18):** drinks and delivery fee 27 % (`DL_DRINK_VAT`, `DL_FEE_VAT`). Company orders always
+  get an invoice. Group payers (organiser and participants) get one only if they tick "Számlát kérek" (optional
+  `invoice{ name, zip, city, street, tax_number? }`); otherwise `invoice_error = 'pos'` and the counter email lists them
+  under "Pénztárgépbe ütni" with the amount to ring into Fruitsys (receipt). A refunded group fee on an invoiced organiser
+  gets a helyesbítő reversing the fee line (`correction_no`, ref `BD-…-H`); a full refund is a storno.
 - **Stamps:** the stamp logic of `POST /scan/:code/add-coffee` is repeated in `services/delivery.ts` (that route needs a
   staff user): one stamp per stampable cup until a reward is ready; transactions are logged with employee `delivery`.
 - **Recurring:** rule is `weekdays` or `1`–`6`. From 18:00 the cron prepares tomorrow's orders (`pending`, capacity held)

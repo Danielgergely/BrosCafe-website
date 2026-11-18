@@ -583,8 +583,9 @@
         <div class="aha__actions">
           ${b.status === 'paid' ? `<button type="button" class="btn btn--ghost" data-act="cancel">${t('Foglalás lemondása')}</button>` : ''}
           ${b.status === 'cancelled' ? `<button type="button" class="btn" data-act="refund" data-pct="${pct}">${t('Visszatérítés')} · ${pct}%</button>` : ''}
+          ${b.status === 'cancelled' ? [50, 100].filter((p) => p > pct).map((p) => `<button type="button" class="btn btn--ghost" data-act="refund" data-pct="${p}">${t('Méltányosságból')} · ${p}%</button>`).join('') : ''}
         </div>
-        <p class="fine" style="margin-top:14px">${b.invoice_no ? `${t('Számla')}: ${esc(b.invoice_no)}` : b.status === 'paid' ? t('Számla még nincs kiállítva.') : ''}</p>`;
+        <p class="fine" style="margin-top:14px">${b.invoice_no ? [[t('Előlegszámla'), b.invoice_no], [t('Végszámla'), b.final_no], [t('Helyesbítő számla'), b.correction_no]].filter((r) => r[1]).map((r) => `${r[0]}: ${esc(r[1])}`).join(' · ') : b.status === 'paid' ? t('Számla még nincs kiállítva.') : ''}</p>`;
       if (!dlg.open) dlg.showModal();
       (focusSel && $(focusSel, dlg) || $('[data-close]', dlg)).focus();
     }
