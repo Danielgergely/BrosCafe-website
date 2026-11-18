@@ -69,7 +69,7 @@ export async function scheduled(controller: ScheduledController, env: Env, exec:
   }
 
   // Bros After Hours + Delivery: group cutoffs, expired holds, invoices that waited, tomorrow's recurring orders
-  for (const [name, job] of [['delivery sweep', delivery.sweep], ['recurring', delivery.runRecurring], ['delivery invoices', delivery.retryInvoices], ['after hours invoices', afterHours.retryInvoices]] as const) {
+  for (const [name, job] of [['delivery sweep', delivery.sweep], ['recurring', delivery.runRecurring], ['delivery invoices', delivery.retryInvoices], ['after hours invoices', afterHours.retryInvoices], ['after hours reminders', afterHours.sendReminders]] as const) {
     try {
       await job(app);
     } catch (e) {

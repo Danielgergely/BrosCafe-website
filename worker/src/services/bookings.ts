@@ -92,6 +92,9 @@ export const esc = email.escape;
 export const staffAddress = (app: App) => settings(app.env).cafe.email || 'hello@broscafe.hu';
 interface Mail { to: string; subject: string; title: string; html: string; text: string; button?: [string, string]; lang?: string }
 /** Never throws: an email problem must not undo a payment or a cancellation. */
+export const CAFE_PHONE = '+36 20 356 6754';
+export const MAP_URL = 'https://www.google.com/maps/search/?api=1&query=Bros+Cafe+Csan%C3%A1dy+u.+4%2Fb+Budapest';
+
 export async function mail(app: App, m: Mail) {
   const button = m.button
     ? `<tr><td style="padding:8px 24px 24px"><a href="${m.button[1]}" style="display:inline-block;background:#66734A;color:#F5F0E6;text-decoration:none;padding:14px 28px;border-radius:14px;font-weight:600">${esc(m.button[0])}</a></td></tr>`

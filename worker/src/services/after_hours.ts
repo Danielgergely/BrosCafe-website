@@ -5,7 +5,7 @@ import type { Doc } from '../db';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 import {
   ApiError, EMAIL, TAX, ZIP, addDays, addMonths, assertBookingsOpen, bookingsOpen, esc, ft, hm, instant, invalid, iso, lang as langOf, mail, mins, nextId, returnPath, rows,
-  safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday,
+  safeEqual, sign, siteUrl, staffAddress, text, today, validDate, weekday, CAFE_PHONE, MAP_URL,
 } from './bookings';
 import * as stripe from './stripe';
 import * as szamlazz from './szamlazz';
@@ -324,8 +324,20 @@ function staffDetails(b: Doc, extra: [string, string | number | null][] = []) {
 
 async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
   const en = b.lang === 'en', d = details(b, en), link = await cancelLink(app, b);
-  const intro = en ? 'Your private evening at Bros Cafe is booked. The advance invoice arrives in a separate email from Számlázz.hu, the final invoice on the day of the evening.'
-    : 'A privát estétek a Bros Caféban le van foglalva. Az előlegszámlát külön e-mailben küldi a Számlázz.hu, a végszámlát az est napján.';
+  const intro = en ? 'The café will be all yours for the evening, and we are looking forward to having you.'
+    : 'Az estére csak a tiétek a kávézó, már nagyon várunk titeket.';
+  const practical = en ? [
+    `Arrival: please come at the start time (${b.date}, ${b.start_time}); everything will be ready for you then. The evening ends at ${hm(mins(b.start_time) + b.hours * 60)}.`,
+    'Where: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
+    `Questions, allergies or special wishes: just reply to this email or call us on ${CAFE_PHONE}.`,
+    'Invoices: the advance invoice arrives in a separate email from Számlázz.hu, the final invoice on the day of the evening.',
+  ] : [
+    `Érkezés: kérjük, a kezdés időpontjára érkezzetek (${b.date}, ${b.start_time}), addigra minden készen vár. Az este vége: ${hm(mins(b.start_time) + b.hours * 60)}.`,
+    'Helyszín: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
+    `Kérdés, allergia, különleges kérés: válaszoljatok erre az e-mailre, vagy hívjatok: ${CAFE_PHONE}.`,
+    'Számla: az előlegszámlát külön e-mailben küldi a Számlázz.hu, a végszámlát az est napján.',
+  ];
+  const mapLink = `<p><a href="${MAP_URL}" style="color:#66734A;font-weight:600">${en ? 'Open in Google Maps' : 'Útvonal a Google Térképen'}</a></p>`;
   const food = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
     : en ? 'Food and drinks are included in the amount you paid; the cake is paid on the evening.' : 'Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.';
   const pct = offer(app.env).cancelFeePct;
@@ -333,12 +345,47 @@ async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
     : `Lemondás: legalább 7 nappal előtte a teljes összeg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni; a visszatérítésből a befizetett összeg ${pct}%-át kezelési költségként levonjuk.`}`;
   await mail(app, {
     to: b.email, lang: b.lang, subject: en ? `Your Bros After Hours booking (${b.id})` : `Bros After Hours foglalás (${b.id})`,
-    title: en ? 'Your evening is booked' : 'Megvan a foglalás', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(terms)}</p>`,
-    text: `${intro}\n\n${d.text}\n\n${terms}\n\n${en ? 'Cancel the booking' : 'Foglalás lemondása'}: ${link}`,
+    title: en ? 'Thank you for your booking' : 'Köszönjük a foglalást!',
+    html: `<p>${esc(intro)}</p>${practical.map((l) => `<p style="margin:6px 0">${esc(l)}</p>`).join('')}${mapLink}${d.html}<p>${esc(terms)}</p>`,
+    text: `${intro}\n\n${practical.join('\n')}\n${MAP_URL}\n\n${d.text}\n\n${terms}\n\n${en ? 'Cancel the booking' : 'Foglalás lemondása'}: ${link}`,
     button: [en ? 'Cancel the booking' : 'Foglalás lemondása', link],
   });
   const s = staffDetails(b, [['Fizetés', 'kifizetve (Stripe)'], ['Számla', invoiceNo ?? `NINCS KIÁLLÍTVA (${szamlazz.ready(app.env) ? 'hiba, újrapróbáljuk' : 'Számlázz.hu kulcs nincs beállítva'})`]]);
   await mail(app, { to: staffAddress(app), subject: `Új After Hours foglalás: ${b.date} ${b.start_time} · ${b.name} (${b.id})`, title: 'Új Bros After Hours foglalás', html: s.html, text: s.text });
+}
+
+/**
+ * Cron: a reminder the day before the evening, from 10:00 Budapest time. Not for bookings paid the day before or later
+ * (they just had the confirmation): those are marked 'skip'.
+ */
+export async function sendReminders(app: App) {
+  const now = today(app);
+  if (now.hour < 10) return;
+  const d1 = app.db.d1, tomorrow = addDays(now.date, 1);
+  const { results } = await d1.prepare("SELECT * FROM ah_bookings WHERE status = 'paid' AND date = ? AND reminder_sent_at IS NULL").bind(tomorrow).all<Doc>();
+  for (const b of results) {
+    const late = !b.paid_at || today(app, parseIso(b.paid_at)).date >= now.date;
+    const claim = await d1.prepare('UPDATE ah_bookings SET reminder_sent_at = ? WHERE id = ? AND reminder_sent_at IS NULL').bind(late ? 'skip' : nowIso(), b.id).run();
+    if (!claim.meta.changes || late) continue;
+    const en = b.lang === 'en', end = hm(mins(b.start_time) + b.hours * 60);
+    const lines = en ? [
+      `Tomorrow is your evening at Bros Cafe: ${b.date}, ${b.start_time}–${end}, ${b.guests} people.`,
+      `Please arrive at ${b.start_time}; everything will be ready for you.`,
+      'Where: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
+      `Anything to tell us (allergies, a change in numbers, a cake)? Reply to this email or call ${CAFE_PHONE}.`,
+    ] : [
+      `Holnap lesz a privát estétek a Bros Caféban: ${b.date}, ${b.start_time}–${end}, ${b.guests} fő.`,
+      `Kérjük, a kezdés időpontjára (${b.start_time}) érkezzetek, minden készen vár majd.`,
+      'Helyszín: Bros Cafe, 1132 Budapest, Csanády u. 4/b.',
+      `Ha valamit jeleznétek (allergia, létszámváltozás, torta), válaszoljatok erre az e-mailre, vagy hívjatok: ${CAFE_PHONE}.`,
+    ];
+    await mail(app, {
+      to: b.email, lang: b.lang, subject: en ? `See you tomorrow at Bros After Hours (${b.id})` : `Holnap találkozunk: Bros After Hours (${b.id})`,
+      title: en ? 'See you tomorrow!' : 'Holnap találkozunk!',
+      html: `${lines.map((l) => `<p style="margin:6px 0">${esc(l)}</p>`).join('')}<p><a href="${MAP_URL}" style="color:#66734A;font-weight:600">${en ? 'Open in Google Maps' : 'Útvonal a Google Térképen'}</a></p>`,
+      text: `${lines.join('\n')}\n${MAP_URL}`,
+    });
+  }
 }
 
 async function sendCancelled(app: App, b: Doc, by: 'guest' | 'staff', note: string) {

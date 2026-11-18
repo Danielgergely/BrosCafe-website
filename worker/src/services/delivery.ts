@@ -6,7 +6,7 @@ import { settings } from '../config';
 import { isoAt, nowIso, tokenUrlsafe } from '../util';
 import {
   ApiError, EMAIL, TAX, ZIP, addDays, assertBookingsOpen, bookingsOpen, esc, ft, instant, invalid, iso, lang as langOf, mail, nextId, returnPath, rows, safeEqual, sign, siteUrl,
-  staffAddress, text, today, validDate, weekday,
+  staffAddress, text, today, validDate, weekday, CAFE_PHONE,
 } from './bookings';
 import { earnsStamp } from './drinks';
 import * as emailService from './email';
@@ -419,7 +419,10 @@ async function sendPayer(app: App, p: Doc, o: Doc, kind: 'confirmed' | 'coming' 
     [en ? 'Of which delivery fee' : 'Ebből kiszállítási díj', p.fee_huf ? ft(p.fee_huf) : null]]);
   const tail = kind !== 'confirmed' ? '' : wantsInvoice(p) ? (en ? 'The invoice arrives in a separate email.' : 'A számlát külön e-mailben küldjük.')
     : (en ? 'You did not ask for an invoice. If you need one, reply to this email with your billing details.' : 'Számlát nem kértél. Ha mégis kell, válaszolj erre az e-mailre a számlázási adatokkal.');
-  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], html: `<p>${esc(T[2])}</p>${d.html}${cups.html}${tail ? `<p>${esc(tail)}</p>` : ''}`, text: `${T[2]}\n\n${d.text}\n\n${cups.text}${tail ? `\n\n${tail}` : ''}` });
+  const help = kind !== 'confirmed' ? '' : en ? `Thank you for ordering! Questions or a change: reply to this email or call us on ${CAFE_PHONE}. You can cancel free of charge until the order deadline.`
+    : `Köszönjük a rendelést! Kérdés vagy változtatás: válaszolj erre az e-mailre, vagy hívj minket: ${CAFE_PHONE}. A rendelési határidőig díjmentesen lemondhatod.`;
+  const extra = [tail, help].filter(Boolean);
+  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], html: `<p>${esc(T[2])}</p>${d.html}${cups.html}${extra.map((x) => `<p>${esc(x)}</p>`).join('')}`, text: `${T[2]}\n\n${d.text}\n\n${cups.text}${extra.map((x) => `\n\n${x}`).join('')}` });
 }
 
 // ---- Stripe webhook ----

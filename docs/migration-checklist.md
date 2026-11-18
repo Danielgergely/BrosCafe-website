@@ -258,9 +258,19 @@ Total about 6–7 agent days, 18–26 Nov.
 - [ ] 30 Nov [Daniel] Stop the VPS; delete the `coolify` DNS record; remove the server's SSH key and deploy key from GitHub.
 - [ ] 30 Nov [agent] `PROJECT.md` and `docs/cloudflare-migration.md` marked done.
 
-### Later: After Hours / Delivery backends (not needed for the switch)
+### Bookings go live: Stripe + Számlázz.hu (after cut-over B, before the first bookable evening 1 Dec)
 
-- [ ] Dec [Daniel + brothers] Stripe and Számlázz.hu accounts, accountant on invoice type and VAT, final prices, cancellation terms (`docs/after-hours.md`, `docs/delivery.md`).
-- [ ] Dec [agent] `/api/after-hours/*` with D1 tables and Stripe checkout (`docs/after-hours-api.md`); switch `USE_MOCK` off; real admin page.
-- [ ] Dec [agent] `/api/delivery/*` (`docs/delivery-api.md`); real admin page.
+The code is done and tested on the preview (`PROJECT.md`, 2026-11-18). The Számlázz.hu account stays in **test mode**
+until the website is fully migrated, and the preview's `SZAMLAZZ_AGENT_KEY` points at that same account. Order matters:
+step 1 must happen before test mode goes off, or preview test bookings become real invoices reported to NAV.
+
+- [ ] **CP** 1. [agent] Cut the preview off the account: `npx wrangler secret delete SZAMLAZZ_AGENT_KEY --env preview` (the preview then issues no invoices; a separate test account can be added later).
+- [ ] **CP** 2. [Daniel] Számlázz.hu: Vezérlőpult → switch test mode off. Check the test invoices (E-HNG-2026-1…14) are gone or marked as test, and where real numbering starts.
+- [ ] **CP** 3. [Daniel] Számlázz.hu: NAV connection (Online Számla technical user) set up; Számla Agent switched on (#free, upgrade to #start if Agent e-invoices are refused); Bros Cafe logo uploaded; accountant has access (invited 18 Nov).
+- [ ] **CP** 4. [Daniel] Generate a **new** Agent key (after test mode is off) and set it on production only: copy it, then `cd worker && pbpaste | npx wrangler secret put SZAMLAZZ_AGENT_KEY`.
+- [ ] **CP** 5. [Daniel] Stripe live mode: account activated; live secret key → `pbpaste | npx wrangler secret put STRIPE_SECRET_KEY`; webhook endpoint `https://broscafe.hu/api/stripe/webhook` with `checkout.session.completed` + `checkout.session.expired`, its signing secret → `STRIPE_WEBHOOK_SECRET`; Apple Pay domain `broscafe.hu` verified; card, Apple Pay, Google Pay on; adaptive pricing off (always HUF).
+- [ ] 6. [agent] Production vars: no `SZAMLAZZ_PROFORMA` / `SZAMLAZZ_OFF`, `BOOKINGS_OPEN` true, `AH_LAUNCH_DATE` 2026-12-01; `payments_ready: true` from `/api/after-hours/availability`.
+- [ ] **CP** 7. [Daniel + agent] One real test with a real card: a single-drink Delivery company order → real invoice in Számlázz.hu (proves Agent e-invoices work on the package), then cancel + refund it in the admin → storno. Then a small After Hours booking with a 50 % refund → correcting invoice with the 3 % fee line.
+- [ ] 8. [Daniel] Accountant answers before the first real cancellation: does a kept cancellation (50 % / 0 %) need a végszámla; ÁFA rate of the 3 % fee (`AH_CANCEL_FEE_VAT`, now 27); one read of the ÁSZF (`/aszf/`).
+- [ ] 9. [Daniel] NTAK answer on online sales outside the till (email draft in the 18 Nov session).
 - [ ] Dec [agent] Port account and card into D; decide on the scanner after a month of use.

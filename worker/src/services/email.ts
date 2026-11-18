@@ -34,7 +34,7 @@ function assertSafe(html: string) {
 }
 
 async function post(app: App, payload: Record<string, unknown>) {
-  return fetch(API_URL, {
+  return fetch(String(app.env.RESEND_API_URL ?? '') || API_URL, { // RESEND_API_URL: local tests against a stub only
     method: 'POST',
     headers: { Authorization: `Bearer ${settings(app.env).resend_api_key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
