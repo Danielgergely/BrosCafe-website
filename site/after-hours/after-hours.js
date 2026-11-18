@@ -16,6 +16,7 @@
     minGuests: 2, maxGuests: 12,
     base: 12900,                         // the private café for 2 hours, any group size
     extraHour: 5900,                     // per hour above baseHours
+    drinks: 2500,                        // unlimited drinks we make, per guest, whole group
     draft: false, windowMonths: 3,
     // the price ladder per person: welcome drink + 1, 2 or 3 of the six dishes; the 4th dish on is an extra at its own price
     tiers: {
@@ -51,6 +52,7 @@
     line('cafe', t('Privát kávézó, {n} óra', { n: C.baseHours }), 1, C.base);
     line('package', `${t('Üdvözlőital')} + ${t(tier.name)}${s.dishes.length ? ` (${names(s.dishes)})` : ''}`, s.guests, tier.perPerson);
     if (tier.extras) s.extras.forEach((d) => line('extra', `${t('Extra tál')}: ${t(DISH[d].name)}`, s.guests, DISH[d].extra));
+    if (s.drinks) line('drinks', t('Korlátlan italok (saját készítésű)'), s.guests, C.drinks);
     if (extraHours(s.hours)) line('hours', t('További óra'), extraHours(s.hours), C.extraHour);
     if (s.voucher) line('voucher', t('Kuponkód {code} (−{p}% a kávézó díjából)', { code: s.voucher.code, p: s.voucher.percent }), 1, -s.voucher.discount);
     return { lines, total: lines.reduce((a, l) => a + l.amount, 0) };
@@ -351,16 +353,16 @@
     const bar = $('#ah-bar'), barBtn = $('#ah-bar-btn'), barSum = $('#ah-bar-sum');
     // the price: computed here at once, then replaced by the server's quote for the same choice (the amount charged is always the server's)
     let served = null, quoteKey = '', quoteTimer = 0;
-    const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), guests: nGuests, hours, voucher: vch });
+    const state = () => ({ tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: F('drinks').checked, guests: nGuests, hours, voucher: vch });
     const complete = () => sel.picks.length > 0;
     function askServer(s) {
-      const key = JSON.stringify([s.tier, s.dishes, s.extras, s.guests, s.hours, s.voucher && s.voucher.code]);
+      const key = JSON.stringify([s.tier, s.dishes, s.extras, s.drinks, s.guests, s.hours, s.voucher && s.voucher.code]);
       if (key === quoteKey) return;
       quoteKey = key; served = null; clearTimeout(quoteTimer);
       if (!complete()) return;
       quoteTimer = setTimeout(async () => {
         try {
-          const r = await api.quote({ tier: s.tier, dishes: s.dishes, extras: s.extras, guests: s.guests, hours: s.hours, voucher: s.voucher ? s.voucher.code : '' });
+          const r = await api.quote({ tier: s.tier, dishes: s.dishes, extras: s.extras, drinks: s.drinks, guests: s.guests, hours: s.hours, voucher: s.voucher ? s.voucher.code : '' });
           if (key !== quoteKey) return;
           if (r.total !== localQuote(s).total) console.warn('After Hours: page and server price differ', localQuote(s), r);
           served = r; summary();
@@ -394,7 +396,7 @@
       if (barBtn.getAttribute('href') === href && barBtn.firstChild) return;
       barBtn.setAttribute('href', href); barBtn.innerHTML = `${t(label)} <span aria-hidden="true">→</span>`;
     }
-    form.addEventListener('change', (e) => { if (e.target.name === 'cake') summary(); });
+    form.addEventListener('change', (e) => { if (e.target.name === 'cake' || e.target.name === 'drinks') summary(); });
     form.addEventListener('input', () => nextStep());
     // the bar shows between the hero button and the summary card (phones only, see the CSS)
     const heroBtn = $('.ah-hero__actions'), sumCard = $('#ah-sum-card');
@@ -463,7 +465,7 @@
       if (codeIn.value.trim() && !vch && !(await applyCode())) { codeIn.focus(); return; }
       const v = (n) => F(n).value.trim();
       const payload = {
-        date: picked, start, hours, guests: nGuests, tier: tierOf(), dishes: chosen(), extras: extrasOf(), name: v('name'), email: v('email'), phone: v('phone'),
+        date: picked, start, hours, guests: nGuests, tier: tierOf(), dishes: chosen(), extras: extrasOf(), drinks: F('drinks').checked, name: v('name'), email: v('email'), phone: v('phone'),
         billing: { zip: v('zip'), city: v('city'), street: v('street'), company: toggle.checked ? v('company') : '', tax_number: toggle.checked ? v('tax_number') : '' },
         occasion: v('occasion'), note: v('note'), cake: F('cake').checked, voucher: vch ? vch.code : '', terms: true, lang: B.lang,
         return_path: location.pathname, // Stripe sends the guest back to this page, wherever the site is mounted

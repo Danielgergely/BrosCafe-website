@@ -53,3 +53,40 @@ Small groups: at 2 guests with 1 platter, every option earns at most ~1 800 Ft f
 
 ## To confirm with the brothers
 Beef, slider buns, crackers and winter fruit prices; the real portion sizes; whether one or two people work an evening; overtime pay.
+
+## Unlimited drinks (2026-11-18): drinks we make only; bottled drinks are bought separately
+
+Material cost per drink from the 2026-10 margin analysis (Termékek sheet, sold units as weights):
+
+| Group | Cost per drink | Range | Avg price (gross, 5 % VAT) |
+|---|---|---|---|
+| Coffees | 174 | 82–233 | ~1 115 |
+| Specialities (flavoured lattes, matcha, hot chocolate, espresso tonic) | 342 | 217–545 | ~1 590 |
+| Teas | 77 | 71–90 | ~1 155 |
+| Smoothies | 555 | 351–922 | ~1 550 |
+
+Evening mix assumed (fewer espressos, more specialities/tea/smoothies): 35 % coffee, 35 % speciality, 15 % tea,
+15 % smoothie → **~285 Ft per drink** with 3 % waste; a heavy speciality/smoothie drinker ~420.
+
+Drinks per guest (the welcome drink, 300 Ft, is already in the platter price; the package replaces it):
+
+| Evening | Drinks per guest | Cost | Extra cost over the welcome drink |
+|---|---|---|---|
+| 2 h, light | 2 | 570 | 270 |
+| 2 h, typical | 3 | 855 | 555 |
+| 3 h, typical | 4 | 1 140 | 840 |
+| 4 h, typical | 5 | 1 425 | 1 125 |
+| 2 h, heavy (smoothies/specialities) | 5 | 2 100 | 1 800 |
+
+Options per guest for the whole evening (gross; net = ÷ 1.05), profit per guest over the welcome drink:
+
+| Price | Typical 2 h | Typical 4 h | Heavy 2 h | Pays off after (extra drinks at 285) |
+|---|---|---|---|---|
+| 1 500 | +874 | +304 | −371 | 5 |
+| **2 500** | **+1 826** | **+1 256** | **+581** | **8** |
+| 3 500 | +2 778 | +2 208 | +1 533 | 12 |
+
+2 500 ≈ the price of two café drinks, so "unlimited for the price of two" reads as good value, and it stays profitable
+even for heavy drinkers and the longest evening. Suggested rules: whole group or nobody (otherwise glasses get shared);
+smoothies 3 dl; bottled drinks (soft drinks, waters, tonics) at the café price on the evening. Staff time is the real
+limit: unlimited drinks mean more barista work for the person serving.

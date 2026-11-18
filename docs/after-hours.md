@@ -21,6 +21,8 @@ Private evening: a group books the whole café. **Evenings run 18:00–22:00** (
     +1 500 Ft each, like the 2nd and 3rd (Daniel 2026-11-18: keep it simple).
 - **VAT** (Daniel 2026-11-18): café fee and extra hours 27 % (room, `AH_VAT`); package and extra dishes 5 % (food and
   drink served in-house, `AH_FOOD_VAT`). The voucher lowers the café line.
+- **Unlimited drinks: +2 500 Ft/person** for the evening, whole group, drinks we make only (bottled drinks not included);
+  optional row in step 3, quote line `drinks` at 5 % VAT, `AH_DRINKS_HUF` (Daniel 2026-11-18, costing in docs/after-hours-costs.md).
 - **Extra hour: +5 900 Ft** (max 2, until 22:00; start 18:00–20:00). **Cake** from 10 000 Ft (optional).
 - Headline: **"17 900 Ft-tól"** (2 people, 2 hours, drink + food). Examples: 1 tál 2 p 17 900 · 6 p 27 900 · 12 p 42 900; 2 tál 6 p 36 900;
   3 tál 2 p 23 900 · 6 p 45 900 · 12 p 78 900 · 12 p 4 h 90 700 · 6 p + 1 extra 54 900; 1 tál 4 p + AFTER25 19 675. (Daniel's 14 900 base and the brother's 15 000 + 5 900/person = 50 400

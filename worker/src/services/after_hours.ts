@@ -18,6 +18,7 @@ const num = (env: Env, k: string, def: number) => {
 const offer = (env: Env) => ({
   base: num(env, 'AH_BASE_HUF', 12900),            // the private café, 2 hours, any group size
   extraHour: num(env, 'AH_EXTRA_HOUR_HUF', 5900),   // per hour above 2
+  drinks: num(env, 'AH_DRINKS_HUF', 2500),          // unlimited drinks we make, per guest for the evening, whole group (docs/after-hours-costs.md)
   minGuests: 2, maxGuests: 12, baseHours: 2, maxHours: 4,
   open: '18:00', close: '22:00', lastStart: '20:00', startStep: 30,
   launch: String(env.AH_LAUNCH_DATE ?? '2026-12-01'), noticeDays: 3, windowMonths: 3,
@@ -47,8 +48,8 @@ const OCCASIONS: Record<string, [string, string]> = {
 };
 
 /** One priced line; `amount` = qty × unit. The voucher is a negative line. Stored with the booking so old bookings keep their prices. */
-export interface QuoteLine { kind: 'cafe' | 'package' | 'extra' | 'hours' | 'voucher'; id?: string; hu: string; en: string; qty: number; unit: number; amount: number }
-export interface Quote { tier: string; dishes: string[]; extras: string[]; guests: number; hours: number; lines: QuoteLine[]; total: number; voucher: { code: string; percent: number; discount: number } | null }
+export interface QuoteLine { kind: 'cafe' | 'package' | 'extra' | 'drinks' | 'hours' | 'voucher'; id?: string; hu: string; en: string; qty: number; unit: number; amount: number }
+export interface Quote { tier: string; dishes: string[]; extras: string[]; drinks: boolean; guests: number; hours: number; lines: QuoteLine[]; total: number; voucher: { code: string; percent: number; discount: number } | null }
 
 /**
  * The price. Throws 400 invalid (fields) for a bad tier, dish set, extras, guests or hours, and 400 invalid_voucher for an unknown code.
@@ -78,9 +79,11 @@ export function quote(env: Env, b: Doc): Quote {
     line({ kind: 'package', id: tierId, hu: `Üdvözlőital + ${tier.hu} (${names(dishes, 'hu')})`, en: `Welcome drink + ${tier.en} (${names(dishes, 'en')})`, qty: guests, unit: tier.perPerson }),
     ...extras.map((d) => line({ kind: 'extra', id: d, hu: `Extra tál: ${DISHES[d].hu}`, en: `Extra platter: ${DISHES[d].en}`, qty: guests, unit: DISHES[d].extra })),
   ];
+  const drinks = b.drinks === true;
+  if (drinks) lines.push(line({ kind: 'drinks', hu: 'Korlátlan italok (saját készítésű)', en: 'Unlimited drinks (made by us)', qty: guests, unit: o.drinks }));
   if (hours > o.baseHours) lines.push(line({ kind: 'hours', hu: 'További óra', en: 'Extra hour', qty: hours - o.baseHours, unit: o.extraHour }));
   if (vch) lines.push(line({ kind: 'voucher', id: vch.code, hu: `Kuponkód ${vch.code} (−${vch.percent}% a kávézó díjából)`, en: `Voucher ${vch.code} (−${vch.percent}% off the café fee)`, qty: 1, unit: -vch.discount }));
-  return { tier: tierId, dishes, extras, guests, hours, lines, total: lines.reduce((s, l) => s + l.amount, 0), voucher: vch };
+  return { tier: tierId, dishes, extras, drinks, guests, hours, lines, total: lines.reduce((s, l) => s + l.amount, 0), voucher: vch };
 }
 
 /** Stripe and Számlázz take no negative lines: the voucher comes off the café line, so the lines still add up to the total. */
@@ -165,7 +168,7 @@ export async function availability(app: App, from: unknown, to: unknown, code?: 
 export function priceQuote(app: App, b: Doc) {
   const o = offer(app.env), q = quote(app.env, b), start = text(b.start, 5);
   if (start && (!/^\d\d:\d\d$/.test(start) || mins(start) + q.hours * 60 > mins(o.close))) throw invalid(['hours']);
-  return { tier: q.tier, dishes: q.dishes, extras: q.extras, guests: q.guests, hours: q.hours, lines: q.lines, total: q.total, voucher: q.voucher };
+  return { tier: q.tier, dishes: q.dishes, extras: q.extras, drinks: q.drinks, guests: q.guests, hours: q.hours, lines: q.lines, total: q.total, voucher: q.voucher };
 }
 
 export async function book(app: App, b: Doc) {
@@ -210,7 +213,7 @@ export async function book(app: App, b: Doc) {
   if (v.date < w.min || v.date > w.max || !open) throw new ApiError(409, 'day_taken');
 
   const qt = q!, id = await nextId(app, 'AH'), discount = vch?.discount ?? 0, amount = qt.total, lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
-  const pkg = JSON.stringify({ tier: qt.tier, dishes: qt.dishes, extras: qt.extras, lines: qt.lines, total: qt.total });
+  const pkg = JSON.stringify({ tier: qt.tier, dishes: qt.dishes, extras: qt.extras, drinks: qt.drinks, lines: qt.lines, total: qt.total });
   try {
     await app.db.d1.prepare(
       `INSERT INTO ah_bookings (id, date, status, hold_expires, start_time, hours, guests, tier, amount_huf, cancel_token, name, email, phone, zip, city, street,
@@ -276,6 +279,7 @@ function orderRows(b: Doc, en: boolean): [string, string | null][] {
     [en ? 'Package' : 'Csomag', tier ? `${tier[en ? 'en' : 'hu']} (${ft(p.lines.find((l) => l.kind === 'package')?.unit ?? tier.perPerson)} ${en ? 'per person' : '/ fő'})` : b.tier],
     [en ? 'Platters' : 'Tálak', dishNames(p.dishes, en) || null],
     [en ? 'Extra platters' : 'Extra tálak', dishNames(p.extras, en) || null],
+    [en ? 'Drinks' : 'Italok', p.lines.some((l) => l.kind === 'drinks') ? (en ? 'Unlimited drinks we make' : 'Korlátlan saját készítésű italok') : null],
     [en ? 'Breakdown' : 'Részletezés', p.lines.map(money).join('\n') || null],
   ];
 }
