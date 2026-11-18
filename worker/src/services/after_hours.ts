@@ -640,7 +640,7 @@ export async function adminCancel(app: App, id: string) {
   const b = await get(app, id);
   if (!b) throw new ApiError(404, 'not_found');
   if (!r.meta.changes) throw new ApiError(409, 'not_paid');
-  app.later(sendCancelled(app, b, 'staff', 'Lemondva az adminban. A visszatérítést külön gombbal kell elindítani.'));
+  // no email yet: guest and staff get one, with the refund, when staff choose it (adminRefund)
   return view(b);
 }
 

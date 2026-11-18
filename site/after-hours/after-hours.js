@@ -607,7 +607,7 @@
       if (e.target.closest('[data-back]')) { const id = dlg.dataset.editing; delete dlg.dataset.editing; return detail(id); }
       const act = e.target.closest('[data-act]'); if (!act || working) return;
       const id = $('.aha__dl', dlg).dataset.id;
-      if (!confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég e-mailt kap róla.', { id }) : t('{id}: visszautaljuk a kifizetett összeg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
+      if (!confirm(act.dataset.act === 'cancel' ? t('{id}: lemondjuk a foglalást? A vendég a visszatérítés elindítása után kap egy e-mailt.', { id }) : t('{id}: visszautaljuk a kifizetett összeg {pct}%-át?', { id, pct: act.dataset.pct }))) return;
       working = true; act.setAttribute('aria-busy', 'true'); act.textContent = t('Folyamatban…');
       try {
         await (act.dataset.act === 'cancel' ? api.admin.cancel(id) : api.admin.refund(id, Number(act.dataset.pct), act.dataset.waive));
