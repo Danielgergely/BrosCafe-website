@@ -410,3 +410,36 @@
 .ah-code__row input { flex: 1; min-width: 0; min-height: 48px; padding: 10px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fff; box-shadow: none; font-size: 16px; text-transform: uppercase; }
 .ah-code__row input:focus { outline: none; border-color: var(--olive); box-shadow: 0 0 0 4px rgb(var(--olive-rgb) / .18); }
 .ah-code__row .btn { min-height: 48px; padding-inline: 16px; }
+
+/* ---- offer v4 (owner 2026-11-17): café fee + one package per person, six dishes ---- */
+.ah-price__plus { margin-top: 12px; max-width: none; }
+.ah-offer__lead { font: 420 20px/1.2 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.015em; }
+.ah-packs { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.ah-pack { padding: 16px; border-radius: var(--r-md); background: var(--ivory-hi); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(var(--espresso-rgb) / .06); }
+.ah-pack__sum { margin-top: 4px; font: 420 32px/1 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ah-pack__sum small { font: 600 14px/1 var(--sans); letter-spacing: 0; color: var(--text-soft); }
+.ah-pack__list { display: grid; gap: 6px; margin-top: 12px; font-size: 15px; line-height: 1.4; color: var(--text-soft); }
+.ah-pack__list li { position: relative; padding-left: 16px; }
+.ah-pack__list li::before { content: ""; position: absolute; left: 2px; top: .55em; width: 6px; height: 6px; border-radius: 50%; background: var(--champagne); }
+.ah-menu { max-width: 980px; margin-top: clamp(18px, 3vh, 28px); }
+.ah-menu .ah-sub { margin-top: 0; }
+.ah-menu .ah-extra__list { margin-top: 0; }
+.ah-extra__list dt b { display: block; font-weight: 650; color: var(--text); }
+.ah-extra__list dt small { display: block; font-size: 14px; line-height: 1.35; }
+.ah-extra__list dd { font-weight: 600; font-size: 14px; color: var(--text-soft); }
+.ah-pick--tier label { min-height: 72px; }
+.ah-pick label.is-off { opacity: .5; cursor: default; }
+.ah-pick label.is-off:active { transform: none; }
+#ah-dish-title { min-width: 0; }
+#err-dishes { margin-top: 10px; }
+#ah-extrapick > .fine { margin: 0; }
+@media (max-width: 619.98px) {
+  .ah-menu { margin-top: 14px; }
+  .ah-offer__lead { font-size: 18px; }
+  .ah-pack { padding: 14px; }
+  .ah-pack__sum { font-size: 28px; }
+  .ah-extra__list dd { align-self: center; }
+}
+.ah-sum__list dt { flex: 0 1 auto; min-width: 0; }
+.ah-sum__list dt small { display: block; margin-top: 2px; font-size: 13px; line-height: 1.35; }
+.ah-sum__list dd { flex: none; }

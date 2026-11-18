@@ -14,27 +14,95 @@ const num = (env: Env, k: string, def: number) => {
   const n = Number.parseInt(String(env[k] ?? ''), 10);
   return Number.isFinite(n) ? n : def;
 };
-/** The offer. The page's CONFIG mirrors it; the amounts are DRAFT until Daniel confirms (docs/after-hours.md). */
+/** The offer (owner, 2026-11-17). The page's CONFIG mirrors it and shows the server's quote. Everything is prepaid except the cake. */
 const offer = (env: Env) => ({
-  base: num(env, 'AH_BASE_HUF', 14900),            // 2–6 people, 2 hours
-  extraGuest: num(env, 'AH_EXTRA_GUEST_HUF', 1990), // DRAFT: per person 7–12
-  extraHour: num(env, 'AH_EXTRA_HOUR_HUF', 5900),   // DRAFT: per hour above 2
-  minGuests: 2, baseGuests: 6, maxGuests: 12, baseHours: 2, maxHours: 4,
+  base: num(env, 'AH_BASE_HUF', 12900),            // the private café, 2 hours, any group size
+  extraHour: num(env, 'AH_EXTRA_HOUR_HUF', 5900),   // per hour above 2
+  minGuests: 2, maxGuests: 12, baseHours: 2, maxHours: 4,
   open: '18:00', close: '22:00', lastStart: '20:00', startStep: 30,
   launch: String(env.AH_LAUNCH_DATE ?? '2026-12-01'), noticeDays: 3, windowMonths: 3,
   closedDays: ['12-24', '12-25', '12-26', '12-31', '01-01'], // blocked every year unless the admin opens the day
-  packages: ['food1', 'food2', 'food3'], // the three food selections (contents TBD, paid on site)
 });
-/** Voucher codes: percent off the BASE fee only (not the surcharges). Keys upper-case. */
+/** The six dishes (the brothers' list); `extra` = per person as an additional dish on the menu. */
+export const DISHES: Record<string, { hu: string; en: string; extra: number }> = {
+  waffle: { hu: 'Waffle board', en: 'Waffle board', extra: 1500 },
+  pizza: { hu: 'Mini pizza bites', en: 'Mini pizza bites', extra: 1500 },
+  veggie: { hu: 'Fresh fruit & veggie board', en: 'Fresh fruit & veggie board', extra: 1500 },
+  burger: { hu: 'Mini burger sliders', en: 'Mini burger sliders', extra: 1800 },
+  sandwich: { hu: 'Mini sandwich selection', en: 'Mini sandwich selection', extra: 1500 },
+  cheese: { hu: 'Cheese & charcuterie board', en: 'Cheese & charcuterie board', extra: 2000 },
+};
+/** One per-person package for the whole group. Alap: welcome drink + one board; menu: welcome drink + 3 dishes (+ extras). */
+export const TIERS: Record<string, { hu: string; en: string; perPerson: number; pick: number; from: string[]; extras: boolean }> = {
+  alap: { hu: 'Alap csomag', en: 'Basic package', perPerson: 2500, pick: 1, from: ['waffle', 'veggie'], extras: false },
+  menu: { hu: 'Fingerfood menü', en: 'Finger food menu', perPerson: 3900, pick: 3, from: Object.keys(DISHES), extras: true },
+};
+/** Voucher codes: percent off the café fee only (never food, drinks or extra hours). Keys upper-case. */
 const VOUCHERS: Record<string, { percent: number }> = { AFTER25: { percent: 25 } };
 const PATHS = ['/after-hours/'];
-
-const price = (env: Env, guests: number, hours: number) => {
-  const o = offer(env);
-  return o.base + o.extraGuest * Math.max(0, guests - o.baseGuests) + o.extraHour * Math.max(0, hours - o.baseHours);
+const OCCASIONS: Record<string, [string, string]> = {
+  birthday: ['Születésnap', 'Birthday'], romantic: ['Romantikus este', 'Romantic evening'], friends: ['Baráti összejövetel', 'Get-together with friends'],
+  team: ['Céges', 'Company'], family: ['Családi alkalom', 'Family occasion'], other: ['Egyéb', 'Other'],
 };
 
-/** Case-insensitive, trimmed. null = no such code. The discount is a share of the base fee only. */
+/** One priced line; `amount` = qty × unit. The voucher is a negative line. Stored with the booking so old bookings keep their prices. */
+export interface QuoteLine { kind: 'cafe' | 'package' | 'extra' | 'hours' | 'voucher'; id?: string; hu: string; en: string; qty: number; unit: number; amount: number }
+export interface Quote { tier: string; dishes: string[]; extras: string[]; guests: number; hours: number; lines: QuoteLine[]; total: number; voucher: { code: string; percent: number; discount: number } | null }
+
+/**
+ * The price. Throws 400 invalid (fields) for a bad tier, dish set, extras, guests or hours, and 400 invalid_voucher for an unknown code.
+ * Checks: alap 2 p 2 h 17 900 · alap 6 p 27 900 · menu 6 p 36 300 · menu 12 p 4 h 71 500 · menu 6 p + cheese 48 300 · alap 4 p AFTER25 19 675.
+ */
+export function quote(env: Env, b: Doc): Quote {
+  const o = offer(env), bad: string[] = [];
+  const tierId = String(b.tier ?? ''), tier = TIERS[tierId];
+  const list = (v: unknown) => (Array.isArray(v) ? v.map(String) : []);
+  const dishes = list(b.dishes), extras = list(b.extras);
+  const guests = Number(b.guests), hours = Number(b.hours);
+  if (!tier) bad.push('tier');
+  else {
+    if (dishes.length !== tier.pick || new Set(dishes).size !== dishes.length || !dishes.every((d) => tier.from.includes(d))) bad.push('dishes');
+    if (extras.length && (!tier.extras || new Set(extras).size !== extras.length || !extras.every((d) => DISHES[d] && !dishes.includes(d)))) bad.push('extras');
+  }
+  if (!(Number.isInteger(guests) && guests >= o.minGuests && guests <= o.maxGuests)) bad.push('guests');
+  if (!(Number.isInteger(hours) && hours >= o.baseHours && hours <= o.maxHours)) bad.push('hours');
+  if (bad.length) throw invalid(bad);
+  const vch = String(b.voucher ?? '').trim() ? voucher(env, b.voucher) : null;
+  if (String(b.voucher ?? '').trim() && !vch) throw new ApiError(400, 'invalid_voucher');
+
+  const line = (l: Omit<QuoteLine, 'amount'>): QuoteLine => ({ ...l, amount: l.qty * l.unit });
+  const names = (ids: string[], k: 'hu' | 'en') => ids.map((d) => DISHES[d][k]).join(', ');
+  const lines: QuoteLine[] = [
+    line({ kind: 'cafe', hu: `Privát kávézó, ${o.baseHours} óra`, en: `Private café, ${o.baseHours} hours`, qty: 1, unit: o.base }),
+    line({ kind: 'package', id: tierId, hu: `${tier.hu} (üdvözlőital + ${names(dishes, 'hu')})`, en: `${tier.en} (welcome drink + ${names(dishes, 'en')})`, qty: guests, unit: tier.perPerson }),
+    ...extras.map((d) => line({ kind: 'extra', id: d, hu: `Extra fogás: ${DISHES[d].hu}`, en: `Extra dish: ${DISHES[d].en}`, qty: guests, unit: DISHES[d].extra })),
+  ];
+  if (hours > o.baseHours) lines.push(line({ kind: 'hours', hu: 'További óra', en: 'Extra hour', qty: hours - o.baseHours, unit: o.extraHour }));
+  if (vch) lines.push(line({ kind: 'voucher', id: vch.code, hu: `Kuponkód ${vch.code} (−${vch.percent}% a kávézó díjából)`, en: `Voucher ${vch.code} (−${vch.percent}% off the café fee)`, qty: 1, unit: -vch.discount }));
+  return { tier: tierId, dishes, extras, guests, hours, lines, total: lines.reduce((s, l) => s + l.amount, 0), voucher: vch };
+}
+
+/** Stripe and Számlázz take no negative lines: the voucher comes off the café line, so the lines still add up to the total. */
+function chargeLines(q: { lines: QuoteLine[] }, en: boolean) {
+  const disc = q.lines.find((l) => l.kind === 'voucher');
+  return q.lines.filter((l) => l.kind !== 'voucher').map((l) => {
+    const cut = l.kind === 'cafe' && disc;
+    return { kind: l.kind, name: `${en ? l.en : l.hu}${cut ? ` (${disc.id} −${ft(-disc.amount)})` : ''}`, quantity: l.qty, unit: l.unit + (cut ? disc.amount : 0) };
+  });
+}
+
+/** The stored package: { tier, dishes, extras, lines, total } since 2026-11-17; older rows hold an array of 'food1'… ids (indicative, paid on site). */
+function pkgOf(b: Doc): { legacy: string[] | null; dishes: string[]; extras: string[]; lines: QuoteLine[] } {
+  let p: unknown;
+  try { p = JSON.parse(b.packages || '[]'); } catch { p = []; }
+  if (Array.isArray(p)) return { legacy: p.map(String), dishes: [], extras: [], lines: [] };
+  const o = (p ?? {}) as Doc;
+  return { legacy: null, dishes: o.dishes ?? [], extras: o.extras ?? [], lines: o.lines ?? [] };
+}
+const dishNames = (ids: string[], en: boolean) => ids.map((d) => DISHES[d]?.[en ? 'en' : 'hu'] ?? d).join(', ');
+const occasionOf = (v: string | null, en: boolean) => (v ? OCCASIONS[v]?.[en ? 1 : 0] ?? v : null);
+
+/** Case-insensitive, trimmed. null = no such code. The discount is a share of the café fee only. */
 function voucher(env: Env, raw: unknown) {
   const code = String(raw ?? '').trim().toUpperCase(), v = VOUCHERS[code];
   return v ? { code, percent: v.percent, discount: Math.round((offer(env).base * v.percent) / 100) } : null;
@@ -58,10 +126,11 @@ const get = (app: App, id: string) => app.db.d1.prepare('SELECT * FROM ah_bookin
 const expireHolds = (app: App) => app.db.d1.prepare("UPDATE ah_bookings SET status = 'expired' WHERE status = 'pending' AND hold_expires < ?").bind(nowIso()).run();
 
 function view(b: Doc) {
+  const p = pkgOf(b);
   return {
     id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, tier: b.tier, name: b.name, email: b.email, phone: b.phone,
     billing: { zip: b.zip, city: b.city, street: b.street, company: b.company ?? '', tax_number: b.tax_number ?? '' },
-    occasion: b.occasion ?? '', note: b.note ?? '', packages: JSON.parse(b.packages || '[]'), cake: !!b.cake, voucher_code: b.voucher_code ?? null, discount: b.discount_huf ?? 0, status: b.status, amount: b.amount_huf,
+    occasion: b.occasion ?? '', note: b.note ?? '', packages: p.legacy ?? [], dishes: p.dishes, extras: p.extras, lines: p.lines, cake: !!b.cake, voucher_code: b.voucher_code ?? null, discount: b.discount_huf ?? 0, status: b.status, amount: b.amount_huf,
     created_at: iso(b.created_at), paid_at: iso(b.paid_at), cancelled_at: iso(b.cancelled_at),
     refund_percent: b.refund_percent, refund_huf: b.refund_huf, invoice_no: b.invoice_no, invoice_error: b.invoice_error,
   };
@@ -91,6 +160,13 @@ export async function availability(app: App, from: unknown, to: unknown, code?: 
   return res;
 }
 
+/** POST /quote: the price the page shows (same function as the booking). No date needed; a start, when sent, must leave room for the hours. */
+export function priceQuote(app: App, b: Doc) {
+  const o = offer(app.env), q = quote(app.env, b), start = text(b.start, 5);
+  if (start && (!/^\d\d:\d\d$/.test(start) || mins(start) + q.hours * 60 > mins(o.close))) throw invalid(['hours']);
+  return { tier: q.tier, dishes: q.dishes, extras: q.extras, guests: q.guests, hours: q.hours, lines: q.lines, total: q.total, voucher: q.voucher };
+}
+
 export async function book(app: App, b: Doc) {
   assertBookingsOpen(app);
   const o = offer(app.env), bad: string[] = [];
@@ -102,13 +178,17 @@ export async function book(app: App, b: Doc) {
     zip: text(billing.zip, 4), city: text(billing.city, 80), street: text(billing.street, 160),
     company: text(billing.company, 160), tax: text(billing.tax_number, 13),
     occasion: text(b.occasion, 40), note: text(b.note, 1000), cake: b.cake === true,
-    packages: Array.isArray(b.packages) ? b.packages.filter((p: unknown) => o.packages.includes(p as string)) : [],
   };
   need(validDate(v.date), 'date');
   const startOk = /^\d\d:\d\d$/.test(v.start) && mins(v.start) >= mins(o.open) && mins(v.start) <= mins(o.lastStart) && (mins(v.start) - mins(o.open)) % o.startStep === 0;
   need(startOk, 'start');
   need(Number.isInteger(v.hours) && v.hours >= o.baseHours && v.hours <= o.maxHours && startOk && mins(v.start) + v.hours * 60 <= mins(o.close), 'hours');
   need(Number.isInteger(v.guests) && v.guests >= o.minGuests && v.guests <= o.maxGuests, 'guests');
+  let q: Quote | null = null;
+  try { q = quote(app.env, b); } catch (e) {
+    if (!(e instanceof ApiError) || e.code !== 'invalid') throw e; // invalid_voucher goes straight out, as before
+    for (const f of e.extra.fields as string[]) if (!bad.includes(f)) bad.push(f);
+  }
   need(v.name.length >= 2, 'name');
   need(EMAIL.test(v.email), 'email');
   need(v.phone.replace(/\D/g, '').length >= 7, 'phone');
@@ -128,14 +208,15 @@ export async function book(app: App, b: Doc) {
   const open = (await overrides(app, v.date, v.date)).get(v.date) ?? defaultOpen(app.env, v.date);
   if (v.date < w.min || v.date > w.max || !open) throw new ApiError(409, 'day_taken');
 
-  const id = await nextId(app, 'AH'), discount = vch?.discount ?? 0, amount = price(app.env, v.guests, v.hours) - discount, lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
+  const qt = q!, id = await nextId(app, 'AH'), discount = vch?.discount ?? 0, amount = qt.total, lang = langOf(b.lang), path = returnPath(b.return_path, PATHS, PATHS[0]);
+  const pkg = JSON.stringify({ tier: qt.tier, dishes: qt.dishes, extras: qt.extras, lines: qt.lines, total: qt.total });
   try {
     await app.db.d1.prepare(
       `INSERT INTO ah_bookings (id, date, status, hold_expires, start_time, hours, guests, tier, amount_huf, cancel_token, name, email, phone, zip, city, street,
         company, tax_number, occasion, note, packages, cake, voucher_code, discount_huf, lang, return_path, created_at)
-       VALUES (?, ?, 'pending', ?, ?, ?, ?, 'base', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(id, v.date, isoAt(new Date(Date.now() + stripe.HOLD_MIN * 60_000)), v.start, v.hours, v.guests, amount, tokenUrlsafe(24), v.name, v.email, v.phone, v.zip, v.city, v.street,
-      v.company || null, v.tax || null, v.occasion || null, v.note || null, JSON.stringify(v.packages), v.cake ? 1 : 0, vch?.code ?? null, discount, lang, path, nowIso()).run();
+       VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).bind(id, v.date, isoAt(new Date(Date.now() + stripe.HOLD_MIN * 60_000)), v.start, v.hours, v.guests, qt.tier, amount, tokenUrlsafe(24), v.name, v.email, v.phone, v.zip, v.city, v.street,
+      v.company || null, v.tax || null, v.occasion || null, v.note || null, pkg, v.cake ? 1 : 0, vch?.code ?? null, discount, lang, path, nowIso()).run();
   } catch (e) {
     if (/UNIQUE/i.test(String((e as Error).message))) throw new ApiError(409, 'day_taken'); // ah_one_per_day: someone else holds or has the evening
     throw e;
@@ -144,8 +225,8 @@ export async function book(app: App, b: Doc) {
     const end = hm(mins(v.start) + v.hours * 60);
     const session = await stripe.createCheckout(app, {
       kind: 'ah', ref: id, email: v.email, lang,
-      lines: [{ name: `Bros After Hours · ${v.date} ${v.start}–${end} · ${v.guests} ${lang === 'en' ? 'guests' : 'fő'}${vch ? ` (${vch.code} −${vch.percent}%)` : ''}`, amountHuf: amount }], // Stripe has no negative lines: the discount is already inside the one amount
-      description: `Bros After Hours ${id} · ${v.date} ${v.start}–${end}`,
+      lines: chargeLines(qt, lang === 'en').map((l, i) => ({ name: i ? l.name : `Bros After Hours ${v.date} ${v.start}–${end} · ${l.name}`, quantity: l.quantity, amountHuf: l.unit })),
+      description: `Bros After Hours ${id} · ${v.date} ${v.start}–${end} · ${v.guests} ${lang === 'en' ? 'guests' : 'fő'}`,
       successUrl: siteUrl(app, `${path}?booking=${id}&paid=1`), cancelUrl: siteUrl(app, `${path}?cancelled=1`),
     });
     await app.db.d1.prepare('UPDATE ah_bookings SET stripe_session = ? WHERE id = ?').bind(session.id, id).run();
@@ -159,11 +240,16 @@ export async function book(app: App, b: Doc) {
 
 // ---- invoice ----
 function invoiceOf(app: App, b: Doc): szamlazz.Invoice {
-  const cfg = szamlazz.config(app.env), end = hm(mins(b.start_time) + b.hours * 60), en = b.lang === 'en';
+  const cfg = szamlazz.config(app.env), end = hm(mins(b.start_time) + b.hours * 60), en = b.lang === 'en', p = pkgOf(b);
+  const head = `Bros After Hours ${cfg.ahInvoiceType === 'elolegszamla' ? 'előleg' : 'privát este'} · ${b.date} ${b.start_time}–${end} · ${b.guests} fő`;
+  // VAT: the room (café fee, extra hours) at AH_VAT 27 %, food and drink served in-house at AH_FOOD_VAT 5 % (Daniel 2026-11-18)
+  const lines: szamlazz.Line[] = p.lines.length
+    ? chargeLines(p, false).map((l, i) => ({ name: i ? l.name : `${head} · ${l.name}`, quantity: l.quantity, grossHuf: l.unit, vat: l.kind === 'cafe' || l.kind === 'hours' ? cfg.ahVat : cfg.ahFoodVat, unit: l.kind === 'hours' ? 'óra' : l.kind === 'cafe' ? undefined : 'fő' }))
+    : [{ name: `${head}${b.voucher_code ? ` (${b.voucher_code} kupon)` : ''}`, quantity: 1, grossHuf: b.amount_huf, vat: cfg.ahVat }]; // bookings before 2026-11-17
   return {
     ref: b.id, type: cfg.ahInvoiceType, lang: b.lang,
     buyer: { name: b.company || b.name, zip: b.zip, city: b.city, street: b.street, email: b.email, taxNumber: b.tax_number },
-    lines: [{ name: `Bros After Hours ${cfg.ahInvoiceType === 'elolegszamla' ? 'előleg' : 'privát este'} · ${b.date} ${b.start_time}–${end} · ${b.guests} fő${b.voucher_code ? ` (${b.voucher_code} kupon)` : ''}`, quantity: 1, grossHuf: b.amount_huf, vat: cfg.ahVat }],
+    lines,
     comment: `Foglalás: ${b.id}`,
     subject: en ? `Your Bros After Hours invoice (${b.id})` : `Bros After Hours számla (${b.id})`,
     body: en ? 'Thank you for your booking. Your invoice is attached.' : 'Köszönjük a foglalást! A számlát mellékelten küldjük.',
@@ -180,18 +266,32 @@ export async function retryInvoices(app: App) {
 
 // ---- emails ----
 const cancelLink = async (app: App, b: Doc) => siteUrl(app, `${b.return_path}lemondas/?t=${encodeURIComponent(`${b.id}.${await sign(app, b.id + b.cancel_token)}`)}`);
+/** Package, dishes, extras and the price lines, for both emails; old bookings show their indicative food choice. */
+function orderRows(b: Doc, en: boolean): [string, string | null][] {
+  const p = pkgOf(b), tier = TIERS[b.tier];
+  if (p.legacy) return [[en ? 'Food selection (paid on site)' : 'Ételválogatás (helyszínen fizetendő)', p.legacy.join(', ') || null], [en ? 'Voucher' : 'Kuponkód', b.voucher_code ? `${b.voucher_code} (−${ft(b.discount_huf)})` : null]];
+  const money = (l: QuoteLine) => `${en ? l.en : l.hu}: ${l.qty > 1 ? `${l.qty} × ${ft(l.unit)} = ` : ''}${l.amount < 0 ? '−' : ''}${ft(Math.abs(l.amount))}`;
+  return [
+    [en ? 'Package' : 'Csomag', tier ? `${tier[en ? 'en' : 'hu']} (${ft(p.lines.find((l) => l.kind === 'package')?.unit ?? tier.perPerson)} ${en ? 'per person' : '/ fő'})` : b.tier],
+    [en ? (b.tier === 'alap' ? 'Board' : 'Dishes') : (b.tier === 'alap' ? 'Tál' : 'Fogások'), dishNames(p.dishes, en) || null],
+    [en ? 'Extra dishes' : 'Extra fogások', dishNames(p.extras, en) || null],
+    [en ? 'Breakdown' : 'Részletezés', p.lines.map(money).join('\n') || null],
+  ];
+}
+const cakeRow = (b: Doc, en: boolean): [string, string] => [en ? 'Celebration cake' : 'Ünnepi torta', b.cake ? (en ? 'requested, from 10 000 Ft, paid on the evening' : 'kérnek, 10 000 Ft-tól, a helyszínen fizetendő') : (en ? 'no' : 'nem')];
 function details(b: Doc, en: boolean) {
   const end = hm(mins(b.start_time) + b.hours * 60);
   return rows([
     [en ? 'Booking' : 'Azonosító', b.id], [en ? 'Date' : 'Dátum', b.date], [en ? 'Time' : 'Időpont', `${b.start_time}–${end}`],
-    [en ? 'Guests' : 'Vendégszám', b.guests], ...(b.voucher_code ? [[en ? 'Voucher' : 'Kuponkód', `${b.voucher_code} (−${ft(b.discount_huf)})`] as [string, string]] : []), [en ? 'Deposit paid' : 'Kifizetett előleg', ft(b.amount_huf)],
+    [en ? 'Guests' : 'Vendégszám', b.guests], ...orderRows(b, en), cakeRow(b, en), [en ? 'Total paid' : 'Kifizetett összeg', ft(b.amount_huf)],
   ]);
 }
 function staffDetails(b: Doc, extra: [string, string | number | null][] = []) {
   return rows([
-    ['Azonosító', b.id], ['Dátum', b.date], ['Időpont', `${b.start_time}–${hm(mins(b.start_time) + b.hours * 60)}`], ['Vendégszám', b.guests], ['Előleg', ft(b.amount_huf)],
+    ['Azonosító', b.id], ['Dátum', b.date], ['Időpont', `${b.start_time}–${hm(mins(b.start_time) + b.hours * 60)}`], ['Vendégszám', b.guests],
+    ...orderRows(b, false), cakeRow(b, false), ['Fizetett összeg', ft(b.amount_huf)],
     ['Név', b.name], ['E-mail', b.email], ['Telefon', b.phone], ['Számlázás', `${b.company ? `${b.company} (${b.tax_number ?? '–'}), ` : ''}${b.zip} ${b.city}, ${b.street}`],
-    ['Alkalom', b.occasion], ['Ételválogatás (helyszínen fizetendő)', JSON.parse(b.packages || '[]').join(', ')], ['Ünnepi torta (helyszínen fizetendő)', b.cake ? 'IGEN, kérnek tortát' : 'nem'], ['Kuponkód', b.voucher_code ? `${b.voucher_code} (−${ft(b.discount_huf)})` : null], ['Megjegyzés', b.note], ...extra,
+    ['Alkalom', occasionOf(b.occasion, false)], ['Megjegyzés', b.note], ...extra,
   ]);
 }
 
@@ -199,8 +299,10 @@ async function sendConfirmation(app: App, b: Doc, invoiceNo: string | null) {
   const en = b.lang === 'en', d = details(b, en), link = await cancelLink(app, b);
   const intro = en ? 'Your private evening at Bros Cafe is booked. The invoice arrives in a separate email from Számlázz.hu.'
     : 'A privát estétek a Bros Caféban le van foglalva. A számlát külön e-mailben küldi a Számlázz.hu.';
-  const terms = en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after. Food, cake and extras are paid on the evening.'
-    : 'Lemondás: legalább 7 nappal előtte a teljes előleg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni. Az ételeket, a tortát és az extrákat a helyszínen fizetitek.';
+  const food = pkgOf(b).legacy ? (en ? 'Food, cake and extras are paid on the evening.' : 'Az ételeket, a tortát és az extrákat a helyszínen fizetitek.') // bookings before 2026-11-17
+    : en ? 'Food and drinks are included in the amount you paid; the cake is paid on the evening.' : 'Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő.';
+  const terms = `${food} ${en ? 'Cancellation: full refund 7 or more days before, 50% until 48 hours before, none after.'
+    : 'Lemondás: legalább 7 nappal előtte a teljes összeg, 48 órával előttig a fele jár vissza, azután már nem tudunk visszatéríteni.'}`;
   await mail(app, {
     to: b.email, lang: b.lang, subject: en ? `Your Bros After Hours booking (${b.id})` : `Bros After Hours foglalás (${b.id})`,
     title: en ? 'Your evening is booked' : 'Megvan a foglalás', html: `<p>${esc(intro)}</p>${d.html}<p>${esc(terms)}</p>`,
@@ -284,7 +386,7 @@ async function byToken(app: App, token: string) {
   return b;
 }
 const cancelView = (b: Doc, percent: number) => ({
-  booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, amount: b.amount_huf, status: b.status },
+  booking: { id: b.id, date: b.date, start: b.start_time, hours: b.hours, guests: b.guests, name: b.name, amount: b.amount_huf, status: b.status, tier: b.tier, lines: pkgOf(b).lines },
   refund_percent: percent, refund_huf: Math.round((b.amount_huf * percent) / 100),
 });
 

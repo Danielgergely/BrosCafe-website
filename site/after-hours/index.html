@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bros After Hours · Bros Cafe</title>
-<meta name="description" content="Bros After Hours: privát este a Bros Caféban. Az egész kávézó a társaságotoké esténként 18:00 és 22:00 között, 2–12 főre, 14 900 Ft-tól.">
+<meta name="description" content="Bros After Hours: privát este a Bros Caféban. Az egész kávézó a társaságotoké esténként 18:00 és 22:00 között, 2–12 főre, italokkal és falatokkal, 17 900 Ft-tól.">
 <meta name="theme-color" content="#25251C">
 <link rel="canonical" href="https://broscafe.hu/after-hours/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Bros Cafe">
-<meta property="og:title" content="Bros After Hours · Bros Cafe"><meta property="og:description" content="Bros After Hours: privát este a Bros Caféban. Az egész kávézó a társaságotoké esténként 18:00 és 22:00 között, 2–12 főre, 14 900 Ft-tól.">
+<meta property="og:title" content="Bros After Hours · Bros Cafe"><meta property="og:description" content="Bros After Hours: privát este a Bros Caféban. Az egész kávézó a társaságotoké esténként 18:00 és 22:00 között, 2–12 főre, italokkal és falatokkal, 17 900 Ft-tól.">
 <meta property="og:url" content="https://broscafe.hu/after-hours/"><meta property="og:image" content="https://broscafe.hu/shared/img/terrace-tables.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -46,7 +46,7 @@
           <video muted loop playsinline preload="none" poster="/shared/media/after-hours-lounge-evening-9x16.jpg" aria-hidden="true"><source src="/shared/media/after-hours-lounge-evening-9x16.mp4" type="video/mp4"></video>
         </figure>
         <span class="cut ah-hero__photo"><picture><source srcset="/shared/media/after-hours-dining-room-warm-3x2.webp" type="image/webp"><img src="/shared/media/after-hours-dining-room-warm-3x2.jpg" alt="" width="2000" height="1335"></picture></span>
-        <span class="sticker sticker--white ah-hero__tag">14&nbsp;900&nbsp;Ft-tól</span>
+        <span class="sticker sticker--white ah-hero__tag">17&nbsp;900&nbsp;Ft-tól</span>
       </div>
     </div>
   </section>
@@ -71,7 +71,7 @@
   <section class="ah-sec ah-book" id="foglalas" aria-labelledby="foglalas-cim">
     <div class="wrap">
       <h2 class="title" id="foglalas-cim">Válasszatok <em>egy estét.</em></h2>
-      <p class="body">Esténként egy társaságot fogadunk. A foglalás az előleg kifizetésével azonnal végleges.</p>
+      <p class="body">Esténként egy társaságot fogadunk. A foglalás a fizetéssel azonnal végleges.</p>
       <div class="ah-return" id="ah-return" role="status" tabindex="-1" hidden></div>
 
       <form class="ah-book__grid" id="ah-form" novalidate>
@@ -102,8 +102,22 @@
             </div>
           </fieldset>
 
+          <fieldset class="ah-step" id="csomagok">
+            <legend><span class="ah-step__no">2</span>Csomag és falatok</legend>
+            <div id="ah-pkg">
+              <h3 class="ah-sub ah-sub--first" id="ah-tier-title">Melyik csomag legyen?</h3>
+              <div class="ah-pick ah-pick--tier" id="ah-tierpick" role="radiogroup" aria-labelledby="ah-tier-title"></div>
+              <h3 class="ah-sub"><span id="ah-dish-title"></span> <small class="ah-plus" id="ah-dish-count" aria-live="polite"></small></h3>
+              <div class="ah-pick" id="ah-dishpick" role="group" aria-labelledby="ah-dish-title"></div>
+              <p class="ah-err" id="err-dishes" role="alert" hidden></p>
+              <h3 class="ah-sub" id="ah-extra-title">Extra fogás <small class="ah-plus">nem kötelező</small></h3>
+              <div class="ah-pick" id="ah-extrapick" role="group" aria-labelledby="ah-extra-title"></div>
+            </div>
+            <label class="ah-check"><input type="checkbox" name="cake" id="ah-cake"><span>Ünnepi tortát kérünk (10 000 Ft-tól, a helyszínen fizetendő)</span></label>
+          </fieldset>
+
           <fieldset class="ah-step">
-            <legend><span class="ah-step__no">2</span>A foglaló adatai</legend>
+            <legend><span class="ah-step__no">3</span>A foglaló adatai</legend>
             <div class="ah-fields">
               <div class="ah-field ah-field--wide"><label for="ah-name">Név</label><input id="ah-name" name="name" type="text" autocomplete="name" required></div>
               <div class="ah-field"><label for="ah-email">E-mail</label><input id="ah-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
@@ -127,8 +141,9 @@
                   <select id="ah-occasion" name="occasion">
                     <option value="">Válassz…</option>
                     <option value="birthday">Születésnap</option>
-                    <option value="friends">Baráti este</option>
-                    <option value="team">Céges este, csapatépítő</option>
+                    <option value="romantic">Romantikus este</option>
+                    <option value="friends">Baráti összejövetel</option>
+                    <option value="team">Céges</option>
                     <option value="family">Családi alkalom</option>
                     <option value="other">Egyéb</option>
                   </select>
@@ -138,13 +153,6 @@
             </details>
           </fieldset>
 
-          <details class="ah-step ah-fold ah-fold--step" id="csomagok" data-open-wide>
-            <summary><span class="ah-step__no">3</span><span>Ételválogatás, torta <i>(nem kötelező)</i></span></summary>
-            <p class="fine" id="ah-food-note"></p>
-            <p class="ah-packs__draft"><span class="ah-draft ah-draft--wrap">Hamarosan · az ételválogatások tartalma még készül</span></p>
-            <div class="ah-pick" id="ah-pick"></div>
-            <label class="ah-check"><input type="checkbox" name="cake" id="ah-cake"><span>Ünnepi tortát kérünk (10 000 Ft-tól, a helyszínen fizetendő)</span></label>
-          </details>
         </div>
 
         <aside class="ah-sum" id="ah-sum-card" aria-labelledby="ah-sum-title">
@@ -157,9 +165,9 @@
           </div>
           <label class="ah-check ah-check--terms"><input type="checkbox" name="terms" id="ah-terms" required><span>Elfogadom a <a href="#lemondas">lemondási feltételeket</a> és az <a href="#aszf">általános szerződési feltételeket</a> (tervezet).</span></label>
           <p class="ah-err" id="err-terms" role="alert" hidden></p>
-          <button class="btn ah-sum__btn" type="submit">Foglalás és előleg fizetése</button>
+          <button class="btn ah-sum__btn" type="submit">Foglalás és fizetés</button>
           <div class="ah-preview" id="ah-result" role="alert" tabindex="-1" hidden></div>
-          <p class="fine ah-sum__fine">Az előleget online fizetitek: bankkártyával, Apple Pay-jel vagy Google Pay-jel. A számlát e-mailben küldjük.</p>
+          <p class="fine ah-sum__fine">A teljes összeget online fizetitek: bankkártyával, Apple Pay-jel vagy Google Pay-jel. A számlát e-mailben küldjük.</p>
         </aside>
       </form>
     </div>
@@ -171,13 +179,13 @@
       <div class="ah-faq">
         <details>
           <summary>Mennyi időre szól?</summary>
-          <p>Az este 18:00-tól 22:00-ig tart. Az alapár 2 órára szól: ti választjátok a kezdést (18:00 és 20:00 között, félóránként) és azt, hogy 2, 3 vagy 4 órát maradtok. Minden további óra felárral jár, és legkésőbb 22:00-kor zárunk.</p>
+          <p>Az este 18:00-tól 22:00-ig tart. A kávézó díja 2 órára szól: ti választjátok a kezdést (18:00 és 20:00 között, félóránként) és azt, hogy 2, 3 vagy 4 órát maradtok. Minden további óra 5 900 Ft, és legkésőbb 22:00-kor zárunk.</p>
         </details>
         <details id="lemondas" data-open-wide>
           <summary>Lemondás</summary>
           <ul class="ah-terms">
-            <li><b>Legalább 7 nappal előtte</b> a teljes előleg visszajár.</li>
-            <li><b>Legkésőbb 48 órával előtte</b> az előleg 50%-a jár vissza.</li>
+            <li><b>Legalább 7 nappal előtte</b> a teljes kifizetett összeg visszajár.</li>
+            <li><b>Legkésőbb 48 órával előtte</b> a kifizetett összeg 50%-a jár vissza.</li>
             <li><b>48 órán belül</b> már nem tudunk visszatéríteni.</li>
           </ul>
           <p>Lemondani a visszaigazoló e-mail „Foglalás lemondása” gombjával vagy az e-mailre válaszolva lehet. A visszatérítés automatikusan érkezik a fizetéshez használt kártyára.</p>
@@ -185,9 +193,9 @@
         </details>
         <details>
           <summary>Fizetés és számla</summary>
-          <p>Az előleg az alapár és a felárak (további vendégek, további órák) összege; a kuponkód az alapárból vesz le. Foglaláskor, online fizetitek bankkártyával, Apple Pay-jel vagy Google Pay-jel.</p>
+          <p>Foglaláskor mindent előre, online fizettek: a kávézó díját, a csomagot, az extra fogásokat és a további órákat. A kuponkód csak a kávézó díjából vesz le. Bankkártyával, Apple Pay-jel vagy Google Pay-jel fizethettek.</p>
           <p>A számlát a sikeres fizetés után e-mailben küldjük, a megadott számlázási adatokra.</p>
-          <p>Az ételválogatást, az ünnepi tortát és minden további fogyasztást az estén, a kávézóban rendezitek kártyával vagy készpénzzel.</p>
+          <p>Az étel és az ital is benne van az előre fizetett összegben; a torta a helyszínen fizetendő. Az ünnepi tortát és minden további fogyasztást az estén, a kávézóban rendezitek kártyával vagy készpénzzel.</p>
         </details>
         <details id="aszf">
           <summary>Általános szerződési feltételek <span class="ah-draft">Tervezet</span></summary>

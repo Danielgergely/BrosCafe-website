@@ -69,7 +69,7 @@
     { id: 'etlap', href: '/etlap/', hu: 'Étlap', en: 'Menu', icon: 'cup', tab: true },
     { id: 'husegkartya', href: signedIn ? '/fiok/' : '/husegkartya/', hu: 'Hűségkártya', en: 'Loyalty card', short: { hu: 'Kártya', en: 'Card' }, icon: 'card', tab: true },
     { id: 'after-hours', href: '/after-hours/', hu: 'Bros After Hours', en: 'Bros After Hours', short: { hu: 'After Hours', en: 'After Hours' }, icon: 'moon', extra: true, isNew: true,
-      img: '/shared/media/after-hours-lounge-evening-4x5', line: 'Privát kávézó különleges alkalmakra — 14 900 Ft-tól', tease: 'privát este', go: 'Estét választok' },
+      img: '/shared/media/after-hours-lounge-evening-4x5', line: 'Privát kávézó különleges alkalmakra — 17 900 Ft-tól', tease: 'privát este', go: 'Estét választok' },
     { id: 'delivery', href: '/delivery/', hu: 'Bros Delivery', en: 'Bros Delivery', short: { hu: 'Delivery', en: 'Delivery' }, icon: 'box', extra: true, isNew: true,
       img: '/shared/media/delivery-paper-cup-handwritten-4x5', line: 'Kávé az irodába — 5 italtól ingyen kiszállítás', tease: 'kávé az irodába', go: 'Rendelek' },
     { id: 'ujdonsagok', href: '/ujdonsagok/', hu: 'Újdonságok', en: 'What’s new', icon: 'spark' },

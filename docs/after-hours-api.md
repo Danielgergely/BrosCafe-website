@@ -48,18 +48,20 @@ and 1 Jan: blocked every year unless the admin opens the day) live in worker con
 
 - The evening is 18:00–22:00. A booking is a **start time** (18:00, 18:30, 19:00, 19:30 or 20:00) plus **hours**
   (2, 3 or 4) with `start_time + hours <= 22:00`; anything else is `400 invalid`. Still one booking per evening.
-- **Price formula** (the online deposit; food, cake and extras are indicative and paid on the evening):
+- **Price** (owner 2026-11-17; `quote()` in `services/after_hours.ts`, everything prepaid except the cake):
 
   ```
-  amount_huf = BASE + EXTRA_GUEST * max(0, guests - 6) + EXTRA_HOUR * max(0, hours - 2) - VOUCHER_DISCOUNT
-  BASE = 14 900        -- 2–6 people, 2 hours, the private café, 3 food selections to choose from, one free drink per guest, optional cake from 10 000 Ft
-  EXTRA_GUEST = 1 990  -- DRAFT amount, per person 7–12
-  EXTRA_HOUR = 5 900   -- DRAFT amount, per hour above 2
+  amount_huf = CAFE + PACKAGE * guests + sum(EXTRA[d] * guests) + EXTRA_HOUR * max(0, hours - 2) - VOUCHER_DISCOUNT
+  CAFE = 12 900                         -- the private café, 2 hours (AH_BASE_HUF)
+  PACKAGE: alap 2 500 | menu 3 900      -- per person; alap = welcome drink + 1 board (gofri | gyumolcs), menu = welcome drink + 3 distinct dishes
+  DISHES: pizza, gofri, sajt, hus, gyumolcs
+  EXTRA (menu only, not-chosen dishes): pizza 1 500 · gofri 1 500 · gyumolcs 1 500 · sajt 2 000 · hus 2 000
+  EXTRA_HOUR = 5 900                    -- AH_EXTRA_HOUR_HUF
   ```
 
-  Checks: 6 p/2 h → 14 900 · 8 p/2 h → 18 880 · 6 p/3 h → 20 800 · 12 p/4 h → 38 640.
-- **Voucher codes** (`VOUCHERS` in `services/after_hours.ts`, case-insensitive, trimmed): `AFTER25` = 25 % off the BASE fee only, not the surcharges (−3 725 Ft). Checks: 6 p/2 h + AFTER25 → 11 175 · 8 p/3 h + AFTER25 → 21 055. Stripe Checkout has no negative lines, so the one line is the reduced total and its name carries `(AFTER25 −25%)`.
-- Food is NOT priced online: the three food selections are paid on site. The group discount on food (25 % for 4–7 people, 35 % from 8) is information on the page only. The cake is a checkbox (`cake: true`), paid on site, shown in the admin and the staff email.
+  Checks: alap 2 p 17 900 · alap 6 p 27 900 · menu 6 p 36 300 · menu 12 p 4 h 71 500 · menu 6 p + sajt 48 300 · alap 4 p + AFTER25 19 675.
+- **Voucher codes** (`VOUCHERS`, case-insensitive, trimmed): `AFTER25` = 25 % off the café fee only (−3 225 Ft), never food, drinks or hours. It is a negative line in the quote; Stripe and Számlázz get it taken off the café line (no negative lines there), so their lines still add up to the total.
+- The booking stores `tier` (`alap` | `menu`) and in `packages` the JSON `{ tier, dishes, extras, lines, total }` (the priced lines at booking time). Bookings before 2026-11-17 hold an array of `food1`… ids and render as before. The cake is a checkbox (`cake: true`), paid on site.
 
 **Time zone:** every date, the notice period, the booking window and the refund rule are computed in
 `Europe/Budapest`, on the server and on the page (never the device's zone). The refund rule counts back from the booking's own
@@ -70,7 +72,8 @@ and 1 Jan: blocked every year unless the admin opens the day) live in worker con
 | Method, path | Does |
 |---|---|
 | `GET /availability?from=YYYY-MM-DD&to=YYYY-MM-DD[&code=AFTER25]` | `{ days: [{ date, status: "open" \| "booked" }] }`, plus `voucher: { valid, code, percent, discount }` (or `{ valid: false }`) when `code` is given. Only opened days inside the window are returned: from max(`LAUNCH_DATE` 2026-12-01, now + 3 full days) to today + 3 months; a pending hold counts as booked. |
-| `POST /bookings` | Body as built in `after-hours.js` (`date, start ("HH:MM"), hours, guests, tier, name, email, phone, billing{zip, city, street, company, tax_number}, occasion, note, packages[], cake (bool), voucher (code, optional), terms, lang, return_path`). `start` and `hours` are validated as above and the amount is computed from `guests` and `hours`. Billing is Hungary only: `zip` is 4 digits, `tax_number` is `12345678-1-12`. Validates, inserts a `pending` row with `hold_expires = now + 30 min`, creates a Stripe Checkout session (`expires_at` the same 30 min, booking id in `metadata` and `client_reference_id`), returns `{ checkout_url }`; a `200` without `checkout_url` is treated as a failure by the page. Errors: `400 { error: "invalid_voucher" }` for an unknown code (the page shows it inline); `400 { error: "invalid", fields }`, `409 { error: "day_taken" }`. |
+| `POST /quote` | Body `{ tier, dishes[], extras[], guests, hours, voucher? }` → `{ tier, dishes, extras, guests, hours, lines: [{ kind, id?, hu, en, qty, unit, amount }], total, voucher }`. The page shows these lines; same validation and errors as below (`400 invalid` with `fields` from `tier, dishes, extras, guests, hours`; `400 invalid_voucher`). Works while booking is closed. |
+| `POST /bookings` | Body as built in `after-hours.js` (`date, start ("HH:MM"), hours, guests, tier, dishes[], extras[], name, email, phone, billing{zip, city, street, company, tax_number}, occasion, note, cake (bool), voucher (code, optional), terms, lang, return_path`). `start` and `hours` are validated as above and the amount is `quote()`'s total. Billing is Hungary only: `zip` is 4 digits, `tax_number` is `12345678-1-12`. Validates, inserts a `pending` row with `hold_expires = now + 30 min`, creates a Stripe Checkout session (`expires_at` the same 30 min, booking id in `metadata` and `client_reference_id`), returns `{ checkout_url }`; a `200` without `checkout_url` is treated as a failure by the page. Errors: `400 { error: "invalid_voucher" }` for an unknown code (the page shows it inline); `400 { error: "invalid", fields }`, `409 { error: "day_taken" }`. |
 | `POST /stripe/webhook` | Signature-checked. `checkout.session.completed` → set `paid`, issue the Számlázz.hu invoice (emailed to the guest), send the confirmation email to the guest and the booking email to hello@broscafe.hu. `checkout.session.expired` → set `expired`. Idempotent on the Stripe event id. |
 
 | `GET /cancel/:token` | For the "Foglalás lemondása" button in the confirmation email. `{ booking: { id, date, start, hours, guests, name, amount, status }, refund_percent, refund_huf }`, computed now from the terms. `404` unknown token, `410` already cancelled or evening passed. |
@@ -134,7 +137,7 @@ tables in `worker/migrations/0001_bookings.sql` (apply it to each D1 before the 
 - **Invoices (ACCOUNTANT, config in `services/szamlazz.ts`, overridable as worker vars):** `AH_INVOICE_TYPE`
   (`elolegszamla` default, or `szamla`), `AH_VAT` (27). A 100 % refund issues a storno automatically; a **50 % refund
   issues nothing** and the staff email asks for a manual correction until the accountant says how to invoice it.
-- **Config** (`offer()` in `services/after_hours.ts`, vars `AH_BASE_HUF`, `AH_EXTRA_GUEST_HUF`, `AH_EXTRA_HOUR_HUF`,
-  `AH_LAUNCH_DATE`): the draft amounts above. The signature secret for cancel links is `JWT_SECRET`.
+- **Config** (`offer()` in `services/after_hours.ts`, vars `AH_BASE_HUF`, `AH_EXTRA_HOUR_HUF`,
+  `AH_LAUNCH_DATE`): the café fee and extra hour above (package and dish prices are `TIERS` / `DISHES` in code, mirrored by `CONFIG` in `after-hours.js`). The signature secret for cancel links is `JWT_SECRET`.
 - **Local test hooks:** `STRIPE_API_BASE` and `SZAMLAZZ_API_URL` point the worker at a stub; never set them in production.
 - Not built: the final invoice (végszámla) after the evening, add-on package prices.

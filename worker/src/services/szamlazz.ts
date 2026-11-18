@@ -14,7 +14,8 @@ export const config = (env: Env) => ({
   url: s(env, 'SZAMLAZZ_API_URL') || 'https://www.szamlazz.hu/szamla/', // overridable for local tests against a stub
   // After Hours deposit: 'elolegszamla' (advance invoice, a final invoice follows the evening) or 'szamla' (plain invoice).
   ahInvoiceType: s(env, 'AH_INVOICE_TYPE', 'elolegszamla') as 'elolegszamla' | 'szamla',
-  ahVat: s(env, 'AH_VAT', '27'),          // room fee with catering
+  ahVat: s(env, 'AH_VAT', '27'),          // After Hours room fee (café fee, extra hours)
+  ahFoodVat: s(env, 'AH_FOOD_VAT', '5'),  // After Hours food and drink served in-house
   dlDrinkVat: s(env, 'DL_DRINK_VAT', '27'), // delivered drinks (on-site service may differ)
   dlFeeVat: s(env, 'DL_FEE_VAT', '27'),    // delivery fee
   prefix: s(env, 'SZAMLAZZ_PREFIX'),       // invoice number prefix, empty = the account's default

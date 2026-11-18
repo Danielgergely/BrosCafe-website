@@ -75,6 +75,18 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-18 Alap 2 400 → 2 500 Ft/person so the headline reads "17 900 Ft-tól" (Daniel); menu stays 3 900. Live on the
+  preview (0ba17a98) and new.broscafe.hu (d87e781b).
+- 2026-11-18 After Hours dishes = the brothers' six (Waffle board, Mini pizza bites, Fresh fruit & veggie board, Mini burger
+  sliders, Mini sandwich selection, Cheese & charcuterie board; English titles, Hungarian descriptions); Alap board = waffle
+  or fruit & veggie; welcome drink = any drink from the menu; VAT café/hours 27 %, package/extras 5 % (AH_FOOD_VAT).
+  Deployed: preview 54b3e43d, production new.broscafe.hu 5f6e7de4 (booking closed there). Not committed yet.
+- 2026-11-17 (night) After Hours new pricing built (docs/after-hours.md "Offer"): café 12 900 Ft/2 h + Alap 2 400 Ft/person
+  (üdvözlőital + Gofri or Gyümölcstál) or Fingerfood menü 3 900 Ft/person (üdvözlőital + 3 of: Mini pizzás csomag, Gofri,
+  Sajtos hidegtál, Húsos hidegtál, Gyümölcstál); extras +1 500/+2 000 per person; +5 900 Ft/hour; AFTER25 on the café fee;
+  everything prepaid except the cake; headline 17 700 Ft-tól. New POST /api/after-hours/quote. Preview 792cb333: totals
+  verified, real Stripe test payment AH-0005 = 50 975 Ft paid (2027-02-11, preview only; cancel it in the preview admin to
+  test the refund). Superseded on 2026-11-18 (six dishes, deployed to production).
 - 2026-11-17 (late night) code cleanup: glass.css/glass-staff.css merged into the base CSS (one Üveg system, SHELL.md
   rewritten), mock modes + 200 dead i18n keys + duplicate helpers removed from site JS (shell.js now exposes esc/toast/
   preview/guard), worker dead code/exports trimmed (API responses identical), 8.8 MB unused media + Emergent leftovers

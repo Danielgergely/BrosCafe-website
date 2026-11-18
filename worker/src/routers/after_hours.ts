@@ -28,7 +28,8 @@ export function register(api: Router) {
 
   const p = '/after-hours';
   api.get(`${p}/availability`, handle((c) => ah.availability(c, c.query.get('from'), c.query.get('to'), c.query.get('code'))));
-  api.post(`${p}/bookings`, handle(async (c) => ah.book(c, (await c.json()) ?? {})));
+  api.post(`${p}/quote`, handle(async (c) => ah.priceQuote(c, (await c.json()) ?? {})));
+  api.post(`${p}/bookings`,handle(async (c) => ah.book(c, (await c.json()) ?? {})));
   api.get(`${p}/cancel/{token}`, handle((c) => ah.cancelInfo(c, c.params.token)));
   api.post(`${p}/cancel/{token}`, handle((c) => ah.cancelConfirm(c, c.params.token)));
 

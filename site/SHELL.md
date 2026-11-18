@@ -183,7 +183,7 @@ A name must be unique on a page at the moment of the transition. Convention:
 
 - Use tokens, never raw hex outside `:root`. Keep tap targets ≥ 44 px and body text ≥ 15 px.
 - Facts: Mon–Fri 7:30–18:00, Sat 8:30–17:00, Sun closed · 1132 Budapest, Csanády u. 4/b · @broscafe.co.
-  After Hours: the whole café, 2–6 people, 14 900 Ft for 2 hours, evenings 18:00–22:00. Delivery: slots 9:00 / 10:30 /
+  After Hours: the whole café for 2–12 people, from 17 900 Ft (café 12 900 Ft for 2 hours + package from 2 500 Ft per person, all prepaid), evenings 18:00–22:00. Delivery: slots 9:00 / 10:30 /
   14:00, free from 5 drinks, 490 Ft below.
 - Use the media in `/shared/media/` (see `docs/media-picks.md`); `<picture>` with the `.webp` first.
 
