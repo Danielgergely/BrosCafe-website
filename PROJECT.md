@@ -17,6 +17,7 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - Port: the whole backend runs as a Cloudflare Worker (worker/), deployed to the preview with a copy of the data (2026-11-14)
 
 ## Open
+- Ideas backlog (not scheduled): account statistics, coffee-plant companion, staff iPad app, customer app, Instagram feed → `docs/ideas.md`.
 - [x] 2026-11-17 independent review fixed (review notes removed in the 2026-11-17 cleanup); deployed to the preview /d/ (version 814f2e0f);
       portal: choice accepted, step "Készül a weboldal" active, status line updated (no notification)
 - [ ] waiting for Daniel's inspection of the preview
