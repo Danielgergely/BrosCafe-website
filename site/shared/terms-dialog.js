@@ -14,7 +14,7 @@
     ],
     dl: [
       L('Kávézói árak, online fizetés; 5 italtól ingyenes a kiszállítás, alatta 490 Ft.', 'Café prices, paid online; delivery is free from 5 drinks, 490 Ft below that.'),
-      L('A rendelési határidőig díjmentesen lemondhatod (az időpontnál látod), utána már készítjük.', 'You can cancel free of charge until the order deadline (shown with each time); after that we are making it.'),
+      L('A rendelési határidőig online lemondhatod (a link a visszaigazoló e-mailben); a befizetett összeg 3%-át kezelési költségként levonjuk. Utána már készítjük.', 'You can cancel online until the order deadline (the link is in the confirmation email); 3% of what you paid is kept as a handling fee. After that we are making it.'),
       L('Csoportos rendelésnél azt visszük, amit a határidőig kifizettek; a késve érkező fizetés teljesen visszajár.', 'In a group order we bring what is paid by the deadline; a late payment is refunded in full.'),
       L('Számlát kérésre küldünk, céges vagy magánszemély nevére.', 'An invoice on request, to a company or a private person.'),
       L('Ha bármi nem stimmel, szólj, és megoldjuk.', 'If anything is not right, tell us and we will sort it out.'),

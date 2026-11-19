@@ -166,6 +166,8 @@
       group: (code) => call(`/groups/${encodeURIComponent(code)}`),
       join: (code, payload) => post(`/groups/${encodeURIComponent(code)}/participants`, payload), // -> { checkout_url }
       close: (code, token) => post(`/groups/${encodeURIComponent(code)}/close`, { token }), // organiser only -> the group view
+      cancelInfo: (token) => call(`/cancel/${encodeURIComponent(token)}`), // the payer's link from the email or /fiok/
+      cancelConfirm: (token) => post(`/cancel/${encodeURIComponent(token)}`),
       admin: {
         board: (date) => call(`/admin/board?date=${date}`),
         setStatus: (id, status) => put(`/admin/orders/${id}/status`, { status }),
@@ -1151,8 +1153,43 @@
     }, 15000);
   }
 
+  // ---------- the guest cancels (link in the confirmation email and on /fiok/): until the order deadline, minus the fee ----------
+  async function cancelPage() {
+    const root = $('#dl-cancel'), token = new URLSearchParams(location.search).get('t') || '';
+    const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+    let working = false, info = null;
+    const view = (r, done, error) => {
+      const o = r.order, deadline = clock(o.deadline);
+      root.innerHTML = `
+        <h2 id="dl-cx-title" tabindex="-1">${o.time ? `${dayLabel(o.date)} · ${hm(o.time)}` : dayLabel(o.date)}</h2>
+        <p class="dl-g__addr">${esc(o.place)}</p>
+        <dl class="dl-sum__list">
+          ${row(t('Azonosító'), esc(o.id))}
+          ${row(t('Italok'), r.drinks.map(esc).join('<br>'))}
+          ${row(t('Kifizetve'), ft(r.amount))}
+          ${r.fee_huf ? row(t('Kezelési költség'), `−${ft(r.fee_huf)} <small>${t('a befizetett összeg {p}%-a', { p: r.fee_percent })}</small>`) : ''}
+          ${row(t('Visszatérítés'), `<b>${ft(r.refund_huf)}</b>`)}
+        </dl>
+        ${done ? `<p class="dl-preview" role="status" tabindex="-1">${t('Lemondtuk. A visszatérítés ({sum}) néhány napon belül megérkezik a kártyádra. E-mailben is elküldtük.', { sum: ft(r.refund_huf) })}</p>`
+          : `<p class="fine">${r.organiser && o.kind === 'group' ? (r.others ? tn('Szervezőként az egész csoportos rendelést lemondod: {n} kolléga a teljes összeget visszakapja.', r.others) : t('Szervezőként az egész csoportos rendelést lemondod.')) : o.kind === 'group' ? t('Csak a saját italodat mondod le, a csoportos rendelés megy tovább.') : t('Az egész rendelést lemondod.')}
+            ${t('{time}-ig mondhatod le, utána már készítjük.', { time: deadline })}</p>
+          ${error ? `<p class="dl-err" role="alert">${t('Most nem sikerült lemondani. Próbáld újra egy perc múlva, vagy írj nekünk: hello@broscafe.hu')}</p>` : ''}
+          <div class="dl-cx__actions"><button type="button" class="btn" data-confirm>${t('Lemondom')}</button><a class="btn btn--ghost" href="/delivery/">${t('Mégsem, megtartom')}</a></div>`}`;
+      if (done) $('.dl-preview', root).focus(); else if (error) $('[data-confirm]', root).focus();
+    };
+    try { if (!token) throw new Error('no_token'); info = await api.cancelInfo(token); view(info); }
+    catch (e) { root.innerHTML = `<p role="alert">${e.status === 410 ? t('Ezt a rendelést már nem lehet online lemondani: lejárt a határidő, vagy már le van mondva. Ha kérdésed van, írj nekünk: hello@broscafe.hu') : t('Ez a lemondó link nem érvényes. Írj nekünk: hello@broscafe.hu')}</p>`; return; }
+    root.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-confirm]'); if (!btn || working) return;
+      working = true; busy(btn, true);
+      try { view(await api.cancelConfirm(token), true); } catch (err) { if (err.status === 410) { root.innerHTML = `<p role="alert">${t('Ezt a rendelést már nem lehet online lemondani: lejárt a határidő, vagy már le van mondva. Ha kérdésed van, írj nekünk: hello@broscafe.hu')}</p>`; } else view(info, false, true); }
+      working = false;
+    });
+  }
+
   const view = document.body.dataset.dl;
   if (view === 'order') orderPage();
   else if (view === 'group') groupPage();
   else if (view === 'admin') adminPage();
+  else if (view === 'cancel') cancelPage();
 })();

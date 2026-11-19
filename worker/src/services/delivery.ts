@@ -441,7 +441,7 @@ async function notifyCounter(app: App, order: Doc) {
   });
 }
 
-async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'coming' | 'out' | 'late' | 'cancelled' | 'requested' | 'declined' | 'timeout') {
+async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'coming' | 'out' | 'late' | 'cancelled' | 'requested' | 'declined' | 'timeout' | 'withdrawn' | 'group_cancelled') {
   const en = p.lang === 'en', items = await itemsOf(app, p.id), o = withEta(app, order);
   const released = en ? 'The amount was only held on your card and is released now; nothing was charged (some banks show the hold for a few more days). You can still order for the fixed times.'
     : 'Az összeget csak zároltuk a kártyádon, ezt most feloldottuk, semmit nem terheltünk (egyes bankok még pár napig mutatják a zárolást). A fix időpontokra továbbra is rendelhetsz.';
@@ -459,6 +459,10 @@ async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'comi
       : en ? ['Your Bros Delivery is on its way', 'On the way', 'One of us has just left the café with your drinks.'] : ['Úton a Bros Delivery', 'Elindultunk', 'Egyikünk most indult el a kávézóból az italokkal.'],
     late: en ? ['Your payment was refunded', 'Payment refunded', 'Your payment arrived after the order had closed or the delivery time had filled up, so we refunded it in full. Nothing will be delivered for it.']
       : ['Visszatérítettük a fizetést', 'Visszatérítés', 'A fizetés azután érkezett, hogy a rendelés lezárult vagy az időpont betelt, ezért a teljes összeget visszatérítettük. Ehhez a fizetéshez nem szállítunk.'],
+    withdrawn: en ? ['You cancelled your Bros Delivery order', 'Cancelled', `We refund ${ft(p.refund_huf)}; ${ft(p.amount_huf - p.refund_huf)} (${cancelFeePct(app)}% of what you paid) is kept as a handling fee. The refund reaches your card in a few days.`]
+      : ['Lemondtad a Bros Delivery rendelést', 'Lemondva', `Visszatérítünk ${ft(p.refund_huf)}-ot; a befizetett összeg ${cancelFeePct(app)}%-át (${ft(p.amount_huf - p.refund_huf)}) kezelési költségként levonjuk. Néhány napon belül megérkezik a kártyádra.`],
+    group_cancelled: en ? ['Your group order was cancelled', 'Order cancelled', 'The organiser cancelled the group order. What you paid is refunded in full; it reaches your card in a few days.']
+      : ['Lemondták a csoportos rendelést', 'Rendelés lemondva', 'A szervező lemondta a csoportos rendelést. A kifizetett összeget teljes egészében visszatérítjük, néhány napon belül megérkezik a kártyádra.'],
     cancelled: en ? ['Your Bros Delivery order was cancelled', 'Order cancelled', 'We had to cancel this order. What you paid is refunded in full; it reaches your card in a few days.']
       : ['Töröltük a Bros Delivery rendelést', 'Rendelés törölve', 'Ezt a rendelést törölnünk kellett. A kifizetett összeget teljes egészében visszatérítjük, néhány napon belül megérkezik a kártyádra.'],
   }[kind];
@@ -470,7 +474,7 @@ async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'comi
     const by = o.cutoff_at ? today(app, parseIso(o.cutoff_at)) : null;
     const until = by ? `${by.date === o.date ? '' : `${longDate(by.date, en)}, `}${String(by.hour).padStart(2, '0')}:${String(by.minute).padStart(2, '0')}` : null;
     parts.push(card(en ? 'Good to know' : 'Jó tudni', [
-      [en ? 'Free cancellation' : 'Díjmentes lemondás', until ? (en ? `Until ${until}, by replying to this email` : `${until}-ig, erre az e-mailre válaszolva`) : null],
+      [en ? 'Cancellation' : 'Lemondás', until ? (en ? `Online until ${until} (link below); ${cancelFeePct(app)}% of what you paid is kept as a handling fee` : `${until}-ig online (lent a link); a befizetett összeg ${cancelFeePct(app)}%-át kezelési költségként levonjuk`) : null],
       [en ? 'Invoice' : 'Számla', wantsInvoice(p) ? (en ? 'Arrives in a separate email' : 'Külön e-mailben érkezik') : (en ? 'Not requested; reply with your billing details if you need one' : 'Nem kértél; ha kell, válaszolj a számlázási adatokkal')],
     ]));
   }
@@ -479,7 +483,9 @@ async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'comi
   const button: [string, string] | undefined = kind === 'confirmed' && p.organiser && o.kind === 'group' && o.status === 'open'
     ? [en ? 'Open the group page' : 'A csoport oldala', siteUrl(app, `${o.return_path}csoport/?g=${o.group_code}&o=${await orgToken(app, o.id)}`)] : undefined;
   if (button) parts.splice(1, 0, para(en ? 'On the group page you see who has ordered; once everyone has, you can send the order before the deadline.' : 'A csoport oldalán látod, ki rendelt már; ha mindenki rendelt, a határidő előtt is elküldheted a rendelést.'));
-  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], parts, button });
+  const live = kind === 'confirmed' ? (await getOrder(app, o.id)) ?? o : o; // onPaid passes the order as it was before 'new'
+  const links: [string, string][] | undefined = kind === 'confirmed' && cancellable(live, p) ? [[en ? 'Cancel the order' : 'Rendelés lemondása', await cancelLink(app, p, live)]] : undefined;
+  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], parts, button, links });
 }
 
 // ---- Stripe webhook ----
@@ -679,6 +685,89 @@ export async function closeGroup(app: App, code: string, token: unknown) {
   if (!(await paidCups(app, o.id))) throw new ApiError(409, 'nothing_paid'); // locking now would cancel the whole order
   await lockGroup(app, o);
   return groupView(app, code);
+}
+
+// ---- the guest cancels: until the order deadline, refund minus a handling fee (Daniel 2026-11-19) ----
+// A company or pickup order is cancelled whole; a colleague in a group cancels only their drink; the organiser cancels the
+// whole group (the colleagues get everything back, they did not choose it). Rush orders are made at once: no online cancel.
+const cancelFeePct = (app: App) => Number.parseFloat(String(app.env.DL_CANCEL_FEE_PCT ?? '')) || 3;
+const cancelSig = (app: App, payerId: string) => sign(app, `cx${payerId}`);
+export const cancelLink = async (app: App, p: Doc, o: Doc) => siteUrl(app, `${o.return_path || PATHS[0]}lemondas/?t=${encodeURIComponent(`${p.id}.${await cancelSig(app, p.id)}`)}`);
+export const cancellable = (o: Doc, p: Doc) => p.status === 'paid' && !o.rush && !!o.cutoff_at && o.cutoff_at > nowIso() && o.status === (o.kind === 'group' ? 'open' : 'new');
+const cancelMoney = (app: App, p: Doc) => {
+  const fee = Math.round((p.amount_huf * cancelFeePct(app)) / 100);
+  return { fee, refund: Math.max(0, p.amount_huf - p.refund_huf - fee) };
+};
+
+async function cancelTarget(app: App, token: string) {
+  const dot = token.lastIndexOf('.'), id = token.slice(0, dot), sig = token.slice(dot + 1);
+  if (dot < 1 || !/^BD-\d+-[\w-]+$/.test(id)) throw new ApiError(404, 'not_found');
+  const p = await getPayer(app, id);
+  if (!p || !safeEqual(sig, await cancelSig(app, p.id))) throw new ApiError(404, 'not_found');
+  const o = await getOrder(app, p.order_id);
+  if (!o) throw new ApiError(404, 'not_found');
+  return { p, o };
+}
+async function cancelView(app: App, p: Doc, o: Doc, done = false) {
+  const en = p.lang === 'en', m = done ? { refund: p.refund_huf, fee: p.amount_huf - p.refund_huf } : cancelMoney(app, p);
+  const others = o.kind === 'group' && p.organiser
+    ? ((await d1(app).prepare("SELECT COUNT(*) AS n FROM dl_payers WHERE order_id = ? AND id != ? AND status = 'paid'").bind(o.id, p.id).first<{ n: number }>())?.n ?? 0) : 0;
+  return {
+    order: { id: o.id, kind: o.kind, pickup: !!o.pickup, date: o.date, time: o.slot_time, place: placeOf(o, en), deadline: iso(o.cutoff_at) },
+    name: p.name, amount: p.amount_huf, drinks: (await itemsOf(app, p.id)).map(cupLine),
+    whole: o.kind !== 'group' || !!p.organiser, organiser: !!p.organiser, others,
+    fee_huf: m.fee, refund_huf: m.refund, fee_percent: cancelFeePct(app), status: done ? 'cancelled' : 'paid',
+  };
+}
+
+/** GET: changes nothing, so a mail scanner following the link cannot cancel. */
+export async function cancelInfo(app: App, token: string) {
+  await sweep(app);
+  const { p, o } = await cancelTarget(app, token);
+  if (!cancellable(o, p)) throw new ApiError(410, 'gone');
+  return cancelView(app, p, o);
+}
+
+export async function cancelConfirm(app: App, token: string) {
+  await sweep(app);
+  const { p, o } = await cancelTarget(app, token);
+  if (!cancellable(o, p)) throw new ApiError(410, 'gone');
+  const whole = o.kind !== 'group' || !!p.organiser;
+  if (whole) {
+    const r = await d1(app).prepare('UPDATE dl_orders SET status = ? WHERE id = ? AND status = ?').bind('cancelled', o.id, o.status).run();
+    if (!r.meta.changes) throw new ApiError(410, 'gone');
+  }
+  const claim = await d1(app).prepare("UPDATE dl_payers SET status = 'refunded' WHERE id = ? AND status = 'paid'").bind(p.id).run();
+  if (!claim.meta.changes) throw new ApiError(410, 'gone');
+  const { fee, refund } = cancelMoney(app, p), todo: string[] = [];
+  try {
+    if (refund > 0) await stripe.refund(app, p.stripe_payment_intent, refund, `${p.id}-cx`);
+    await d1(app).prepare('UPDATE dl_payers SET refund_huf = refund_huf + ? WHERE id = ?').bind(refund, p.id).run();
+  } catch (e) {
+    console.error(`cancel refund of ${p.id} failed`, e);
+    todo.push(`A VISSZATÉRÍTÉS NEM SIKERÜLT: ${ft(refund)} kézzel a Stripe-ban.`);
+  }
+  // the invoice: a correction that keeps only the handling fee; no invoice (till receipt): staff settle it at the till
+  if (p.invoice_no && !p.correction_no) {
+    const items = await itemsOf(app, p.id), base = invoiceOf(app, p, o, items, 'helyesbito', { ref: `${p.id}-L`, refersTo: p.invoice_no });
+    const no = await szamlazz.issueFor(app, 'dl_payers', p.id, () => ({ ...base, lines: szamlazz.correctionLines(base.lines, fee, `Kezelési költség lemondás miatt (a befizetett ${ft(p.amount_huf)} ${cancelFeePct(app)} %-a)`) }), 'correction');
+    todo.push(no ? `Helyesbítő számla: ${no}.` : 'A HELYESBÍTŐ SZÁMLA NEM KÉSZÜLT EL: kézzel kell kiállítani a Számlázz.hu-ban.');
+  } else if (p.invoice_no) todo.push('Már volt helyesbítő számla (díj-visszatérítés): a lemondást kézzel kell helyesbíteni a Számlázz.hu-ban.');
+  else todo.push(`Nem volt számla: a pénztárgépben ${ft(refund)} visszatérítés, ${ft(fee)} kezelési költség marad.`);
+  if (whole && o.kind === 'group') { // the organiser cancelled: everyone else gets everything back
+    const pending = await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'pending'").bind(o.id));
+    await d1(app).prepare("UPDATE dl_payers SET status = 'expired' WHERE order_id = ? AND status = 'pending'").bind(o.id).run();
+    for (const x of pending) if (x.stripe_session) app.later(stripe.expireSession(app, x.stripe_session));
+    for (const q of await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(o.id))) {
+      try { await refundPayer(app, q); app.later(sendPayer(app, q, o, 'group_cancelled')); } catch (e) { console.error(`refund of ${q.id} failed`, e); todo.push(`${q.name}: A VISSZATÉRÍTÉS NEM SIKERÜLT, kézzel a Stripe-ban.`); }
+    }
+  }
+  const fresh = (await getPayer(app, p.id))!;
+  app.later(sendPayer(app, fresh, o, 'withdrawn'));
+  const what = whole ? (o.kind === 'group' ? 'a szervező lemondta az egész csoportos rendelést' : 'a vendég lemondta a rendelést') : `${p.name} visszalépett a csoportos rendelésből`;
+  const msg = `${o.id} (${when(o)} · ${o.pickup ? 'elvitel' : placeName(o)}): ${what}. Visszatérítés ${ft(refund)}, kezelési költség ${ft(fee)}. ${todo.join(' ')}`;
+  app.later(mail(app, { to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: lemondás`, title: 'Lemondás', html: `<p>${esc(msg)}</p>`, text: msg }));
+  return cancelView(app, fresh, o, true);
 }
 
 // ---- recurring: a reminder with a payment link the evening before, no stored card ----

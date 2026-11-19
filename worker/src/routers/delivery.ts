@@ -18,6 +18,8 @@ export function register(api: Router) {
   api.post(`${p}/orders/{id}/recurring`, handle(async (c) => dl.setRecurring(c, c.params.id, await body(c))));
   api.post(`${p}/groups`, handle(async (c) => dl.createGroup(c, await withCard(c))));
   api.get(`${p}/groups/{code}`, handle((c) => dl.groupView(c, c.params.code)));
+  api.get(`${p}/cancel/{token}`, handle((c) => dl.cancelInfo(c, c.params.token)));
+  api.post(`${p}/cancel/{token}`, handle((c) => dl.cancelConfirm(c, c.params.token)));
   api.post(`${p}/groups/{code}/close`, handle(async (c) => dl.closeGroup(c, c.params.code, (await body(c)).token)));
   api.post(`${p}/groups/{code}/participants`, handle(async (c) => dl.joinGroup(c, c.params.code, await withCard(c))));
 

@@ -75,6 +75,10 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 Guests cancel Delivery orders online (Daniel): link in the confirmation email and on /fiok/ → /delivery/lemondas/,
+  until the order deadline, refund minus 3 % (DL_CANCEL_FEE_PCT). Company/pickup: whole order; group colleague: own drink;
+  organiser: whole group, colleagues refunded in full. Invoice: correcting invoice keeping the fee; no invoice: staff email says
+  what to settle at the till. Rush: no online cancel. ÁSZF + order popup updated. Pay-at-pickup NOT offered (no-shows).
 - 2026-11-19 "Válaszd ki a térképen" under the delivery address: the 3D zone map in a popup; "Ide kérem" fills the address
   (trusted as in-zone, no Photon round trip) and closes it. map.js now exposes DLZoneMap.mount(el).
 - 2026-11-19 Order page fixes (Daniel): nothing pre-selected in "Hova kéritek?" (address and "Ki fizet?" appear after

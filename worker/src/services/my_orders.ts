@@ -4,7 +4,7 @@ import type { App } from '../http';
 import type { Doc } from '../db';
 import { instant, today } from './bookings';
 import { cancelLink, modifyLink } from './after_hours';
-import { itemRequest } from './delivery';
+import { cancelLink as dlCancelLink, cancellable, itemRequest } from './delivery';
 
 const LIMIT = 30;
 const mailOf = (m: Doc) => String(m.email ?? '').toLowerCase().trim();
@@ -14,7 +14,7 @@ export async function list(app: App, member: Doc) {
   const d1 = app.db.d1, email = mailOf(member), now = today(app).date;
   const [dl, ah] = await Promise.all([
     rows(d1.prepare(
-      `SELECT o.id, o.kind, o.group_code, o.date, o.slot_time, o.rush, o.status, o.pickup, o.company, o.street, p.status AS paid, p.amount_huf, p.refund_huf, p.organiser,
+      `SELECT o.id, o.kind, o.group_code, o.date, o.slot_time, o.rush, o.status, o.pickup, o.company, o.street, o.cutoff_at, o.return_path, p.id AS payer_id, p.status AS paid, p.amount_huf, p.refund_huf, p.organiser,
               (SELECT COUNT(*) FROM dl_items i WHERE i.payer_id = p.id) AS drinks
        FROM dl_payers p JOIN dl_orders o ON o.id = p.order_id
        WHERE lower(p.email) = ? AND p.status IN ('paid', 'refunded') ORDER BY o.date DESC, p.created_at DESC LIMIT ?`,
@@ -24,11 +24,12 @@ export async function list(app: App, member: Doc) {
     ).bind(email, LIMIT)),
   ]);
   return {
-    delivery: dl.map((r) => ({
+    delivery: await Promise.all(dl.map(async (r) => ({
       id: r.id, kind: r.kind, group_code: r.organiser ? r.group_code : null, date: r.date, time: r.rush ? null : r.slot_time, rush: !!r.rush,
       pickup: !!r.pickup, company: r.company, street: r.street, drinks: r.drinks, amount: r.amount_huf, refund: r.refund_huf || 0,
       status: r.paid === 'refunded' ? 'refunded' : r.status, upcoming: r.date >= now,
-    })),
+      cancel_url: cancellable(r, { id: r.payer_id, status: r.paid }) ? await dlCancelLink(app, { id: r.payer_id }, r) : null,
+    }))),
     after_hours: await Promise.all(ah.map(async (b) => {
       const left = instant(app, b.date, b.start_time).getTime() - Date.now(), paid = b.status === 'paid';
       return {

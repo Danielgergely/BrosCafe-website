@@ -636,3 +636,9 @@
 .dl-mapsheet__hint { margin: 0 0 10px; }
 .dl-mapsheet__map { height: min(66dvh, 620px); flex: none; }
 @media (min-width: 900px) { .dl-sheet.dl-mapsheet { max-width: 980px; width: calc(100% - 64px); } }
+
+/* the guest's cancel page (lemondas/) */
+.dl-cx__card { display: grid; gap: 14px; max-width: 620px; margin-top: clamp(20px, 3vw, 32px); }
+.dl-cx__card .dl-sum__list { margin-top: 0; }
+.dl-cx__card dd small { display: block; font-weight: 400; font-size: 13px; color: var(--text-soft); }
+.dl-cx__actions { display: flex; flex-wrap: wrap; gap: 10px; }
