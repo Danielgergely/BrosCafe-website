@@ -75,6 +75,8 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 "Válaszd ki a térképen" under the delivery address: the 3D zone map in a popup; "Ide kérem" fills the address
+  (trusted as in-zone, no Photon round trip) and closes it. map.js now exposes DLZoneMap.mount(el).
 - 2026-11-19 Order page fixes (Daniel): nothing pre-selected in "Hova kéritek?" (address and "Ki fizet?" appear after
   Kiszállítás), steps never fold by themselves, Fizetés is always active and on a tap lists and highlights what is missing
   (the grey button could not be clicked: shell.css pointer-events none), the bag stays visible except next to the basket card,

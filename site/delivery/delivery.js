@@ -279,27 +279,54 @@
     });
   }
 
-  // The 3D zone map: loaded once its block is on screen and the device can draw it (WebGL); otherwise the sketch stays.
-  function map3d() {
-    const box = $('#dl-map3d'), fig = box && box.closest('.dl-map');
-    if (!fig || !('IntersectionObserver' in window)) return;
-    try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) return; } catch (e) { return; }
+  // The 3D zone map (map/map.js + self-hosted MapLibre), loaded on first use; devices without WebGL keep the sketch.
+  const webgl = (() => { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch (e) { return false; } })();
+  let mapLib = null;
+  const loadMap = () => (mapLib ||= (() => {
     const load = (src) => new Promise((ok, no) => {
       const css = src.endsWith('.css'), el = document.createElement(css ? 'link' : 'script');
       if (css) { el.rel = 'stylesheet'; el.href = src; } else el.src = src;
       el.onload = ok; el.onerror = no; document.head.append(el);
     });
+    const lib = '/shared/vendor/maplibre-gl-4.7.1/maplibre-gl';
+    return Promise.all([load(`${lib}.css`), load(`${lib}.js`)]).then(() => load('/delivery/map/map.js')).catch((e) => { mapLib = null; throw e; });
+  })());
+  // the map in "Hova visszük?": once its block is on screen
+  function map3d() {
+    const box = $('#dl-map3d'), fig = box && box.closest('.dl-map');
+    if (!fig || !webgl || !('IntersectionObserver' in window)) return;
     const io = new IntersectionObserver((es) => {
       if (!es.some((x) => x.isIntersecting)) return;
       io.disconnect();
-      const lib = '/shared/vendor/maplibre-gl-4.7.1/maplibre-gl';
-      Promise.all([load(`${lib}.css`), load(`${lib}.js`)]).then(() => {
+      loadMap().then(() => {
         fig.classList.add('is-3d'); box.hidden = false; // the container needs its size before the map starts
         $('#dl-map-cap').textContent = t('Zölddel a házak, ahova szállítunk. Koppints egy épületre: ha ide kéred, beírjuk a címét.');
-        return load('/delivery/map/map.js');
+        return window.DLZoneMap.mount(box, { cooperative: true });
       }).catch(() => { fig.classList.remove('is-3d'); box.hidden = true; });
     }, { rootMargin: '300px' });
     io.observe(fig);
+  }
+  // "Válaszd ki a térképen" under the address: the same map in a popup; "Ide kérem" fills the address and closes it
+  function mapPicker() {
+    const btn = $('#dl-mappick');
+    if (!btn || !webgl) return;
+    btn.hidden = false;
+    let dlg = null, sheetApi2 = null, map = null;
+    btn.addEventListener('click', async () => {
+      if (!dlg) {
+        ($('main.dl') || document.body).insertAdjacentHTML('beforeend', `<dialog class="sheet dl-sheet dl-mapsheet" id="dl-mapsheet" aria-labelledby="dl-mapsheet-title">
+          <div class="sheet__grab"><div class="sheet__head"><h2 class="sheet__title" id="dl-mapsheet-title">${t('Válaszd ki a házat')}</h2><button class="sheet__close" type="button" aria-label="${t('Bezárás')}">${cross}</button></div></div>
+          <p class="fine dl-mapsheet__hint">${t('Zölddel a házak, ahova szállítunk. Koppints a tiédre, majd: Ide kérem.')}</p>
+          <div class="dl-map3d dl-mapsheet__map" id="dl-mapsheet-map"></div></dialog>`);
+        dlg = $('#dl-mapsheet'); sheetApi2 = B.shell.sheet(dlg);
+        dlg.addEventListener('close', () => btn.focus());
+        document.addEventListener('dl:pick', () => { if (dlg.open) sheetApi2.close(); });
+      }
+      sheetApi2.open();
+      if (map) { map.resize(); return; }
+      try { await loadMap(); map = await window.DLZoneMap.mount($('#dl-mapsheet-map')); }
+      catch (e) { $('#dl-mapsheet-map').innerHTML = `<p class="dl-state" role="alert">${t('A térkép most nem érhető el. Írd be a címet kézzel.')}</p>`; }
+    });
   }
 
   // ---------- order page ----------
@@ -325,7 +352,7 @@
       document.dispatchEvent(new CustomEvent('dl:checked', { detail: { address: v } }));
     });
     addressBox(zf.elements.address, () => zf.requestSubmit());
-    map3d();
+    map3d(); mapPicker();
 
     const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
     window.BROS_TERMS?.bind(form, 'dl', { linkOnly: true });
@@ -536,7 +563,11 @@
     // a building picked on the 3D map: its address goes into the form (or pickup, outside the zone)
     document.addEventListener('dl:pick', (e) => {
       F('how').value = e.detail.pickup ? 'pickup' : 'delivery'; mode();
-      if (!e.detail.pickup) { F('street').value = e.detail.address; delete F('street').dataset.postcode; checkZone(); }
+      if (!e.detail.pickup) {
+        F('street').value = e.detail.address; delete F('street').dataset.postcode;
+        if (e.detail.inZone) zone = { v: val('street'), zip: '', status: 'in_zone' }; // our own map: no need to ask the address service
+        checkZone();
+      }
       $('#dl-step-where').scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
       setTimeout(() => (e.detail.pickup ? $('input[name="how"][value="pickup"]') : F('street')).focus({ preventScroll: true }), calm ? 0 : 500);
     });

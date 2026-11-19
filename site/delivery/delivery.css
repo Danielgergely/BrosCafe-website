@@ -628,3 +628,11 @@
 .dl-fields--who { margin-top: 16px; }
 .dl-sum__btn.is-off { filter: grayscale(1); opacity: .45; box-shadow: none; }
 @media (max-width: 619.98px) { .dl-fields--addr .dl-field:first-child { grid-column: auto; } .dl-fields--who { margin-top: 10px; } }
+
+/* "Válaszd ki a térképen": the link under the address and the map popup */
+.dl-mappick-row { margin: 0; }
+.dl-mappick-row:has(> [hidden]) { display: none; }
+.dl-mappick { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; color: var(--olive-deep); }
+.dl-mapsheet__hint { margin: 0 0 10px; }
+.dl-mapsheet__map { height: min(66dvh, 620px); flex: none; }
+@media (min-width: 900px) { .dl-sheet.dl-mapsheet { max-width: 980px; width: calc(100% - 64px); } }

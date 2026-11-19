@@ -453,7 +453,7 @@
     'A térkép mozgatásához használd a Ctrl + görgetést': 'Use Ctrl + scroll to move the map', 'A térkép mozgatásához használd a ⌘ + görgetést': 'Use ⌘ + scroll to move the map',
     'Két ujjal mozgathatod a térképet': 'Use two fingers to move the map', 'Nagyítás': 'Zoom in', 'Kicsinyítés': 'Zoom out', 'Észak felé': 'Reset to north',
     'Épület a körzetben': 'Building in the zone', 'Épület a körzeten kívül': 'Building outside the zone', 'Ez már kívül esik a körzeten, de elvitelre kérheted.': 'This is outside the zone, but you can order for pickup.',
-    'Ide kérem': 'Deliver here', 'Ennek az épületnek nincs címe a térképen: írd be lent.': 'This building has no address on the map: type it below.',
+    'Ide kérem': 'Deliver here', 'Ennek az épületnek nincs címe a térképen: írd be kézzel.': 'This building has no address on the map: type it in.', 'Válaszd ki a térképen': 'Choose on the map', 'Válaszd ki a házat': 'Choose your building', 'Zölddel a házak, ahova szállítunk. Koppints a tiédre, majd: Ide kérem.': 'Green: the buildings we deliver to. Tap yours, then: Deliver here.', 'A térkép most nem érhető el. Írd be a címet kézzel.': 'The map is not available right now. Please type the address.',
     'Zölddel a házak, ahova szállítunk. Koppints egy épületre: ha ide kéred, beírjuk a címét.': 'Green: the buildings we deliver to. Tap a building and we fill in its address.',
     '3D térkép: zölddel a házak, ahova szállítunk': '3D map: the buildings we deliver to in green', 'Lehel Piac': 'Lehel Market', 'Nyugati pályaudvar': 'Nyugati railway station',
     'Margitsziget': 'Margaret Island', 'Olimpia park': 'Olimpia Park',
