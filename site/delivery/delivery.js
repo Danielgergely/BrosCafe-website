@@ -113,7 +113,7 @@
       const r = await fetch(base + path, { credentials: 'same-origin', headers, ...opts });
       const body = await r.json().catch(() => ({}));
       if (r.status === 401 && staff) staff.toLogin();
-      if (!r.ok) throw Object.assign(new Error(body.error || r.statusText), { status: r.status, code: body.error, left: body.left });
+      if (!r.ok) throw Object.assign(new Error(body.error || r.statusText), { status: r.status, code: body.error, left: body.left, fields: body.fields });
       return body;
     };
     const post = (path, data) => call(path, { method: 'POST', body: JSON.stringify(data || {}) });
@@ -338,6 +338,7 @@
     function syncMenu() {
       $$('.dl-item', menuEl).forEach((li) => { const n = count(li.dataset.id); $('output', li).textContent = n; li.classList.toggle('is-on', n > 0); $('[data-step="-1"]', li).setAttribute('aria-disabled', n ? 'false' : 'true'); });
     }
+    let whoShown = false; // the empty name fields stay red once the guest tried to send
     function renderCups() {
       $('#dl-cups-wrap').hidden = !cups.length;
       cupsEl.innerHTML = cups.map((c, i) => { const d = menu.get(c.id); return `
@@ -345,7 +346,7 @@
           <span class="dl-cup__no" aria-hidden="true">${i + 1}</span>
           <span class="dl-cup__name"><b>${esc(d.name)}</b><small data-price>${ft(cupPrice(c))}</small></span>
           <button type="button" class="dl-cup__del" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">${cross}</button>
-          <div class="dl-cup__opts"><input type="text" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" placeholder="${t('Név a pohárra')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}">${optionSelects(d, c)}</div>
+          <div class="dl-cup__opts"><input type="text" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" required${whoShown && !c.who.trim() ? ' aria-invalid="true" aria-describedby="err-who"' : ''} placeholder="${t('Név a pohárra')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}">${optionSelects(d, c)}</div>
         </li>`; }).join('');
     }
     catsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; showAll = false; renderMenu(); $(`[data-cat="${cat}"]`, catsEl).focus(); });
@@ -367,6 +368,7 @@
       const li = e.target.closest('.dl-cup'); if (!li || !e.target.dataset.k) return;
       const c = cups.find((x) => x.uid === li.dataset.uid); readOpt(c, e.target);
       $('[data-price]', li).textContent = ft(cupPrice(c)); summary();
+      if (whoShown && e.target.dataset.k === 'who') { if (c.who.trim()) e.target.removeAttribute('aria-invalid'); if (!cups.some((x) => !x.who.trim())) check1('who'); }
     });
 
     // 2 · when
@@ -459,9 +461,10 @@
     phone.addEventListener('change', () => { if (menu.size) renderMenu(); });
 
     // validation
-    const BASE = ['cups', 'slot', 'company', 'street', 'floor', 'name', 'email', 'phone'], INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
+    const BASE = ['cups', 'who', 'slot', 'company', 'street', 'floor', 'name', 'email', 'phone'], INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
     const rules = {
       cups: (v, k) => (cups.length ? '' : k === 'group' ? t('Add hozzá a saját italodat: a csoportos rendelést is egy itallal indítod.') : t('Válassz legalább egy italt.')),
+      who: () => (cups.some((c) => !c.who.trim()) ? t('Írj nevet minden pohárra.') : ''),
       slot: (v, k) => (!slot ? t('Válassz időpontot.') : k === 'group' && slot === 'rush' ? t('Csoportos rendeléshez válassz időpontot, ne a rusht.') : capMsg()),
       company: (v) => (v.length >= 2 ? '' : t('Add meg a cég vagy az iroda nevét.')),
       street: (v) => (v.length < 4 ? t('Add meg az utcát és a házszámot.') : zone.v === v && zone.status === 'out_of_zone' ? t(ZONE_OUT) : ''),
@@ -477,7 +480,11 @@
       terms: () => (F('terms').checked ? '' : t('A rendeléshez el kell fogadnod a feltételeket.')),
     };
     const val = (n) => (F(n) instanceof Element && F(n).type !== 'checkbox' ? F(n).value.trim() : '');
-    const check1 = (n, k) => { const msg = rules[n](val(n), k); setErr(n, msg); return !msg; };
+    const check1 = (n, k) => {
+      const msg = rules[n](val(n), k); setErr(n, msg);
+      if (n === 'who') { whoShown = !!msg; $$('[data-k="who"]', cupsEl).forEach((el) => { if (msg && !el.value.trim()) { el.setAttribute('aria-invalid', 'true'); el.setAttribute('aria-describedby', 'err-who'); } else el.removeAttribute('aria-invalid'); }); }
+      return !msg;
+    };
     // zone: checked when an address is picked or the field is left; only "outside" stops the order
     let zone = { v: '', zip: '', status: null };
     const zoneNote = $('#dl-street-zone');
@@ -498,7 +505,7 @@
     F('street').addEventListener('input', () => { zoneNote.hidden = true; });
     form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n, kind()); });
     F('terms').addEventListener('change', () => check1('terms'));
-    const focusBad = (n) => (n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
+    const focusBad = (n) => (n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'who' ? $('[data-k="who"][aria-invalid]', cupsEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
 
     function payload(k) {
       const s = curSlot();
@@ -526,7 +533,8 @@
         if (res.checkout_url) { location.assign(res.checkout_url); return; } // stays busy while the browser leaves
         throw new Error('no_checkout_url'); // a 200 without a payment link is a failure
       } catch (err) {
-        if (err.code === 'out_of_zone') { zone = { v: val('street'), zip: F('street').dataset.postcode || '', status: 'out_of_zone' }; zoneNote.hidden = true; check1('street'); F('street').focus(); }
+        if (err.code === 'invalid' && err.fields?.includes('who')) { check1('who'); focusBad('who'); }
+        else if (err.code === 'out_of_zone') { zone = { v: val('street'), zip: F('street').dataset.postcode || '', status: 'out_of_zone' }; zoneNote.hidden = true; check1('street'); F('street').focus(); }
         else { result.textContent = problem(err); result.hidden = false; result.focus(); if (err.code) loadSlots(); }
       }
       sending = false; busy(payBtn, false);

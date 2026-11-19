@@ -165,6 +165,7 @@ async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<P
   if (!rush && !validDate(b.date)) bad.push('date');
   if (bad.length) throw invalid(bad);
   const cups = await priceCups(app, b.items);
+  if (cups.some((c) => !c.who)) throw invalid(['who']); // the barista writes it on the cup
   // only a house the map places outside the radius is refused; an unknown address is confirmed by hand
   if ((await zone.check(app, address.street, a.postcode)).status === 'out_of_zone') throw new ApiError(409, 'out_of_zone', { fields: ['street'] });
   if (!stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
