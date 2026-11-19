@@ -431,7 +431,7 @@
     function addCups(c, n = 1) {
       n = Math.min(n, MAX - cups.length); if (n <= 0) { sayFull(); return; }
       for (let k = 0; k < n; k += 1) cups.push({ ...c, uid: newCup(c.id).uid, who: '' });
-      setErr('cups', ''); syncMenu(); renderCups(); summary(); 
+      setErr('cups', ''); result.hidden = true; syncMenu(); renderCups(); summary(); 
     }
     let whoShown = false; // the empty name fields stay red once the guest tried to send
     function renderCups() {
@@ -466,6 +466,7 @@
     });
     cupsEl.addEventListener('click', (e) => {
       const li = e.target.closest('.dl-cup'); if (!li) return;
+      if (e.target.closest('[data-dup], [data-del]')) result.hidden = true;
       const i = cups.findIndex((c) => c.uid === li.dataset.uid);
       if (e.target.closest('[data-custom]')) {
         const uid = li.dataset.uid;
@@ -623,8 +624,10 @@
     }
     function openStep(el, focus) { el.classList.remove('is-closed'); if (focus) $('input:not([type="hidden"]):not([disabled]), .dl-item button', el)?.focus({ preventScroll: true }); }
     // steps never fold by themselves (Daniel 2026-11-19: it jumped while scrolling); the pay button is always active and shows what is missing
-    form.addEventListener('input', steps);
-    form.addEventListener('change', steps);
+    // the "Még hiányzik…" line goes as soon as the guest edits anything again
+    const editing = () => { if (!sending) result.hidden = true; };
+    form.addEventListener('input', () => { editing(); steps(); });
+    form.addEventListener('change', steps); // not editing(): a field's late change on blur (Enter to submit) would hide the fresh message
 
     // the side rail (1-4) and the paper bag (phone): components.js; the bag hides once the basket card is on screen
     const sumCard = $('#dl-sum-card'), orderSec = $('#rendeles');
