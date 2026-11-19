@@ -75,6 +75,10 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 Order page fixes (Daniel): nothing pre-selected in "Hova kéritek?" (address and "Ki fizet?" appear after
+  Kiszállítás), steps never fold by themselves, Fizetés is always active and on a tap lists and highlights what is missing
+  (the grey button could not be clicked: shell.css pointer-events none), the bag stays visible except next to the basket card,
+  company name optional so private persons can order (emails/board fall back to the person's name), no texts about how we deliver.
 - 2026-11-19 3D zone map on /delivery/ ("Hova visszük?"): OSM buildings in 3D, olive = delivered, grey = outside, landmarks
   (Lehel Piac, Westend, Nyugati, Vígszínház, Skála, Olimpia park). Tap a building → "Ide kérem" fills the order address. Zone is now
   whole street blocks (Daniel: follow streets, never cut a building), nothing across the railway out of Nyugati; the server

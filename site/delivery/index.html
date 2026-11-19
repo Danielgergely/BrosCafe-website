@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bros Delivery · Bros Cafe</title>
-<meta name="description" content="Bros Delivery: Bros kávé az irodátokba, gyalog, a kávézótól kb. 500 méteren belül. 5 italtól ingyenes kiszállítás, alatta 490 Ft.">
+<meta name="description" content="Bros Delivery: Bros kávé az irodába vagy haza, a kávézótól kb. 500 méteren belül. 5 italtól ingyenes kiszállítás, alatta 490 Ft.">
 <meta name="theme-color" content="#25251C">
 <link rel="canonical" href="https://broscafe.hu/delivery/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Bros Cafe">
-<meta property="og:title" content="Bros Delivery · Bros Cafe"><meta property="og:description" content="Bros Delivery: Bros kávé az irodátokba, gyalog, a kávézótól kb. 500 méteren belül. 5 italtól ingyenes kiszállítás, alatta 490 Ft.">
+<meta property="og:title" content="Bros Delivery · Bros Cafe"><meta property="og:description" content="Bros Delivery: Bros kávé az irodába vagy haza, a kávézótól kb. 500 méteren belül. 5 italtól ingyenes kiszállítás, alatta 490 Ft.">
 <meta property="og:url" content="https://broscafe.hu/delivery/"><meta property="og:image" content="https://broscafe.hu/shared/img/terrace-tables.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
@@ -31,10 +31,10 @@
   <section class="dl-hero">
     <div class="wrap dl-hero__grid">
       <div class="dl-hero__text">
-        <p class="eyebrow">Irodai kiszállítás · gyalog</p>
+        <p class="eyebrow">Kiszállítás</p>
         <h1 class="display display--md" data-vt="page-title">Bros <em>Delivery</em></h1>
-        <p class="body body--lg">Bros kávé az irodátokba.</p>
-        <p class="body">Gyalog visszük, a kávézótól kb. 500 méteren belül, arra az időpontra, amit választotok.</p>
+        <p class="body body--lg">Bros kávé hozzátok.</p>
+        <p class="body">A kávézótól kb. 500 méteren belül, arra az időpontra, amit választotok.</p>
         <ul class="dl-facts">
           <li id="dl-fact-slots">Időpontok: 9:00 · 10:30 · 14:00</li>
           <li data-fee="chip">5 italtól ingyenes kiszállítás, alatta 490 Ft</li>
@@ -56,7 +56,7 @@
   <section class="dl-sec dl-order" id="rendeles" aria-labelledby="rendeles-cim">
     <div class="wrap">
       <h2 class="title" id="rendeles-cim">Állítsd össze <em>a kört.</em></h2>
-      <p class="body">Kiszállítjuk az irodába, vagy elkészítjük elvitelre. Fizethetsz egyben, vagy indíthatsz csoportos rendelést, ahol mindenki a saját italát fizeti.</p>
+      <p class="body">Kiszállítjuk az irodába vagy haza, vagy elkészítjük elvitelre. Fizethetsz egyben, vagy indíthatsz csoportos rendelést, ahol mindenki a saját italát fizeti.</p>
       <div class="dl-return" id="dl-return" role="status" tabindex="-1" hidden></div>
       <div class="dl-again" id="dl-again" role="status" tabindex="-1" hidden></div>
 
@@ -66,22 +66,24 @@
           <fieldset class="dl-step" id="dl-step-where">
             <legend><span class="dl-step__no">1</span><span class="dl-step__t">Hova kéritek?</span></legend>
             <div class="dl-mode dl-how" role="radiogroup" aria-label="Kiszállítás vagy elvitel">
-              <label class="dl-slot"><input type="radio" name="how" value="delivery" checked><span><b>Kiszállítás</b><small>Az irodába visszük, kb. 500 méteren belül.</small></span></label>
+              <label class="dl-slot"><input type="radio" name="how" value="delivery"><span><b>Kiszállítás</b><small>Az irodába vagy haza visszük, kb. 500 méteren belül.</small></span></label>
               <label class="dl-slot"><input type="radio" name="how" value="pickup"><span><b>Elvitel</b><small>Időre elkészítjük, a pultnál vár: Csanády u. 4/b.</small></span></label>
             </div>
-            <div class="dl-where" id="dl-where">
-              <div class="dl-field dl-field--wide"><label for="dl-street">Az iroda címe: utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" placeholder="Pl. Váci út 37" required><p class="dl-zone-note" id="dl-street-zone" role="status" hidden></p></div>
+            <p class="dl-err" id="err-how" role="alert" hidden></p>
+            <div class="dl-where" id="dl-where" hidden>
+              <div class="dl-field dl-field--wide"><label for="dl-street">Cím: utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" placeholder="Pl. Váci út 37" required><p class="dl-zone-note" id="dl-street-zone" role="status" hidden></p></div>
               <div class="dl-out" id="dl-out" role="alert" hidden>
                 <p><b>Ilyen messzire még nem megyünk.</b> Időre elkészítjük, és a pultnál vár, vagy nagyobb rendelésnél írj nekünk, és megbeszéljük.</p>
                 <p class="dl-out__actions"><button type="button" class="btn" data-pickup>Elvitelre kérem</button><a class="link" href="/kapcsolat/">Írj nekünk</a></p>
               </div>
             </div>
-            <div id="dl-who-pays">
+            <div id="dl-who-pays" hidden>
               <h3 class="dl-sub">Ki fizet?</h3>
               <div class="dl-mode">
-                <label class="dl-slot"><input type="radio" name="pay" value="company" checked><span><b>Egyben fizetek</b><small>Egy fizetés mindenki italáért.</small></span></label>
+                <label class="dl-slot"><input type="radio" name="pay" value="company"><span><b>Egyben fizetek</b><small>Egy fizetés mindenki italáért.</small></span></label>
                 <label class="dl-slot"><input type="radio" name="pay" value="group"><span><b>Mindenki a sajátját</b><small>Csoportos rendelés: kapsz egy linket a kollégáknak.</small></span></label>
               </div>
+              <p class="dl-err" id="err-pay" role="alert" hidden></p>
             </div>
           </fieldset>
 
@@ -103,7 +105,7 @@
           <fieldset class="dl-step" id="dl-step-pay">
             <legend><span class="dl-step__no">4</span><span class="dl-step__t">Adatok</span></legend>
             <div class="dl-fields dl-fields--addr" id="dl-addr-more">
-              <div class="dl-field"><label for="dl-company">Cég neve</label><input id="dl-company" name="company" type="text" autocomplete="organization" required></div>
+              <div class="dl-field"><label for="dl-company">Cég neve <i>(ha irodába kéred)</i></label><input id="dl-company" name="company" type="text" autocomplete="organization"></div>
               <div class="dl-field dl-field--short"><label for="dl-floor">Emelet, ajtó</label><input id="dl-floor" name="floor" type="text" autocomplete="address-line2" required></div>
               <div class="dl-field dl-field--wide"><label for="dl-note">Megjegyzés <i>(nem kötelező)</i></label><input id="dl-note" name="note" type="text" maxlength="200" placeholder="Kit keressünk, hol adjuk le…"></div>
             </div>
@@ -152,7 +154,7 @@
           <summary>Hova visszük?</summary>
           <div class="dl-zone">
             <div>
-              <p data-zone>Kb. 700 méteren belül a kávézótól. A Csanády utca 4/b-ből indulunk, gyalog, hőtartó táskával. A környék irodáiba visszük:</p>
+              <p data-zone>Kb. 700 méteren belül a kávézótól, irodába és otthonra is:</p>
               <ul class="dl-areas" id="dl-areas"></ul>
               <form class="dl-zone__form" id="dl-zone-form" novalidate>
                 <div class="dl-field"><label for="dl-zone-address">Az irodátok címe</label><input id="dl-zone-address" name="address" type="text" autocomplete="street-address" placeholder="Utca, házszám"></div>
@@ -196,8 +198,7 @@
           <p><b>Hűségpecsét.</b> Ha a saját italodat fizeted, és megadod a hűségkártyád e-mail-címét, a kávéd ugyanúgy pecsétet ér, mint a pultnál. Ha a cég fizet, nem jár pecsét.</p>
         </details>
         <details>
-          <summary>Poharak, kávés doboz <span class="dl-draft">Tervezet</span></summary>
-          <p><b>Poharak.</b> Papírpohárban, négyes pohártartóban, hőtartó táskában visszük. A rendszeres irodáknak visszaváltható Bros poharat is tervezünk, betéti díjjal.</p>
+          <summary>Kávés doboz <span class="dl-draft">Tervezet</span></summary>
           <p><b>Kávés doboz megbeszélésre.</b> Nagyobb adag kávé egy dobozban, megbeszélésekre. A tartalma és az ára még készül.</p>
         </details>
         <details id="aszf">

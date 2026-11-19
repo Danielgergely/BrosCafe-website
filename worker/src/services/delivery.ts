@@ -171,7 +171,6 @@ async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<P
     : { company: text(a.company, 160), street: text(a.street, 160), floor: text(a.floor, 80), note: text(a.note, 500) };
   const contact = { name: text(c.name, 120), email: text(c.email, 200), phone: text(c.phone, 40) };
   if (pickup && kind === 'group') bad.push('pickup');
-  if (!pickup && address.company.length < 2) bad.push('company');
   if (!pickup && address.street.length < 4) bad.push('street');
   if (!pickup && address.floor.length < 1) bad.push('floor');
   const payer = checkParty({ ...contact, invoice: b.invoice }, bad, { invoice: 'optional' });
@@ -257,7 +256,7 @@ async function place(app: App, v: Place) {
   }
   const groupPath = `${v.path}csoport/`;
   const url = await checkout(app, {
-    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.pickup ? 'elvitel' : v.address.company}`,
+    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.pickup ? 'elvitel' : v.address.company || v.contact.name}`,
     success: siteUrl(app, code ? `${groupPath}?g=${code}&paid=1&o=${await orgToken(app, orderId)}` : `${v.path}?order=${orderId}&paid=1&t=${await sign(app, `rec${orderId}`)}`),
     cancel: siteUrl(app, code ? `${groupPath}?g=${code}&cancelled=1` : `${v.path}?cancelled=1`),
   });
@@ -320,7 +319,7 @@ export async function joinGroup(app: App, code: string, b: Doc) {
     throw new ApiError(409, 'slot_full', { left });
   }
   const url = await checkout(app, {
-    payerId, orderId: o.id, cups, fee: 0, email: party.email, lang, what: `${o.date} ${o.slot_time} · ${o.company}`,
+    payerId, orderId: o.id, cups, fee: 0, email: party.email, lang, what: `${o.date} ${o.slot_time} · ${placeName(o)}`,
     success: siteUrl(app, `${path}?g=${o.group_code}&paid=1`), cancel: siteUrl(app, `${path}?g=${o.group_code}&cancelled=1`),
   });
   return { checkout_url: url };
@@ -409,7 +408,9 @@ const clockAt = (app: App, at: string) => { const t = today(app, parseIso(at)); 
 /** The order with its accepted arrival time as HH:MM (rush), for the emails. */
 const withEta = (app: App, o: Doc): Doc => ({ ...o, eta_hm: o.eta_at ? clockAt(app, o.eta_at) : null });
 const cupLine = (i: Doc) => `${i.who ? `${i.who} · ${i.label}` : i.label}${i.note ? ` · „${i.note}”` : ''}`;
-const placeOf = (o: Doc, en = false) => (o.pickup ? (en ? `Pickup at the counter · ${CAFE_ADDRESS}` : `Elvitel a pultnál · ${CAFE_ADDRESS}`) : `${o.company} · ${o.street}, ${o.floor}`);
+/** Who it goes to: the company, or the person for a private order (company name is optional). */
+const placeName = (o: Doc) => o.company || o.contact_name;
+const placeOf = (o: Doc, en = false) => (o.pickup ? (en ? `Pickup at the counter · ${CAFE_ADDRESS}` : `Elvitel a pultnál · ${CAFE_ADDRESS}`) : `${placeName(o)} · ${o.street}, ${o.floor}`);
 async function paidItems(app: App, orderId: string) {
   return all<Doc>(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id WHERE i.order_id = ? AND p.status = 'paid' ORDER BY i.id").bind(orderId));
 }
@@ -428,7 +429,7 @@ async function notifyCounter(app: App, order: Doc) {
   const till = payers.filter((p) => !wantsInvoice(p)).map((p) => `${p.name}: ${ft(p.amount_huf - p.refund_huf)}`);
   const noInvoice = payers.filter((p) => wantsInvoice(p) && !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
   await mail(app, {
-    to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: ${when(o)} · ${o.pickup ? 'ELVITEL' : o.company} · ${items.length} ital`, title: `${o.pickup ? 'Elvitel' : 'Delivery'} · ${items.length} ital`,
+    to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: ${when(o)} · ${o.pickup ? 'ELVITEL' : placeName(o)} · ${items.length} ital`, title: `${o.pickup ? 'Elvitel' : 'Delivery'} · ${items.length} ital`,
     parts: [
       deliveryHero(o, false),
       listCard('Italok', items.map(cupLine)),
@@ -577,9 +578,9 @@ async function notifyRequest(app: App, o: Doc) {
   const items = await all<Doc>(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id WHERE i.order_id = ? AND p.status = 'authorised' ORDER BY i.id").bind(o.id));
   const by = clockAt(app, o.answer_by);
   await mail(app, {
-    to: staffAddress(app), staff: true, subject: `AZONNALI kérés ${o.id}: ${items.length} ital · ${o.company}, válasz ${by}-ig`, title: 'Azonnali kérés',
+    to: staffAddress(app), staff: true, subject: `AZONNALI kérés ${o.id}: ${items.length} ital · ${placeName(o)}, válasz ${by}-ig`, title: 'Azonnali kérés',
     parts: [
-      hero(`Válaszolj ${by}-ig`, [`${o.company} · ${o.street}, ${o.floor}`]),
+      hero(`Válaszolj ${by}-ig`, [placeOf(o)]),
       listCard('Italok', items.map(cupLine)),
       card('Rendelés', [['Azonosító', o.id], ['Megjegyzés', o.note], ['Kapcsolat', [o.contact_name, o.contact_phone].filter(Boolean).join(' · ')]]),
       para(`A táblán: Elfogad (15 / 20 / 30 perc vagy időpont), vagy Most nem megy. ${RUSH_ANSWER_MIN} perc után magától elutasítjuk, és a vendég kártyáján feloldjuk a zárolást.`),
@@ -735,7 +736,7 @@ export async function board(app: App, dateParam: unknown) {
   const items = await all(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id JOIN dl_orders o ON o.id = i.order_id WHERE o.date = ? AND p.status IN ('paid', 'authorised') ORDER BY i.id").bind(date));
   const view = (o: Doc) => {
     const cups = items.filter((i) => i.order_id === o.id).map(cupLine);
-    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, pickup: !!o.pickup, company: o.pickup ? o.contact_name : o.company, contact: [o.contact_name, o.contact_phone].filter(Boolean).join(' · '), address: o.pickup ? 'Elvitel a pultnál' : `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
+    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, pickup: !!o.pickup, company: placeName(o), contact: [o.contact_name, o.contact_phone].filter(Boolean).join(' · '), address: o.pickup ? 'Elvitel a pultnál' : `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
   };
   const cols: Doc[] = list.map((x) => ({ ...slotInfo(app, date, x, taken, closed), orders: orders.filter((o) => o.slot_id === x.id).map(view) }));
   // orders of a slot that was removed since, and rush orders, still have to be made
@@ -798,7 +799,7 @@ export async function closeSlot(app: App, date: string, slotId: string, closed: 
 
 export async function recurringList(app: App) {
   const r = await all(d1(app).prepare(
-    `SELECT r.id, r.rule, r.active, o.company, COALESCE(s.time, o.slot_time) AS time, (SELECT COUNT(*) FROM dl_items i WHERE i.order_id = o.id) AS drinks
+    `SELECT r.id, r.rule, r.active, COALESCE(NULLIF(o.company, ''), o.contact_name) AS company, COALESCE(s.time, o.slot_time) AS time, (SELECT COUNT(*) FROM dl_items i WHERE i.order_id = o.id) AS drinks
      FROM dl_recurring r JOIN dl_orders o ON o.id = r.source_order LEFT JOIN dl_slots s ON s.id = r.slot_id ORDER BY r.created_at`));
   return { recurring: r.map((x) => ({ id: x.id, company: x.company, rule: /^\d$/.test(x.rule) ? Number(x.rule) : x.rule, time: x.time, drinks: x.drinks, active: !!x.active })) };
 }
