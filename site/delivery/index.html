@@ -56,39 +56,54 @@
   <section class="dl-sec dl-order" id="rendeles" aria-labelledby="rendeles-cim">
     <div class="wrap">
       <h2 class="title" id="rendeles-cim">Állítsd össze <em>a kört.</em></h2>
-      <p class="body">Fizethet a cég egyben, vagy indíthatsz csoportos rendelést, ahol mindenki a saját italát fizeti.</p>
+      <p class="body">Kiszállítjuk az irodába, vagy elkészítjük elvitelre. Fizethetsz egyben, vagy indíthatsz csoportos rendelést, ahol mindenki a saját italát fizeti.</p>
       <div class="dl-return" id="dl-return" role="status" tabindex="-1" hidden></div>
       <div class="dl-again" id="dl-again" role="status" tabindex="-1" hidden></div>
 
       <form class="dl-order__grid" id="dl-form" novalidate>
         <div class="dl-steps">
 
-          <fieldset class="dl-step">
-            <legend><span class="dl-step__no">1</span>Mit kértek?</legend>
-            <div class="chips dl-cats" id="dl-cats" role="group" aria-label="Italkategóriák"></div>
-            <ul class="dl-menu" id="dl-menu"></ul>
-            <p class="dl-more" id="dl-more" hidden><button type="button" class="link"></button></p>
-            <p class="dl-err" id="err-cups" role="alert" hidden></p>
-            <div id="dl-cups-wrap" hidden>
-              <h3 class="dl-sub" id="dl-cups-title">Poharak</h3>
-              <p class="fine">Minden pohárra írj nevet, hogy az irodában mindenki megtalálja a sajátját.</p>
-              <ul class="dl-cups" id="dl-cups" aria-labelledby="dl-cups-title"></ul>
-              <p class="dl-err" id="err-who" role="alert" hidden></p>
+          <fieldset class="dl-step" id="dl-step-where">
+            <legend><span class="dl-step__no">1</span>Hova kéritek?</legend>
+            <div class="dl-mode dl-how" role="radiogroup" aria-label="Kiszállítás vagy elvitel">
+              <label class="dl-slot"><input type="radio" name="how" value="delivery" checked><span><b>Kiszállítás</b><small data-zone>Az irodába visszük, kb. 700 méteren belül.</small></span></label>
+              <label class="dl-slot"><input type="radio" name="how" value="pickup"><span><b>Elvitel</b><small>Időre elkészítjük, a pultnál vár: Csanády u. 4/b.</small></span></label>
+            </div>
+            <div class="dl-where" id="dl-where">
+              <div class="dl-field dl-field--wide"><label for="dl-street">Az iroda címe: utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" placeholder="Pl. Váci út 37" required><p class="dl-zone-note" id="dl-street-zone" role="status" hidden></p></div>
+              <div class="dl-out" id="dl-out" role="alert" hidden>
+                <p><b>Ilyen messzire még nem megyünk.</b> Időre elkészítjük, és a pultnál vár, vagy nagyobb rendelésnél írj nekünk, és megbeszéljük.</p>
+                <p class="dl-out__actions"><button type="button" class="btn" data-pickup>Elvitelre kérem</button><a class="link" href="/kapcsolat/">Írj nekünk</a></p>
+              </div>
+            </div>
+            <div id="dl-who-pays">
+              <h3 class="dl-sub">Ki fizet?</h3>
+              <div class="dl-mode">
+                <label class="dl-slot"><input type="radio" name="pay" value="company" checked><span><b>Egyben fizetek</b><small>Egy fizetés mindenki italáért, céges számlával.</small></span></label>
+                <label class="dl-slot"><input type="radio" name="pay" value="group"><span><b>Mindenki a sajátját</b><small>Csoportos rendelés: kapsz egy linket a kollégáknak.</small></span></label>
+              </div>
             </div>
           </fieldset>
 
           <fieldset class="dl-step">
-            <legend><span class="dl-step__no">2</span>Mikorra?</legend>
+            <legend><span class="dl-step__no">2</span>Mit kértek?</legend>
+            <div class="chips dl-cats" id="dl-cats" role="group" aria-label="Italkategóriák"></div>
+            <ul class="dl-menu" id="dl-menu"></ul>
+            <p class="fine dl-menu__hint">Tejet, koffeinmentest, tejszínhabot és megjegyzést a kosárban kérhetsz, a pohár melletti gombbal.</p>
+            <p class="dl-err" id="err-cups" role="alert" hidden></p>
+          </fieldset>
+
+          <fieldset class="dl-step">
+            <legend><span class="dl-step__no">3</span>Mikorra?</legend>
             <div class="chips" id="dl-days" role="group" aria-label="Nap"></div>
             <div class="dl-slots" id="dl-slots" role="radiogroup" aria-label="Időpont"></div>
             <p class="dl-err" id="err-slot" role="alert" hidden></p>
           </fieldset>
 
-          <fieldset class="dl-step">
-            <legend><span class="dl-step__no">3</span>Hova?</legend>
-            <div class="dl-fields dl-fields--addr">
+          <fieldset class="dl-step" id="dl-step-pay">
+            <legend><span class="dl-step__no">4</span>Adatok</legend>
+            <div class="dl-fields dl-fields--addr" id="dl-addr-more">
               <div class="dl-field dl-field--wide"><label for="dl-company">Cég vagy iroda neve</label><input id="dl-company" name="company" type="text" autocomplete="organization" required></div>
-              <div class="dl-field"><label for="dl-street">Utca, házszám</label><input id="dl-street" name="street" type="text" autocomplete="address-line1" required><p class="dl-zone-note" id="dl-street-zone" role="status" hidden></p></div>
               <div class="dl-field dl-field--short"><label for="dl-floor">Emelet, ajtó</label><input id="dl-floor" name="floor" type="text" autocomplete="address-line2" required></div>
               <div class="dl-field dl-field--wide"><label for="dl-note">Megjegyzés a recepciónak <i>(nem kötelező)</i></label><input id="dl-note" name="note" type="text" maxlength="200" placeholder="Kit keressünk, hol adjuk le…"></div>
             </div>
@@ -98,15 +113,7 @@
               <div class="dl-field"><label for="dl-email">E-mail</label><input id="dl-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
               <div class="dl-field"><label for="dl-phone">Telefonszám</label><input id="dl-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+36 30 123 4567" required></div>
             </div>
-          </fieldset>
-
-          <fieldset class="dl-step" id="dl-step-pay">
-            <legend><span class="dl-step__no">4</span>Ki fizet?</legend>
-            <div class="dl-mode">
-              <label class="dl-slot"><input type="radio" name="pay" value="company" checked><span><b>A cég, egyben</b><small>Egy fizetés, céges számla.</small></span></label>
-              <label class="dl-slot"><input type="radio" name="pay" value="group"><span><b>Mindenki a sajátját</b><small>Csoportos rendelés: kapsz egy linket a kollégáknak.</small></span></label>
-            </div>
-            <label class="dl-check" id="dl-inv-want" hidden><input type="checkbox" name="inv_want"><span>Számlát kérek a saját italomról</span></label>
+            <label class="dl-check" id="dl-inv-want" hidden><input type="checkbox" name="inv_want"><span id="dl-inv-want-txt">Számlát kérek a saját italomról</span></label>
             <div id="dl-inv">
               <h3 class="dl-sub" id="dl-inv-head">Céges számla</h3>
               <div class="dl-fields dl-fields--inv">
@@ -122,7 +129,11 @@
         </div>
 
         <aside class="dl-sum" id="dl-sum-card" aria-labelledby="dl-sum-title">
-          <h3 class="dl-sum__title" id="dl-sum-title">Összegzés</h3>
+          <h3 class="dl-sum__title" id="dl-sum-title">Kosár</h3>
+          <p class="dl-sum__empty fine" id="dl-cups-empty">Még üres. Válassz italt a <a href="#dl-menu">listából</a>.</p>
+          <ul class="dl-cups" id="dl-cups" aria-labelledby="dl-sum-title"></ul>
+          <p class="fine dl-cups__hint" id="dl-cups-hint" hidden>Minden pohárra írj nevet, hogy az irodában mindenki megtalálja a sajátját.</p>
+          <p class="dl-err" id="err-who" role="alert" hidden></p>
           <dl class="dl-sum__list" id="dl-sum"></dl>
           <p class="visually-hidden" role="status" id="dl-sum-live"></p>
           <label class="dl-check"><input type="checkbox" name="terms" required><span>Elfogadom az <a href="/aszf/" target="_blank" rel="noopener">általános szerződési feltételeket</a>.</span></label>

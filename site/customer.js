@@ -219,7 +219,7 @@
     const items = [
       ...d.delivery.map((o) => ({ date: o.date, html: `
         <div class="order__main"><b>Bros Delivery · ${esc(X(`${o.drinks} ital`, `${o.drinks} ${o.drinks === 1 ? 'drink' : 'drinks'}`))}</b>
-          <span>${esc([day(o.date), o.rush ? X('azonnali', 'rush') : o.time, o.company].filter(Boolean).join(' · '))}</span></div>
+          <span>${esc([day(o.date), o.rush ? X('azonnali', 'rush') : o.time, o.pickup ? X('elvitel', 'pickup') : o.company].filter(Boolean).join(' · '))}</span></div>
         <div class="order__end"><b>${S.ft(o.amount)}</b><span class="order__st" data-s="${esc(o.status)}">${esc(X(...(ST[o.status] || [o.status, o.status])))}</span></div>
         <div class="order__acts">${o.group_code && o.status === 'open' ? link(`/delivery/csoport/?g=${encodeURIComponent(o.group_code)}`, X('A csoportos rendelés', 'The group order')) : ''}${link(`/delivery/?ujra=${encodeURIComponent(o.id)}#rendeles`, X('Újra rendelem', 'Order again'))}</div>` })),
       ...d.after_hours.map((b) => ({ date: b.date, html: `

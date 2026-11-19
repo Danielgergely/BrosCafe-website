@@ -29,6 +29,13 @@ const MAX_CUPS = 40;
 const GROUP_FEE_RULE = 'organiser'; // the organiser pays the fee up front; refunded when the group reaches free_from paid cups
 const RECURRING_FROM_HOUR = 18; // the evening before: tomorrow's recurring orders are prepared from this hour
 const MILKS: Record<string, string> = { Oat: 'Zabtej', CoconutRice: 'Kókusz-rizs tej', Pea: 'Borsótej' };
+// DRAFT 2026-11-19: free extras and the drinks that offer them (decaf: every espresso drink; cream: on request, catalogue)
+const EXTRAS: Record<string, { label: string; ids: string[] }> = {
+  decaf: { label: 'koffeinmentes', ids: ['espresso', 'double-espresso', 'espresso-macchiato', 'americano', 'cortado', 'flat-white', 'cappuccino', 'latte', 'pistachio-latte', 'caramel-latte', 'pumpkin-spice-latte', 'espresso-tonic'] },
+  cream: { label: 'tejszínhabbal', ids: ['belgian-hot-chocolate'] },
+};
+const extrasView = () => Object.fromEntries(Object.entries(EXTRAS).map(([k, v]) => [k, v.ids]));
+const CAFE_ADDRESS = 'Csanády u. 4/b';
 const PATHS = ['/delivery/', '/delivery/csoport/'];
 const BOARD = ['new', 'making', 'out', 'delivered'];
 
@@ -94,11 +101,11 @@ export async function slots(app: App, daysParam: unknown) {
     if (infos.length && infos.every((x) => x.status === 'past')) continue; // today, after its last cutoff
     days.push({ date, slots: infos });
   }
-  return { free_from: s.free_from, fee: s.fee_huf, zone_m: zone.radius(app), rush: rushView(s), days, payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
+  return { free_from: s.free_from, fee: s.fee_huf, zone_m: zone.radius(app), rush: rushView(s), days, extras: extrasView(), payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app) };
 }
 
 // ---- pricing from the catalogue ----
-interface Cup { product_id: string; cat: string; label: string; who: string; milk: string | null; size: number | null; iced: number; price: number }
+interface Cup { product_id: string; cat: string; label: string; who: string; milk: string | null; size: number | null; iced: number; extras: string | null; note: string | null; price: number }
 const nice = (v: string) => (v && v === v.toUpperCase() ? v.charAt(0) + v.slice(1).toLocaleLowerCase('hu') : v || '');
 async function priceCups(app: App, items: unknown): Promise<Cup[]> {
   if (!Array.isArray(items) || !items.length || items.length > MAX_CUPS) throw invalid(['items']);
@@ -112,20 +119,27 @@ async function priceCups(app: App, items: unknown): Promise<Cup[]> {
     const size = sizes.length ? sizes[Number.isInteger(i.size) && sizes[i.size] ? i.size : 0] : null;
     const milk = typeof i.milk === 'string' && (p.milks ?? []).includes(i.milk) ? i.milk : null;
     const iced = p.temp === 'both' && i.iced === true;
+    const extras = Object.keys(EXTRAS).filter((k) => i[k] === true && EXTRAS[k].ids.includes(p.id));
     const price = size ? size.price : p.price_huf;
     if (!Number.isInteger(price) || price <= 0) throw invalid(['items']);
     return {
       product_id: p.id, cat: p.cat, who: text(i.who, 60), milk, size: size ? sizes.indexOf(size) : null, iced: iced ? 1 : 0, price,
-      label: [nice(p.name?.hu ?? p.id), size?.label, milk && (MILKS[milk] ?? milk), iced && 'jeges'].filter(Boolean).join(' · '),
+      extras: extras.join(',') || null, note: text(i.note, 80) || null,
+      label: [nice(p.name?.hu ?? p.id), size?.label, milk && (MILKS[milk] ?? milk), iced && 'jeges', ...extras.map((k) => EXTRAS[k].label)].filter(Boolean).join(' · '),
     };
   });
 }
 const sum = (cups: { price: number }[]) => cups.reduce((n, c) => n + c.price, 0);
+/** A stored cup as an order request again (recurring orders, "order again"). */
+export const itemRequest = (i: Doc) => ({
+  product_id: i.product_id, who: i.who ?? '', milk: i.milk ?? '', size: i.size ?? 0, iced: !!i.iced, note: i.note ?? '',
+  ...Object.fromEntries(Object.keys(EXTRAS).map((k) => [k, String(i.extras ?? '').split(',').includes(k)])),
+});
 
 // ---- creating orders ----
 interface Party { name: string; email: string; loyaltyEmail?: string | null; invoice?: { name: string; tax: string | null; zip: string; city: string; street: string } | null }
 interface Place {
-  kind: 'company' | 'group'; date: string; slot: Slot | null; cups: Cup[]; lang: string; path: string;
+  kind: 'company' | 'group'; pickup: boolean; date: string; slot: Slot | null; cups: Cup[]; lang: string; path: string;
   address: { company: string; street: string; floor: string; note: string }; contact: { name: string; email: string; phone: string };
   payer: Party; recurringId?: string | null; payBy?: Date;
 }
@@ -151,23 +165,26 @@ function checkParty(b: Doc, bad: string[], opts: { invoice: 'required' | 'option
 
 /** Validates a company or organiser request body up to the slot. */
 async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<Place> {
-  const bad: string[] = [], a = b.address ?? {}, c = b.contact ?? {};
-  const address = { company: text(a.company, 160), street: text(a.street, 160), floor: text(a.floor, 80), note: text(a.note, 500) };
+  const bad: string[] = [], a = b.address ?? {}, c = b.contact ?? {}, pickup = b.pickup === true;
+  // pickup: made for the chosen time and collected at the counter; no address, no zone, no fee, invoice on request
+  const address = pickup ? { company: '', street: '', floor: '', note: text(a.note, 500) }
+    : { company: text(a.company, 160), street: text(a.street, 160), floor: text(a.floor, 80), note: text(a.note, 500) };
   const contact = { name: text(c.name, 120), email: text(c.email, 200), phone: text(c.phone, 40) };
-  if (address.company.length < 2) bad.push('company');
-  if (address.street.length < 4) bad.push('street');
-  if (address.floor.length < 1) bad.push('floor');
+  if (pickup && kind === 'group') bad.push('pickup');
+  if (!pickup && address.company.length < 2) bad.push('company');
+  if (!pickup && address.street.length < 4) bad.push('street');
+  if (!pickup && address.floor.length < 1) bad.push('floor');
   if (contact.phone.replace(/\D/g, '').length < 7) bad.push('phone');
-  const payer = checkParty({ ...contact, invoice: b.invoice }, bad, { invoice: kind === 'company' ? 'required' : 'optional' });
+  const payer = checkParty({ ...contact, invoice: b.invoice }, bad, { invoice: kind === 'company' && !pickup ? 'required' : 'optional' });
   if (b.terms !== true) bad.push('terms');
   const rush = b.rush === true;
-  if (kind === 'group' && rush) bad.push('slot');
+  if ((kind === 'group' || pickup) && rush) bad.push('slot');
   if (!rush && !validDate(b.date)) bad.push('date');
   if (bad.length) throw invalid(bad);
   const cups = await priceCups(app, b.items);
   if (cups.some((c) => !c.who)) throw invalid(['who']); // the barista writes it on the cup
   // only a house the map places outside the radius is refused; an unknown address is confirmed by hand
-  if ((await zone.check(app, address.street, a.postcode)).status === 'out_of_zone') throw new ApiError(409, 'out_of_zone', { fields: ['street'] });
+  if (!pickup && (await zone.check(app, address.street, a.postcode)).status === 'out_of_zone') throw new ApiError(409, 'out_of_zone', { fields: ['street'] });
   if (!stripe.ready(app.env)) throw new ApiError(503, 'payments_not_configured');
 
   await sweep(app);
@@ -184,7 +201,7 @@ async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<P
     if (info.status === 'closed' || info.status === 'past') throw new ApiError(409, 'slot_closed');
     if (info.left < cups.length) throw new ApiError(409, 'slot_full', { left: info.left });
   }
-  return { kind, date, slot, cups, lang: langOf(b.lang), path: returnPath(b.return_path, [PATHS[0]], PATHS[0]), address, contact, payer };
+  return { kind, pickup, date, slot, cups, lang: langOf(b.lang), path: returnPath(b.return_path, [PATHS[0]], PATHS[0]), address, contact, payer };
 }
 
 const cutoffOf = (app: App, date: string, slot: Slot) => new Date(instant(app, date, slot.time).getTime() - slot.cutoff_min * 60_000);
@@ -199,8 +216,8 @@ function payerInsert(app: App, o: { id: string; orderId: string; party: Party; o
     isoAt(o.holdUntil), o.amount, o.fee, o.lang, o.path, nowIso(), ...whereArgs);
 }
 const itemInserts = (app: App, orderId: string, payerId: string, cups: Cup[]) => cups.map((c) => d1(app).prepare(
-  `INSERT INTO dl_items (order_id, payer_id, product_id, cat, label, who, milk, size, iced, price_huf) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM dl_payers WHERE id = ?)`,
-).bind(orderId, payerId, c.product_id, c.cat, c.label, c.who || null, c.milk, c.size, c.iced, c.price, payerId));
+  `INSERT INTO dl_items (order_id, payer_id, product_id, cat, label, who, milk, size, iced, extras, note, price_huf) SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM dl_payers WHERE id = ?)`,
+).bind(orderId, payerId, c.product_id, c.cat, c.label, c.who || null, c.milk, c.size, c.iced, c.extras, c.note, c.price, payerId));
 
 /** One Checkout session for one payer; on failure the hold is released. */
 async function checkout(app: App, o: { payerId: string; orderId: string; cups: Cup[]; fee: number; email: string; lang: string; success: string; cancel: string; expiresAt?: Date; what: string; authorizeOnly?: boolean }) {
@@ -221,16 +238,16 @@ async function checkout(app: App, o: { payerId: string; orderId: string; cups: C
 /** Inserts order + payer + cups in one batch; the order row is only written while the slot still has room. */
 async function place(app: App, v: Place) {
   const s = await readSettings(app), orderId = await nextId(app, 'BD'), payerId = `${orderId}-${tokenUrlsafe(6)}`, code = v.kind === 'group' ? groupCode() : null;
-  const fee = feeFor(s, v.cups.length); // company: below free_from; group: the organiser carries it until the group reaches free_from
+  const fee = v.pickup ? 0 : feeFor(s, v.cups.length); // company: below free_from; group: the organiser carries it until the group reaches free_from
   const cutoff = v.slot ? cutoffOf(app, v.date, v.slot) : null;
   const sessionEnd = v.payBy ?? new Date(Date.now() + stripe.SESSION_MIN * 60_000), holdUntil = new Date(sessionEnd.getTime() + 2 * 60_000);
   const capacity = v.slot ? `${CUPS_IN_SLOT} + ? <= ?` : '1 = 1';
   const capArgs = v.slot ? [v.date, v.slot.id, nowIso(), v.cups.length, v.slot.capacity] : [];
   const res = await d1(app).batch([
     d1(app).prepare(
-      `INSERT INTO dl_orders (id, kind, group_code, date, slot_id, rush, slot_time, cutoff_at, status, company, street, floor, note, contact_name, contact_email, contact_phone, fee_huf, recurring_id, lang, return_path, created_at)
-       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${capacity}`,
-    ).bind(orderId, v.kind, code, v.date, v.slot?.id ?? null, v.slot ? 0 : 1, v.slot?.time ?? null, cutoff ? isoAt(cutoff) : null, v.kind === 'group' ? 'open' : 'pending',
+      `INSERT INTO dl_orders (id, kind, pickup, group_code, date, slot_id, rush, slot_time, cutoff_at, status, company, street, floor, note, contact_name, contact_email, contact_phone, fee_huf, recurring_id, lang, return_path, created_at)
+       SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${capacity}`,
+    ).bind(orderId, v.kind, v.pickup ? 1 : 0, code, v.date, v.slot?.id ?? null, v.slot ? 0 : 1, v.slot?.time ?? null, cutoff ? isoAt(cutoff) : null, v.kind === 'group' ? 'open' : 'pending',
       v.address.company, v.address.street, v.address.floor, v.address.note || null, v.contact.name, v.contact.email, v.contact.phone, fee, v.recurringId ?? null, v.lang, v.path, nowIso(), ...capArgs),
     payerInsert(app, { id: payerId, orderId, party: v.payer, organiser: v.kind === 'group', amount: sum(v.cups) + fee, fee, lang: v.lang, path: v.path, holdUntil }, 'EXISTS (SELECT 1 FROM dl_orders WHERE id = ?)', [orderId]),
     ...itemInserts(app, orderId, payerId, v.cups),
@@ -241,7 +258,7 @@ async function place(app: App, v: Place) {
   }
   const groupPath = `${v.path}csoport/`;
   const url = await checkout(app, {
-    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.address.company}`,
+    payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.pickup ? 'elvitel' : v.address.company}`,
     success: siteUrl(app, code ? `${groupPath}?g=${code}&paid=1&o=${await orgToken(app, orderId)}` : `${v.path}?order=${orderId}&paid=1&t=${await sign(app, `rec${orderId}`)}`),
     cancel: siteUrl(app, code ? `${groupPath}?g=${code}&cancelled=1` : `${v.path}?cancelled=1`),
   });
@@ -275,7 +292,7 @@ export async function groupView(app: App, code: string) {
   const participants = [...people.values()], drinks = participants.reduce((n, p) => n + (p.paid ? p.items.length : 0), 0);
   return {
     code: o.group_code, status: o.status === 'open' ? 'open' : 'locked', closed_early: !!(o.locked_at && o.cutoff_at && o.locked_at < o.cutoff_at), date: o.date, time: o.slot_time, cutoff_at: iso(o.cutoff_at), company: o.company,
-    address: { street: o.street, floor: o.floor }, organiser: o.contact_name, drinks, free_from: s.free_from, fee: s.fee_huf, fee_due: feeFor(s, drinks), fee_rule: GROUP_FEE_RULE, participants,
+    address: { street: o.street, floor: o.floor }, organiser: o.contact_name, drinks, free_from: s.free_from, fee: s.fee_huf, fee_due: feeFor(s, drinks), fee_rule: GROUP_FEE_RULE, participants, extras: extrasView(),
     payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app),
   };
 }
@@ -392,7 +409,8 @@ const when = (o: Doc, en = false) => `${o.date} · ${o.rush ? (o.eta_hm ? (en ? 
 const clockAt = (app: App, at: string) => { const t = today(app, parseIso(at)); return `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`; };
 /** The order with its accepted arrival time as HH:MM (rush), for the emails. */
 const withEta = (app: App, o: Doc): Doc => ({ ...o, eta_hm: o.eta_at ? clockAt(app, o.eta_at) : null });
-const cupLine = (i: Doc) => (i.who ? `${i.who} · ${i.label}` : i.label);
+const cupLine = (i: Doc) => `${i.who ? `${i.who} · ${i.label}` : i.label}${i.note ? ` · „${i.note}”` : ''}`;
+const placeOf = (o: Doc, en = false) => (o.pickup ? (en ? `Pickup at the counter · ${CAFE_ADDRESS}` : `Elvitel a pultnál · ${CAFE_ADDRESS}`) : `${o.company} · ${o.street}, ${o.floor}`);
 async function paidItems(app: App, orderId: string) {
   return all<Doc>(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id WHERE i.order_id = ? AND p.status = 'paid' ORDER BY i.id").bind(orderId));
 }
@@ -402,7 +420,7 @@ function list(lines: string[]) {
 
 /** The highlighted card: the day big, time and place small. */
 const deliveryHero = (o: Doc, en: boolean) => hero(o.rush ? (o.eta_hm ? (en ? `About ${o.eta_hm}` : `Kb. ${o.eta_hm}`) : en ? 'As soon as possible' : 'Amint lehet') : longDate(o.date, en),
-  [...(o.rush ? [] : [o.slot_time]), `${o.company} · ${o.street}, ${o.floor}`]);
+  [...(o.rush ? [] : [o.slot_time]), placeOf(o, en)]);
 
 /** The counter's ticket: a new order to make. */
 async function notifyCounter(app: App, order: Doc) {
@@ -411,11 +429,11 @@ async function notifyCounter(app: App, order: Doc) {
   const till = payers.filter((p) => !wantsInvoice(p)).map((p) => `${p.name}: ${ft(p.amount_huf - p.refund_huf)}`);
   const noInvoice = payers.filter((p) => wantsInvoice(p) && !p.invoice_no).map((p) => `${p.name}: ${p.invoice_error ?? 'folyamatban'}`);
   await mail(app, {
-    to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: ${when(o)} · ${o.company} · ${items.length} ital`, title: `Delivery · ${items.length} ital`,
+    to: staffAddress(app), staff: true, subject: `Delivery ${o.id}: ${when(o)} · ${o.pickup ? 'ELVITEL' : o.company} · ${items.length} ital`, title: `${o.pickup ? 'Elvitel' : 'Delivery'} · ${items.length} ital`,
     parts: [
       deliveryHero(o, false),
       listCard('Italok', items.map(cupLine)),
-      card('Rendelés', [['Azonosító', o.id], ['Típus', o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Megjegyzés', o.note],
+      card('Rendelés', [['Azonosító', o.id], ['Típus', o.pickup ? 'elvitel a pultnál' : o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Megjegyzés', o.note],
         ['Kapcsolat', `${o.contact_name} · ${o.contact_phone} · ${o.contact_email}`], ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))]]),
       listCard('Pénztárgépbe ütni (online kártyás fizetés, nyugta)', till),
       listCard('Számla hiányzik', noInvoice),
@@ -434,10 +452,11 @@ async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'comi
     timeout: en ? ['We could not confirm your rush order in time', 'Not possible right now', `We could not answer within ${RUSH_ANSWER_MIN} minutes, so we closed the request. ${released}`]
       : ['Nem tudtuk időben visszaigazolni', 'Most nem megy', `Nem tudtunk ${RUSH_ANSWER_MIN} percen belül válaszolni, ezért lezártuk a kérést. ${released}`],
     confirmed: o.rush && o.eta_hm ? (en ? ['Your Bros Delivery is accepted', 'Accepted!', `We will be there at about ${o.eta_hm}. Your order is paid.`] : ['Elfogadtuk a Bros Delivery rendelést', 'Elfogadtuk!', `Kb. ${o.eta_hm}-ra ott vagyunk. A rendelés ki van fizetve.`])
-      : en ? ['Your Bros Delivery order', 'Thank you for your order!', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : 'Your order is paid. We are bringing it at the time you chose.']
-      : ['Bros Delivery rendelés', 'Köszönjük a rendelést!', o.kind === 'group' ? 'Az italod ki van fizetve, és a csoport listáján van. Amit a határidőig kifizettek, azt visszük.' : 'A rendelés ki van fizetve, a választott időpontra visszük.'],
+      : en ? ['Your Bros Delivery order', 'Thank you for your order!', o.kind === 'group' ? 'Your drink is paid and on the group list. We bring whatever is paid by the deadline.' : o.pickup ? `Your order is paid. It will be ready at the counter at the time you chose (${CAFE_ADDRESS}).` : 'Your order is paid. We are bringing it at the time you chose.']
+      : ['Bros Delivery rendelés', 'Köszönjük a rendelést!', o.kind === 'group' ? 'Az italod ki van fizetve, és a csoport listáján van. Amit a határidőig kifizettek, azt visszük.' : o.pickup ? `A rendelés ki van fizetve. A választott időpontra elkészítjük, a pultnál vár (${CAFE_ADDRESS}).` : 'A rendelés ki van fizetve, a választott időpontra visszük.'],
     coming: en ? ['Your group order is closed', 'It is coming', 'The group order is closed and we are making the drinks.'] : ['Lezárult a csoportos rendelés', 'Készül, visszük', 'A csoportos rendelés lezárult, készítjük az italokat.'],
-    out: en ? ['Your Bros Delivery is on its way', 'On the way', 'One of us has just left the café with your drinks.'] : ['Úton a Bros Delivery', 'Elindultunk', 'Egyikünk most indult el a kávézóból az italokkal.'],
+    out: o.pickup ? (en ? ['Your order is ready', 'Ready to collect', `Your drinks are ready at the counter (${CAFE_ADDRESS}).`] : ['Kész a rendelésed', 'Átveheted', `Elkészültek az italok, a pultnál várnak (${CAFE_ADDRESS}).`])
+      : en ? ['Your Bros Delivery is on its way', 'On the way', 'One of us has just left the café with your drinks.'] : ['Úton a Bros Delivery', 'Elindultunk', 'Egyikünk most indult el a kávézóból az italokkal.'],
     late: en ? ['Your payment was refunded', 'Payment refunded', 'Your payment arrived after the order had closed or the delivery time had filled up, so we refunded it in full. Nothing will be delivered for it.']
       : ['Visszatérítettük a fizetést', 'Visszatérítés', 'A fizetés azután érkezett, hogy a rendelés lezárult vagy az időpont betelt, ezért a teljes összeget visszatérítettük. Ehhez a fizetéshez nem szállítunk.'],
     cancelled: en ? ['Your Bros Delivery order was cancelled', 'Order cancelled', 'We had to cancel this order. What you paid is refunded in full; it reaches your card in a few days.']
@@ -690,10 +709,10 @@ export async function runRecurring(app: App) {
       const src = await getOrder(app, r.source_order), slot = await d1(app).prepare('SELECT * FROM dl_slots WHERE id = ? AND active = 1').bind(r.slot_id).first<Slot>();
       const payer = src && (await d1(app).prepare('SELECT * FROM dl_payers WHERE order_id = ? ORDER BY created_at LIMIT 1').bind(src.id).first<Doc>());
       if (!src || !slot || !payer || (await closedSlots(app, date, date)).has(`${date}|${slot.id}`)) continue;
-      const cups = await priceCups(app, (await itemsOf(app, payer.id)).map((i) => ({ product_id: i.product_id, who: i.who ?? '', milk: i.milk, size: i.size, iced: !!i.iced })));
+      const cups = await priceCups(app, (await itemsOf(app, payer.id)).map(itemRequest));
       const cutoff = cutoffOf(app, date, slot), payBy = new Date(Math.min(cutoff.getTime(), Date.now() + 23 * 3600e3));
       const placed = await place(app, {
-        kind: 'company', date, slot, cups, lang: src.lang, path: src.return_path, recurringId: r.id, payBy,
+        kind: 'company', pickup: !!src.pickup, date, slot, cups, lang: src.lang, path: src.return_path, recurringId: r.id, payBy,
         address: { company: src.company, street: src.street, floor: src.floor, note: src.note ?? '' }, contact: { name: src.contact_name, email: src.contact_email, phone: src.contact_phone },
         payer: { name: payer.name, email: payer.email, invoice: { name: payer.inv_name, tax: payer.tax_number, zip: payer.zip, city: payer.city, street: payer.inv_street } },
       });
@@ -717,7 +736,7 @@ export async function board(app: App, dateParam: unknown) {
   const items = await all(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id JOIN dl_orders o ON o.id = i.order_id WHERE o.date = ? AND p.status IN ('paid', 'authorised') ORDER BY i.id").bind(date));
   const view = (o: Doc) => {
     const cups = items.filter((i) => i.order_id === o.id).map(cupLine);
-    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, company: o.company, contact: `${o.contact_name} · ${o.contact_phone}`, address: `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
+    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, pickup: !!o.pickup, company: o.pickup ? o.contact_name : o.company, contact: `${o.contact_name} · ${o.contact_phone}`, address: o.pickup ? 'Elvitel a pultnál' : `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
   };
   const cols: Doc[] = list.map((x) => ({ ...slotInfo(app, date, x, taken, closed), orders: orders.filter((o) => o.slot_id === x.id).map(view) }));
   // orders of a slot that was removed since, and rush orders, still have to be made

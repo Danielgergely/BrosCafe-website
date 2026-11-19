@@ -75,6 +75,10 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 Simpler order page (Daniel, Starbucks/McDonald's model): "Hova kéritek?" first (delivery or pickup + address check
+  before any drink; outside the zone one tap to "Elvitelre kérem"), full menu per category, basket on the right with cup names,
+  earliest free time pre-selected, details last. Milk, decaf, whipped cream and a note per cup in a "Testreszabás" sheet (also on the
+  group page). Pickup: no fee, invoice optional, no rush, not for groups. DRAFT: decaf on every espresso drink, cream on hot chocolate, both free.
 - 2026-11-19 Organiser closes a group early (handoff item 5): "Mindenki rendelt? · Rendelés küldése" on the group page, only with the
   organiser's signed link (Stripe return / confirmation email); same lock as the cutoff; refused while nothing is paid.
 - 2026-11-19 Name on every cup required for company and group-organiser orders (handoff item 4), form + server.
