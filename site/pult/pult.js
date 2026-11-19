@@ -54,6 +54,8 @@
     S.api('/scan/drinks').then((d) => { drinks = d; if (member) renderMember(); }).catch(() => {});
     view('scan');
     camState.textContent = t('Kamera kikapcsolva');
+    ready = true;
+    if (wantCam) startCamera();
   }
 
   // ---------- camera ----------
@@ -122,8 +124,12 @@
   flipBtn.addEventListener('click', () => { facing = facing === 'environment' ? 'user' : 'environment'; stopCamera(); startCamera(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && scanning) stopCamera(); });
   window.addEventListener('pagehide', stopCamera);
+  // the admin popup (shell.js scanPopup): open = a fresh scan with the camera on, close = camera off
+  let ready = false, wantCam = false;
+  const popupOpen = () => { next(); if (ready) startCamera(); else wantCam = true; };
+  const popupClose = () => { wantCam = false; stopCamera(); next(); };
   // test hook for the decoder: BROS.pult.decode(imageData) — used with a QR image file, no camera needed
-  B.pult = { decode: (img) => new Promise((ok) => { const w = new Worker('/pult/qr-worker.js'); w.onmessage = (e) => { w.terminate(); ok(e.data.text); }; w.postMessage({ id: 0, data: img.data.buffer, width: img.width, height: img.height }, [img.data.buffer]); }) };
+  B.pult = { open: popupOpen, close: popupClose, decode: (img) => new Promise((ok) => { const w = new Worker('/pult/qr-worker.js'); w.onmessage = (e) => { w.terminate(); ok(e.data.text); }; w.postMessage({ id: 0, data: img.data.buffer, width: img.width, height: img.height }, [img.data.buffer]); }) };
 
   // ---------- lookup ----------
   // A card may be shown as a bare code or as the card-page link; both end in the code.

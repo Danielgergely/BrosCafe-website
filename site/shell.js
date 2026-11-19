@@ -145,7 +145,41 @@
   if (BARE) {
     document.body.classList.add('is-bare');
     document.body.insertAdjacentHTML('beforeend', `<a class="staff-back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>${L('Vissza az oldalra', 'Back to the site')}</span></a>`);
+    scanPopup();
   }
+  // /pult/?embed=1 is the scanner inside the admin popup: no site chrome
+  if (page === 'scanner' && new URLSearchParams(location.search).has('embed')) {
+    document.body.classList.add('is-bare', 'is-embed');
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') window.parent.document.querySelector('.scan-pop')?.close(); }); // Esc lands in the frame
+  }
+
+  // Admin pages: a floating camera button (bottom left) opens the counter scanner (/pult/) in a popup with the camera on.
+  // A tap outside, ✕ or Esc closes it and turns the camera off. Both floating buttons fade while the page scrolls.
+  function scanPopup() {
+    const lbl = L('Kártya beolvasása', 'Scan a card');
+    document.body.insertAdjacentHTML('beforeend', `<button type="button" class="scan-fab" aria-haspopup="dialog" aria-label="${lbl}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg><span>${L('Beolvasás', 'Scan')}</span></button>
+<dialog class="scan-pop" aria-label="${lbl}"><button type="button" class="scan-pop__x" aria-label="${L('Bezárás', 'Close')}">✕</button></dialog>`);
+    const fab = $('.scan-fab'), pop = $('.scan-pop');
+    let frame = null;
+    const scanner = () => frame?.contentWindow?.BROS?.pult;
+    fab.addEventListener('click', () => {
+      if (!frame) { // loaded on first use; afterwards it stays, so the next scan starts at once
+        frame = document.createElement('iframe');
+        frame.src = '/pult/?embed=1'; frame.title = lbl; frame.allow = 'camera';
+        frame.addEventListener('load', () => scanner()?.open());
+        pop.append(frame);
+      } else scanner()?.open();
+      pop.showModal();
+    });
+    pop.addEventListener('click', (e) => { if (e.target === pop || e.target.closest('.scan-pop__x')) pop.close(); }); // the backdrop is the dialog itself
+    pop.addEventListener('close', () => scanner()?.close());
+    let idle = 0;
+    addEventListener('scroll', () => {
+      document.body.classList.add('is-scrolling');
+      clearTimeout(idle); idle = setTimeout(() => document.body.classList.remove('is-scrolling'), 700);
+    }, { passive: true });
+  }
+
 
   // Asked once, on the first visit; both answers weigh the same. Changing your mind: /adatvedelem/.
   if (consent.read() === null && !['scanner', 'belepes', 'admin-app', 'after-hours-admin', 'delivery-admin'].includes(page)) {

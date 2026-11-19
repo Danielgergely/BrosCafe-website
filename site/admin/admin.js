@@ -23,7 +23,6 @@
       <div><p class="eyebrow">${esc(T('admin.kicker'))}</p><h1 data-vt="page-title">${esc(T('admin.title'))}</h1></div>
       <div class="ad-tools">
         <span class="ad-who">${esc(T('x.signedIn', { name: user.name || user.email }))}</span>
-        <a class="link" href="/pult/">${esc(T('admin.scanner'))}</a>
         <button type="button" class="ad-btn ad-btn--ghost" data-add-staff data-testid="add-staff-top">＋ ${esc(T('admin.addStaff'))}</button>
         <button type="button" class="link" data-logout data-testid="admin-logout-btn">${esc(T('account.logOut'))}</button>
       </div>
