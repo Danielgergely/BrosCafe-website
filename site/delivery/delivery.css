@@ -266,6 +266,7 @@
 .dl-g__count { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 18px; padding: 14px 16px; border-radius: var(--r-md); background: var(--ivory-2); }
 .dl-g__count span { font: 700 12px/1.3 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); }
 .dl-g__count b { font: 420 clamp(27px, 3vw, 36px)/1.05 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.dl-g__close p { margin: 6px 0 14px; }
 .dl-g__locked { margin-top: 18px; padding: 14px 16px; border-radius: var(--r-md); background: var(--ivory-hi); font-weight: 650; }
 .dl-g__prog { margin-top: 20px; }
 .dl-g__prog .fine { margin-top: 8px; }
@@ -445,3 +446,4 @@
 
 /* recurring orders: pages */
 .dla__pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 14px; color: var(--text-soft); }
+#dl-g-title:focus { outline: none; } /* focused after the organiser closes the order, for screen readers */

@@ -128,6 +128,7 @@
       createGroup: (payload) => post('/groups', payload), // -> { code, url, checkout_url }
       group: (code) => call(`/groups/${encodeURIComponent(code)}`),
       join: (code, payload) => post(`/groups/${encodeURIComponent(code)}/participants`, payload), // -> { checkout_url }
+      close: (code, token) => post(`/groups/${encodeURIComponent(code)}/close`, { token }), // organiser only -> the group view
       admin: {
         board: (date) => call(`/admin/board?date=${date}`),
         setStatus: (id, status) => put(`/admin/orders/${id}/status`, { status }),
@@ -595,8 +596,12 @@
   // ---------- group order page ----------
   function groupPage() {
     const root = $('#dl-group-root'), code = (new URLSearchParams(location.search).get('g') || '').toUpperCase();
-    const back = returned(['paid', 'cancelled']);
-    let g = null, timer = null, cup = null, sending = false;
+    const back = returned(['paid', 'cancelled', 'o']);
+    // the organiser's key (Stripe return or confirmation email) stays on this device for this group
+    const ORG = `bros_dl_org_${code}`;
+    let orgTok = back.o || '';
+    try { if (orgTok) localStorage.setItem(ORG, orgTok); else orgTok = localStorage.getItem(ORG) || ''; } catch (err) { /* no storage: only this visit */ }
+    let g = null, timer = null, cup = null, sending = false, closing = false;
     const FEE_RULE = {
       organiser: 'Ha a határidőig nem gyűlik össze {n} ital, a {fee} kiszállítási díjat a szervező fizeti.',
       split: 'Ha a határidőig nem gyűlik össze {n} ital, a {fee} kiszállítási díjat a résztvevők között osztjuk el.',
@@ -618,9 +623,9 @@
       main.innerHTML = `
           <section class="dl-card" aria-labelledby="dl-g-title">
             <p class="dl-g__tags"><span class="dl-tag dl-tag--big" data-st="${open ? 'open' : 'locked'}">${open ? t('Nyitva') : t('Lezárva')}</span></p>
-            <h2 id="dl-g-title">${dayLabel(g.date)} · ${hm(g.time)}</h2>
+            <h2 id="dl-g-title" tabindex="-1">${dayLabel(g.date)} · ${hm(g.time)}</h2>
             <p class="dl-g__addr">${addr}<br>${t('Szervező')}: ${esc(g.organiser)}</p>
-            ${open ? `<p class="dl-g__count"><span>${t('Lezárásig')}</span><b id="dl-count" role="timer"></b></p>` : `<p class="dl-g__locked">${t('A rendelés lezárult, már készítjük. {time}-kor visszük.', { time: hm(g.time) })}</p>`}
+            ${open ? `<p class="dl-g__count"><span>${t('Lezárásig')}</span><b id="dl-count" role="timer"></b></p>` : `<p class="dl-g__locked">${g.closed_early ? t('A szervező elküldte a rendelést, már készítjük. {time}-kor visszük.', { time: hm(g.time) }) : t('A rendelés lezárult, már készítjük. {time}-kor visszük.', { time: hm(g.time) })}</p>`}
             <div class="dl-g__prog"><div id="dl-g-prog">${progress(g.drinks)}</div><p class="fine">${open && g.drinks < g.free_from ? `${t(FEE_RULE[g.fee_rule] || FEE_RULE.organiser, { n: g.free_from, fee: ft(g.fee) })} ${draftPill()}` : !open && g.fee_due ? t('Kiszállítási díj: {fee}.', { fee: ft(g.fee_due) }) : ''}</p></div>
           </section>
           <section class="dl-card" aria-labelledby="dl-who-title">
@@ -628,6 +633,9 @@
             <div id="dl-who">${who()}</div>
             <p class="visually-hidden" role="status">${tn('{n} ital', g.drinks)}</p>
           </section>
+          ${open && orgTok ? `<section class="dl-card dl-g__close" aria-labelledby="dl-close-title"><h2 id="dl-close-title">${t('Mindenki rendelt?')}</h2>
+            <p>${t('Szervezőként a határidő előtt is elküldheted: amit eddig kifizettek, azt elkészítjük, és {time}-kor visszük. A még nem fizetett italok kimaradnak.', { time: hm(g.time) })}</p>
+            <button type="button" class="btn btn--ghost" data-close-group>${t('Rendelés küldése')}</button><p class="dl-err" role="alert" data-close-err hidden></p></section>` : ''}
           ${open ? `<section class="dl-card dl-card--tint" aria-labelledby="dl-inv-title"><h2 id="dl-inv-title">${t('Hívd meg a kollégákat')}</h2>${shareBox(`${location.origin}${location.pathname}?g=${g.code}`)}</section>` : ''}`;
       clearInterval(timer);
       const form = $('#dl-join');
@@ -726,6 +734,19 @@
           <p class="actions"><a class="link" href="../">Bros Delivery</a></p></section>`;
       }
     }
+    root.addEventListener('click', async (e) => {
+      const btn = e.target.closest('[data-close-group]'); if (!btn || closing) return;
+      if (!confirm(t('Elküldöd most a rendelést? Utána már senki nem tud italt hozzáadni.'))) return;
+      const fail = (msg) => { const el = $('[data-close-err]', root); if (el) { el.textContent = msg; el.hidden = false; } };
+      closing = true; busy(btn, true);
+      try { g = await api.close(code, orgTok); view(); $('#dl-g-title')?.focus(); }
+      catch (err) {
+        if (err.code === 'forbidden') { orgTok = ''; try { localStorage.removeItem(ORG); } catch (x) { /* ignore */ } view(); }
+        else if (err.code === 'locked') load();
+        else { fail(err.code === 'nothing_paid' ? t('Még egy ital sincs kifizetve, így most nem küldhető el.') : t('Most nem sikerült elküldeni. Próbáld újra egy perc múlva.')); busy(btn, false); }
+      }
+      closing = false;
+    });
     root.innerHTML = `<p class="dl-state" role="status">${t('Csoportos rendelés betöltése…')}</p>`;
     loadMenu().catch(() => {}).then(() => load());
     setInterval(() => { if (!document.hidden) load(true); }, 8000); // the list stays live

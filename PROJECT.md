@@ -75,6 +75,10 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 Organiser closes a group early (handoff item 5): "Mindenki rendelt? · Rendelés küldése" on the group page, only with the
+  organiser's signed link (Stripe return / confirmation email); same lock as the cutoff; refused while nothing is paid.
+- 2026-11-19 Name on every cup required for company and group-organiser orders (handoff item 4), form + server.
+- 2026-11-19 Admin: round back arrow bottom left, olive QR scan button bottom right; the scanner opens as a popup.
 - 2026-11-18 Rush = request (handoff item 3): card authorised only, board beeps, staff accept 15/20/30 min or a time
   (capture → invoice/till, ETA email) or "Most nem megy"; 10 min unanswered → released. Migration 0006. ÁSZF sentence added.
 - 2026-11-18 Signed-in guests (handoff item 2): "Rendeléseim" on /fiok/ (Delivery + After Hours by email, change/cancel

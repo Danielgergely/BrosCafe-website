@@ -242,7 +242,7 @@ async function place(app: App, v: Place) {
   const groupPath = `${v.path}csoport/`;
   const url = await checkout(app, {
     payerId, orderId, cups: v.cups, fee, email: v.payer.email, lang: v.lang, expiresAt: v.payBy, authorizeOnly: !v.slot, what: `${v.date} ${v.slot?.time ?? 'rush'} · ${v.address.company}`,
-    success: siteUrl(app, code ? `${groupPath}?g=${code}&paid=1` : `${v.path}?order=${orderId}&paid=1&t=${await sign(app, `rec${orderId}`)}`),
+    success: siteUrl(app, code ? `${groupPath}?g=${code}&paid=1&o=${await orgToken(app, orderId)}` : `${v.path}?order=${orderId}&paid=1&t=${await sign(app, `rec${orderId}`)}`),
     cancel: siteUrl(app, code ? `${groupPath}?g=${code}&cancelled=1` : `${v.path}?cancelled=1`),
   });
   return { orderId, code, checkout_url: url, url: code ? siteUrl(app, `${groupPath}?g=${code}`) : null };
@@ -274,7 +274,7 @@ export async function groupView(app: App, code: string) {
   for (const r of rowsOf) (people.get(r.id) ?? people.set(r.id, { name: r.name, paid: r.status === 'paid', items: [] }).get(r.id)!).items.push(r.label);
   const participants = [...people.values()], drinks = participants.reduce((n, p) => n + (p.paid ? p.items.length : 0), 0);
   return {
-    code: o.group_code, status: o.status === 'open' ? 'open' : 'locked', date: o.date, time: o.slot_time, cutoff_at: iso(o.cutoff_at), company: o.company,
+    code: o.group_code, status: o.status === 'open' ? 'open' : 'locked', closed_early: !!(o.locked_at && o.cutoff_at && o.locked_at < o.cutoff_at), date: o.date, time: o.slot_time, cutoff_at: iso(o.cutoff_at), company: o.company,
     address: { street: o.street, floor: o.floor }, organiser: o.contact_name, drinks, free_from: s.free_from, fee: s.fee_huf, fee_due: feeFor(s, drinks), fee_rule: GROUP_FEE_RULE, participants,
     payments_ready: stripe.ready(app.env), bookings_open: bookingsOpen(app),
   };
@@ -456,7 +456,11 @@ async function sendPayer(app: App, p: Doc, order: Doc, kind: 'confirmed' | 'comi
     ]));
   }
   parts.push(fine(en ? `Order reference: ${o.id}` : `Rendelési azonosító: ${o.id}`));
-  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], parts });
+  // the organiser's page: who has ordered, and closing the order early once everyone is in
+  const button: [string, string] | undefined = kind === 'confirmed' && p.organiser && o.kind === 'group' && o.status === 'open'
+    ? [en ? 'Open the group page' : 'A csoport oldala', siteUrl(app, `${o.return_path}csoport/?g=${o.group_code}&o=${await orgToken(app, o.id)}`)] : undefined;
+  if (button) parts.splice(1, 0, para(en ? 'On the group page you see who has ordered; once everyone has, you can send the order before the deadline.' : 'A csoport oldalán látod, ki rendelt már; ha mindenki rendelt, a határidő előtt is elküldheted a rendelést.'));
+  await mail(app, { to: p.email, lang: p.lang, subject: `${T[0]} (${o.id})`, title: T[1], parts, button });
 }
 
 // ---- Stripe webhook ----
@@ -642,6 +646,20 @@ async function lockGroup(app: App, o: Doc) {
   const fresh = (await getOrder(app, o.id))!;
   await notifyCounter(app, fresh);
   for (const p of await all(d1(app).prepare("SELECT * FROM dl_payers WHERE order_id = ? AND status = 'paid'").bind(o.id))) await sendPayer(app, p, fresh, 'coming');
+}
+
+/** The organiser closes the group before the deadline: the same lock as the cutoff. */
+const orgToken = (app: App, orderId: string) => sign(app, `org${orderId}`);
+export async function closeGroup(app: App, code: string, token: unknown) {
+  assertBookingsOpen(app);
+  await sweep(app);
+  const o = await orderByCode(app, code);
+  if (!o) throw new ApiError(404, 'not_found');
+  if (typeof token !== 'string' || !safeEqual(token, await orgToken(app, o.id))) throw new ApiError(403, 'forbidden');
+  if (o.status !== 'open') throw new ApiError(409, 'locked');
+  if (!(await paidCups(app, o.id))) throw new ApiError(409, 'nothing_paid'); // locking now would cancel the whole order
+  await lockGroup(app, o);
+  return groupView(app, code);
 }
 
 // ---- recurring: a reminder with a payment link the evening before, no stored card ----
