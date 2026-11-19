@@ -86,7 +86,7 @@
 .dl-steps { display: grid; gap: 20px; min-width: 0; }
 .dl-step { min-width: 0; margin: 0; padding: clamp(18px, 2.6vw, 30px); border: 0; border-radius: var(--r-lg); background: var(--surface); }
 .dl-step legend { float: left; width: 100%; display: flex; align-items: center; gap: 12px; padding: 0; margin-bottom: 18px; font: 420 clamp(23px, 2.2vw, 30px)/1.1 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.02em; }
-.dl-step legend + * { clear: both; }
+.dl-step legend ~ * { clear: both; }
 .dl-step__no { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border: 1px solid rgb(var(--champagne-rgb) / .9); border-radius: 50%; color: var(--bronze); font: 600 17px/1 var(--sans); letter-spacing: 0; }
 
 /* the order controls (quantity, times, repeat days): frosted, scale on press */
@@ -485,3 +485,146 @@
 .dl-join__custom { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
 .dl-join__custom svg { width: 20px; height: 20px; }
 .dl-where:has(.dl-out:not([hidden])) #err-street { display: none; } /* the box says it, with the way out */
+
+/* the 3D zone map (map/map.js): full width under the text; the SVG sketch is the fallback */
+.dl-zone:has(.dl-map.is-3d) { grid-template-columns: minmax(0, 1fr); }
+.dl-map.is-3d { max-width: none; justify-self: stretch; text-align: left; }
+.dl-map.is-3d > svg { display: none; }
+.dl-map3d { position: relative; height: clamp(380px, 62vh, 580px); border-radius: var(--r-lg); overflow: hidden; background: var(--ivory); box-shadow: inset 0 0 0 1px var(--line); }
+.dl-map3d[hidden] { display: none; }
+.dl-map.is-3d figcaption { margin-top: 10px; }
+.dl-map3d__cafe, .dl-map3d__lm, .dl-map3d__label { pointer-events: none; white-space: nowrap; }
+.dl-map3d__cafe span { display: block; padding: 6px 12px; border-radius: var(--r-pill); background: var(--espresso, #25251C); color: var(--ivory); font: 650 13px/1 var(--sans); box-shadow: 0 6px 16px -6px rgb(37 37 28 / .6); }
+.dl-map3d__cafe::after { content: ""; display: block; width: 10px; height: 10px; margin: -5px auto 0; background: var(--espresso, #25251C); transform: rotate(45deg); }
+.dl-map3d__lm { padding: 4px 9px; border-radius: var(--r-pill); background: rgb(255 255 255 / .9); color: var(--olive-deep); font: 650 12px/1.1 var(--sans); box-shadow: 0 2px 8px rgb(37 37 28 / .14), inset 0 0 0 1px rgb(var(--olive-rgb) / .35); }
+.dl-map3d__lm.is-out { color: var(--text-soft); box-shadow: 0 2px 8px rgb(37 37 28 / .1), inset 0 0 0 1px var(--line); }
+.dl-map3d__label { color: rgb(var(--text-rgb) / .55); font: italic 500 13px/1 var(--serif); letter-spacing: .02em; }
+.dl-map3d__pop .maplibregl-popup-content { padding: 14px 16px 16px; border-radius: var(--r-md); background: var(--ivory-hi); color: var(--text); font-family: var(--sans); box-shadow: 0 12px 30px -10px rgb(37 37 28 / .45); }
+.dl-map3d__pop .maplibregl-popup-close-button { width: 32px; height: 32px; font-size: 20px; color: var(--text-soft); }
+.dl-map3d__pt { margin: 0 24px 4px 0; font: 650 15px/1.3 var(--sans); }
+.dl-map3d__ps { margin: 0; font-size: 13.5px; line-height: 1.4; color: var(--text-soft); }
+.dl-map3d__ps[data-s="in"] { color: var(--olive-deep); font-weight: 600; }
+.dl-map3d__pick { width: 100%; min-height: 44px; margin-top: 10px; }
+.dl-map3d .maplibregl-ctrl-group { border-radius: 14px; overflow: hidden; }
+.dl-map3d .maplibregl-ctrl-group button { width: 40px; height: 40px; }
+.dl-map3d .maplibregl-ctrl-attrib { padding: 2px 8px; border-radius: 10px 0 0 0; background: rgb(255 255 255 / .75); font: 11px/1.4 var(--sans); }
+.dl-map3d .maplibregl-ctrl-attrib a { color: var(--text-soft); }
+.dl-map3d .maplibregl-ctrl-attrib-button { display: none !important; }
+
+/* Bros Delivery · the floating paper bag (basket) + its popup, and the step rail. Loaded after delivery.css. */
+.dl-bag, .dl-bag-pop { --dl-bag-w: 68px; --dl-bag-r: max(14px, env(safe-area-inset-right)); --dl-bag-b: calc(var(--bottom-h, 0px) + 16px); }
+.dl-bag { position: fixed; z-index: 58; right: var(--dl-bag-r); bottom: var(--dl-bag-b); display: block; width: var(--dl-bag-w); aspect-ratio: 72 / 96; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; transition: opacity .25s, transform .35s var(--ease), visibility 0s; }
+/* away: the real basket is on screen ([hidden] or .is-away), or the bag is empty */
+.dl-bag[hidden], .dl-bag.is-away, .dl-bag[data-n="0"] { display: block; opacity: 0; visibility: hidden; transform: translateY(28px); pointer-events: none; transition: opacity .25s, transform .35s var(--ease), visibility 0s .35s; }
+.dl-bag:focus-visible { outline: 2px solid var(--champagne); outline-offset: 4px; border-radius: 10px; }
+.dl-bag__art { position: absolute; inset: 0; transform-origin: 46% 92%; transition: transform var(--dur) var(--ease), filter .2s; }
+.dl-bag__art svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 6px 10px rgb(20 20 14 / .28)); }
+.dl-bag:active .dl-bag__art { transform: scale(.95); transition-duration: var(--tap); }
+.dl-bag[aria-expanded="true"] .dl-bag__art { transform: rotate(-4deg) translateY(-2px); }
+@media (hover: hover) { .dl-bag:hover .dl-bag__art { filter: brightness(1.06); } }
+/* the count: a round olive sticker pressed on the bag face */
+.dl-bag__n { position: absolute; left: 40.5%; top: 58%; min-width: 34px; height: 34px; padding: 0 7px; border-radius: var(--r-pill); transform: translate(-50%, -50%) rotate(-7deg); background: radial-gradient(120% 120% at 30% 20%, var(--olive), var(--olive-dark) 70%); color: var(--ivory); font: 700 20px/34px var(--sans); font-variant-numeric: tabular-nums; letter-spacing: -.02em; text-align: center; box-shadow: inset 0 0 0 1.5px rgb(var(--ivory-rgb) / .5), inset 0 1px 0 rgb(255 255 255 / .25), 0 1px 1.5px rgb(60 36 12 / .45); }
+.dl-bag.is-drop .dl-bag__art { animation: dl-bag-drop .52s cubic-bezier(.3, .7, .3, 1); }
+.dl-bag.is-drop .dl-bag__n { animation: dl-bag-n .52s var(--ease); }
+@keyframes dl-bag-drop { 0% { transform: none; } 22% { transform: translateY(-9px) scale(.97, 1.04); } 50% { transform: translateY(2px) scale(1.07, .91); } 74% { transform: translateY(-2px) scale(.985, 1.02); } 100% { transform: none; } }
+@keyframes dl-bag-n { 0%, 30% { transform: translate(-50%, -50%) rotate(-7deg) scale(.6); } 62% { transform: translate(-50%, -50%) rotate(-7deg) scale(1.16); } 100% { transform: translate(-50%, -50%) rotate(-7deg); } }
+
+/* the popup: a glass card above the bag (full width on a phone), with a veil behind it and the bag on top */
+.dl-bag-veil { position: fixed; inset: 0; z-index: 56; background: rgb(var(--espresso-rgb) / .4); opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s .25s; }
+.dl-bag-veil.is-open { opacity: 1; visibility: visible; transition-delay: 0s; }
+.dl-bag-pop { position: fixed; z-index: 57; left: 12px; right: 12px; bottom: calc(var(--dl-bag-b) + var(--dl-bag-w) * 1.334 + 12px); display: flex; flex-direction: column; max-height: calc(100dvh - var(--dl-bag-b) - var(--dl-bag-w) * 1.334 - var(--header-h, 0px) - 28px); border-radius: 26px; background: var(--g-sheet-bg); -webkit-backdrop-filter: var(--g-sheet-fx); backdrop-filter: var(--g-sheet-fx); box-shadow: var(--g-rim-light), var(--shadow-lg); color: var(--text); transform-origin: calc(100% - 30px) 100%; opacity: 0; visibility: hidden; transform: translateY(18px) scale(.94); transition: opacity .2s, transform .3s var(--ease), visibility 0s .3s; }
+.dl-bag-pop.is-open { opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+.dl-bag-pop:focus { outline: none; }
+.dl-bag-pop__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px 20px 10px; }
+.dl-bag-pop__head h3 { margin: 0; font: 420 24px/1.15 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; letter-spacing: -.02em; }
+.dl-bag-pop__head small { font: 500 13.5px/1.3 var(--sans); color: var(--text-soft); }
+.dl-bag-pop__list { flex: 1; min-height: 0; margin: 0; padding: 0 20px; list-style: none; overflow: auto; overscroll-behavior: contain; }
+.dl-bag-pop__list > li { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 11px 0; border-top: var(--hair); font: 500 15px/1.35 var(--sans); }
+.dl-bag-pop__list > li small { display: block; font-size: 13px; font-weight: 400; color: var(--text-soft); }
+.dl-bag-pop__list > li > :last-child:not(:first-child) { flex: none; font-variant-numeric: tabular-nums; }
+.dl-bag-pop__foot { display: grid; gap: 12px; padding: 12px 20px 18px; border-top: 1px solid var(--line-strong); }
+.dl-bag-pop__total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; font: 600 15px/1.3 var(--sans); }
+.dl-bag-pop__total output { font: 440 23px/1 var(--serif); font-variation-settings: var(--soft); font-variant-numeric: tabular-nums; }
+.dl-bag-pop__foot .btn { width: 100%; }
+@media (min-width: 900px) {
+  .dl-bag, .dl-bag-pop { --dl-bag-w: 72px; --dl-bag-r: 24px; --dl-bag-b: 22px; }
+  .dl-bag-pop { left: auto; width: 380px; }
+}
+
+/* the step rail: four dots on a thread. Phone: slim, right edge. Desktop: left gutter, labels on hover / focus. */
+.dl-rail { --d: 7px; --gap: 30px; position: fixed; z-index: 40; right: 0; top: 50%; transform: translate(8px, -50%); opacity: 0; visibility: hidden; transition: opacity .3s, transform .3s var(--ease), visibility 0s .3s; }
+.dl-rail.is-on { opacity: 1; visibility: visible; transform: translate(0, -50%); transition-delay: 0s; }
+.dl-rail ol { position: relative; display: grid; margin: 0; padding: 0; list-style: none; }
+.dl-rail ol::before, .dl-rail ol::after { content: ""; position: absolute; left: calc(50% - 1px); top: calc(var(--gap) / 2); bottom: calc(var(--gap) / 2); width: 2px; border-radius: 1px; background: rgb(var(--espresso-rgb) / .16); }
+.dl-rail ol::after { background: var(--olive); transform-origin: 50% 0; transform: scaleY(var(--p, 0)); transition: transform .5s var(--ease); }
+.dl-rail button { position: relative; z-index: 1; display: grid; place-items: center; width: 20px; height: var(--gap); padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.dl-rail button::before { content: ""; width: var(--d); height: var(--d); border-radius: 50%; background: var(--ivory-hi); box-shadow: inset 0 0 0 1.5px rgb(var(--espresso-rgb) / .34); transition: transform .3s var(--ease), background .3s, box-shadow .3s; }
+.dl-rail .is-done button::before { background: var(--olive); box-shadow: none; }
+.dl-rail [aria-current] button::before, .dl-rail button[aria-current]::before { background: var(--ivory-hi); box-shadow: inset 0 0 0 2px var(--champagne), 0 0 0 1px rgb(var(--espresso-rgb) / .2), 0 0 0 4px rgb(var(--champagne-rgb) / .3); transform: scale(1.3); }
+.dl-rail button:focus-visible { outline: 2px solid var(--olive); outline-offset: -2px; border-radius: 10px; }
+.dl-rail__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@media (min-width: 900px) {
+  .dl-rail { --d: 16px; --gap: 44px; right: auto; left: max(6px, calc(var(--pad) / 2 - 18px)); transform: translate(-8px, -50%); }
+  .dl-rail button { width: 36px; }
+  .dl-rail .is-done button::after { content: ""; position: absolute; width: 10px; height: 10px; background: var(--ivory); -webkit-mask: var(--dl-check) 50% / contain no-repeat; mask: var(--dl-check) 50% / contain no-repeat; --dl-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.8 5.3l2.2 2.2 4.2-4.8' fill='none' stroke='%23000' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .dl-rail__label { left: calc(100% + 2px); top: 50%; width: auto; height: auto; overflow: visible; clip-path: none; padding: 6px 12px; border-radius: var(--r-pill); background: var(--g-frost-bg); -webkit-backdrop-filter: var(--g-frost-fx); backdrop-filter: var(--g-frost-fx); box-shadow: var(--g-rim-light), var(--shadow-sm); color: var(--text); font: 550 13px/1.2 var(--sans); pointer-events: none; opacity: 0; transform: translate(-6px, -50%); transition: opacity .2s, transform .25s var(--ease); }
+  .dl-rail:hover .dl-rail__label, .dl-rail:focus-within .dl-rail__label { opacity: 1; transform: translate(0, -50%); }
+  .dl-rail [aria-current] .dl-rail__label { color: var(--accent-text); font-weight: 650; }
+  @media (hover: hover) { .dl-rail button:hover::before { transform: scale(1.18); } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-bag, .dl-bag__art, .dl-bag-pop, .dl-rail, .dl-rail ol::after { transition-duration: .01s; }
+  .dl-bag.is-drop .dl-bag__art, .dl-bag.is-drop .dl-bag__n { animation: none; }
+  .dl-bag[hidden], .dl-bag.is-away, .dl-bag[data-n="0"], .dl-bag-pop { transform: none; }
+}
+@media (min-width: 980px) { .dl-bag, .dl-bag-veil, .dl-bag-pop { display: none !important; } } /* the basket card is in view beside the form */
+
+/* 2 · drinks: two columns of small tiles; a tap adds, a long press opens the options (delivery.js) */
+.dl-menu { grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); }
+.dl-item { display: block; min-height: 0; padding: 0; background: none; box-shadow: none; }
+.dl-item__btn { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; width: 100%; min-height: 58px; padding: 8px 10px 8px 8px; border: 0; border-radius: var(--r-md); background: var(--ivory-hi); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(var(--espresso-rgb) / .07); color: var(--text); text-align: left; cursor: pointer; -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; touch-action: manipulation; transition: transform var(--tap), box-shadow .2s; }
+.dl-item__btn:active { transform: scale(.96); }
+.dl-item__btn:focus-visible { outline: 2px solid var(--olive-deep); outline-offset: 2px; }
+.dl-item.is-on .dl-item__btn { box-shadow: inset 0 0 0 1.5px var(--olive), 0 6px 14px -8px rgb(var(--espresso-rgb) / .35); }
+.dl-item .dl-item__btn img, .dl-item .dl-item__ph { width: 40px; height: 40px; border-radius: 10px; pointer-events: none; }
+.dl-item__txt b { font-size: 14px; line-height: 1.2; }
+.dl-item__txt small { margin-top: 1px; font-size: 12.5px; }
+.dl-item__n { position: absolute; top: -6px; right: -4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-pill); background: var(--btn-fill); color: var(--ivory); font: 700 12px/22px var(--sans); text-align: center; font-variant-numeric: tabular-nums; box-shadow: 0 2px 6px rgb(var(--espresso-rgb) / .3); }
+.dl-item__n:empty { display: none; }
+@media (max-width: 619.98px) { .dl-menu { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .dl-item__btn { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; padding: 7px 8px 7px 7px; } .dl-item .dl-item__btn img, .dl-item .dl-item__ph { width: 36px; height: 36px; } }
+.dl-custom__qty { display: flex; align-items: center; justify-content: space-between; gap: 12px; font: 600 14px/1.2 var(--sans); color: var(--text-soft); }
+
+/* a finished step: the number turns into a check; folded, it is one line with its summary */
+.dl-step legend { flex-wrap: wrap; }
+.dl-step__no svg { display: none; width: 17px; height: 17px; }
+.dl-step.is-done .dl-step__no { border-color: transparent; background: var(--btn-fill); color: var(--ivory); font-size: 0; }
+.dl-step.is-done .dl-step__no svg { display: block; }
+.dl-step__sum, .dl-step__edit { display: none; }
+.dl-step.is-closed { padding-block: 12px; cursor: pointer; }
+.dl-step.is-closed > :not(legend) { display: none !important; }
+.dl-step.is-closed legend { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 12px; align-items: center; margin-bottom: 0; font-size: 19px; }
+.dl-step.is-closed .dl-step__no { grid-row: 1 / span 2; }
+.dl-step.is-closed .dl-step__sum { display: block; grid-column: 2; font: 500 13.5px/1.35 var(--sans); letter-spacing: 0; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-step.is-closed .dl-step__edit { display: block; grid-column: 3; grid-row: 1 / span 2; min-height: 44px; padding: 0 2px; border: 0; background: none; font: 600 13.5px/1 var(--sans); letter-spacing: 0; color: var(--olive-deep); cursor: pointer; }
+
+/* the basket: one tight line per cup: drink (tap: options) · name on the cup · − + */
+.dl-sum .dl-cups { gap: 0; margin-top: 6px; }
+.dl-sum .dl-cup { grid-template-columns: minmax(0, 1fr) minmax(70px, 96px) auto; gap: 8px; padding: 7px 0; border-radius: 0; background: none; border-bottom: 1px solid var(--line); }
+.dl-cup__name { display: block; min-width: 0; padding: 0; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; }
+.dl-cup__name b { display: block; font: 600 14.5px/1.25 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-cup__name small { margin-top: 1px; font-size: 12.5px; line-height: 1.3; }
+.dl-cup__name.is-set small { color: var(--olive-deep); }
+.dl .dl-cup__who { width: 100%; min-width: 0; min-height: 36px; padding: 5px 9px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: #fff; font-size: 16px; color: var(--text); }
+.dl-cup__qty { display: flex; gap: 4px; }
+.dl-cup__qty button { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 50%; background: var(--ivory-hi); color: var(--text); font: 500 19px/1 var(--sans); cursor: pointer; transition: transform var(--tap); }
+.dl-cup__qty button:active { transform: scale(.88); }
+.dl-sum .dl-sum__list > div { padding: 7px 0; }
+
+/* 4 · details: the invoice only behind its button; the pay button grey until everything is filled in */
+.dl-inv-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; margin-top: 14px; padding: 0 16px 0 8px; border: 1px dashed var(--line-strong); border-radius: var(--r-pill); background: none; font: 600 14px/1 var(--sans); color: var(--text); cursor: pointer; }
+.dl-inv-btn > span:first-child { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ivory-2); font-size: 17px; }
+.dl-inv-btn[aria-expanded="true"] { border-style: solid; }
+#dl-inv[hidden] { display: none; }
+.dl-fields--who { margin-top: 16px; }
+.dl-sum__btn.is-off { filter: grayscale(1); opacity: .45; box-shadow: none; }
+@media (max-width: 619.98px) { .dl-fields--addr .dl-field:first-child { grid-column: auto; } .dl-fields--who { margin-top: 10px; } }

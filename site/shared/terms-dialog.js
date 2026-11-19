@@ -1,6 +1,6 @@
 // Terms popup for the booking forms: the points that matter to the guest first, the full ÁSZF folded below.
 // BROS_TERMS.bind(form, 'ah' | 'dl') makes the terms checkbox, its ÁSZF link and an unaccepted submit open the popup;
-// "Elfogadom" ticks the box (and continues the submit that opened it).
+// "Elfogadom" ticks the box (and continues the submit that opened it). { linkOnly: true }: only the link opens it.
 (() => {
   const B = window.BROS, en = B.lang === 'en', L = (hu, e) => (en ? e : hu);
   const POINTS = {
@@ -16,7 +16,7 @@
       L('Kávézói árak, online fizetés; 5 italtól ingyenes a kiszállítás, alatta 490 Ft.', 'Café prices, paid online; delivery is free from 5 drinks, 490 Ft below that.'),
       L('A rendelési határidőig díjmentesen lemondhatod (az időpontnál látod), utána már készítjük.', 'You can cancel free of charge until the order deadline (shown with each time); after that we are making it.'),
       L('Csoportos rendelésnél azt visszük, amit a határidőig kifizettek; a késve érkező fizetés teljesen visszajár.', 'In a group order we bring what is paid by the deadline; a late payment is refunded in full.'),
-      L('Számla: céges rendelésnél automatikusan, egyébként ha kéred.', 'Invoice: automatic for company orders, otherwise if you ask for one.'),
+      L('Számlát kérésre küldünk, céges vagy magánszemély nevére.', 'An invoice on request, to a company or a private person.'),
       L('Ha bármi nem stimmel, szólj, és megoldjuk.', 'If anything is not right, tell us and we will sort it out.'),
     ],
   };
@@ -79,7 +79,7 @@ html:has(.tdlg[open]) { overflow: hidden; }`;
   }
 
   /** The checkbox can only be ticked through the popup; an unaccepted submit opens it and continues after "Elfogadom". */
-  function bind(form, kind) {
+  function bind(form, kind, { linkOnly = false } = {}) {
     const box = form.querySelector('input[name="terms"]');
     if (!box || box.dataset.terms) return;
     box.dataset.terms = '1';
@@ -89,9 +89,9 @@ html:has(.tdlg[open]) { overflow: hidden; }`;
       box.dispatchEvent(new Event('change', { bubbles: true }));
       return true;
     };
-    box.addEventListener('click', (e) => { if (box.checked) { e.preventDefault(); accept(); } }); // the click has already ticked it
+    if (!linkOnly) box.addEventListener('click', (e) => { if (box.checked) { e.preventDefault(); accept(); } }); // the click has already ticked it
     box.closest('label')?.querySelectorAll('a[href="/aszf/"]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); accept(); }));
-    document.addEventListener('submit', async (e) => {
+    if (!linkOnly) document.addEventListener('submit', async (e) => {
       if (e.target !== form || box.checked) return;
       e.preventDefault(); e.stopImmediatePropagation();
       if (await accept()) form.requestSubmit();

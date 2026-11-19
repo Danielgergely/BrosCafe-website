@@ -410,3 +410,15 @@ body.is-embed .st { padding-top: 14px; }
 body.is-embed .st__bar { padding-right: 52px; } /* the title clears the popup's ✕ */
 body.is-embed .st__toast { top: auto; bottom: 12px; } /* clear of the popup's ✕ */
 @media (prefers-reduced-motion: reduce) { .staff-back, .scan-fab { transition: none; } }
+
+/* Delivery and After Hours: lighter glass on the header and the tab bar, fading further while the page scrolls (shell.js) */
+body:is([data-page="delivery"], [data-page="after-hours"]) :is(.site-header, .tabbar) {
+  --g-chrome-bg: linear-gradient(180deg, rgb(var(--espresso-rgb) / .38), rgb(var(--espresso-rgb) / .48));
+  --g-chrome-fx: blur(20px) saturate(170%) brightness(.62);
+  transition: opacity .35s var(--ease);
+}
+body:is([data-page="delivery"], [data-page="after-hours"]).is-scrolling :is(.site-header, .tabbar):not(:focus-within) { opacity: .5; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  body:is([data-page="delivery"], [data-page="after-hours"]) :is(.site-header, .tabbar) { --g-chrome-bg: var(--espresso); --g-chrome-fx: none; }
+  body:is([data-page="delivery"], [data-page="after-hours"]).is-scrolling :is(.site-header, .tabbar) { opacity: 1; }
+}

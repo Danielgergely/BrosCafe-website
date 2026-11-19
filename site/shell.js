@@ -181,6 +181,12 @@
   }
 
 
+  // Delivery and After Hours: the header and the tab bar are lighter glass there and fade further while the page scrolls
+  if (['delivery', 'after-hours'].includes(page)) {
+    let still = 0;
+    addEventListener('scroll', () => { document.body.classList.add('is-scrolling'); clearTimeout(still); still = setTimeout(() => document.body.classList.remove('is-scrolling'), 700); }, { passive: true });
+  }
+
   // Asked once, on the first visit; both answers weigh the same. Changing your mind: /adatvedelem/.
   if (consent.read() === null && !['scanner', 'belepes', 'admin-app', 'after-hours-admin', 'delivery-admin'].includes(page)) {
     document.body.insertAdjacentHTML('beforeend', `<div class="consent" role="dialog" aria-live="polite" aria-label="${L('Beleszámíthatjuk a látogatásod?', 'Can we count your visit?')}">

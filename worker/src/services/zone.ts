@@ -1,7 +1,8 @@
-// Delivery zone: address suggestions and a straight-line distance check from the café, via Photon (OpenStreetMap).
+// Delivery zone: address suggestions and the zone check (whole street blocks, zone_area.ts) via Photon (OpenStreetMap).
 // Only the typed address goes to Photon, from the Worker (no visitor IP, no personal data); answers are cached a day.
 import type { App } from '../http';
 import { text } from './bookings';
+import { ZONE_AREA } from './zone_area';
 
 const CAFE = { lat: 47.51605, lon: 19.0583 }; // Csanády u. 4/b (OSM)
 const BUDAPEST_BBOX = '18.92,47.35,19.34,47.62';
@@ -21,11 +22,16 @@ function normalize(v: string) {
 }
 const houseNo = (v: string) => /(\d+(?:-\d+)?(?:\/[a-z])?)\s*$/.exec(normalize(v).replace(/,.*$/, ''))?.[1] ?? null;
 
-function metres(lat: number, lon: number) {
-  const r = Math.PI / 180, dLat = (lat - CAFE.lat) * r, dLon = (lon - CAFE.lon) * r;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(CAFE.lat * r) * Math.cos(lat * r) * Math.sin(dLon / 2) ** 2;
-  return Math.round(6371000 * 2 * Math.asin(Math.sqrt(a)));
-}
+const inRing = (lon: number, lat: number, ring: number[][]) => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+};
+/** Inside the delivery zone: whole street blocks around the café, the same outline the 3D map shows (zone_area.ts). */
+export const inZone = (lon: number, lat: number) => ZONE_AREA.some(([outer, ...holes]) => inRing(lon, lat, outer) && !holes.some((h) => inRing(lon, lat, h)));
 
 async function photon(app: App, q: string, limit: number): Promise<Feature[]> {
   const url = new URL('/api/', String(app.env.PHOTON_URL ?? '') || 'https://photon.komoot.io'); // PHOTON_URL: local tests only
@@ -73,7 +79,7 @@ export async function check(app: App, address: unknown, postcode?: unknown): Pro
   const full = houses.filter((f) => typed.includes(normalize(f.properties.street!)));
   const hits = full.length ? full : houses.filter((f) => typed.includes(normalize(f.properties.street!).split(' ')[0]));
   if (!hits.length) return { status: 'confirm', radius_m: r };
-  const inside = hits.map((f) => metres(f.geometry.coordinates[1], f.geometry.coordinates[0]) <= r);
+  const inside = hits.map((f) => inZone(f.geometry.coordinates[0], f.geometry.coordinates[1]));
   // the same street name in two districts (Váci út 37: XIII. and IV.) without a postcode: we cannot tell which one
   return { status: inside.every(Boolean) ? 'in_zone' : inside.some(Boolean) ? 'confirm' : 'out_of_zone', radius_m: r };
 }

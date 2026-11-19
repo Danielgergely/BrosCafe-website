@@ -33,7 +33,7 @@
     "SEED_ON_STARTUP": "true",
     // Forms open for click-testing (Daniel 18 Nov); no Stripe keys here, so nothing can be paid or saved yet
     "BOOKINGS_OPEN": "true",
-    "DELIVERY_RADIUS_M": "700", // straight line from the café; addresses outside are refused (services/zone.ts)
+    "DELIVERY_RADIUS_M": "700", // shown on the page; the zone itself is whole street blocks (zone_area.ts, scripts/build_zone_map.py)
     "CAFE_TIMEZONE": "Europe/Budapest",
     "CAFE_NAME": "Bros Cafe",
     "CAFE_ADDRESS": "1132 Budapest, Csanády u. 4/b",

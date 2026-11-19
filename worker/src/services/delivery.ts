@@ -25,7 +25,7 @@ const RUSH_AUTO_OFF_MIN = 45;
 const RUSH_ANSWER_MIN = 10; // a rush request nobody answers is declined (and the card released) after this
 const SLOT_HOURS = ['07:30', '18:00'];
 const DAYS_AHEAD_MAX = 10;
-const MAX_CUPS = 40;
+const MAX_CUPS = 50;
 const GROUP_FEE_RULE = 'organiser'; // the organiser pays the fee up front; refunded when the group reaches free_from paid cups
 const RECURRING_FROM_HOUR = 18; // the evening before: tomorrow's recurring orders are prepared from this hour
 const MILKS: Record<string, string> = { Oat: 'Zabtej', CoconutRice: 'Kókusz-rizs tej', Pea: 'Borsótej' };
@@ -174,8 +174,7 @@ async function readOrder(app: App, b: Doc, kind: 'company' | 'group'): Promise<P
   if (!pickup && address.company.length < 2) bad.push('company');
   if (!pickup && address.street.length < 4) bad.push('street');
   if (!pickup && address.floor.length < 1) bad.push('floor');
-  if (contact.phone.replace(/\D/g, '').length < 7) bad.push('phone');
-  const payer = checkParty({ ...contact, invoice: b.invoice }, bad, { invoice: kind === 'company' && !pickup ? 'required' : 'optional' });
+  const payer = checkParty({ ...contact, invoice: b.invoice }, bad, { invoice: 'optional' });
   if (b.terms !== true) bad.push('terms');
   const rush = b.rush === true;
   if ((kind === 'group' || pickup) && rush) bad.push('slot');
@@ -434,7 +433,7 @@ async function notifyCounter(app: App, order: Doc) {
       deliveryHero(o, false),
       listCard('Italok', items.map(cupLine)),
       card('Rendelés', [['Azonosító', o.id], ['Típus', o.pickup ? 'elvitel a pultnál' : o.kind === 'company' ? 'cég fizet' : 'csoportos'], ['Megjegyzés', o.note],
-        ['Kapcsolat', `${o.contact_name} · ${o.contact_phone} · ${o.contact_email}`], ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))]]),
+        ['Kapcsolat', [o.contact_name, o.contact_phone, o.contact_email].filter(Boolean).join(' · ')], ['Fizetve', ft(payers.reduce((n, p) => n + p.amount_huf - p.refund_huf, 0))]]),
       listCard('Pénztárgépbe ütni (online kártyás fizetés, nyugta)', till),
       listCard('Számla hiányzik', noInvoice),
     ],
@@ -582,7 +581,7 @@ async function notifyRequest(app: App, o: Doc) {
     parts: [
       hero(`Válaszolj ${by}-ig`, [`${o.company} · ${o.street}, ${o.floor}`]),
       listCard('Italok', items.map(cupLine)),
-      card('Rendelés', [['Azonosító', o.id], ['Megjegyzés', o.note], ['Kapcsolat', `${o.contact_name} · ${o.contact_phone}`]]),
+      card('Rendelés', [['Azonosító', o.id], ['Megjegyzés', o.note], ['Kapcsolat', [o.contact_name, o.contact_phone].filter(Boolean).join(' · ')]]),
       para(`A táblán: Elfogad (15 / 20 / 30 perc vagy időpont), vagy Most nem megy. ${RUSH_ANSWER_MIN} perc után magától elutasítjuk, és a vendég kártyáján feloldjuk a zárolást.`),
     ],
     button: ['Megnyitom a táblát', siteUrl(app, '/admin/delivery/')],
@@ -736,7 +735,7 @@ export async function board(app: App, dateParam: unknown) {
   const items = await all(d1(app).prepare("SELECT i.* FROM dl_items i JOIN dl_payers p ON p.id = i.payer_id JOIN dl_orders o ON o.id = i.order_id WHERE o.date = ? AND p.status IN ('paid', 'authorised') ORDER BY i.id").bind(date));
   const view = (o: Doc) => {
     const cups = items.filter((i) => i.order_id === o.id).map(cupLine);
-    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, pickup: !!o.pickup, company: o.pickup ? o.contact_name : o.company, contact: `${o.contact_name} · ${o.contact_phone}`, address: o.pickup ? 'Elvitel a pultnál' : `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
+    return { id: o.id, slot_id: o.slot_id ?? 'rush', type: o.kind, pickup: !!o.pickup, company: o.pickup ? o.contact_name : o.company, contact: [o.contact_name, o.contact_phone].filter(Boolean).join(' · '), address: o.pickup ? 'Elvitel a pultnál' : `${o.street}, ${o.floor}`, note: o.note ?? '', cups, drinks: cups.length, status: o.status, answer_by: o.answer_by ? iso(o.answer_by) : null, eta_at: o.eta_at ? iso(o.eta_at) : null };
   };
   const cols: Doc[] = list.map((x) => ({ ...slotInfo(app, date, x, taken, closed), orders: orders.filter((o) => o.slot_id === x.id).map(view) }));
   // orders of a slot that was removed since, and rush orders, still have to be made

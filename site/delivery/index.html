@@ -64,9 +64,9 @@
         <div class="dl-steps">
 
           <fieldset class="dl-step" id="dl-step-where">
-            <legend><span class="dl-step__no">1</span>Hova kéritek?</legend>
+            <legend><span class="dl-step__no">1</span><span class="dl-step__t">Hova kéritek?</span></legend>
             <div class="dl-mode dl-how" role="radiogroup" aria-label="Kiszállítás vagy elvitel">
-              <label class="dl-slot"><input type="radio" name="how" value="delivery" checked><span><b>Kiszállítás</b><small data-zone>Az irodába visszük, kb. 700 méteren belül.</small></span></label>
+              <label class="dl-slot"><input type="radio" name="how" value="delivery" checked><span><b>Kiszállítás</b><small>Az irodába visszük, kb. 500 méteren belül.</small></span></label>
               <label class="dl-slot"><input type="radio" name="how" value="pickup"><span><b>Elvitel</b><small>Időre elkészítjük, a pultnál vár: Csanády u. 4/b.</small></span></label>
             </div>
             <div class="dl-where" id="dl-where">
@@ -79,46 +79,44 @@
             <div id="dl-who-pays">
               <h3 class="dl-sub">Ki fizet?</h3>
               <div class="dl-mode">
-                <label class="dl-slot"><input type="radio" name="pay" value="company" checked><span><b>Egyben fizetek</b><small>Egy fizetés mindenki italáért, céges számlával.</small></span></label>
+                <label class="dl-slot"><input type="radio" name="pay" value="company" checked><span><b>Egyben fizetek</b><small>Egy fizetés mindenki italáért.</small></span></label>
                 <label class="dl-slot"><input type="radio" name="pay" value="group"><span><b>Mindenki a sajátját</b><small>Csoportos rendelés: kapsz egy linket a kollégáknak.</small></span></label>
               </div>
             </div>
           </fieldset>
 
           <fieldset class="dl-step">
-            <legend><span class="dl-step__no">2</span>Mit kértek?</legend>
+            <legend><span class="dl-step__no">2</span><span class="dl-step__t">Mit kértek?</span></legend>
             <div class="chips dl-cats" id="dl-cats" role="group" aria-label="Italkategóriák"></div>
             <ul class="dl-menu" id="dl-menu"></ul>
-            <p class="fine dl-menu__hint">Tejet, koffeinmentest, tejszínhabot és megjegyzést a kosárban kérhetsz, a pohár melletti gombbal.</p>
+            <p class="fine dl-menu__hint" id="dl-menu-hint">Koppints egy italra, és a kosárba kerül. Hosszan nyomva választhatsz tejet, koffeinmentest, darabszámot.</p>
             <p class="dl-err" id="err-cups" role="alert" hidden></p>
           </fieldset>
 
           <fieldset class="dl-step">
-            <legend><span class="dl-step__no">3</span>Mikorra?</legend>
+            <legend><span class="dl-step__no">3</span><span class="dl-step__t">Mikorra?</span></legend>
             <div class="chips" id="dl-days" role="group" aria-label="Nap"></div>
             <div class="dl-slots" id="dl-slots" role="radiogroup" aria-label="Időpont"></div>
             <p class="dl-err" id="err-slot" role="alert" hidden></p>
           </fieldset>
 
           <fieldset class="dl-step" id="dl-step-pay">
-            <legend><span class="dl-step__no">4</span>Adatok</legend>
+            <legend><span class="dl-step__no">4</span><span class="dl-step__t">Adatok</span></legend>
             <div class="dl-fields dl-fields--addr" id="dl-addr-more">
-              <div class="dl-field dl-field--wide"><label for="dl-company">Cég vagy iroda neve</label><input id="dl-company" name="company" type="text" autocomplete="organization" required></div>
+              <div class="dl-field"><label for="dl-company">Cég neve</label><input id="dl-company" name="company" type="text" autocomplete="organization" required></div>
               <div class="dl-field dl-field--short"><label for="dl-floor">Emelet, ajtó</label><input id="dl-floor" name="floor" type="text" autocomplete="address-line2" required></div>
-              <div class="dl-field dl-field--wide"><label for="dl-note">Megjegyzés a recepciónak <i>(nem kötelező)</i></label><input id="dl-note" name="note" type="text" maxlength="200" placeholder="Kit keressünk, hol adjuk le…"></div>
+              <div class="dl-field dl-field--wide"><label for="dl-note">Megjegyzés <i>(nem kötelező)</i></label><input id="dl-note" name="note" type="text" maxlength="200" placeholder="Kit keressünk, hol adjuk le…"></div>
             </div>
-            <h3 class="dl-sub">Ki rendel?</h3>
-            <div class="dl-fields">
-              <div class="dl-field dl-field--wide"><label for="dl-name">Név</label><input id="dl-name" name="name" type="text" autocomplete="name" required></div>
+            <div class="dl-fields dl-fields--who">
+              <div class="dl-field"><label for="dl-name">Neved</label><input id="dl-name" name="name" type="text" autocomplete="name" required></div>
               <div class="dl-field"><label for="dl-email">E-mail</label><input id="dl-email" name="email" type="email" autocomplete="email" inputmode="email" required></div>
-              <div class="dl-field"><label for="dl-phone">Telefonszám</label><input id="dl-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+36 30 123 4567" required></div>
             </div>
-            <label class="dl-check" id="dl-inv-want" hidden><input type="checkbox" name="inv_want"><span id="dl-inv-want-txt">Számlát kérek a saját italomról</span></label>
-            <div id="dl-inv">
-              <h3 class="dl-sub" id="dl-inv-head">Céges számla</h3>
+            <button type="button" class="dl-inv-btn" id="dl-inv-want" aria-expanded="false" aria-controls="dl-inv"><span aria-hidden="true">+</span><span id="dl-inv-want-txt">Számlát kérek</span></button>
+            <div id="dl-inv" hidden>
+              <h3 class="dl-sub" id="dl-inv-head">Számlázási adatok</h3>
               <div class="dl-fields dl-fields--inv">
-                <div class="dl-field dl-field--wide"><label for="dl-inv-name" id="dl-inv-name-label">Cégnév</label><input id="dl-inv-name" name="inv_name" type="text" autocomplete="organization"></div>
-                <div class="dl-field dl-field--wide"><label for="dl-tax">Adószám</label><input id="dl-tax" name="tax_number" type="text" inputmode="numeric" pattern="[0-9]{8}-?[0-9]-?[0-9]{2}" placeholder="12345678-1-12" autocomplete="off"></div>
+                <div class="dl-field dl-field--wide"><label for="dl-inv-name" id="dl-inv-name-label">Név vagy cégnév</label><input id="dl-inv-name" name="inv_name" type="text" autocomplete="organization"></div>
+                <div class="dl-field dl-field--wide"><label for="dl-tax">Adószám <i>(cégnek)</i></label><input id="dl-tax" name="tax_number" type="text" inputmode="numeric" pattern="[0-9]{8}-?[0-9]-?[0-9]{2}" placeholder="12345678-1-12" autocomplete="off"></div>
                 <div class="dl-field dl-field--zip"><label for="dl-zip">Irányítószám</label><input id="dl-zip" name="zip" type="text" autocomplete="postal-code" inputmode="numeric" maxlength="4"></div>
                 <div class="dl-field"><label for="dl-city">Város</label><input id="dl-city" name="city" type="text" autocomplete="address-level2"></div>
                 <div class="dl-field dl-field--wide"><label for="dl-inv-street">Számlázási cím: utca, házszám</label><input id="dl-inv-street" name="inv_street" type="text" autocomplete="off"></div>
@@ -132,7 +130,7 @@
           <h3 class="dl-sum__title" id="dl-sum-title">Kosár</h3>
           <p class="dl-sum__empty fine" id="dl-cups-empty">Még üres. Válassz italt a <a href="#dl-menu">listából</a>.</p>
           <ul class="dl-cups" id="dl-cups" aria-labelledby="dl-sum-title"></ul>
-          <p class="fine dl-cups__hint" id="dl-cups-hint" hidden>Minden pohárra írj nevet, hogy az irodában mindenki megtalálja a sajátját.</p>
+          <p class="fine dl-cups__hint" id="dl-cups-hint" hidden>Minden pohárra írj nevet, hogy mindenki megtalálja a sajátját.</p>
           <p class="dl-err" id="err-who" role="alert" hidden></p>
           <dl class="dl-sum__list" id="dl-sum"></dl>
           <p class="visually-hidden" role="status" id="dl-sum-live"></p>
@@ -163,6 +161,7 @@
               <p class="dl-preview" id="dl-zone-result" role="status" hidden></p>
             </div>
             <figure class="dl-map">
+              <div class="dl-map3d" id="dl-map3d" role="region" aria-label="3D térkép: zölddel a házak, ahova szállítunk" hidden></div>
               <svg viewBox="0 0 360 360" role="img" data-zone aria-label="Vázlat: a Bros Cafe körül egy kb. 700 méteres kör, benne a Váci út, a Lehel és a Duna-part">
                 <circle class="dl-map__zone" cx="180" cy="180" r="150"/>
                 <circle class="dl-map__ring" cx="180" cy="180" r="150"/>
@@ -178,7 +177,7 @@
                 <text x="180" y="52" text-anchor="middle" class="dl-map__dist" data-zone>~700 m</text>
                 <text x="180" y="122" text-anchor="middle" class="dl-map__dist" data-zone="half">~350 m</text>
               </svg>
-              <figcaption class="fine">Vázlat, nem méretarányos térkép.</figcaption>
+              <figcaption class="fine" id="dl-map-cap">Vázlat, nem méretarányos térkép.</figcaption>
             </figure>
           </div>
         </details>
@@ -193,7 +192,7 @@
         <details>
           <summary>Fizetés, számla, hűségpecsét</summary>
           <p><b>Fizetés.</b> Rendeléskor, online: bankkártyával, Apple Pay-jel vagy Google Pay-jel. Az árak ugyanazok, mint a kávézóban.</p>
-          <p><b>Számla.</b> Ha a cég fizet, a fizetés után e-mailben küldjük a cég nevére és adószámára. Csoportos rendelésnél az kap számlát, aki a rendeléskor kéri; a többi fizetés a kávézó pénztárgépébe kerül, nyugtával.</p>
+          <p><b>Számla.</b> Ha kéred, a fizetés után e-mailben küldjük, a cég vagy a saját nevedre. Csoportos rendelésnél az kap számlát, aki a rendeléskor kéri; a többi fizetés a kávézó pénztárgépébe kerül, nyugtával.</p>
           <p><b>Hűségpecsét.</b> Ha a saját italodat fizeted, és megadod a hűségkártyád e-mail-címét, a kávéd ugyanúgy pecsétet ér, mint a pultnál. Ha a cég fizet, nem jár pecsét.</p>
         </details>
         <details>
@@ -209,14 +208,10 @@
     </div>
   </section>
 
-  <div class="dl-bar" id="dl-bar" hidden>
-    <p><b id="dl-bar-sum"></b><span id="dl-bar-txt"></span></p>
-    <a class="btn" id="dl-bar-btn" href="#rendeles">Rendelek</a>
-  </div>
-
 </main>
 <script src="/site.js" defer></script>
 <script src="/shared/terms-dialog.js" defer></script>
+<script src="/delivery/bag.js" defer></script>
 <script src="/delivery/delivery.js" defer></script>
 </body>
 </html>

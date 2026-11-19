@@ -183,7 +183,7 @@ list as a printable ticket. A printed ticket at the counter is open (see `docs/d
 | Group fee below 5 at cutoff | organiser pays (up front, refunded at 5) |
 | Unpaid at cutoff | the drink is dropped |
 | Recurring | reminder email with a payment link, no stored card |
-| Zone | 700 m straight line from the café (`DELIVERY_RADIUS_M`), Photon address check (2026-11-18) |
+| Zone | Whole street blocks around the café: a block is in when half of its buildings' floor area is within 700 m and not across the railway out of Nyugati (2026-11-19). Outline in `worker/src/services/zone_area.ts`, built with the 3D map data by `worker/scripts/build_zone_map.py`; the Photon address check tests the house point against it |
 | Coffee box, reusable cups | shown as drafts in the FAQ, not orderable |
 
 ## Needed before building

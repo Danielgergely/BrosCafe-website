@@ -92,30 +92,42 @@
   const sliders = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>';
 
   // "Testreszabás": the options of one cup in a sheet (McDonald's style: hidden in the normal flow, one tap away)
-  let sheetApi = null, sheetCup = null, sheetDone = null, sheetBack = null;
-  function customize(c, onChange, back) {
+  // add(qty, cup): "add" mode (long press on a drink): a quantity on top, the button puts that many cups in the basket
+  let sheetApi = null, sheetCup = null, sheetDone = null, sheetBack = null, sheetAdd = null, sheetQty = 1, sheetMax = 1;
+  function customize(c, onChange, back, add, max = 50) {
     let dlg = $('#dl-custom');
     if (!dlg) {
       ($('main.dl') || document.body).insertAdjacentHTML('beforeend', `<dialog class="sheet dl-sheet" id="dl-custom" aria-labelledby="dl-custom-title">
         <div class="sheet__grab"><div class="sheet__head"><h2 class="sheet__title" id="dl-custom-title"></h2><button class="sheet__close" type="button" aria-label="${t('Bezárás')}">${cross}</button></div></div>
         <div class="dl-custom" id="dl-custom-body"></div>
-        <button class="btn dl-custom__done" type="button" data-close>${t('Kész')}</button></dialog>`);
+        <button class="btn dl-custom__done" type="button" id="dl-custom-done" data-close>${t('Kész')}</button></dialog>`);
       dlg = $('#dl-custom');
       sheetApi = B.shell.sheet(dlg);
-      $('#dl-custom-body').addEventListener('input', (e) => { if (sheetCup && e.target.dataset.k) { readOpt(sheetCup, e.target); sheetDone && sheetDone(); } });
-      dlg.addEventListener('close', () => sheetBack && sheetBack());
+      const done = $('#dl-custom-done');
+      const label = () => { if (sheetAdd) done.textContent = `${t('Kosárba')} · ${sheetQty} × ${ft(cupPrice(sheetCup))}`; };
+      $('#dl-custom-body').addEventListener('input', (e) => { if (sheetCup && e.target.dataset.k) { readOpt(sheetCup, e.target); sheetDone && sheetDone(); label(); } });
+      $('#dl-custom-body').addEventListener('click', (e) => {
+        const b = e.target.closest('[data-q]'); if (!b) return;
+        sheetQty = Math.max(1, Math.min(sheetMax, sheetQty + Number(b.dataset.q)));
+        $('#dl-custom-qty').textContent = sheetQty; label();
+      });
+      done.addEventListener('click', () => { if (sheetAdd) { const f = sheetAdd; sheetAdd = null; f(sheetQty, sheetCup); } });
+      dlg.addEventListener('close', () => { sheetAdd = null; sheetBack && sheetBack(); });
+      dlg.dl = { label };
     }
     const d = menu.get(c.id), uid = c.uid;
-    sheetCup = c; sheetDone = onChange; sheetBack = back; // back: puts the focus where the sheet was opened from
+    sheetCup = c; sheetDone = onChange; sheetBack = back; sheetAdd = add || null; sheetQty = 1; sheetMax = Math.max(1, max); // back: puts the focus where the sheet was opened from
     const pills = (k, label, opts) => `<fieldset class="dl-custom__group"><legend>${t(label)}</legend><div class="dl-custom__pills">${opts.map(([v, l]) => `<label class="dl-pill"><input type="radio" name="c-${k}-${uid}" data-k="${k}" value="${esc(String(v))}"${String(c[k]) === String(v) ? ' checked' : ''}><span>${esc(l)}</span></label>`).join('')}</div></fieldset>`;
     const box = (k, label) => `<label class="dl-check"><input type="checkbox" data-k="${k}"${c[k] ? ' checked' : ''}><span>${t(label)}</span></label>`;
     $('#dl-custom-title').textContent = d.name;
     $('#dl-custom-body').innerHTML =
+      (add ? `<div class="dl-custom__qty"><span>${t('Darab')}</span><span class="dl-qty"><button type="button" data-q="-1" aria-label="${t('Eggyel kevesebb')}">−</button><output id="dl-custom-qty" aria-live="polite">1</output><button type="button" data-q="1" aria-label="${t('Eggyel több')}">+</button></span></div>` : '') +
       (d.sizes.length ? pills('size', 'Méret', d.sizes.map((s, i) => [i, `${s.label} · ${ft(s.price)}`])) : '') +
       (d.temp === 'both' ? pills('iced', 'Forró vagy jeges', [['false', t('Forró')], ['true', t('Jeges')]]) : '') +
       (d.milks.length ? pills('milk', 'Tej', [['', t('Tehéntej')], ...d.milks.map((m) => [m, t(MILKS[m] || m)])]) : '') +
       (offers(d, 'decaf') || offers(d, 'cream') ? `<div class="dl-custom__group">${offers(d, 'decaf') ? box('decaf', 'Koffeinmentes') : ''}${offers(d, 'cream') ? box('cream', 'Tejszínhabbal') : ''}</div>` : '') +
       `<div class="dl-field dl-custom__note"><label for="dl-custom-note">${t('Megjegyzés a baristának')} <i>(${t('nem kötelező')})</i></label><input id="dl-custom-note" type="text" data-k="note" maxlength="80" value="${esc(c.note)}" placeholder="${t('Pl. extra forró, kevés hab')}" autocomplete="off"></div>`;
+    $('#dl-custom-done').textContent = t('Kész'); $('#dl-custom').dl.label();
     sheetApi.open();
   }
 
@@ -267,6 +279,29 @@
     });
   }
 
+  // The 3D zone map: loaded once its block is on screen and the device can draw it (WebGL); otherwise the sketch stays.
+  function map3d() {
+    const box = $('#dl-map3d'), fig = box && box.closest('.dl-map');
+    if (!fig || !('IntersectionObserver' in window)) return;
+    try { const c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) return; } catch (e) { return; }
+    const load = (src) => new Promise((ok, no) => {
+      const css = src.endsWith('.css'), el = document.createElement(css ? 'link' : 'script');
+      if (css) { el.rel = 'stylesheet'; el.href = src; } else el.src = src;
+      el.onload = ok; el.onerror = no; document.head.append(el);
+    });
+    const io = new IntersectionObserver((es) => {
+      if (!es.some((x) => x.isIntersecting)) return;
+      io.disconnect();
+      const lib = '/shared/vendor/maplibre-gl-4.7.1/maplibre-gl';
+      Promise.all([load(`${lib}.css`), load(`${lib}.js`)]).then(() => {
+        fig.classList.add('is-3d'); box.hidden = false; // the container needs its size before the map starts
+        $('#dl-map-cap').textContent = t('Zölddel a házak, ahova szállítunk. Koppints egy épületre: ha ide kéred, beírjuk a címét.');
+        return load('/delivery/map/map.js');
+      }).catch(() => { fig.classList.remove('is-3d'); box.hidden = true; });
+    }, { rootMargin: '300px' });
+    io.observe(fig);
+  }
+
   // ---------- order page ----------
   function orderPage() {
     const video = $('.dl-hero__video video');
@@ -287,13 +322,15 @@
       zr.innerHTML = res.status === 'in_zone' ? esc(t('Ide szállítunk.')) : res.status === 'out_of_zone' ? esc(t(ZONE_OUT))
         : `${esc(t('Ezt a címet nem találtuk a térképen.'))} <a href="/kapcsolat/">${esc(t('Írj nekünk'))}</a>, ${esc(t('és megnézzük.'))}`;
       zr.hidden = false;
+      document.dispatchEvent(new CustomEvent('dl:checked', { detail: { address: v } }));
     });
     addressBox(zf.elements.address, () => zf.requestSubmit());
+    map3d();
 
     const form = $('#dl-form'), F = (n) => form.elements[n], setErr = errors(form);
-    window.BROS_TERMS?.bind(form, 'dl');
+    window.BROS_TERMS?.bind(form, 'dl', { linkOnly: true });
     const menuEl = $('#dl-menu'), catsEl = $('#dl-cats'), cupsEl = $('#dl-cups'), daysEl = $('#dl-days'), slotsEl = $('#dl-slots'), sum = $('#dl-sum'), result = $('#dl-result'), ret = $('#dl-return'), payBtn = $('#dl-pay');
-    let cups = [], cat = CONFIG.cats[0], data = null, day = null, slot = null, capShown = false, sending = false, liveTimer = null; // slot: a slot id or 'rush'
+    let bag = null, cups = [], cat = CONFIG.cats[0], data = null, day = null, slot = null, capShown = false, sending = false, liveTimer = null; // slot: a slot id or 'rush'
     const kind = () => F('pay').value;
     const pickup = () => F('how').value === 'pickup';
 
@@ -351,35 +388,54 @@
       if (!cats.includes(cat)) cat = cats[0];
       catsEl.innerHTML = cats.map((c) => `<button type="button" class="chip" data-cat="${c}" aria-pressed="${c === cat}">${t(CATS[c] || c)}</button>`).join('');
       menuEl.innerHTML = [...menu.values()].filter((d) => d.cat === cat).map((d) => `
-        <li class="dl-item" data-id="${d.id}">
+        <li class="dl-item" data-id="${d.id}"><button type="button" class="dl-item__btn" aria-describedby="dl-menu-hint">
           ${d.photo ? `<img src="${d.photo}" alt="" loading="lazy" width="96" height="96">` : `<span class="dl-item__ph">${B.drinkArt ? B.drinkArt(d) : ''}</span>`}
-          <span class="dl-item__txt"><b>${esc(d.name)}</b><small>${d.sizes.length ? d.sizes.map((x) => ft(x.price)).join(' / ') : ft(d.price)}</small></span>
-          <span class="dl-qty"><button type="button" data-step="-1" aria-label="${esc(`${t('Eggyel kevesebb')}: ${d.name}`)}">−</button><output aria-label="${esc(`${d.name}: ${t('darab')}`)}">0</output><button type="button" data-step="1" aria-label="${esc(`${t('Eggyel több')}: ${d.name}`)}">+</button></span>
-        </li>`).join('');
+          <span class="dl-item__txt"><b>${esc(d.name)}</b><small>${d.sizes.length ? ft(Math.min(...d.sizes.map((x) => x.price))) : ft(d.price)}</small></span>
+          <span class="dl-item__n" aria-hidden="true"></span><span class="visually-hidden" data-n></span>
+        </button></li>`).join('');
       syncMenu();
     }
     function syncMenu() {
-      $$('.dl-item', menuEl).forEach((li) => { const n = count(li.dataset.id); $('output', li).textContent = n; li.classList.toggle('is-on', n > 0); $('[data-step="-1"]', li).setAttribute('aria-disabled', n ? 'false' : 'true'); });
+      $$('.dl-item', menuEl).forEach((li) => { const n = count(li.dataset.id); $('.dl-item__n', li).textContent = n || ''; $('[data-n]', li).textContent = n ? `, ${tn('{n} a kosárban', n)}` : ''; li.classList.toggle('is-on', n > 0); });
+    }
+    // one order holds at most MAX cups (the server's MAX_CUPS); the limit is only mentioned when it is reached
+    const MAX = 50, full = () => cups.length >= MAX;
+    const sayFull = () => B.shell.toast?.(t('Egy rendelésbe legfeljebb {n} ital fér.', { n: MAX }));
+    function addCups(c, n = 1) {
+      n = Math.min(n, MAX - cups.length); if (n <= 0) { sayFull(); return; }
+      for (let k = 0; k < n; k += 1) cups.push({ ...c, uid: newCup(c.id).uid, who: '' });
+      setErr('cups', ''); syncMenu(); renderCups(); summary(); 
     }
     let whoShown = false; // the empty name fields stay red once the guest tried to send
     function renderCups() {
       $('#dl-cups-empty').hidden = !!cups.length; $('#dl-cups-hint').hidden = !cups.length;
       cupsEl.innerHTML = cups.map((c, i) => { const d = menu.get(c.id), extra = [...cupOpts(c), c.note.trim() && `„${c.note.trim()}”`].filter(Boolean); return `
         <li class="dl-cup" data-uid="${c.uid}">
-          <span class="dl-cup__no" aria-hidden="true">${i + 1}</span>
-          <span class="dl-cup__name"><b>${esc(d.name)}</b><small data-price>${esc([ft(cupPrice(c)), ...extra].join(' · '))}</small></span>
-          <button type="button" class="dl-cup__btn${extra.length ? ' is-set' : ''}" data-custom aria-label="${esc(`${t('Testreszabás')}: ${i + 1}. ${d.name}`)}" title="${t('Testreszabás')}">${sliders}</button>
-          <button type="button" class="dl-cup__del" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">${cross}</button>
-          <div class="dl-cup__opts"><input type="text" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" required${whoShown && !c.who.trim() ? ' aria-invalid="true" aria-describedby="err-who"' : ''} placeholder="${t('Név a pohárra')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}"></div>
+          <button type="button" class="dl-cup__name${extra.length ? ' is-set' : ''}" data-custom aria-label="${esc(`${t('Testreszabás')}: ${i + 1}. ${d.name}`)}"><b>${esc(d.name)}</b><small data-price>${esc([ft(cupPrice(c)), ...extra].join(' · '))}</small></button>
+          <input type="text" class="dl-cup__who" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" required${whoShown && !c.who.trim() ? ' aria-invalid="true" aria-describedby="err-who"' : ''} placeholder="${t('Név')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}">
+          <span class="dl-cup__qty"><button type="button" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">−</button><button type="button" data-dup aria-label="${esc(`${t('Még egy ugyanilyen')}: ${d.name}`)}">+</button></span>
         </li>`; }).join('');
     }
     catsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; renderMenu(); $(`[data-cat="${cat}"]`, catsEl).focus(); });
+    // a tap puts the drink in the basket; a long press (or right click) opens its options with a quantity first
+    const openAdd = (id) => {
+      if (full()) { sayFull(); return; }
+      customize(newCup(id), null, () => $(`.dl-item[data-id="${id}"] button`, menuEl)?.focus(), (n, c) => addCups(c, n), MAX - cups.length);
+    };
+    let press = null, longDone = false;
+    menuEl.addEventListener('pointerdown', (e) => {
+      const li = e.target.closest('.dl-item'); if (!li || e.button) return;
+      longDone = false; clearTimeout(press?.timer);
+      press = { x: e.clientX, y: e.clientY, timer: setTimeout(() => { longDone = true; navigator.vibrate?.(12); openAdd(li.dataset.id); }, 450) };
+    });
+    const unpress = () => { clearTimeout(press?.timer); press = null; };
+    menuEl.addEventListener('pointermove', (e) => { if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) unpress(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => menuEl.addEventListener(ev, unpress));
+    menuEl.addEventListener('contextmenu', (e) => { const li = e.target.closest('.dl-item'); if (!li) return; e.preventDefault(); if (!longDone) { unpress(); longDone = true; openAdd(li.dataset.id); } });
     menuEl.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-step]'); if (!b) return;
-      const id = b.closest('.dl-item').dataset.id;
-      if (b.dataset.step === '1') { cups.push(newCup(id)); B.shell.toast?.(t('Kosárba tettük: {name}', { name: menu.get(id).name })); }
-      else { const i = cups.map((c) => c.id).lastIndexOf(id); if (i < 0) return; cups.splice(i, 1); }
-      setErr('cups', ''); syncMenu(); renderCups(); summary();
+      const li = e.target.closest('.dl-item'); if (!li) return;
+      if (longDone) { longDone = false; return; } // the long press already opened the options
+      addCups(newCup(li.dataset.id));
     });
     cupsEl.addEventListener('click', (e) => {
       const li = e.target.closest('.dl-cup'); if (!li) return;
@@ -389,9 +445,15 @@
         customize(cups[i], () => { renderCups(); summary(); }, () => $(`.dl-cup[data-uid="${uid}"] [data-custom]`, cupsEl)?.focus());
         return;
       }
+      if (e.target.closest('[data-dup]')) {
+        if (full()) { sayFull(); return; }
+        cups.splice(i + 1, 0, { ...cups[i], uid: newCup(cups[i].id).uid, who: '' }); syncMenu(); renderCups(); summary(); 
+        $(`.dl-cup[data-uid="${cups[i + 1].uid}"] .dl-cup__who`, cupsEl)?.focus();
+        return;
+      }
       if (!e.target.closest('[data-del]')) return;
       cups.splice(i, 1); syncMenu(); renderCups(); summary();
-      ($$('[data-del]', cupsEl)[Math.min(i, cups.length - 1)] || $('[data-step="1"]', menuEl))?.focus();
+      ($$('[data-del]', cupsEl)[Math.min(i, cups.length - 1)] || $('.dl-item button', menuEl))?.focus();
     });
     cupsEl.addEventListener('input', (e) => {
       const li = e.target.closest('.dl-cup'); if (!li || e.target.dataset.k !== 'who') return;
@@ -411,7 +473,7 @@
       const d = d0 && { ...d0, slots: d0.slots.filter((s) => !gone(s)) };
       const why = { full: t('Betelt'), closed: t('Ezen a napon ekkor nem szállítunk') };
       slotsEl.innerHTML = (rush ? `<label class="dl-slot dl-slot--rush"><input type="radio" name="slot" value="rush"${slot === 'rush' ? ' checked' : ''}><span><b>${t('Rush — amint lehet')}</b><small>${t('Kérésként megy: 10 percen belül visszaigazoljuk, mikorra visszük (általában kb. {m} perc). Addig csak zároljuk az összeget. Legfeljebb {n} ital.', { m: data.rush.eta_min, n: data.rush.max_drinks })}</small></span></label>` : '') +
-        (d ? d.slots.map((s) => `<label class="dl-slot${s.status === 'open' ? '' : ' is-off'}"><input type="radio" name="slot" value="${s.id}"${s.id === slot ? ' checked' : ''}${s.status === 'open' ? '' : ' disabled'}><span><b>${hm(s.time)}</b><small>${s.status === 'open' ? `${t('Rendelés {t}-ig', { t: clock(s.cutoff_at) })} · ${tn('még {n} pohár fér', s.left)}` : why[s.status]}</small></span></label>`).join('') : '') ||
+        (d ? d.slots.map((s) => `<label class="dl-slot${s.status === 'open' ? '' : ' is-off'}"><input type="radio" name="slot" value="${s.id}"${s.id === slot ? ' checked' : ''}${s.status === 'open' ? '' : ' disabled'}><span><b>${hm(s.time)}</b><small>${s.status === 'open' ? `${t('Rendelés {t}-ig', { t: clock(s.cutoff_at) })}` : why[s.status]}</small></span></label>`).join('') : '') ||
         `<p class="dl-state">${t('Most nincs rendelhető időpont. Nézz vissza később!')}</p>`;
     }
     const gone = (s) => s.status === 'past' || (s.cutoff_at && Date.parse(s.cutoff_at) <= Date.now());
@@ -446,23 +508,24 @@
     }
     const firstOpen = () => (data?.days.find((d) => d.date === day)?.slots || []).find((s) => s.status === 'open' && !gone(s))?.id || null;
     daysEl.addEventListener('click', (e) => { const b = e.target.closest('[data-day]'); if (!b) return; day = b.dataset.day; slot = firstOpen(); setErr('slot', ''); renderSlots(); summary(); $(`[data-day="${day}"]`, daysEl).focus(); });
-    slotsEl.addEventListener('change', (e) => { if (e.target.name !== 'slot') return; slot = e.target.value; setErr('slot', ''); capShown = false; $$('[data-day]', daysEl).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.day === day && slot !== 'rush'))); summary(); });
+    slotsEl.addEventListener('change', (e) => { if (e.target.name !== 'slot') return; slot = e.target.value; setErr('slot', ''); capShown = false; setTimeout(() => { e.target.blur(); closeStep(slotsEl.closest('.dl-step')); }, 450); $$('[data-day]', daysEl).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.day === day && slot !== 'rush'))); summary(); });
     // the basket no longer fits the chosen time: say so right away, not only on submit
-    const capMsg = () => (!data || !slot ? '' : slot === 'rush' ? (cups.length > data.rush.max_drinks ? t('Rush rendelésben legfeljebb {n} ital lehet.', { n: data.rush.max_drinks }) : '') : curSlot() && cups.length > curSlot().left ? tn('Erre az időpontra már csak {n} pohár fér.', curSlot().left) : '');
+    const capMsg = () => (!data || !slot ? '' : slot === 'rush' ? (cups.length > data.rush.max_drinks ? t('Rush rendelésben legfeljebb {n} ital lehet.', { n: data.rush.max_drinks }) : '') : curSlot() && cups.length > curSlot().left ? t('Erre az időpontra már nem fér be ennyi ital. Válaszd a következő szabad időpontot.') : '');
 
     // 1 · delivery or pickup, who pays
-    const invRequired = (k) => k === 'company' && !pickup(); // a company delivery is invoiced; a group organiser or a pickup only on request
-    const needInv = (k) => invRequired(k) || F('inv_want').checked;
+    // an invoice only on request: the button opens its fields
+    let invOn = false;
+    const invRequired = () => false;
+    const needInv = () => invOn;
+    const invBtn = $('#dl-inv-want');
+    const setInv = (on) => { invOn = on; invBtn.setAttribute('aria-expanded', String(on)); $('#dl-inv').hidden = !on; $('span', invBtn).textContent = on ? '−' : '+'; if (!on) INV.forEach((n) => setErr(n, '')); };
+    invBtn.addEventListener('click', () => { setInv(!invOn); if (invOn) F('inv_name').focus(); ready(); });
     function mode() {
       const pick = pickup();
       if (pick && kind() === 'group') F('pay').value = 'company'; // a group order is always delivered
-      const g = kind() === 'group', optional = !invRequired(kind()), inv = !optional || F('inv_want').checked;
-      $('#dl-where').hidden = pick; $('#dl-who-pays').hidden = pick; $('#dl-addr-more').hidden = pick;
-      $('#dl-inv').hidden = !inv; $('#dl-inv-want').hidden = !optional; $('#dl-group-hint').hidden = !g;
+      const g = kind() === 'group';
+      $('#dl-where').hidden = pick; $('#dl-who-pays').hidden = pick; $('#dl-addr-more').hidden = pick; $('#dl-group-hint').hidden = !g;
       $('#dl-inv-want-txt').textContent = g ? t('Számlát kérek a saját italomról') : t('Számlát kérek');
-      $('#dl-inv-head').textContent = optional ? t('Számlázási adatok') : t('Céges számla');
-      $('#dl-inv-name-label').textContent = optional ? t('Név vagy cégnév') : t('Cégnév');
-      if (!inv) INV.forEach((n) => setErr(n, ''));
       if (pick) ['company', 'street', 'floor'].forEach((n) => setErr(n, ''));
       if (pick && slot === 'rush') slot = null;
       payBtn.textContent = g ? t('Csoportos rendelés indítása') : t('Fizetés');
@@ -470,10 +533,16 @@
     }
     form.addEventListener('change', (e) => { if (['pay', 'how', 'inv_want'].includes(e.target.name)) mode(); });
     $('[data-pickup]').addEventListener('click', () => { F('how').value = 'pickup'; mode(); $('input[name="how"][value="pickup"]').focus(); });
+    // a building picked on the 3D map: its address goes into the form (or pickup, outside the zone)
+    document.addEventListener('dl:pick', (e) => {
+      F('how').value = e.detail.pickup ? 'pickup' : 'delivery'; mode();
+      if (!e.detail.pickup) { F('street').value = e.detail.address; delete F('street').dataset.postcode; checkZone(); }
+      $('#dl-step-where').scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
+      setTimeout(() => (e.detail.pickup ? $('input[name="how"][value="pickup"]') : F('street')).focus({ preventScroll: true }), calm ? 0 : 500);
+    });
     F('tax_number').addEventListener('blur', (e) => { e.target.value = taxFmt(e.target.value); });
 
-    // summary + the phone bar
-    const bar = $('#dl-bar'), barBtn = $('#dl-bar-btn');
+    // summary, the bag (phone), the steps and the pay button follow every change
     function summary() {
       const n = cups.length, sub = cups.reduce((s, c) => s + cupPrice(c), 0), pick = pickup(), fee = n && !pick ? feeFor(n) : 0;
       const row = (k, v, cls) => `<div${cls ? ` class="${cls}"` : ''}><dt>${k}</dt><dd>${v}</dd></div>`;
@@ -486,19 +555,82 @@
         row(t('Fizetendő'), ft(sub + fee), 'dl-sum__total');
       const cap = capMsg();
       if (cap) { setErr('slot', cap); capShown = true; } else if (capShown) { setErr('slot', ''); capShown = false; }
-      $('#dl-bar-sum').textContent = n ? ft(sub + fee) : t('{n} italtól ingyenes', { n: RULES.freeFrom });
-      $('#dl-bar-txt').textContent = n ? `${tn('{n} ital', n)}${slotText() ? ` · ${slotText()}` : ''}` : t('alatta {fee} a kiszállítás', { fee: ft(RULES.fee) });
-      barBtn.textContent = n ? t('Kosár') : t('Rendelek');
-      barBtn.setAttribute('href', !n ? '#rendeles' : !slot ? '#dl-days' : '#dl-sum-card');
+      fillBag(n, sub, fee);
+      steps(); ready();
       // screen readers hear the total once the basket settles, not on every keystroke
       clearTimeout(liveTimer); liveTimer = setTimeout(() => { $('#dl-sum-live').textContent = n ? `${tn('{n} ital', n)}, ${t('Fizetendő')}: ${ft(sub + fee)}` : ''; }, 900);
     }
-    const heroBtn = $('.dl-hero__actions'), sumCard = $('#dl-sum-card');
-    const placeBar = () => { bar.hidden = heroBtn.getBoundingClientRect().bottom > 60 || sumCard.getBoundingClientRect().top < innerHeight - 80; };
-    addEventListener('scroll', placeBar, { passive: true }); addEventListener('resize', placeBar); placeBar();
+
+    // the four steps: a finished one folds to one line with a check once the guest moves on (a time folds when picked)
+    const stepEls = $$('.dl-step', form), tick = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+    stepEls.forEach((el) => {
+      $('legend', el).insertAdjacentHTML('beforeend', `<span class="dl-step__sum"></span><button type="button" class="dl-step__edit">${t('Módosítás')}</button>`);
+      $('.dl-step__no', el).insertAdjacentHTML('beforeend', tick);
+      el.addEventListener('click', (e) => { if (el.classList.contains('is-closed') && e.target.closest('legend')) openStep(el, true); });
+    });
+    const isOk = (n) => !rules[n](val(n), kind());
+    const stepDone = [
+      () => pickup() || (val('street').length >= 4 && zone.v === val('street') && !!zone.status && zone.status !== 'out_of_zone'),
+      () => cups.length > 0,
+      () => !!slot && isOk('slot'),
+      () => [...(pickup() ? [] : ['company', 'floor']), 'name', 'email', ...(invOn ? INV : [])].every(isOk),
+    ];
+    const stepSum = [
+      () => (pickup() ? `${t('Elvitel')} · Csanády u. 4/b` : `${val('street')} · ${kind() === 'group' ? t('Mindenki a sajátját') : t('Egyben fizetek')}`),
+      () => `${tn('{n} ital', cups.length)} · ${ft(cups.reduce((x, c) => x + cupPrice(c), 0))}`,
+      () => slotText(),
+      () => [val('name'), val('email')].filter(Boolean).join(' · '),
+    ];
+    function steps() {
+      stepEls.forEach((el, i) => {
+        const ok = stepDone[i]();
+        el.classList.toggle('is-done', ok);
+        if (!ok) el.classList.remove('is-closed');
+        $('.dl-step__sum', el).textContent = ok ? stepSum[i]() : '';
+      });
+      railSet();
+    }
+    function openStep(el, focus) { el.classList.remove('is-closed'); if (focus) $('input:not([type="hidden"]):not([disabled]), .dl-item button', el)?.focus({ preventScroll: true }); }
+    const closeStep = (el) => { if (el.classList.contains('is-done') && !el.contains(document.activeElement)) el.classList.add('is-closed'); };
+    // moving on to a later step folds the finished ones above it (never the last one, never the one being worked in)
+    const moveOn = (e) => {
+      const at = e.target.closest?.('.dl-step, .dl-sum'); if (!at) return;
+      const k = at.matches('.dl-sum') ? stepEls.length : stepEls.indexOf(at);
+      stepEls.slice(0, Math.min(k, stepEls.length - 1)).forEach(closeStep);
+    };
+    form.addEventListener('pointerdown', moveOn); form.addEventListener('focusin', moveOn);
+    // the pay button stays grey until everything is filled in (a tap on it still shows what is missing)
+    function ready() {
+      const k = kind(), need = [...BASE.filter((n) => !pickup() || !PLACE.includes(n)), ...(needInv(k) ? INV : []), 'terms'];
+      const ok = need.every(isOk) && (pickup() || zone.status !== 'out_of_zone');
+      payBtn.classList.toggle('is-off', !ok); payBtn.setAttribute('aria-disabled', String(!ok));
+    }
+    form.addEventListener('input', () => { steps(); ready(); });
+    form.addEventListener('change', () => { steps(); ready(); });
+
+    // the side rail (1-4) and the paper bag (phone): components.js; the bag hides once the basket card is on screen
+    const sumCard = $('#dl-sum-card'), orderSec = $('#rendeles');
+    const rail = window.DLRail?.mount({ steps: stepEls.map((el) => ({ label: $('.dl-step__t', el)?.textContent || '', target: el })), onGo: (no, el) => { openStep(el); } });
+    const curStep = () => { let k = 0; stepEls.forEach((el, i) => { if (el.getBoundingClientRect().top < innerHeight * 0.45) k = i; }); return k; };
+    function railSet() { rail?.set({ current: curStep() + 1, done: stepEls.map((el, i) => (el.classList.contains('is-done') ? i + 1 : 0)).filter(Boolean) }); }
+    bag = window.DLBag?.mount({ label: (n) => tn('Kosár: {n} ital', n), onCheckout: () => { sumCard.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' }); } }) || null;
+    function fillBag(n, sub, fee) {
+      if (!bag) return;
+      bag.set(n);
+      bag.list.innerHTML = cups.map((c) => { const d = menu.get(c.id), extra = [...cupOpts(c), c.who.trim()].filter(Boolean); return `<li><span>${esc(d.name)}${extra.length ? `<small>${esc(extra.join(' · '))}</small>` : ''}</span><span>${ft(cupPrice(c))}</span></li>`; }).join('') +
+        (fee ? `<li><span>${t('Kiszállítás')}</span><span>${ft(fee)}</span></li>` : '');
+      bag.total.textContent = ft(sub + fee);
+    }
+    const place = () => {
+      const r = orderSec.getBoundingClientRect(), s2 = sumCard.getBoundingClientRect();
+      bag?.hide(s2.top < innerHeight - 80 || r.top > innerHeight * 0.6);
+      rail?.show(r.top < innerHeight * 0.5 && s2.bottom > innerHeight * 0.3);
+      railSet();
+    };
+    addEventListener('scroll', place, { passive: true }); addEventListener('resize', place);
 
     // validation
-    const BASE = ['street', 'cups', 'who', 'slot', 'company', 'floor', 'name', 'email', 'phone'], PLACE = ['street', 'company', 'floor'], INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
+    const BASE = ['street', 'cups', 'who', 'slot', 'company', 'floor', 'name', 'email'], PLACE = ['street', 'company', 'floor'], INV = ['inv_name', 'tax_number', 'zip', 'city', 'inv_street'];
     const rules = {
       cups: (v, k) => (cups.length ? '' : k === 'group' ? t('Add hozzá a saját italodat: a csoportos rendelést is egy itallal indítod.') : t('Válassz legalább egy italt.')),
       who: () => (cups.some((c) => !c.who.trim()) ? t('Írj nevet minden pohárra.') : ''),
@@ -508,7 +640,6 @@
       floor: (v) => (v.length >= 1 ? '' : t('Add meg az emeletet.')),
       name: (v) => (v.length >= 2 ? '' : t('Add meg a neved.')),
       email: (v) => (EMAIL.test(v) ? '' : t('Adj meg egy érvényes e-mail-címet.')),
-      phone: (v) => (v.replace(/\D/g, '').length >= 7 ? '' : t('Adj meg egy telefonszámot, amin elérünk.')),
       inv_name: (v, k) => (v.length >= 2 ? '' : !invRequired(k) ? t('Add meg a számlán szereplő nevet.') : t('Add meg a cég nevét.')),
       tax_number: (v, k) => ((!invRequired(k) && !v) || /^\d{8}-\d-\d{2}$/.test(taxFmt(v)) ? '' : t('Az adószám formátuma: 12345678-1-12.')),
       zip: (v) => (/^\d{4}$/.test(v) ? '' : t('A magyar irányítószám 4 számjegy.')),
@@ -537,22 +668,24 @@
       zoneNote.dataset.s = zone.status; zoneNote.hidden = zone.status === 'out_of_zone';
       $('#dl-out').hidden = zone.status !== 'out_of_zone';
       check1('street');
+      document.dispatchEvent(new CustomEvent('dl:checked', { detail: { address: v } }));
     }
     addressBox(F('street'), checkZone);
     F('street').addEventListener('change', checkZone);
     F('street').addEventListener('input', () => { zoneNote.hidden = true; $('#dl-out').hidden = true; });
     form.addEventListener('focusout', (e) => { const n = e.target.name; if (rules[n] && !['terms', 'slot'].includes(n) && (e.target.value || e.target.getAttribute('aria-invalid'))) check1(n, kind()); });
     F('terms').addEventListener('change', () => check1('terms'));
-    const focusBad = (n) => (n === 'street' && !$('#dl-out').hidden ? $('[data-pickup]') : n === 'cups' ? $('[data-step="1"]', menuEl) : n === 'who' ? $('[data-k="who"][aria-invalid]', cupsEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n))?.focus();
+    const focusBad = (n) => { const el = focusOf(n); el?.closest('.dl-step')?.classList.remove('is-closed'); el?.focus(); };
+    const focusOf = (n) => (n === 'street' && !$('#dl-out').hidden ? $('[data-pickup]') : n === 'cups' ? $('.dl-item button', menuEl) : n === 'who' ? $('[data-k="who"][aria-invalid]', cupsEl) : n === 'slot' ? $('input[name="slot"]:not([disabled])', slotsEl) || $('[data-day]', daysEl) : F(n));
 
     function payload(k) {
       const s = curSlot();
       return { kind: k, pickup: pickup(), date: slot === 'rush' ? today() : day, slot_id: s ? s.id : null, rush: slot === 'rush', items: cups.map(cupItem),
-        address: { company: val('company'), street: val('street'), postcode: F('street').dataset.postcode || '', floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: val('phone') },
+        address: { company: val('company'), street: val('street'), postcode: F('street').dataset.postcode || '', floor: val('floor'), note: val('note') }, contact: { name: val('name'), email: val('email'), phone: '' },
         invoice: needInv(k) ? { name: val('inv_name'), tax_number: val('tax_number'), zip: val('zip'), city: val('city'), street: val('inv_street') } : null, terms: true, lang: B.lang,
         return_path: location.pathname }; // Stripe sends the payer back under this page, wherever the site is mounted
     }
-    const problem = (err) => (err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'slot_full' ? tn('Erre az időpontra már csak {n} pohár fér.', err.left ?? 0) : err.code === 'slot_closed' || err.code === 'rush_off' ? t('Ez az időpont közben lezárult. Válassz másikat.') : t('Most nem sikerült elküldeni a rendelést. Próbáld újra egy perc múlva.'));
+    const problem = (err) => (err.code === 'bookings_closed' ? t(CLOSED) : err.code === 'payments_not_configured' ? t(NOT_READY) : err.code === 'slot_full' ? t('Erre az időpontra már nem fér be ennyi ital. Válaszd a következő szabad időpontot.') : err.code === 'slot_closed' || err.code === 'rush_off' ? t('Ez az időpont közben lezárult. Válassz másikat.') : t('Most nem sikerült elküldeni a rendelést. Próbáld újra egy perc múlva.'));
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -578,7 +711,7 @@
       sending = false; busy(payBtn, false);
     });
 
-    mode(); renderCups();
+    mode(); renderCups(); place();
     loadSlots();
     menuEl.innerHTML = `<li class="dl-state" role="status">${t('Itallap betöltése…')}</li>`;
     const menuReady = loadMenu().then(() => { if (!menu.size) throw new Error('empty'); renderMenu(); }).catch(() => { menuEl.innerHTML = `<li class="dl-state" role="alert">${t('Az itallap most nem érhető el. Próbáld újra egy perc múlva.')}</li>`; });
@@ -588,8 +721,9 @@
     const again = $('#dl-again');
     function fill(o, all) {
       const set = (n, v) => { const el = F(n); if (el && v != null && (all || !el.value.trim())) el.value = v; };
-      if (all) { F('how').value = o.pickup ? 'pickup' : 'delivery'; F('pay').value = o.kind; F('inv_want').checked = (o.kind === 'group' || !!o.pickup) && !!o.invoice; mode(); }
-      Object.entries({ company: o.address.company, street: o.address.street, floor: o.address.floor, note: o.address.note, name: o.contact.name, email: o.contact.email, phone: o.contact.phone }).forEach(([n, v]) => set(n, v));
+      if (all) { F('how').value = o.pickup ? 'pickup' : 'delivery'; F('pay').value = o.kind; setInv(!!o.invoice); mode(); }
+      Object.entries({ company: o.address.company, street: o.address.street, floor: o.address.floor, note: o.address.note, name: o.contact.name, email: o.contact.email }).forEach(([n, v]) => set(n, v));
+      if (o.invoice && (all || o.kind === kind())) setInv(true);
       if (o.invoice && (all || o.kind === kind())) Object.entries({ inv_name: o.invoice.name, tax_number: o.invoice.tax_number, zip: o.invoice.zip, city: o.invoice.city, inv_street: o.invoice.street }).forEach(([n, v]) => set(n, v));
       if (all) {
         const known = o.items.filter((i) => menu.has(i.product_id));
@@ -706,7 +840,7 @@
     }
     function bindForm() {
       const form = $('#dl-join'), setErr = errors(form), F = (n) => form.elements[n], opts = $('#dl-join-opts'), btn = $('.dl-join__btn', form), out = $('#dl-join-result');
-      window.BROS_TERMS?.bind(form, 'dl');
+      window.BROS_TERMS?.bind(form, 'dl', { linkOnly: true });
       if (guestToken()) B.shell.customer.me().then((m) => { if (!m) return; ['name', 'email', 'loyalty_email'].forEach((n) => { if (!F(n).value) F(n).value = n === 'name' ? m.name : m.email; }); }).catch(() => {});
       const price = () => { btn.textContent = cup ? `${t('Hozzáadom és fizetek')} · ${ft(cupPrice(cup))}` : t('Hozzáadom és fizetek'); };
       cup = null;

@@ -75,6 +75,11 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-19 3D zone map on /delivery/ ("Hova visszük?"): OSM buildings in 3D, olive = delivered, grey = outside, landmarks
+  (Lehel Piac, Westend, Nyugati, Vígszínház, Skála, Olimpia park). Tap a building → "Ide kérem" fills the order address. Zone is now
+  whole street blocks (Daniel: follow streets, never cut a building), nothing across the railway out of Nyugati; the server
+  check uses the same outline. Self-hosted
+  (MapLibre in site/shared/vendor, data in site/delivery/map/zone.json); rebuild with worker/scripts/build_zone_map.py.
 - 2026-11-19 Simpler order page (Daniel, Starbucks/McDonald's model): "Hova kéritek?" first (delivery or pickup + address check
   before any drink; outside the zone one tap to "Elvitelre kérem"), full menu per category, basket on the right with cup names,
   earliest free time pre-selected, details last. Milk, decaf, whipped cream and a note per cup in a "Testreszabás" sheet (also on the
