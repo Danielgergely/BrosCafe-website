@@ -377,7 +377,7 @@
             ${d.code ? `<label class="ad-small">${esc(L('Cím, pl. „Ha a főnök hív” (borítókép nélkül ez látszik a csempén)', 'Title, e.g. “When the boss calls” (shown on the tile when there is no cover)'))}
               <input class="ad-sel" data-cap maxlength="80" value="${esc(d.caption || '')}"></label>
             <span class="ad-small">${esc(L('Borítókép (nem kötelező): a kész borító a 04_Boritok mappából (iCloud → HungBros → 07_Arculat → Instagram → 04_Boritok), egy kép, vagy a reel videója csúszkával. Nélküle a cím látszik a kávézó színein.', 'Cover (optional): the finished cover from the 04_Boritok folder (iCloud → HungBros → 07_Arculat → Instagram → 04_Boritok), a picture, or the reel video with a slider. Without one the title shows on the café colours.'))}</span>
-            <div class="ad-row"><label class="ad-btn ad-btn--ghost">${esc(pic ? L('Másik borítókép', 'Another cover') : L('Borítókép kiválasztása', 'Pick a cover'))}<input type="file" accept="image/*,video/*" data-cover hidden></label>
+            <div class="ad-row"><button type="button" class="ad-btn${pic ? ' ad-btn--ghost' : ''}" data-make>${esc(L('Borító készítése videóból', 'Make a cover from the video'))}</button><label class="ad-btn ad-btn--ghost">${esc(pic ? L('Másik borítókép', 'Another cover') : L('Kész borítókép kiválasztása', 'Pick a finished cover'))}<input type="file" accept="image/*,video/*" data-cover hidden></label>
               ${pic ? `<button type="button" class="ad-btn ad-btn--ghost" data-nocover>${esc(L('Borítókép nélkül', 'No cover'))}</button>` : ''}</div>
             <div class="ad-row">${d.urlEn || d.cover_en ? `<img class="ad-reel__en" src="${esc(d.urlEn || d.cover_en)}" alt="">` : ''}<label class="ad-btn ad-btn--ghost">${esc(d.urlEn || d.cover_en ? L('Másik angol borító', 'Another English cover') : L('Angol borító (nem kötelező)', 'English cover (optional)'))}<input type="file" accept="image/*" data-cover-en hidden></label>
               ${d.urlEn || d.cover_en ? `<button type="button" class="ad-btn ad-btn--ghost" data-noen>${esc(L('Angol borító nélkül', 'No English cover'))}</button>` : ''}</div>
@@ -450,6 +450,17 @@
         }
         if (e.target.closest('[data-cancel]')) return reset();
         if (e.target.closest('[data-nocover]')) { keep(); dropUrl(); d.cover = ''; return draw(); }
+        if (e.target.closest('[data-make]')) {
+          keep();
+          BA.coverMaker({ onDone: ({ hu, en, caption }) => {
+            dropUrl(); dropEn();
+            Object.assign(d, { url: URL.createObjectURL(hu), video: false, urlEn: en ? URL.createObjectURL(en) : '' });
+            if (!en) d.cover_en = '';
+            if (!d.caption && caption) d.caption = caption;
+            draw();
+          } });
+          return;
+        }
         if (e.target.closest('[data-noen]')) { keep(); dropEn(); d.cover_en = ''; return draw(); }
         if (e.target.closest('[data-save]')) {
           const btn = e.target.closest('[data-save]'); btn.disabled = true; keep();
