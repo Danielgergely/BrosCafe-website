@@ -117,7 +117,7 @@ cheap.
   ordering and the plant give it real app value.
 - **Shared groundwork:** it reuses the staff app's web-app work (manifest, push).
 
-## 5. Instagram feed on the website
+## 5. Instagram feed on the website (BUILT 2026-11-20: pasted links + our covers, no Instagram API)
 
 The current videos are a fixed handful. The goal is our pinned reels plus the most viewed, always up to date.
 
@@ -150,4 +150,6 @@ The current videos are a fixed handful. The goal is our pinned reels plus the mo
     (open on Instagram) link.
   - Visitors stay on the site; the plays may count as views (not confirmed by Instagram), and followers come from
     the button.
-
+- **Outcome (2026-11-20):** the API needs a Meta developer app on a Facebook account; Benjamin's Facebook holds
+  broscafe.co and the setup failed after hours. Built instead: staff paste the reel link in admin → Videók and pick a
+  cover (a screenshot or the reel video, frame slider); a tap plays Instagram's own player. No view sorting.

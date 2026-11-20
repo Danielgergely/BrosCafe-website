@@ -330,3 +330,16 @@ button.clip:active { transform: scale(.97); }
   .item, .mrow, .chip, .lcard, .tap, .clip { transition: none; }
   .status { transition-duration: .01s; }
 }
+
+/* Instagram reels (site.js reels()): cover + play badge; Instagram's player opens in a sheet */
+.clip--reel { padding: 0; border: 0; cursor: pointer; }
+.clip__play { position: absolute; z-index: 1; top: 50%; left: 50%; display: grid; place-items: center; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgb(20 20 14 / .45); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.clip__play svg { width: 24px; height: 24px; margin-left: 3px; }
+.clip--reel .clip__cap { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.reel-sheet { display: none; }
+.reel-sheet[open] { display: flex; flex-direction: column; overflow: auto; }
+.reel-sheet__frame { display: grid; place-items: center; }
+.reel-sheet__frame iframe { width: 100%; max-width: 420px; height: min(68dvh, 680px); border: 0; border-radius: var(--r-md); background: #fff; }
+.reel-sheet__fine { margin: 10px 0 0; text-align: center; font-size: 12.5px; color: var(--text-soft); }
+.reel-sheet__acts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 18px; margin-top: 14px; }
+@media (min-width: 900px) { .reel-sheet { inset: 0; max-width: 480px; height: fit-content; max-height: 92dvh; margin: auto; padding-bottom: 20px; border-radius: 28px; } .reel-sheet .sheet__grab::before { display: none; } }

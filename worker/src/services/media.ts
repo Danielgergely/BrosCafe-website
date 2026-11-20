@@ -75,7 +75,9 @@ export async function usage(app: App, url: string): Promise<string[]> {
     .bind(url)
     .all<{ id: string }>();
   const posts = await app.db.content.find({ image: url }, { projection: { id: 1 }, limit: 200 });
-  return [...products.map((d) => d.id), ...posts.map((d) => d.id)];
+  const reels = (((await app.db.settings.findOne({ _key: 'reels' })) ?? {}).items ?? []) as Doc[];
+  const inReels = reels.some((r) => r.cover === url) ? ['videos'] : [];
+  return [...products.map((d) => d.id), ...posts.map((d) => d.id), ...inReels];
 }
 
 export async function remove(app: App, filename: string): Promise<boolean> {

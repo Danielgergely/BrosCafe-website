@@ -76,6 +76,10 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
 - 2026-11-14 (Claude, on that instruction): dropped B Napló: the most conventional and closest to A (cream, serif, editorial)
 
 ## Feedback log
+- 2026-11-20 Instagram reels on /ujdonsagok/ (Daniel): no Instagram API (the Meta app needs a Facebook account; the setup
+  on Benjamin's failed) and no scraping (embed pages no longer carry the cover). Admin → Weboldal → Videók: paste the reel
+  link, pick a cover (screenshot, or the reel video with a frame slider), order/caption/delete (services/reels.ts).
+  A tap plays Instagram's player in a sheet + "Kövess minket" (so it can count on Instagram). Empty list = the old 4 clips.
 - 2026-11-19 Guests cancel Delivery orders online (Daniel): link in the confirmation email and on /fiok/ → /delivery/lemondas/,
   until the order deadline, refund minus 3 % (DL_CANCEL_FEE_PCT). Company/pickup: whole order; group colleague: own drink;
   organiser: whole group, colleagues refunded in full. Invoice: correcting invoice keeping the fee; no invoice: staff email says

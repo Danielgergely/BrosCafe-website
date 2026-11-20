@@ -7,13 +7,13 @@
     live: L('Élő forgalom', 'Live sales'), overview: L('Áttekintés', 'Overview'), funnel: L('Tölcsér', 'Funnel'), customers: L('Vendégek', 'Customers'),
     coffee: L('Kávé', 'Coffee'), rewards: L('Jutalmak', 'Rewards'), retention: L('Megtartás', 'Retention'), segments: L('Szegmensek', 'Segments'),
     members: L('Tagok', 'Members'), transactions: L('Tranzakciók', 'Transactions'), wallet: L('Pénztárca', 'Wallet'),
-    products: L('Étlap', 'Menu'), journal: L('Napló', 'Journal'), photos: L('Képek', 'Photos'), settings: L('Beállítások', 'Settings'), staff: L('Munkatársak', 'Staff'),
+    products: L('Étlap', 'Menu'), journal: L('Napló', 'Journal'), photos: L('Képek', 'Photos'), reels: L('Videók', 'Videos'), settings: L('Beállítások', 'Settings'), staff: L('Munkatársak', 'Staff'),
   };
   const GROUPS = [
     { id: 'live', label: TABS.live, tabs: ['live'] },
     { id: 'stats', label: L('Statisztika', 'Statistics'), tabs: ['overview', 'funnel', 'customers', 'coffee', 'rewards', 'retention', 'segments'] },
     { id: 'loyalty', label: L('Hűségprogram', 'Loyalty'), tabs: ['members', 'transactions', 'wallet'] },
-    { id: 'site', label: L('Weboldal', 'Website'), tabs: ['products', 'journal', 'photos'] },
+    { id: 'site', label: L('Weboldal', 'Website'), tabs: ['products', 'journal', 'photos', 'reels'] },
     { id: 'settings', label: L('Beállítások', 'Settings'), tabs: ['settings', 'staff'] },
   ];
   const BOOKINGS = [{ id: 'after-hours', href: '/admin/after-hours/', label: 'Bros After Hours' }, { id: 'delivery', href: '/admin/delivery/', label: 'Bros Delivery' }];

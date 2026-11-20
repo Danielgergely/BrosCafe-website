@@ -354,8 +354,40 @@
     });
     document.addEventListener('visibilitychange', () => $$('video', row).forEach((v) => { if (document.hidden) v.pause(); else if (v.dataset.on && !v.dataset.stop) v.play().catch(() => {}); }));
   }
+  // Our Instagram reels (worker: services/reels.ts, picked in the admin): our own covers in a row; a tap plays the reel in
+  // Instagram's player in a sheet, so nothing loads from Instagram before that. Until staff add reels the four clips stay.
+  async function reels() {
+    const row = $('#clips'); if (!row) return true;
+    let f;
+    try { const r = await fetch('/api/reels', { headers: { Accept: 'application/json' } }); if (!r.ok) return false; f = await r.json(); } catch (e) { return false; }
+    if (!f.items || !f.items.length) return false;
+    const short = (c) => (c.length > 48 ? `${c.slice(0, 46).trim()}…` : c);
+    row.innerHTML = f.items.map((r, i) => `<button class="clip clip--reel" type="button" data-reel="${i}" aria-label="${esc(`${t('Videó lejátszása')}${r.caption ? `: ${r.caption}` : ''}`)}">
+        <img src="${esc(r.cover)}" alt="" loading="lazy" width="720" height="1280"><span class="clip__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+        ${r.caption ? `<span class="clip__cap">${esc(short(r.caption))}</span>` : ''}</button>`).join('')
+      + `<a class="clip clip--ig" href="${esc(f.profile)}" target="_blank" rel="noopener">${ico('insta')}<b>${t('Még több az Instagramon')}</b><span>@broscafe.co</span></a>`;
+    let dlg = null, ctl = null, last = null;
+    row.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-reel]'); if (!b) return;
+      last = b;
+      const r = f.items[Number(b.dataset.reel)];
+      if (!dlg) {
+        document.body.insertAdjacentHTML('beforeend', `<dialog class="sheet reel-sheet" id="reel-sheet" aria-labelledby="reel-title">
+          <div class="sheet__grab"><div class="sheet__head"><span class="sheet__title" id="reel-title">@broscafe.co</span><button class="sheet__close" type="button" aria-label="${t('Bezárás')}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></div>
+          <div class="reel-sheet__frame"></div>
+          <div class="reel-sheet__acts"><a class="btn" href="${esc(f.profile)}" target="_blank" rel="noopener">${t('Kövess minket az Instagramon')}</a><a class="link" data-open target="_blank" rel="noopener">${t('Megnyitás az Instagramon')}</a></div>
+          <p class="reel-sheet__fine">${t('A videót az Instagram lejátszója mutatja.')}</p></dialog>`);
+        dlg = $('#reel-sheet'); ctl = S.sheet(dlg);
+        dlg.addEventListener('close', () => { $('.reel-sheet__frame', dlg).innerHTML = ''; last?.focus(); }); // emptying the frame stops the reel
+      }
+      $('.reel-sheet__frame', dlg).innerHTML = `<iframe src="https://www.instagram.com/reel/${encodeURIComponent(r.code)}/embed/" title="${esc(r.caption || 'Instagram reel')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      $('[data-open]', dlg).href = r.link;
+      ctl.open();
+    });
+    return true;
+  }
   async function ujdonsagok() {
-    clips();
+    reels().then((ok) => { if (!ok) clips(); });
     const out = $('#posts');
     let posts = [], products = [];
     try { [posts, products] = await Promise.all([api('whats-new'), api('products').catch(() => [])]); }

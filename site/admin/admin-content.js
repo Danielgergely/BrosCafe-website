@@ -355,4 +355,107 @@
       await media.refresh(); draw();
     },
   });
+
+  // ---------- Instagram: which reels are featured on /ujdonsagok/ (the API cannot tell which are pinned) ----------
+  // Instagram reels on /ujdonsagok/ (worker services/reels.ts): paste the reel's link, pick a cover (a screenshot, or the
+  // reel video itself with a slider for the frame). The cover is stored by us; Instagram's player opens on a tap.
+  BA.tab('reels', {
+    icon: '🎬',
+    async render(root) {
+      const L = (hu, en) => (BA.lang === 'en' ? en : hu);
+      let items = [], draft = { code: '' }; // draft.file / .url / .video once a cover is picked
+      const codeOf = (s) => (/instagram\.com\/(?:[\w.]+\/)?(?:reels?|p)\/([\w-]{5,40})/.exec(String(s)) || [])[1] || '';
+      const save = async (next) => { items = (await BA.api('/admin/reels', { method: 'PUT', body: { items: next } })).items; };
+      const item = (r, i) => `<li class="ad-reel" data-i="${i}"><img src="${esc(r.cover)}" alt="">
+          <div class="ad-reel__f"><input class="ad-sel" data-k="caption" maxlength="140" value="${esc(r.caption)}" placeholder="${esc(L('Felirat (nem kötelező)', 'Caption (optional)'))}">
+            <div class="ad-row"><button type="button" class="ad-btn ad-btn--ghost" data-mv="-1"${i ? '' : ' disabled'} aria-label="${esc(L('Előrébb', 'Up'))}">↑</button><button type="button" class="ad-btn ad-btn--ghost" data-mv="1"${i < items.length - 1 ? '' : ' disabled'} aria-label="${esc(L('Hátrébb', 'Down'))}">↓</button>
+              <a class="ad-btn ad-btn--ghost" href="https://www.instagram.com/reel/${esc(r.code)}/" target="_blank" rel="noopener">${esc(L('Megnyitás', 'Open'))}</a>
+              <button type="button" class="ad-btn ad-btn--ghost" data-del>${esc(L('Törlés', 'Delete'))}</button></div></div></li>`;
+      const adder = () => {
+        if (items.length >= 12) return `<p class="ad-small">${esc(L('Elérted a 12 reelt: törölj egyet, ha újat tennél fel.', '12 reels is the maximum: delete one to add another.'))}</p>`;
+        const d = draft;
+        return `<div class="ad-reel ad-reel--new">${d.url ? (d.video ? `<video src="${esc(d.url)}" muted playsinline preload="auto"></video>` : `<img src="${esc(d.url)}" alt="">`) : `<div class="ad-reel__ph" aria-hidden="true">🎬</div>`}
+          <div class="ad-reel__f"><b>${esc(L('Új reel', 'New reel'))}</b>
+            <span class="ad-small">${esc(L('1. Az Instagramon: Megosztás → Link másolása, aztán:', '1. On Instagram: Share → Copy link, then:'))}</span>
+            <div class="ad-row"><input class="ad-sel" style="flex:1 1 200px;min-width:0" data-link inputmode="url" value="${esc(d.code ? `https://www.instagram.com/reel/${d.code}/` : '')}" placeholder="https://www.instagram.com/reel/…"><button type="button" class="ad-btn${d.code ? ' ad-btn--ghost' : ''}" data-paste>${esc(L('Link beillesztése', 'Paste link'))}</button></div>
+            ${d.code ? `<span class="ad-small">${esc(L('2. Borítókép: egy képernyőkép vagy maga a videó', '2. Cover: a screenshot or the video itself'))}</span>
+            <label class="ad-btn${d.url ? ' ad-btn--ghost' : ''}" style="justify-self:start">${esc(d.url ? L('Másik borítókép', 'Another cover') : L('Borítókép kiválasztása', 'Pick a cover'))}<input type="file" accept="image/*,video/*" data-cover hidden></label>
+            ${d.video ? `<label class="ad-small">${esc(L('Húzd a csúszkát a borítóképhez', 'Drag the slider to choose the frame'))}<input type="range" data-seek min="0" max="1" step="0.04" value="0" style="width:100%"></label>` : ''}
+            ${d.url ? `<input class="ad-sel" data-cap maxlength="140" value="${esc(d.caption || '')}" placeholder="${esc(L('Felirat (nem kötelező)', 'Caption (optional)'))}">
+            <div class="ad-row"><button type="button" class="ad-btn" data-add>${esc(L('Mentés', 'Save'))}</button><button type="button" class="ad-btn ad-btn--ghost" data-cancel>${esc(L('Mégse', 'Cancel'))}</button></div>` : ''}` : ''}
+          </div></div>`;
+      };
+      const draw = () => {
+        root.innerHTML = `<div class="ad-panel">
+          <p class="ad-hint">${esc(L('Az Újdonságok oldalon ebben a sorrendben látszanak (legfeljebb 12); koppintásra az Instagram lejátszója nyílik meg. Amíg nincs itt reel, a régi négy klip látszik.', "Shown on the news page in this order (12 at most); a tap opens Instagram's player. Until there are reels here, the old four clips show."))}</p>
+          ${adder()}${items.length ? `<ol class="ad-reels">${items.map(item).join('')}</ol>` : ''}</div>`;
+        const v = root.querySelector('.ad-reel--new video'), seek = root.querySelector('[data-seek]');
+        if (v && seek) {
+          v.addEventListener('loadedmetadata', () => { seek.max = String(v.duration || 1); v.currentTime = seek.value = String(Math.min(1, (v.duration || 0) / 2)); }, { once: true });
+          seek.oninput = () => { v.currentTime = Number(seek.value); };
+        }
+      };
+      const setLink = (text) => {
+        const code = codeOf(text);
+        if (!code) { BA.toast(L('Ez nem Instagram-reel link.', 'That is not an Instagram reel link.'), true); return; }
+        if (items.some((r) => r.code === code)) { BA.toast(L('Ez a reel már fent van.', 'This reel is already on the list.'), true); return; }
+        draft = { ...draft, code }; draw();
+      };
+      // the cover, at most 720 px wide, as a JPEG: from the picked image or the shown video frame
+      const grab = (el) => new Promise((ok, no) => {
+        const w0 = el.videoWidth || el.naturalWidth, h0 = el.videoHeight || el.naturalHeight, c = document.createElement('canvas');
+        c.width = Math.min(720, w0); c.height = Math.round(c.width * h0 / w0);
+        c.getContext('2d').drawImage(el, 0, 0, c.width, c.height);
+        c.toBlob((b) => (b ? ok(b) : no(new Error(L('A borítóképet nem sikerült elkészíteni.', 'Could not make the cover.')))), 'image/jpeg', 0.85);
+      });
+      const reset = () => { if (draft.url) URL.revokeObjectURL(draft.url); draft = { code: '' }; draw(); };
+      root.onchange = async (e) => {
+        if (e.target.matches('[data-link]')) { if (e.target.value.trim()) setLink(e.target.value); return; }
+        if (e.target.matches('[data-cover]')) {
+          const file = e.target.files[0]; if (!file) return;
+          if (draft.url) URL.revokeObjectURL(draft.url);
+          draft = { ...draft, caption: root.querySelector('[data-cap]')?.value, url: URL.createObjectURL(file), video: file.type.startsWith('video/') };
+          draw(); return;
+        }
+        const f = e.target.closest('[data-k]'); if (!f) return;
+        const i = Number(f.closest('[data-i]').dataset.i);
+        try { await save(items.map((r, j) => (j === i ? { ...r, [f.dataset.k]: f.value } : r))); BA.toast(L('Mentve', 'Saved')); } catch (err) { BA.fail(err); }
+        draw();
+      };
+      root.onclick = async (e) => {
+        if (e.target.closest('[data-paste]')) {
+          try { setLink(await navigator.clipboard.readText()); }
+          catch (err) { const inp = root.querySelector('[data-link]'); inp.focus(); BA.toast(L('Illeszd be a linket a mezőbe.', 'Paste the link into the field.')); }
+          return;
+        }
+        if (e.target.closest('[data-cancel]')) return reset();
+        if (e.target.closest('[data-add]')) {
+          const btn = e.target.closest('[data-add]'); btn.disabled = true;
+          try {
+            const body = new FormData();
+            body.append('file', new File([await grab(root.querySelector('.ad-reel--new video, .ad-reel--new img'))], 'cover.jpg', { type: 'image/jpeg' }));
+            const c = await BA.api('/admin/media', { method: 'POST', body });
+            await save([{ code: draft.code, cover: c.url, caption: root.querySelector('[data-cap]').value }, ...items]);
+            BA.toast(L('A reel felkerült.', 'Reel added.')); reset();
+          } catch (err) { BA.fail(err); btn.disabled = false; }
+          return;
+        }
+        const li = e.target.closest('[data-i]'); if (!li) return;
+        const i = Number(li.dataset.i), mv = e.target.closest('[data-mv]');
+        if (mv) {
+          const j = i + Number(mv.dataset.mv), next = [...items]; [next[i], next[j]] = [next[j], next[i]];
+          try { await save(next); } catch (err) { BA.fail(err); }
+          return draw();
+        }
+        if (e.target.closest('[data-del]') && confirm(L('Törlöd ezt a reelt az oldalról?', 'Remove this reel from the site?'))) {
+          const gone = items[i];
+          try { await save(items.filter((_, j) => j !== i)); } catch (err) { BA.fail(err); return; }
+          BA.api(`/admin/media/${gone.cover.split('/').pop()}`, { method: 'DELETE' }).catch(() => {});
+          draw();
+        }
+      };
+      root.innerHTML = BA.loading();
+      try { items = (await BA.api('/admin/reels')).items; draw(); } catch (e) { BA.fail(e); root.innerHTML = ''; }
+    },
+  });
 })();

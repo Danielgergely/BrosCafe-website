@@ -137,6 +137,15 @@
 .ad-media .ph { aspect-ratio: 1; background: var(--ivory); }
 .ad-media .ph img, .ad-media .ph video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ad-media figcaption { padding: 8px 10px; font-size: 12px; }
+.ad-reels { display: grid; gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.ad-reel { display: flex; gap: 14px; align-items: flex-start; padding: 12px; border-radius: var(--r-md); background: var(--ivory-hi); }
+.ad-reel img, .ad-reel video { flex: none; width: 96px; aspect-ratio: 9 / 16; object-fit: cover; border-radius: var(--r-sm); background: #000; }
+.ad-reel--new video, .ad-reel--new img, .ad-reel__ph { width: 120px; }
+.ad-reel__ph { flex: none; display: grid; place-items: center; aspect-ratio: 9 / 16; border-radius: var(--r-sm); background: var(--ivory); font-size: 28px; }
+.ad-reel__f { flex: 1; min-width: 0; display: grid; gap: 8px; }
+.ad-reel__f .ad-sel { width: 100%; }
+@media (max-width: 520px) { .ad-reel__ph { display: none; } .ad-reel--new { flex-direction: column; } .ad-reel--new > :first-child { width: 100px; } .ad-reel__f { width: 100%; } }
+.ad-reel__f input[type=range] { accent-color: var(--olive); }
 .ad-media figcaption p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .ad-gal { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--r-sm); }
 .ad-gal img { width: 54px; height: 54px; object-fit: cover; border-radius: 8px; flex: none; }
