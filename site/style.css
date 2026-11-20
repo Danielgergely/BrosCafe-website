@@ -128,11 +128,14 @@ html:not(.live) .act__duo { padding: 40px 0 44px; }
 .place__text, .loy__text, .story__text { display: contents; }
 .visit .scene__head { padding: 0; order: 1; }
 .place__pics { order: 2; position: relative; height: clamp(190px, 36vh, 320px); margin: 4px 0 8px; }
-.place__a, .place__b { border-radius: 22px; box-shadow: 0 24px 50px -18px rgb(37 37 28 / .5); }
+.place__a, .place__b, .place__c { border-radius: 22px; box-shadow: 0 24px 50px -18px rgb(37 37 28 / .5); }
 .place__a { position: absolute; left: 0; top: 0; bottom: 0; width: 50%; }
-.place__b { position: absolute; z-index: 1; right: 0; top: 10%; bottom: 4%; width: 46%; }
-.place__b img { object-position: 60% 50%; }
-.place__tag { position: absolute; z-index: 2; left: 50%; bottom: 12px; translate: -50% 0; background: var(--g-smoke-bg); -webkit-backdrop-filter: var(--g-smoke-fx); backdrop-filter: var(--g-smoke-fx); color: var(--ivory); box-shadow: var(--g-rim-dark), var(--g-lift-sm); font-size: 13px; }
+.place__b { position: absolute; z-index: 1; right: 0; top: 0; height: 58%; width: 44%; }
+.place__b img { object-position: 60% 22%; }
+/* the third photo overlaps the second, lower and a little in from the edge */
+.place__c { position: absolute; z-index: 2; right: 8%; bottom: 0; height: 52%; width: 38%; }
+.place__c img { object-position: 50% 0%; }
+.place__tag { position: absolute; z-index: 3; left: 12px; bottom: 12px; background: var(--g-smoke-bg); -webkit-backdrop-filter: var(--g-smoke-fx); backdrop-filter: var(--g-smoke-fx); color: var(--ivory); box-shadow: var(--g-rim-dark), var(--g-lift-sm); font-size: 13px; }
 .place__foot { order: 3; display: grid; gap: 8px; }
 .place { font: 500 14.5px/1.45 var(--sans); color: var(--text-soft); text-wrap: balance; }
 
@@ -294,8 +297,9 @@ html:not(.live) .act__duo { padding: 40px 0 44px; }
   .place__text { display: grid; gap: 26px; }
   .place__pics { order: 0; height: min(calc(var(--scene-h) - 300px), 520px); min-height: 360px; margin: 0; }
   .place__a { left: 4%; width: 46%; }
-  .place__b { right: 4%; width: 42%; }
-  .place__tag { bottom: 6%; font-size: 14px; }
+  .place__b { right: 4%; width: 40%; }
+  .place__c { right: 14%; width: 34%; }
+  .place__tag { left: calc(4% + 14px); bottom: 6%; font-size: 14px; }
   .place__foot { gap: 14px; }
   .place { font-size: 17px; }
   .loy, .story { order: 0; align-self: stretch; }
@@ -376,6 +380,7 @@ html:not(.live) .act__duo { padding: 40px 0 44px; }
 /* the visit: two photos slide together, the address label drops on top; the card and the story rise */
 .place__a { --in: m-pic-l; --a: .1; --b: .9; }
 .place__b { --in: m-pic-r; --a: .2; --b: .95; }
+.place__c { --in: m-pic-r; --a: .3; --b: 1; }
 .place__tag { --in: m-drop; --a: .7; --b: 1; }
 .place__foot { --in: m-rise; --a: .4; --b: 1; }
 .loy, .story { --in: m-rise; --a: .1; --b: .7; }

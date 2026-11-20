@@ -492,6 +492,8 @@
     'Ez a lemondó link nem érvényes. Írj nekünk: hello@broscafe.hu': 'This cancellation link is not valid. Write to us: hello@broscafe.hu',
     'Vissza a Bros Delivery oldalra': 'Back to Bros Delivery',
     'Rendelés lemondása · Bros Delivery · Bros Cafe': 'Cancel order · Bros Delivery · Bros Cafe',
+    // home: the delivery photos in "Gyere el hozzánk"
+    'Egy vendég mosolyogva átveszi a kávéját a Duna-parton': 'A guest smiling as she takes her coffee by the Danube', 'A barista kiviszi a rendelést egy vendégnek': 'The barista bringing a guest their order',
     // Google reviews on the home page
     'Google-értékelések': 'Google reviews', 'Ezt mondják': 'What people say', 'rólunk.': 'about us.', '{n} értékelés a Google-on': '{n} reviews on Google', '{n} csillag': '{n} stars', 'Összes értékelés': 'All reviews', 'Írj te is értékelést': 'Write a review',
     // Instagram reels on /ujdonsagok/
