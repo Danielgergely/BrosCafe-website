@@ -23,12 +23,14 @@
 <link rel="stylesheet" href="/style.css">
 <script src="/glass.js" defer></script>
 <script>
-  // "still": no video, no scroll motion (reduced motion, Save-Data, or ?still for testing).
+  // "still": no scroll motion (reduced motion, Save-Data, or ?still for testing). "novideo": no films (Save-Data or ?still);
+  // the hero's silent loop still plays under reduced motion (Daniel, 2026-11-20).
   // "sda" / "no-sda": scroll-driven animations run natively, or home.js drives the same keyframes (?nosda to test that path).
   (function () {
     var c = navigator.connection, q = location.search, d = document.documentElement.classList;
     var still = matchMedia('(prefers-reduced-motion: reduce)').matches || (c && c.saveData) || /[?&]still\b/.test(q);
     d.add(still ? 'still' : 'live');
+    if ((c && c.saveData) || /[?&]still\b/.test(q)) d.add('novideo');
     d.add(!/[?&]nosda\b/.test(q) && window.CSS && CSS.supports('animation-timeline: view()') && CSS.supports('animation-range: entry 0% entry 100%') ? 'sda' : 'no-sda');
   })();
 </script>
@@ -55,7 +57,7 @@
       </div>
       <div class="hero__stage">
         <div class="hero__frame" data-m>
-          <div class="cut film" data-film="/shared/media/hero-iced-pour-hands-9x16.mp4" data-film-wide="/shared/media/hero-iced-pour-hands-4x5.mp4"><picture><source media="(min-width: 900px)" srcset="/shared/media/hero-iced-pour-hands-4x5.webp" type="image/webp"><source media="(min-width: 900px)" srcset="/shared/media/hero-iced-pour-hands-4x5.jpg"><source srcset="/shared/media/hero-iced-pour-hands-9x16.webp" type="image/webp"><img src="/shared/media/hero-iced-pour-hands-9x16.jpg" alt="Három kéz jeges lattét készít a zsályazöld fal mögül" width="1080" height="1920" fetchpriority="high"></picture></div>
+          <div class="cut film" data-film="/shared/media/hero-beans-cup-9x16.mp4|/shared/media/hero-iced-latte-9x16.mp4|/shared/media/hero-iced-pour-hands-9x16.mp4" data-film-wide="/shared/media/hero-beans-cup-4x5.mp4|/shared/media/hero-iced-latte-4x5.mp4|/shared/media/hero-iced-pour-hands-4x5.mp4"><picture><source media="(min-width: 900px)" srcset="/shared/media/hero-beans-cup-4x5.webp" type="image/webp"><source media="(min-width: 900px)" srcset="/shared/media/hero-beans-cup-4x5.jpg"><source srcset="/shared/media/hero-beans-cup-9x16.webp" type="image/webp"><img src="/shared/media/hero-beans-cup-9x16.jpg" alt="Kávészemek hullanak egy csészébe" width="1080" height="1920" fetchpriority="high"></picture></div>
           <button class="status" type="button" data-panel="hours" data-status hidden><i aria-hidden="true"></i><span data-status-text></span></button>
           <a class="rate" href="#ertekelesek" data-rate hidden><b data-rate-n></b><span class="rate__t"><span class="rate__stars" aria-hidden="true">★★★★★</span><small data-rate-c></small><small class="rate__g">Google</small></span></a>
           <a class="now" href="/after-hours/" data-now hidden><span class="new">Új</span><span class="now__txt"><b data-now-name></b> · <span data-now-line></span></span><span aria-hidden="true">→</span></a>

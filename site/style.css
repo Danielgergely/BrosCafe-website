@@ -33,9 +33,8 @@ body { padding: 0; background: var(--espresso); }
 }
 
 /* films: the still first, the clip fades in over it */
-.film video { opacity: 0; transition: opacity .6s linear; }
-.film video.is-on { opacity: 1; }
-.film video.is-top { z-index: 1; }
+.film video { transition: opacity .6s linear; }
+.film video.is-out { opacity: 0; }
 
 /* ---------- chips over the film ---------- */
 .status, .now { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 7px 14px 7px 12px; border-radius: var(--r-pill); font: 560 14px/1.25 var(--sans); text-align: left; text-decoration: none; transition: transform var(--dur) var(--ease); }
@@ -63,6 +62,9 @@ body { padding: 0; background: var(--espresso); }
 .hero__frame { position: absolute; inset: 0; transform-origin: 50% 46%; clip-path: inset(0 round 0px); }
 .hero__frame .cut { position: absolute; inset: 0; isolation: isolate; border-radius: 0; background: var(--espresso-2); box-shadow: none; }
 .hero__frame .cut img, .hero__frame .cut video { filter: var(--warm); }
+/* the beans and the iced latte (Instagram reels) come in brighter and more orange: graded on their own to sit with the pour */
+.hero__frame .cut [data-clip="hero-beans-cup"], .hero__frame .cut img[src*="hero-beans-cup"] { filter: sepia(.4) saturate(.72) hue-rotate(-4deg) brightness(.7) contrast(1.1); }
+.hero__frame .cut [data-clip="hero-iced-latte"] { filter: sepia(.55) saturate(1.25) hue-rotate(-6deg) brightness(.6) contrast(1.18); }
 .hero__frame::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgb(var(--espresso-rgb) / .82) 0%, rgb(var(--espresso-rgb) / .58) 22%, rgb(var(--espresso-rgb) / .1) 46%, rgb(var(--espresso-rgb) / .22) 64%, rgb(var(--espresso-rgb) / .78) 100%); }
 .hero__frame .status, .hero__frame .now { position: absolute; z-index: 2; background: var(--g-smoke-bg); -webkit-backdrop-filter: var(--g-smoke-fx); backdrop-filter: var(--g-smoke-fx); box-shadow: var(--g-rim-dark), var(--g-lift); color: var(--ivory); }
 .hero__frame .status { left: var(--pad); bottom: calc(var(--peek) + 16px + 50px + 14px + 62px + 10px); max-width: calc(100% - 2 * var(--pad)); }

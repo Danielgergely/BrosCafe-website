@@ -494,6 +494,7 @@
     'Rendelés lemondása · Bros Delivery · Bros Cafe': 'Cancel order · Bros Delivery · Bros Cafe',
     // home: the delivery photos in "Gyere el hozzánk"
     'Egy vendég mosolyogva átveszi a kávéját a Duna-parton': 'A guest smiling as she takes her coffee by the Danube', 'A barista kiviszi a rendelést egy vendégnek': 'The barista bringing a guest their order',
+    'Kávészemek hullanak egy csészébe': 'Coffee beans falling into a cup',
     // Google reviews on the home page
     'Google-értékelések': 'Google reviews', 'Ezt mondják': 'What people say', 'rólunk.': 'about us.', '{n} értékelés a Google-on': '{n} reviews on Google', '{n} csillag': '{n} stars', '{n} Google-értékelés': '{n} Google reviews', '{r} csillag a Google-on, {n} értékelés': '{r} stars on Google, {n} reviews', 'Összes értékelés': 'All reviews', 'Megnézem a Google Mapsen': 'View on Google Maps', 'Értékelések a Google Mapsről, a Google sorrendjében.': 'Reviews from Google Maps, in Google’s order.', 'Írj te is értékelést': 'Write a review',
     // Instagram reels on /ujdonsagok/

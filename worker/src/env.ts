@@ -7,7 +7,8 @@ export interface Env {
   CF_VERSION?: { id: string; tag?: string; timestamp?: string }; // the deployed version
 
   FRONTEND_URL: string;
-  PREVIEW?: string; // "1" on broscafe.gracelabs.dev: noindex everywhere, variant switcher on the app
+  PREVIEW?: string;
+  REDIRECT_TO?: string; // set on the retired preview: every request redirects there // "1" on broscafe.gracelabs.dev: noindex everywhere, variant switcher on the app
   CORS_ORIGINS?: string;
   ADMIN_EMAIL?: string;
   ADMIN_PASSWORD?: string;

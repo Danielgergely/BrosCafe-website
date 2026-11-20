@@ -61,16 +61,17 @@
   // APPLE_CERTIFICATE, APPLE_PRIVATE_KEY, APPLE_WWDR_CERTIFICATE (PEM), GOOGLE_ISSUER_ID, GOOGLE_SERVICE_ACCOUNT_JSON.
 
   "env": {
-    // https://broscafe.gracelabs.dev: a copy of the real data, but nothing that reaches customers. No Wallet
-    // credentials (no passes, no pushes), no Resend key (sign-in links only in the log), no Fruitsys login.
+    // https://broscafe.gracelabs.dev: retired 2026-11-20, redirects every request to new.broscafe.hu (REDIRECT_TO);
+    // no cron. Was a copy of the real data with nothing that reached customers (no Wallet, Resend or Fruitsys).
     "preview": {
       "name": "broscafe-preview",
       "version_metadata": { "binding": "CF_VERSION" },
       "routes": [{ "pattern": "broscafe.gracelabs.dev", "custom_domain": true }],
       "d1_databases": [{ "binding": "DB", "database_name": "broscafe-preview", "database_id": "e1d2062c-2d0b-4551-b60c-34a416866df1" }],
       "r2_buckets": [{ "binding": "MEDIA", "bucket_name": "broscafe-media-preview", "jurisdiction": "eu" }],
-      "triggers": { "crons": ["*/15 * * * *"] },
+      "triggers": { "crons": [] },
       "vars": {
+        "REDIRECT_TO": "https://new.broscafe.hu",
         "PREVIEW": "1",
         "FRONTEND_URL": "https://broscafe.gracelabs.dev",
         "CORS_ORIGINS": "https://broscafe.gracelabs.dev",

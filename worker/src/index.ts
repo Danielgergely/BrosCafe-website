@@ -134,6 +134,11 @@ async function handleAssets(req: Request, env: Env, url: URL) {
 
 export default {
   async fetch(req, env, exec): Promise<Response> {
+    // the retired preview (broscafe.gracelabs.dev) sends everyone to the live site, same path (Daniel, 2026-11-20)
+    if (env.REDIRECT_TO) {
+      const u = new URL(req.url);
+      return Response.redirect(`${env.REDIRECT_TO}${u.pathname}${u.search}`, 302);
+    }
     const url = new URL(req.url);
     if (url.pathname === '/api' || url.pathname.startsWith('/api/')) return handleApi(req, env, exec, url);
     return handleAssets(req, env, url);

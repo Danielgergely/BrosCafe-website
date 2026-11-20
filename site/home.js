@@ -10,30 +10,40 @@
   const MAPS = 'https://www.google.com/maps/search/?api=1&query=Bros%20Cafe%2C%201132%20Budapest%2C%20Csan%C3%A1dy%20u.%204%2Fb';
 
   // ---------- films ----------
-  // One <video> per clip plus a twin of itself; shortly before the clip ends the twin starts on top and fades in, so
-  // the loop shows no hard cut. A film plays while it is on screen.
+  // One <video> per clip (data-film="a.mp4|b.mp4|…"; a single clip gets a twin of itself); shortly before a clip ends the
+  // next one starts on top and fades in, so the loop shows no hard cut. A film plays while it is on screen.
+  // data-clip (the file name) lets CSS grade each clip on its own.
+  // iPhone Safari only starts a muted video that is visible on screen, so no clip is ever hidden: all stay stacked
+  // (current on top), the next starts underneath and the top one fades out. The first shows the still as its poster.
   const FADE = 0.6;
   const build = (media) => {
-    const src = (desk.matches && media.dataset.filmWide) || media.dataset.film;
-    const vids = [src, src].map((u) => {
+    const list = ((desk.matches && media.dataset.filmWide) || media.dataset.film).split('|');
+    const img = media.querySelector('img'), poster = img ? img.currentSrc || img.src : '';
+    const vids = (list.length > 1 ? list : [list[0], list[0]]).map((u, i) => {
       const v = document.createElement('video');
       v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'none'; v.disablePictureInPicture = true;
       v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true'); v.tabIndex = -1;
-      v.src = u;
+      if (i === 0 && poster) v.poster = poster;
+      v.style.zIndex = i === 0 ? 2 : 0;
+      v.src = u; v.dataset.clip = u.split('/').pop().replace(/-\d+x\d+\.mp4$/, '');
       media.appendChild(v);
       return v;
     });
-    const film = { vids, cur: 0, on: false, seen: false };
+    const film = { vids, cur: 0, on: false, seen: false, fading: false };
     vids.forEach((v, i) => {
-      v.addEventListener('playing', () => { if (film.cur === i) v.classList.add('is-on'); });
+      v.addEventListener('playing', () => {
+        if (film.cur !== i) return;
+        const next = vids[(i + 1) % vids.length]; // fetch the next clip while this one plays
+        if (next !== v && next.readyState === 0) { next.preload = 'auto'; next.load(); }
+      });
       v.addEventListener('timeupdate', () => {
-        if (film.cur !== i || !film.on || !v.duration || v.duration - v.currentTime > FADE) return;
+        if (film.cur !== i || !film.on || film.fading || !v.duration || v.duration - v.currentTime > FADE) return;
         const n = (i + 1) % vids.length, next = vids[n];
-        film.cur = n;
+        film.cur = n; film.fading = true;
         try { next.currentTime = 0; } catch (e) { /* not loaded yet */ }
-        next.classList.add('is-top');
-        next.play().catch(() => {});
-        setTimeout(() => { v.classList.remove('is-on'); next.classList.remove('is-top'); }, FADE * 1000 + 80);
+        next.style.zIndex = 1; next.play().catch(() => {});
+        v.classList.add('is-out');
+        setTimeout(() => { v.style.zIndex = 0; v.classList.remove('is-out'); next.style.zIndex = 2; film.fading = false; }, FADE * 1000 + 80);
       });
     });
     return film;
@@ -44,7 +54,7 @@
     if (on) film.vids[film.cur].play().catch(() => {}); // autoplay refused (low power mode): the still stays
     else film.vids.forEach((v) => v.pause());
   };
-  if (!still && 'IntersectionObserver' in window) {
+  if (!root.classList.contains('novideo') && 'IntersectionObserver' in window) {
     const films = new Map();
     const io = new IntersectionObserver((es) => es.forEach((e) => { const f = films.get(e.target); f.seen = e.isIntersecting; run(f, f.seen && !document.hidden); }), { threshold: 0.4 });
     $$('.film[data-film]').forEach((m) => { films.set(m, build(m)); io.observe(m); });
