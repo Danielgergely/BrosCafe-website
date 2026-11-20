@@ -379,6 +379,8 @@
             <span class="ad-small">${esc(L('Borítókép (nem kötelező): a kész borító a 04_Boritok mappából (iCloud → HungBros → 07_Arculat → Instagram → 04_Boritok), egy kép, vagy a reel videója csúszkával. Nélküle a cím látszik a kávézó színein.', 'Cover (optional): the finished cover from the 04_Boritok folder (iCloud → HungBros → 07_Arculat → Instagram → 04_Boritok), a picture, or the reel video with a slider. Without one the title shows on the café colours.'))}</span>
             <div class="ad-row"><label class="ad-btn ad-btn--ghost">${esc(pic ? L('Másik borítókép', 'Another cover') : L('Borítókép kiválasztása', 'Pick a cover'))}<input type="file" accept="image/*,video/*" data-cover hidden></label>
               ${pic ? `<button type="button" class="ad-btn ad-btn--ghost" data-nocover>${esc(L('Borítókép nélkül', 'No cover'))}</button>` : ''}</div>
+            <div class="ad-row">${d.urlEn || d.cover_en ? `<img class="ad-reel__en" src="${esc(d.urlEn || d.cover_en)}" alt="">` : ''}<label class="ad-btn ad-btn--ghost">${esc(d.urlEn || d.cover_en ? L('Másik angol borító', 'Another English cover') : L('Angol borító (nem kötelező)', 'English cover (optional)'))}<input type="file" accept="image/*" data-cover-en hidden></label>
+              ${d.urlEn || d.cover_en ? `<button type="button" class="ad-btn ad-btn--ghost" data-noen>${esc(L('Angol borító nélkül', 'No English cover'))}</button>` : ''}</div>
             ${d.url && d.video ? `<label class="ad-small">${esc(L('Húzd a csúszkát a borítóképhez', 'Drag the slider to choose the frame'))}<input type="range" data-seek min="0" max="1" step="0.04" value="0" style="width:100%"></label>` : ''}
             <div class="ad-row"><button type="button" class="ad-btn" data-save>${esc(L('Mentés', 'Save'))}</button>${editing || d.code ? `<button type="button" class="ad-btn ad-btn--ghost" data-cancel>${esc(L('Mégse', 'Cancel'))}</button>` : ''}</div>` : ''}
           </div></div>`;
@@ -406,7 +408,13 @@
       };
       const keep = () => { const c = root.querySelector('[data-cap]'); if (c) d.caption = c.value; };
       const dropUrl = () => { if (d.url) URL.revokeObjectURL(d.url); d.url = ''; d.video = false; };
-      const reset = () => { dropUrl(); d = { code: '' }; draw(); };
+      const dropEn = () => { if (d.urlEn) URL.revokeObjectURL(d.urlEn); d.urlEn = ''; };
+      const reset = () => { dropUrl(); dropEn(); d = { code: '' }; draw(); };
+      const upload = async (el) => {
+        const body = new FormData();
+        body.append('file', new File([await grab(el)], 'cover.jpg', { type: 'image/jpeg' }));
+        return (await BA.api('/admin/media', { method: 'POST', body })).url;
+      };
       const setLink = (text) => {
         const code = codeOf(text);
         if (!code) { BA.toast(L('Ez nem Instagram-reel link.', 'That is not an Instagram reel link.'), true); return; }
@@ -429,6 +437,10 @@
           Object.assign(d, { url: URL.createObjectURL(file), video: file.type.startsWith('video/') || /\.(mov|mp4|m4v|webm)$/i.test(file.name) });
           draw();
         }
+        if (e.target.matches('[data-cover-en]')) {
+          const file = e.target.files[0]; if (!file) return;
+          keep(); dropEn(); d.urlEn = URL.createObjectURL(file); draw();
+        }
       };
       root.onclick = async (e) => {
         if (e.target.closest('[data-paste]')) {
@@ -438,25 +450,23 @@
         }
         if (e.target.closest('[data-cancel]')) return reset();
         if (e.target.closest('[data-nocover]')) { keep(); dropUrl(); d.cover = ''; return draw(); }
+        if (e.target.closest('[data-noen]')) { keep(); dropEn(); d.cover_en = ''; return draw(); }
         if (e.target.closest('[data-save]')) {
           const btn = e.target.closest('[data-save]'); btn.disabled = true; keep();
           try {
-            let cover = d.cover || '';
-            if (d.url) {
-              const body = new FormData();
-              body.append('file', new File([await grab(root.querySelector('.ad-reel--new video, .ad-reel--new img'))], 'cover.jpg', { type: 'image/jpeg' }));
-              cover = (await BA.api('/admin/media', { method: 'POST', body })).url;
-            }
-            const entry = { code: d.code, cover, caption: d.caption || '' }, old = d.i !== undefined ? items[d.i] : null;
+            const cover = d.url ? await upload(root.querySelector('.ad-reel--new > video, .ad-reel--new > img')) : d.cover || '';
+            const coverEn = d.urlEn ? await upload(root.querySelector('.ad-reel__en')) : d.cover_en || '';
+            const entry = { code: d.code, cover, cover_en: coverEn, caption: d.caption || '' }, old = d.i !== undefined ? items[d.i] : null;
             await save(old ? items.map((r, j) => (j === d.i ? entry : r)) : [entry, ...items]);
             if (old && old.cover !== cover) unused(old.cover);
+            if (old && old.cover_en && old.cover_en !== coverEn) unused(old.cover_en);
             BA.toast(old ? L('Mentve', 'Saved') : L('A reel felkerült.', 'Reel added.')); reset();
           } catch (err) { BA.fail(err); btn.disabled = false; }
           return;
         }
         const li = e.target.closest('[data-i]'); if (!li) return;
         const i = Number(li.dataset.i), mv = e.target.closest('[data-mv]');
-        if (e.target.closest('[data-edit]')) { dropUrl(); d = { ...items[i], i }; return draw(); }
+        if (e.target.closest('[data-edit]')) { dropUrl(); dropEn(); d = { ...items[i], i }; return draw(); }
         if (mv) {
           const j = i + Number(mv.dataset.mv), next = [...items]; [next[i], next[j]] = [next[j], next[i]];
           try { await save(next); } catch (err) { BA.fail(err); }
@@ -465,7 +475,7 @@
         if (e.target.closest('[data-del]') && confirm(L('Törlöd ezt a reelt az oldalról?', 'Remove this reel from the site?'))) {
           const gone = items[i];
           try { await save(items.filter((_, j) => j !== i)); } catch (err) { BA.fail(err); return; }
-          unused(gone.cover); draw();
+          unused(gone.cover); unused(gone.cover_en); draw();
         }
       };
       root.innerHTML = BA.loading();

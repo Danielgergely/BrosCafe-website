@@ -362,9 +362,10 @@
     try { const r = await fetch('/api/reels', { headers: { Accept: 'application/json' } }); if (!r.ok) return false; f = await r.json(); } catch (e) { return false; }
     if (!f.items || !f.items.length) return false;
     // a cover carries its own title (skill reel-cover); a reel without one is a title tile in the café colours
-    row.innerHTML = f.items.map((r, i) => `<button class="clip clip--reel${r.cover ? '' : ' clip--text'}" type="button" data-reel="${i}" aria-label="${esc(`${t('Videó lejátszása')}${r.caption ? `: ${r.caption}` : ''}`)}">
-        ${r.cover ? `<img src="${esc(r.cover)}" alt="" loading="lazy" width="720" height="1280">` : ''}<span class="clip__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
-        ${r.caption && !r.cover ? `<span class="clip__title">${esc(r.caption)}</span>` : ''}</button>`).join('')
+    const coverOf = (r) => (B.lang === 'en' && r.cover_en) || r.cover;
+    row.innerHTML = f.items.map((r, i) => `<button class="clip clip--reel${coverOf(r) ? '' : ' clip--text'}" type="button" data-reel="${i}" aria-label="${esc(`${t('Videó lejátszása')}${r.caption ? `: ${r.caption}` : ''}`)}">
+        ${coverOf(r) ? `<img src="${esc(coverOf(r))}" alt="" loading="lazy" width="720" height="1280">` : ''}<span class="clip__play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span>
+        ${r.caption && !coverOf(r) ? `<span class="clip__title">${esc(r.caption)}</span>` : ''}</button>`).join('')
       + `<a class="clip clip--ig" href="${esc(f.profile)}" target="_blank" rel="noopener">${ico('insta')}<b>${t('Még több az Instagramon')}</b><span>@broscafe.co</span></a>`;
     let dlg = null, ctl = null, last = null;
     row.addEventListener('click', (e) => {

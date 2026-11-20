@@ -76,7 +76,7 @@ export async function usage(app: App, url: string): Promise<string[]> {
     .all<{ id: string }>();
   const posts = await app.db.content.find({ image: url }, { projection: { id: 1 }, limit: 200 });
   const reels = (((await app.db.settings.findOne({ _key: 'reels' })) ?? {}).items ?? []) as Doc[];
-  const inReels = reels.some((r) => r.cover === url) ? ['videos'] : [];
+  const inReels = reels.some((r) => r.cover === url || r.cover_en === url) ? ['videos'] : [];
   return [...products.map((d) => d.id), ...posts.map((d) => d.id), ...inReels];
 }
 
