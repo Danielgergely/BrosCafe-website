@@ -80,6 +80,8 @@ the design test with the client (variants/). Bros Cafe is Daniel's own company, 
   on Benjamin's failed) and no scraping (embed pages no longer carry the cover). Admin → Weboldal → Videók: paste the reel
   link, pick a cover (screenshot, or the reel video with a frame slider), order/caption/delete (services/reels.ts).
   A tap plays Instagram's player in a sheet + "Kövess minket" (so it can count on Instagram). Empty list = the old 4 clips.
+  Cover optional: without one the tile shows the title on olive. Covers with their own title come from the Claude skill
+  `reel-cover` (end of `reel-finish`), saved in iCloud HungBros/07_Arculat/Instagram/Boritok; the site doesn't overlay them.
 - 2026-11-19 Guests cancel Delivery orders online (Daniel): link in the confirmation email and on /fiok/ → /delivery/lemondas/,
   until the order deadline, refund minus 3 % (DL_CANCEL_FEE_PCT). Company/pickup: whole order; group colleague: own drink;
   organiser: whole group, colleagues refunded in full. Invoice: correcting invoice keeping the fee; no invoice: staff email says
