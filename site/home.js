@@ -7,6 +7,17 @@
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const scenes = $$('.scene');
   const desk = matchMedia('(min-width: 900px)');
+  // ?vdebug: a box listing what each film does (to find out why a phone shows only the still)
+  const vdebug = /[?&]vdebug\b/.test(location.search) ? (() => {
+    const box = document.createElement('pre'), lines = [];
+    box.style.cssText = 'position:fixed;z-index:9999;left:6px;right:6px;bottom:90px;max-height:45vh;overflow:auto;margin:0;padding:8px;background:rgb(0 0 0 / .85);color:#9f9;font:10px/1.35 ui-monospace,monospace;white-space:pre-wrap;border-radius:8px';
+    document.body.appendChild(box);
+    const log = (m) => { lines.push(`${(performance.now() / 1000).toFixed(1)}s ${m}`); box.textContent = [`html: ${root.className}`, `ua: ${navigator.userAgent}`, ...lines.slice(-40)].join('\n'); };
+    log('start');
+    addEventListener('error', (e) => log(`JS error: ${e.message} @${e.lineno}:${e.colno}`));
+    addEventListener('unhandledrejection', (e) => log(`promise: ${e.reason}`));
+    return log;
+  })() : null;
   const MAPS = 'https://www.google.com/maps/search/?api=1&query=Bros%20Cafe%2C%201132%20Budapest%2C%20Csan%C3%A1dy%20u.%204%2Fb';
 
   // ---------- films ----------
@@ -51,13 +62,18 @@
   const run = (film, on) => {
     if (film.on === on) return;
     film.on = on;
-    if (on) film.vids[film.cur].play().catch(() => {}); // autoplay refused (low power mode): the still stays
+    if (on) film.vids[film.cur].play().then(() => vdebug?.(`play() ok ${film.vids[film.cur].dataset.clip}`), (e) => vdebug?.(`play() refused ${film.vids[film.cur].dataset.clip}: ${e && e.name} ${e && e.message}`)); // autoplay refused (low power mode): the still stays
     else film.vids.forEach((v) => v.pause());
   };
+  vdebug?.(`novideo=${root.classList.contains('novideo')} IO=${'IntersectionObserver' in window} desk=${desk.matches}`);
   if (!root.classList.contains('novideo') && 'IntersectionObserver' in window) {
     const films = new Map();
-    const io = new IntersectionObserver((es) => es.forEach((e) => { const f = films.get(e.target); f.seen = e.isIntersecting; run(f, f.seen && !document.hidden); }), { threshold: 0.4 });
-    $$('.film[data-film]').forEach((m) => { films.set(m, build(m)); io.observe(m); });
+    const io = new IntersectionObserver((es) => es.forEach((e) => { const f = films.get(e.target); f.seen = e.isIntersecting; vdebug?.(`seen ${f.vids[0].dataset.clip}: ${e.isIntersecting} (${e.intersectionRatio.toFixed(2)})`); run(f, f.seen && !document.hidden); }), { threshold: 0.4 });
+    $$('.film[data-film]').forEach((m) => {
+      const f = build(m); films.set(m, f); io.observe(m);
+      if (vdebug) f.vids.forEach((v) => ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'playing', 'pause', 'waiting', 'stalled', 'suspend', 'error', 'ended'].forEach((ev) => v.addEventListener(ev, () => vdebug(`${v.dataset.clip} ${ev} rs=${v.readyState} ns=${v.networkState} paused=${v.paused}${v.error ? ` err=${v.error.code} ${v.error.message}` : ''}`))));
+    });
+    vdebug?.(`films: ${films.size}, observer on`);
     document.addEventListener('visibilitychange', () => films.forEach((f) => run(f, f.seen && !document.hidden)));
   }
 
