@@ -74,6 +74,24 @@
       if (vdebug) f.vids.forEach((v) => ['loadstart', 'loadedmetadata', 'loadeddata', 'canplay', 'playing', 'pause', 'waiting', 'stalled', 'suspend', 'error', 'ended'].forEach((ev) => v.addEventListener(ev, () => vdebug(`${v.dataset.clip} ${ev} rs=${v.readyState} ns=${v.networkState} paused=${v.paused}${v.error ? ` err=${v.error.code} ${v.error.message}` : ''}`))));
     });
     vdebug?.(`films: ${films.size}, observer on`);
+    if (vdebug) { // four ways to start a muted inline video, side by side, to see which iPhone Safari accepts
+      const src = '/shared/media/hero-beans-cup-9x16.mp4';
+      const make = (n, attrs, how) => {
+        const v = document.createElement('video');
+        v.style.cssText = `position:fixed;z-index:9998;top:${70 + (n - 1) * 0}px;left:${6 + (n - 1) * 52}px;width:48px;height:85px;object-fit:cover;border:2px solid #9f9${n === 3 ? ';filter:sepia(.5) brightness(.8)' : ''}`;
+        Object.entries(attrs).forEach(([k, val]) => v.setAttribute(k, val));
+        v.muted = true; v.defaultMuted = true; v.playsInline = true;
+        v.src = src; document.body.appendChild(v);
+        v.addEventListener('playing', () => vdebug(`T${n} playing`), { once: true });
+        if (how === 'now') v.play().then(() => vdebug(`T${n} play() ok`), (e) => vdebug(`T${n} play() ${e.name}`));
+        if (how === 'loaded') v.addEventListener('loadeddata', () => v.play().then(() => vdebug(`T${n} play() ok`), (e) => vdebug(`T${n} play() ${e.name}`)), { once: true });
+        setTimeout(() => vdebug(`T${n} after 5s: paused=${v.paused} rs=${v.readyState}`), 5000);
+      };
+      make(1, { autoplay: '', muted: '', playsinline: '', loop: '', preload: 'auto' }, 'attr');
+      make(2, { muted: '', playsinline: '', loop: '', preload: 'auto' }, 'loaded');
+      make(3, { muted: '', playsinline: '', loop: '', preload: 'auto' }, 'loaded');
+      make(4, { muted: '', playsinline: '', preload: 'none' }, 'now');
+    }
     document.addEventListener('visibilitychange', () => films.forEach((f) => run(f, f.seen && !document.hidden)));
   }
 
