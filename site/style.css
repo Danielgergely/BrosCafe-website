@@ -65,6 +65,15 @@ body { padding: 0; background: var(--espresso); }
 /* the beans and the iced latte (Instagram reels) come in brighter and more orange: graded on their own to sit with the pour */
 .hero__frame .cut [data-clip="hero-beans-cup"], .hero__frame .cut img[src*="hero-beans-cup"] { filter: sepia(.4) saturate(.72) hue-rotate(-4deg) brightness(.7) contrast(1.1); }
 .hero__frame .cut [data-clip="hero-iced-latte"] { filter: sepia(.55) saturate(1.25) hue-rotate(-6deg) brightness(.6) contrast(1.18); }
+/* phones: the pills and buttons cover the lower half, so each clip is lifted to bring its subject (the cup, the
+   handwriting, the hands) into the free strip under the title; the bottom fades to solid brown to hide the gap */
+@media (max-width: 899.98px) {
+  .hero__frame .cut video, .hero__frame .cut img { transform: translateY(var(--lift, 0%)); }
+  .hero__frame .cut [data-clip="hero-beans-cup"], .hero__frame .cut img[src*="hero-beans-cup"] { --lift: -13%; }
+  .hero__frame .cut [data-clip="hero-iced-latte"] { --lift: -27%; }
+  .hero__frame .cut [data-clip="hero-iced-pour-hands"] { --lift: -6%; }
+  .hero__frame::after { background: linear-gradient(180deg, rgb(var(--espresso-rgb) / .82) 0%, rgb(var(--espresso-rgb) / .58) 20%, rgb(var(--espresso-rgb) / .08) 38%, rgb(var(--espresso-rgb) / .3) 52%, rgb(var(--espresso-rgb) / .92) 70%, rgb(var(--espresso-rgb)) 78%); }
+}
 .hero__frame::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgb(var(--espresso-rgb) / .82) 0%, rgb(var(--espresso-rgb) / .58) 22%, rgb(var(--espresso-rgb) / .1) 46%, rgb(var(--espresso-rgb) / .22) 64%, rgb(var(--espresso-rgb) / .78) 100%); }
 .hero__frame .status, .hero__frame .now { position: absolute; z-index: 2; background: var(--g-smoke-bg); -webkit-backdrop-filter: var(--g-smoke-fx); backdrop-filter: var(--g-smoke-fx); box-shadow: var(--g-rim-dark), var(--g-lift); color: var(--ivory); }
 .hero__frame .status { left: var(--pad); bottom: calc(var(--peek) + 16px + 50px + 14px + 62px + 10px); max-width: calc(100% - 2 * var(--pad)); }
