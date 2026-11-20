@@ -268,6 +268,24 @@
     b.addEventListener('click', () => openPanel(b.dataset.panel, null, b));
   });
 
+  // ---------- Google reviews: the rating (Places API, daily) and the comments staff picked; hidden until there is one ----------
+  fetch('/api/reviews').then((r) => (r.ok ? r.json() : Promise.reject())).then((g) => {
+    const box = $('[data-revs]'); if (!box || (!g.rating && !g.items.length)) return;
+    const star = (n) => `<span class="revs__fill" style="--p:${Math.max(0, Math.min(100, (n / 5) * 100))}%">★★★★★</span>`;
+    if (g.rating) {
+      $('[data-rev-rating]', box).textContent = g.rating.toLocaleString(B.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      $('[data-rev-stars]', box).innerHTML = star(g.rating);
+      $('[data-rev-count]', box).textContent = t('{n} értékelés a Google-on', { n: g.count });
+      $('[data-rev-score]', box).hidden = false;
+    }
+    $('[data-rev-list]', box).innerHTML = g.items.map((r) => `<li class="revs__card"><span class="revs__stars" aria-label="${esc(t('{n} csillag', { n: r.stars }))}">${star(r.stars)}</span>
+      <blockquote>${esc(r.text)}</blockquote><p class="revs__who"><b>${esc(r.name)}</b>${r.date ? ` · ${esc(r.date)}` : ''}</p></li>`).join('');
+    const all = $('[data-rev-all]', box), write = $('[data-rev-write]', box);
+    if (g.url) { all.href = g.url; all.hidden = false; }
+    if (g.write_url) { write.href = g.write_url; write.hidden = false; }
+    box.hidden = false;
+  }).catch(() => { /* no reviews: the block stays hidden */ });
+
   // ---------- coffees: prices and details from the live menu ----------
   fetch('/api/products').then((r) => (r.ok ? r.json() : Promise.reject())).then((list) => {
     list.forEach((p) => { if (p && p.active !== false) products[p.id] = p; });

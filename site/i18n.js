@@ -492,6 +492,8 @@
     'Ez a lemondó link nem érvényes. Írj nekünk: hello@broscafe.hu': 'This cancellation link is not valid. Write to us: hello@broscafe.hu',
     'Vissza a Bros Delivery oldalra': 'Back to Bros Delivery',
     'Rendelés lemondása · Bros Delivery · Bros Cafe': 'Cancel order · Bros Delivery · Bros Cafe',
+    // Google reviews on the home page
+    'Google-értékelések': 'Google reviews', 'Ezt mondják': 'What people say', 'rólunk.': 'about us.', '{n} értékelés a Google-on': '{n} reviews on Google', '{n} csillag': '{n} stars', 'Összes értékelés': 'All reviews', 'Írj te is értékelést': 'Write a review',
     // Instagram reels on /ujdonsagok/
     'Videó lejátszása': 'Play video', 'Kövess minket az Instagramon': 'Follow us on Instagram', 'Megnyitás az Instagramon': 'Open on Instagram', 'A videót az Instagram lejátszója mutatja.': "The video plays in Instagram's player.",
     'Kiszállítás': 'Delivery',

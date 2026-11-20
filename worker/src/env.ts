@@ -38,6 +38,8 @@ export interface Env {
   CAFE_NAME?: string;
   CAFE_ADDRESS?: string;
   CAFE_INSTAGRAM?: string;
+  GOOGLE_PLACES_KEY?: string; // Places API (New) key: the home page's Google rating (services/reviews.ts)
+  GOOGLE_PLACE_ID?: string; // optional: otherwise found once by text search
   CAFE_PHONE?: string;
   CAFE_EMAIL?: string;
   CAFE_HOURS_WEEKDAYS?: string;

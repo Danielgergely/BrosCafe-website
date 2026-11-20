@@ -252,3 +252,8 @@
 .rc__out canvas { display: block; width: 100%; height: auto; border-radius: var(--r-sm); }
 .rc__out figcaption { margin-top: 4px; font-size: 12px; color: var(--text-soft); text-align: center; }
 @media (max-width: 520px) { .rc__form { grid-template-columns: 1fr; } }
+
+/* Google reviews tab */
+.ad-revs { display: grid; gap: 12px; margin: 16px 0; padding: 0; list-style: none; }
+.ad-rev { display: grid; gap: 8px; padding: 12px; border-radius: var(--r-md); background: var(--ivory-hi); }
+.ad-rev textarea { width: 100%; resize: vertical; font: inherit; }

@@ -493,4 +493,50 @@
       try { items = (await BA.api('/admin/reels')).items; draw(); } catch (e) { BA.fail(e); root.innerHTML = ''; }
     },
   });
+  // Google reviews on the home page (worker services/reviews.ts): the rating comes from Google daily; staff pick the comments.
+  BA.tab('reviews', {
+    icon: '⭐',
+    async render(root) {
+      const L = (hu, en) => (BA.lang === 'en' ? en : hu);
+      let v = null, items = [];
+      const fmt = (iso) => (iso ? new Date(iso).toLocaleString(BA.locale, { dateStyle: 'medium', timeStyle: 'short' }) : '–');
+      const row = (r, i) => `<li class="ad-rev" data-i="${i}">
+          <div class="ad-row"><input class="ad-sel" data-k="name" maxlength="60" value="${esc(r.name)}" placeholder="${esc(L('Név, pl. Anna K.', 'Name, e.g. Anna K.'))}" style="flex:2 1 160px">
+            <select class="ad-sel" data-k="stars">${[5, 4, 3, 2, 1].map((n) => `<option value="${n}"${r.stars === n ? ' selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select>
+            <input class="ad-sel" data-k="date" maxlength="20" value="${esc(r.date)}" placeholder="${esc(L('Mikor, pl. 2026. november', 'When, e.g. November 2026'))}" style="flex:1 1 140px"></div>
+          <textarea class="ad-sel" data-k="text" maxlength="600" rows="3" placeholder="${esc(L('A vélemény szövege (pontosan, ahogy a Google-on áll)', 'The review text (exactly as on Google)'))}">${esc(r.text)}</textarea>
+          <div class="ad-row"><button type="button" class="ad-btn ad-btn--ghost" data-mv="-1"${i ? '' : ' disabled'} aria-label="${esc(L('Előrébb', 'Up'))}">↑</button><button type="button" class="ad-btn ad-btn--ghost" data-mv="1"${i < items.length - 1 ? '' : ' disabled'} aria-label="${esc(L('Hátrébb', 'Down'))}">↓</button><button type="button" class="ad-btn ad-btn--ghost" data-del>${esc(L('Törlés', 'Delete'))}</button></div></li>`;
+      const draw = () => {
+        root.innerHTML = `<div class="ad-panel">
+          <p class="ad-hint">${esc(L('A kezdőlap alján: a Google-pontszám (naponta frissül) és az itt kiválasztott vélemények. Másold be pontosan a Google-on olvasható szöveget.', "At the bottom of the home page: the Google score (updated daily) and the reviews picked here. Copy the text exactly as it reads on Google."))}</p>
+          ${card('', !v.connected ? `<p>${esc(L('A Google-pontszám még nincs bekötve (GOOGLE_PLACES_KEY). A kiválasztott vélemények addig is megjelennek.', 'The Google score is not connected yet (GOOGLE_PLACES_KEY). The picked reviews show anyway.'))}</p>`
+            : `<div class="ad-row ad-row--between"><span><b>${v.rating == null ? '–' : esc(v.rating.toLocaleString(BA.locale, { minimumFractionDigits: 1 }))} ★</b> · ${esc(String(v.count))} ${esc(L('értékelés', 'reviews'))}<br><span class="ad-small">${esc(L('Frissítve', 'Updated'))}: ${esc(fmt(v.fetched_at))}${v.error ? ` · ${esc(L('Hiba', 'Error'))}: ${esc(v.error)}` : ''}</span></span>
+              <button type="button" class="ad-btn ad-btn--ghost" data-sync>${esc(L('Frissítés most', 'Update now'))}</button></div>`)}
+          <ol class="ad-revs">${items.map(row).join('')}</ol>
+          <div class="ad-row">${items.length < 8 ? `<button type="button" class="ad-btn ad-btn--ghost" data-add>${esc(L('＋ Vélemény', '＋ Review'))}</button>` : ''}<button type="button" class="ad-btn" data-save>${esc(L('Mentés', 'Save'))}</button></div></div>`;
+      };
+      const read = () => { root.querySelectorAll('[data-i]').forEach((li) => { const r = items[Number(li.dataset.i)]; li.querySelectorAll('[data-k]').forEach((f) => { r[f.dataset.k] = f.dataset.k === 'stars' ? Number(f.value) : f.value; }); }); };
+      root.onclick = async (e) => {
+        if (e.target.closest('[data-sync]')) {
+          e.target.closest('[data-sync]').disabled = true; read();
+          try { v = await BA.api('/admin/reviews/sync', { method: 'POST' }); } catch (err) { BA.fail(err); }
+          return draw();
+        }
+        if (e.target.closest('[data-add]')) { read(); items.push({ name: '', stars: 5, text: '', date: '' }); draw(); root.querySelector(`[data-i="${items.length - 1}"] [data-k="name"]`)?.focus(); return; }
+        if (e.target.closest('[data-save]')) {
+          read();
+          const keep = items.filter((r) => r.name.trim() || r.text.trim());
+          if (keep.some((r) => !r.name.trim() || !r.text.trim())) { BA.toast(L('Minden véleményhez kell név és szöveg.', 'Every review needs a name and a text.'), true); return; }
+          try { v = await BA.api('/admin/reviews', { method: 'PUT', body: { items: keep } }); items = v.items.map((r) => ({ ...r })); BA.toast(L('Mentve', 'Saved')); } catch (err) { BA.fail(err); }
+          return draw();
+        }
+        const li = e.target.closest('[data-i]'); if (!li) return;
+        const i = Number(li.dataset.i), mv = e.target.closest('[data-mv]');
+        if (mv) { read(); const j = i + Number(mv.dataset.mv); [items[i], items[j]] = [items[j], items[i]]; return draw(); }
+        if (e.target.closest('[data-del]')) { read(); items.splice(i, 1); draw(); }
+      };
+      root.innerHTML = BA.loading();
+      try { v = await BA.api('/admin/reviews'); items = v.items.map((r) => ({ ...r })); draw(); } catch (e) { BA.fail(e); root.innerHTML = ''; }
+    },
+  });
 })();

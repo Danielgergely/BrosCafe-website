@@ -9,6 +9,7 @@ import { startup } from './services/startup';
 import { isoAt, nowIso } from './util';
 import * as afterHours from './services/after_hours';
 import * as delivery from './services/delivery';
+import * as reviews from './services/reviews';
 import * as retention from './services/retention';
 
 const CRON_MINUTES = 15;
@@ -69,7 +70,7 @@ export async function scheduled(controller: ScheduledController, env: Env, exec:
   }
 
   // Bros After Hours + Delivery: group cutoffs, expired holds, invoices that waited, tomorrow's recurring orders
-  for (const [name, job] of [['delivery sweep', delivery.sweep], ['recurring', delivery.runRecurring], ['delivery invoices', delivery.retryInvoices], ['after hours invoices', afterHours.retryInvoices], ['after hours reminders', afterHours.sendReminders]] as const) {
+  for (const [name, job] of [['delivery sweep', delivery.sweep], ['recurring', delivery.runRecurring], ['delivery invoices', delivery.retryInvoices], ['after hours invoices', afterHours.retryInvoices], ['after hours reminders', afterHours.sendReminders], ['google reviews', (a: App) => reviews.sync(a)]] as const) {
     try {
       await job(app);
     } catch (e) {

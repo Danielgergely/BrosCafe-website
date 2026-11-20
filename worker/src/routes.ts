@@ -12,9 +12,10 @@ import { register as contact } from './routers/contact';
 import { register as game } from './routers/game';
 import { register as media } from './routers/media';
 import { register as reels } from './routers/reels';
+import { register as reviews } from './routers/reviews';
 import { register as wallet } from './routers/wallet';
 import { register as admin } from './routers/admin';
 import { register as afterHours } from './routers/after_hours';
 import { register as delivery } from './routers/delivery';
 
-export const routes: ((api: Router) => void)[] = [meta, staffAuth, customerAuth, members, scan, liveSales, track, content, contact, game, media, reels, wallet, admin, afterHours, delivery];
+export const routes: ((api: Router) => void)[] = [meta, staffAuth, customerAuth, members, scan, liveSales, track, content, contact, game, media, reels, reviews, wallet, admin, afterHours, delivery];

@@ -173,6 +173,17 @@
           <p class="body">Azt szeretnénk, hogy a Bros Cafe olyan hely legyen, amiért érdemes elindulni: egy ismerős pont, ahol kedvességgel, bátorítással és gondosan elkészített kávéval kezdheted a napodat.</p>
         </div>
       </div>
+
+      <!-- Google reviews: rating + count from the Places API, hand-picked comments (worker services/reviews.ts; home.js fills it) -->
+      <div class="revs" id="ertekelesek" data-revs hidden>
+        <div class="revs__head">
+          <p class="eyebrow">Google-értékelések</p>
+          <h3 class="title">Ezt mondják <em>rólunk.</em></h3>
+          <p class="revs__score" data-rev-score hidden><b data-rev-rating></b><span class="revs__stars" data-rev-stars aria-hidden="true"></span><span data-rev-count></span></p>
+        </div>
+        <ul class="revs__list" data-rev-list></ul>
+        <p class="actions"><a class="btn btn--ghost" data-rev-all target="_blank" rel="noopener" hidden>Összes értékelés <span aria-hidden="true">↗</span></a><a class="link" data-rev-write target="_blank" rel="noopener" hidden>Írj te is értékelést <span aria-hidden="true">↗</span></a></p>
+      </div>
     </div>
   </section>
 
