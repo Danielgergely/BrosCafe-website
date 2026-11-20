@@ -270,6 +270,21 @@
 
   // ---------- Google reviews: the rating (Places API, daily) and the comments staff picked; hidden until there is one ----------
   fetch('/api/reviews').then((r) => (r.ok ? r.json() : Promise.reject())).then((g) => {
+    const badge = $('[data-rate]'); // the stamp on the hero: jumps to the reviews
+    if (badge && g.rating) {
+      const r = g.rating.toLocaleString(B.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      $('[data-rate-n]', badge).textContent = r;
+      $('[data-rate-c]', badge).textContent = t('{n} Google-értékelés', { n: g.count });
+      badge.setAttribute('aria-label', t('{r} csillag a Google-on, {n} értékelés', { r, n: g.count }));
+      badge.hidden = false;
+      // phones: the round stamp carries the rating instead of the pill (fewer things to tap)
+      const stamp = $('[data-stamp]');
+      if (stamp) {
+        $('[data-stamp-n]', stamp).textContent = r;
+        Object.assign(stamp, { href: '#ertekelesek' }); stamp.removeAttribute('aria-hidden'); stamp.removeAttribute('tabindex');
+        stamp.setAttribute('aria-label', badge.getAttribute('aria-label')); stamp.classList.add('is-rated');
+      }
+    }
     const box = $('[data-revs]'); if (!box || (!g.rating && !g.items.length)) return;
     const star = (n) => `<span class="revs__fill" style="--p:${Math.max(0, Math.min(100, (n / 5) * 100))}%">★★★★★</span>`;
     if (g.rating) {
@@ -280,6 +295,22 @@
     }
     $('[data-rev-list]', box).innerHTML = g.items.map((r) => `<li class="revs__card"><span class="revs__stars" aria-label="${esc(t('{n} csillag', { n: r.stars }))}">${star(r.stars)}</span>
       <blockquote>${esc(r.text)}</blockquote><p class="revs__who"><b>${esc(r.name)}</b>${r.date ? ` · ${esc(r.date)}` : ''}</p></li>`).join('');
+    // Google's own reviews replace the hand-picked ones, fetched fresh once the visitor is near (Google forbids storing them)
+    const near = $('#tortenet') || box, list = $('[data-rev-list]', box);
+    const google = () => fetch(`/api/reviews/google?lang=${B.lang === 'en' ? 'en' : 'hu'}`).then((r) => (r.ok ? r.json() : Promise.reject())).then((live) => {
+      if (!live.items || !live.items.length) return;
+      list.innerHTML = live.items.map((r) => `<li class="revs__card">
+        <p class="revs__by">${r.photo ? `<img src="${esc(r.photo)}" alt="" width="32" height="32" loading="lazy" referrerpolicy="no-referrer">` : ''}<span>${r.author_url ? `<a href="${esc(r.author_url)}" target="_blank" rel="noopener">${esc(r.name)}</a>` : `<b>${esc(r.name)}</b>`}<small>${esc(r.when)}</small></span></p>
+        ${r.stars ? `<span class="revs__stars" aria-label="${esc(t('{n} csillag', { n: r.stars }))}">${star(r.stars)}</span>` : ''}
+        <blockquote>${esc(r.text)}</blockquote>
+        ${r.url ? `<a class="revs__src" href="${esc(r.url)}" target="_blank" rel="noopener">${t('Megnézem a Google Mapsen')} <span aria-hidden="true">↗</span></a>` : ''}</li>`).join('');
+      $('[data-rev-note]', box).hidden = false;
+      box.hidden = false;
+    }).catch(() => { /* the picked ones stay */ });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); google(); } }, { rootMargin: '600px 0px' });
+      io.observe(near);
+    } else google();
     const all = $('[data-rev-all]', box), write = $('[data-rev-write]', box);
     if (g.url) { all.href = g.url; all.hidden = false; }
     if (g.write_url) { write.href = g.write_url; write.hidden = false; }

@@ -89,6 +89,7 @@
     plus: '<circle cx="12" cy="12" r="8.5"/><path d="M12 8.2v7.6M8.2 12h7.6"/>',
     more: '<path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/>',
     chevron: '<path d="m9 6 6 6-6 6"/>',
+    key: '<circle cx="8" cy="15" r="3.5"/><path d="m10.5 12.5 8-8M16 7l2 2M14 9l1.5 1.5"/>',
     close: '<path d="m6 6 12 12M18 6 6 18"/>',
     dot: '<circle cx="12" cy="12" r="3"/>',
     user: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5a7 7 0 0 1 14 0"/>',
@@ -130,7 +131,7 @@
 </dialog>
 <dialog class="sheet" id="more-sheet" aria-labelledby="more-title">
   ${sheetHead('more-title', L('Több', 'More'))}
-  <ul class="sheet__list"><li><a href="${signedIn ? '/fiok/' : '/husegkartya/'}"${page === 'fiok' ? ' aria-current="page"' : ''}>${icon('user')}<span>${signedIn ? L('Fiókom', 'My account') : L('Belépés', 'Sign in')}</span>${icon('chevron')}</a></li>${more.map((n) => `<li><a href="${n.href}"${cur(n)}>${icon(n.icon)}<span>${label(n)}</span>${icon('chevron')}</a></li>`).join('')}${signedIn ? `<li><a href="/" data-sign-out>${icon('exit')}<span>${L('Kijelentkezés', 'Sign out')}</span></a></li>` : ''}</ul>
+  <ul class="sheet__list"><li><a href="${signedIn ? '/fiok/' : '/husegkartya/'}"${page === 'fiok' ? ' aria-current="page"' : ''}>${icon('user')}<span>${signedIn ? L('Fiókom', 'My account') : L('Belépés', 'Sign in')}</span>${icon('chevron')}</a></li>${more.map((n) => `<li><a href="${n.href}"${cur(n)}>${icon(n.icon)}<span>${label(n)}</span>${icon('chevron')}</a></li>`).join('')}${signedIn ? `<li><a href="/" data-sign-out>${icon('exit')}<span>${L('Kijelentkezés', 'Sign out')}</span></a></li>` : ''}<li class="sheet__staff"><a href="/admin/">${icon('key')}<span>${L('Admin (munkatársaknak)', 'Admin (staff)')}</span>${icon('chevron')}</a></li></ul>
   <p class="sheet__lang"><span>${L('Nyelv', 'Language')}</span><span data-lang-switch></span></p>
 </dialog>`);
 
@@ -398,7 +399,7 @@
           <p class="end__hours"><span>Hétfő–péntek 7:30–18:00</span> <span>Szombat 8:30–17:00</span> <span>Vasárnap zárva</span></p>
           <p><a href="mailto:hello@broscafe.hu">hello@broscafe.hu</a><br><a href="https://instagram.com/broscafe.co" target="_blank" rel="noopener" aria-label="${L('A Bros Cafe az Instagramon', 'Bros Cafe on Instagram')}">@broscafe.co</a></p></div>
       </div>
-      <p class="end__end"><span>© ${budapest().year} Bros Cafe · ${L('Jó kávéval készült', 'Made with good coffee')}</span><a href="/adatvedelem/">Adatkezelés</a><a href="/aszf/">ÁSZF</a><a href="/segitseg/">Segítség</a><a href="/pult/">Munkatársaknak</a></p>
+      <p class="end__end"><span>© ${budapest().year} Bros Cafe · ${L('Jó kávéval készült', 'Made with good coffee')}</span><a href="/adatvedelem/">Adatkezelés</a><a href="/aszf/">ÁSZF</a><a href="/segitseg/">Segítség</a><a href="/admin/">Munkatársaknak</a></p>
     </div>`;
     document.body.append(end);
     paintStatus(); setInterval(paintStatus, 30000);

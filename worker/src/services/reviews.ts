@@ -1,11 +1,12 @@
 // Google reviews on the home page. The rating and the count come from the Places API (New) once a day (Place Details,
-// Enterprise SKU: 1,000 free calls a month, we make ~30); the highlighted comments are picked by hand in the admin
-// (the API only ever returns Google's own 5). GOOGLE_PLACES_KEY (Worker secret) turns the sync on.
+// Enterprise SKU: 1,000 free calls a month, we make ~30). The comments are Google's own 5, fetched fresh when a visitor
+// scrolls near them (Google forbids storing reviews; Enterprise + Atmosphere SKU, capped at LIVE_CAP a month to stay
+// free); the comments picked by hand in the admin stand in when Google's can't be loaded. GOOGLE_PLACES_KEY turns it on.
 import type { App } from '../http';
 import type { Doc } from '../db';
 import { ApiError } from './bookings';
 
-const KEY = 'google_reviews', API = 'https://places.googleapis.com/v1', EVERY_H = 23, MAX = 8;
+const KEY = 'google_reviews', API = 'https://places.googleapis.com/v1', EVERY_H = 23, MAX = 8, LIVE_CAP = 900;
 const SEARCH = 'Bros Cafe, Csanády u. 4/b, 1132 Budapest';
 
 interface Item { name: string; stars: number; text: string; date: string }
@@ -53,6 +54,38 @@ export async function feed(app: App) {
     write_url: s.place_id ? `https://search.google.com/local/writereview?placeid=${s.place_id}` : null,
     items: (s.items ?? []) as Item[],
   };
+}
+
+/** Public, on scroll: Google's reviews as Google returns them (its order, its translation), never stored. */
+export async function live(app: App, lang: string) {
+  const s = await state(app);
+  if (!app.env.GOOGLE_PLACES_KEY || !s.place_id) return { items: [] };
+  const month = new Date().toISOString().slice(0, 7), used = s.live_month === month ? Number(s.live_calls ?? 0) : 0;
+  if (used >= LIVE_CAP) return { items: [], capped: true };
+  await save(app, { live_month: month, live_calls: used + 1 });
+  try {
+    const p = await places(app, `/places/${encodeURIComponent(s.place_id)}?languageCode=${lang === 'en' ? 'en' : 'hu'}`, 'reviews');
+    return {
+      items: ((p.reviews ?? []) as Doc[]).map((r) => {
+        const a = r.authorAttribution ?? {};
+        return { name: a.displayName ?? '', author_url: a.uri ?? null, photo: a.photoUri ? `/api/reviews/avatar?u=${encodeURIComponent(a.photoUri)}` : null,
+          stars: r.rating ?? null, text: r.text?.text ?? r.originalText?.text ?? '', when: r.relativePublishTimeDescription ?? '', url: r.googleMapsUri ?? null };
+      }).filter((r) => r.text),
+    };
+  } catch (e) {
+    console.error('google reviews live failed', e);
+    return { items: [] };
+  }
+}
+
+/** The author photos go through us, so visitors' browsers don't contact Google (passed through, not kept). */
+export async function avatar(u: string | null) {
+  let url: URL;
+  try { url = new URL(u ?? ''); } catch { throw new ApiError(404, 'not_found'); }
+  if (url.protocol !== 'https:' || !/(^|\.)googleusercontent\.com$/.test(url.hostname)) throw new ApiError(404, 'not_found');
+  const r = await fetch(url.toString(), { signal: AbortSignal.timeout(8000) });
+  if (!r.ok || !(r.headers.get('content-type') ?? '').startsWith('image/')) throw new ApiError(404, 'not_found');
+  return new Response(r.body, { headers: { 'Content-Type': r.headers.get('content-type')!, 'Cache-Control': 'no-store' } });
 }
 
 export async function adminView(app: App) {

@@ -495,7 +495,7 @@
     // home: the delivery photos in "Gyere el hozzánk"
     'Egy vendég mosolyogva átveszi a kávéját a Duna-parton': 'A guest smiling as she takes her coffee by the Danube', 'A barista kiviszi a rendelést egy vendégnek': 'The barista bringing a guest their order',
     // Google reviews on the home page
-    'Google-értékelések': 'Google reviews', 'Ezt mondják': 'What people say', 'rólunk.': 'about us.', '{n} értékelés a Google-on': '{n} reviews on Google', '{n} csillag': '{n} stars', 'Összes értékelés': 'All reviews', 'Írj te is értékelést': 'Write a review',
+    'Google-értékelések': 'Google reviews', 'Ezt mondják': 'What people say', 'rólunk.': 'about us.', '{n} értékelés a Google-on': '{n} reviews on Google', '{n} csillag': '{n} stars', '{n} Google-értékelés': '{n} Google reviews', '{r} csillag a Google-on, {n} értékelés': '{r} stars on Google, {n} reviews', 'Összes értékelés': 'All reviews', 'Megnézem a Google Mapsen': 'View on Google Maps', 'Értékelések a Google Mapsről, a Google sorrendjében.': 'Reviews from Google Maps, in Google’s order.', 'Írj te is értékelést': 'Write a review',
     // Instagram reels on /ujdonsagok/
     'Videó lejátszása': 'Play video', 'Kövess minket az Instagramon': 'Follow us on Instagram', 'Megnyitás az Instagramon': 'Open on Instagram', 'A videót az Instagram lejátszója mutatja.': "The video plays in Instagram's player.",
     'Kiszállítás': 'Delivery',
