@@ -6,7 +6,7 @@ Bros Cafe website and loyalty programme. Status, decisions and open items: `PROJ
 ## Two stacks, until switch night
 
 - **New (this branch, `cloudflare-d`)**: static site in `site/` + Cloudflare Worker API in `worker/` (D1, R2, cron).
-  Preview https://broscafe.gracelabs.dev (copy of real data, no Wallet), production Worker at https://new.broscafe.hu
+  Production Worker at https://new.broscafe.hu (the old preview broscafe.gracelabs.dev is retired and redirects there)
   (side by side; moves to broscafe.hu on switch night).
 - **Old (live broscafe.hu until the switch)**: React SPA `frontend/` + FastAPI/Mongo `backend/` on the Rackforest VPS,
   deployed by Coolify on every push to `main`. **Never push to `main`** unless Daniel asks. Never push to the
@@ -20,7 +20,6 @@ cd worker
 npm run dev                                                    # local: serves site/ live + the API, local D1
 curl "localhost:8801/__scheduled?cron=*/15+*+*+*+*"            # run the cron once (syncs the admin from .dev.vars, seeds)
 npx tsc --noEmit                                               # must pass
-sh scripts/deploy-preview.sh                                   # preview (fine to run when asked to put things on the preview)
 sh scripts/deploy-prod.sh                                      # PRODUCTION: only with Daniel's explicit OK
 ```
 

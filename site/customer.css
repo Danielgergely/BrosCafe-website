@@ -124,3 +124,52 @@
 .helpwrap .form textarea { min-height: 160px; }
 .helpwrap .alt { margin-top: 18px; text-align: center; font-size: 15.5px; color: var(--text-soft); }
 .helpwrap .alt a { color: var(--olive-deep); font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+
+/* coffee plant (plant.js); its colours live here */
+.plant {
+  --plant-leaf: var(--olive); --plant-pale: #8E9468; --plant-dry: #A88B65; --plant-stem: var(--olive-dark); --plant-wood: #6E5844;
+  --plant-pot: var(--champagne); --plant-rim: #B6955E; --plant-soil: var(--espresso-3); --plant-flower: var(--ivory-hi);
+  --plant-cherry: #A3392B; --plant-green: #93A35C; --plant-bean: #6E4B2F; --plant-water: #8DB3C4;
+  display: grid; gap: 10px;
+}
+.plant[hidden] { display: none; }
+.plant__art { display: grid; place-items: center; margin: 2px 0 0; border-radius: var(--r-md, 14px); background: linear-gradient(var(--ivory-hi), var(--ivory-2)); }
+.plant-svg { width: min(100%, 260px); height: auto; overflow: visible; }
+.plant-svg .lf { fill: var(--plant-leaf); }
+.plant-svg .lf--pale { fill: var(--plant-pale); }
+.plant-svg .lf--dry { fill: var(--plant-dry); }
+.plant-svg .rib { stroke: rgb(255 255 255 / .28); stroke-width: .8; fill: none; }
+.plant-svg .stem { fill: none; stroke: var(--plant-stem); stroke-width: 2.2; stroke-linecap: round; }
+.plant-svg .stem--wood { stroke: var(--plant-wood); }
+.plant-svg .stem--dry { stroke: var(--plant-dry); }
+.plant-svg .fl ellipse { fill: var(--plant-flower); stroke: rgb(var(--espresso-rgb) / .12); stroke-width: .4; }
+.plant-svg .fl__c { fill: var(--champagne); }
+.plant-svg .ch--ripe circle { fill: var(--plant-cherry); }
+.plant-svg .ch--green circle { fill: var(--plant-green); }
+.plant-svg .bean { fill: var(--plant-bean); }
+.plant-svg .bean__line { fill: none; stroke: var(--ivory-2); stroke-width: 1; stroke-linecap: round; }
+.plant-svg .pot { fill: var(--plant-pot); }
+.plant-svg .pot__rim { fill: var(--plant-rim); }
+.plant-svg .pot__band { stroke: var(--plant-rim); stroke-width: 3; }
+.plant-svg .pot__shadow { fill: rgb(var(--espresso-rgb) / .1); }
+.plant-svg .soil { fill: var(--plant-soil); }
+.plant-svg .drops path { fill: var(--plant-water); opacity: 0; }
+.plant-svg__sway { transform-origin: var(--ox) var(--oy); animation: plant-sway 7s ease-in-out infinite; }
+.plant-svg--droopy .plant-svg__sway, .plant-svg--wilted .plant-svg__sway { animation-duration: 11s; }
+.plant-svg--dead .plant-svg__sway, .plant-svg--seed .plant-svg__sway { animation: none; }
+.is-watered .drops path { animation: plant-drop 1.1s ease-in calc(.25s + var(--i) * .18s) 2; }
+.is-watered .plant-svg__sway { animation: plant-perk 1.2s cubic-bezier(.3, 1.6, .5, 1) 1.4s 1, plant-sway 7s ease-in-out 2.6s infinite; }
+@keyframes plant-sway { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+@keyframes plant-drop { 0% { opacity: 0; transform: translateY(0); } 15% { opacity: .9; } 100% { opacity: 0; transform: translateY(var(--fall, 120px)); } }
+@keyframes plant-perk { 0% { transform: scale(.96); } 60% { transform: scale(1.03); } 100% { transform: scale(1); } }
+.plant__stage { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.plant__stage b { font: 420 22px/1.2 var(--serif); font-variation-settings: var(--soft); font-synthesis: none; color: var(--text); }
+.plant__stage span { font-size: 14px; color: var(--text-soft); }
+.plant__bar { height: 8px; border-radius: 99px; background: var(--ivory-2); overflow: hidden; }
+.plant__bar i { display: block; height: 100%; min-width: 8px; border-radius: inherit; background: var(--olive); transition: width .6s ease; }
+.plant__line { font-size: 15.5px; line-height: 1.5; color: var(--text-soft); }
+.plant__line.is-warn { color: var(--text); font-weight: 600; }
+.plant__how summary { cursor: pointer; font-size: 14.5px; color: var(--olive-deep); }
+.plant__how p { margin-top: 6px; font-size: 14.5px; line-height: 1.5; color: var(--text-soft); }
+.plant__off { justify-self: start; font-size: 14px; color: var(--text-soft); }
+@media (prefers-reduced-motion: reduce) { .plant-svg__sway, .is-watered .plant-svg__sway, .is-watered .drops path { animation: none; } }

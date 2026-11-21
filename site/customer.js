@@ -149,6 +149,7 @@
     <div class="acct__row"><a class="btn" href="/card/${encodeURIComponent(m.code)}">${tx('loyalty.openWalletCard')}</a><a class="btn btn--ghost" href="${GAME}">${tx('game.playWhileYouWait')}</a></div>
   </div>
   <div class="acct__side">
+    <div class="paper plant" id="plant" data-testid="account-plant" hidden></div>
     <div class="paper" data-testid="account-rewards"><h2 class="label">${tx('account.rewardsTitle')}</h2><p class="big">${ico('gift')}${tx('account.rewardsAvailable', { n: m.reward_ready ? 1 : 0 })}</p></div>
     <div class="paper acct-orders" id="orders" hidden><h2 class="label">${X('RENDELÉSEIM', 'MY ORDERS')}</h2><div id="order-list"></div></div>
     <div class="paper" data-testid="account-invite"><h2 class="label">${tx('account.inviteTitle')}</h2>
@@ -162,13 +163,14 @@
       <form class="mail-form" id="mail-form" hidden novalidate><label class="field"><span>${tx('account.changeEmailPrompt')}</span><input type="email" name="email" autocomplete="email" inputmode="email" required value="${esc(m.email)}"></label>
         <p class="note note--err" data-msg role="alert" hidden></p>
         <div class="row"><button class="btn" type="submit">${X('Mentés', 'Save')}</button><button class="btn btn--ghost" type="button" data-cancel>${X('Mégse', 'Cancel')}</button></div></form>
-      <div class="links"><button class="link" type="button" data-change>${tx('account.changeEmail')}</button><button class="link" type="button" data-out data-testid="logout-btn">${tx('account.logOut')}</button></div>
+      <div class="links"><button class="link" type="button" data-change>${tx('account.changeEmail')}</button><button class="link" type="button" data-plant-on hidden>${tx('plant.turnOn')}</button><button class="link" type="button" data-out data-testid="logout-btn">${tx('account.logOut')}</button></div>
     </div>
   </div>
 </div></section>`);
 
     wallet(app, m.code);
     orders();
+    plant(m);
     $('[data-share]').addEventListener('click', async () => {
       try {
         if (navigator.share) { await navigator.share({ title: 'Bros Cafe', text: tx('account.inviteMessage'), url: invite }); return; }
@@ -209,6 +211,42 @@
     expired: ['Lejárt', 'Expired'],
   };
   const SHOW = 5;
+  // the coffee plant (plant.js draws it); "Nem érdekel" hides it, the settings link brings it back
+  function plant(m) {
+    const box = $('#plant'), on = $('[data-plant-on]'), p = m.plant;
+    const set = async (value) => {
+      try { m.plant = await api('customer/plant', { method: 'POST', body: { on: value }, auth: true }); }
+      catch (e) { return toast(message(e, tx('common.somethingWrong'))); }
+      plant(m); toast(tx(value ? 'plant.turnedOn' : 'plant.hidden'));
+      if (value) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+    on.onclick = () => set(true);
+    if (!p || !window.BROS_PLANT) { box.hidden = true; return; }
+    box.hidden = !p.on; on.hidden = p.on;
+    if (!p.on) return;
+
+    // a coffee since the last visit waters the plant on screen
+    const key = `bros-plant-seen:${m.code}`;
+    let seen = null;
+    try { seen = localStorage.getItem(key); localStorage.setItem(key, String(p.growth)); } catch (e) { /* private mode */ }
+    const gained = seen === null ? 0 : p.growth - Number(seen);
+
+    const span = Math.max(1, p.next - p.prev), pct = p.growth ? Math.round(((p.growth - p.prev) / span) * 100) : 0;
+    const line = p.state === 'seed' ? tx('plant.seed')
+      : ['droopy', 'wilted', 'dead'].includes(p.state) ? tx(`plant.${p.state}`)
+      : p.stage >= 8 ? tx('plant.toFlush', { n: p.to_next })
+      : p.to_next === 1 ? tx('plant.toNextOne') : tx('plant.toNext', { n: p.to_next });
+    box.innerHTML = `<h2 class="label">${tx('plant.title')}</h2>
+      <div class="plant__art${gained > 0 ? ' is-watered' : ''}">${window.BROS_PLANT.svg(p, m)}</div>
+      <p class="plant__stage"><b>${p.state === 'dead' ? '—' : tx(`plant.stages.${p.stage}`)}</b>${p.growth ? `<span>${tx('plant.grownBy', { n: p.growth })}</span>` : ''}</p>
+      ${p.growth && p.state !== 'dead' ? `<div class="plant__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}" aria-label="${esc(line)}"><i style="width:${pct}%"></i></div>` : ''}
+      <p class="plant__line${['wilted', 'dead'].includes(p.state) ? ' is-warn' : ''}">${line}</p>
+      <details class="plant__how"><summary>${tx('plant.how')}</summary><p>${tx('plant.howBody')}</p></details>
+      <button class="link plant__off" type="button" data-plant-off>${tx('plant.hide')}</button>`;
+    $('[data-plant-off]', box).onclick = () => set(false);
+    if (gained > 0) toast(tx('plant.watered', { n: gained }));
+  }
+
   async function orders() {
     const box = $('#orders'), out = $('#order-list');
     let d;

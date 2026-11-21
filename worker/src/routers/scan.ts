@@ -7,6 +7,7 @@ import { getCurrentUser } from '../security';
 import * as drinks from '../services/drinks';
 import * as email from '../services/email';
 import * as members from '../services/members';
+import * as plant from '../services/plant';
 import * as tiers from '../services/tiers';
 import { notifyUpdate } from '../services/wallet';
 import { nowIso } from '../util';
@@ -73,7 +74,7 @@ export function register(api: Router) {
 
     // Diamond members drink free: serving one is the whole transaction.
     if (required === 0) {
-      const changes = { stamps: 0, reward_ready: true, total_coffees: doc.total_coffees + 1, rewards_redeemed: doc.rewards_redeemed + 1 };
+      const changes = { ...(await plant.water(c, doc)), stamps: 0, reward_ready: true, total_coffees: doc.total_coffees + 1, rewards_redeemed: doc.rewards_redeemed + 1 };
       await apply(c, code, changes, doc);
       await members.log(c, code, doc.name, user.email, members.REWARD_REDEEMED, 0, 0, true, true, drink);
       return card(c, doc);
@@ -84,7 +85,7 @@ export function register(api: Router) {
     const previous = doc.stamps;
     const stamps = previous + 1;
     const rewardReady = stamps >= required;
-    const changes = { stamps, total_coffees: doc.total_coffees + 1, reward_ready: rewardReady };
+    const changes = { ...(await plant.water(c, doc)), stamps, total_coffees: doc.total_coffees + 1, reward_ready: rewardReady };
 
     await apply(c, code, changes, doc);
     await members.log(c, code, doc.name, user.email, members.COFFEE_ADDED, previous, stamps, false, rewardReady, drink);
@@ -116,7 +117,7 @@ export function register(api: Router) {
     const code: string = doc.code;
     const drink = await chosen(c, body);
     const previous = doc.stamps;
-    const changes = { stamps: 0, reward_ready: false, rewards_redeemed: doc.rewards_redeemed + 1 };
+    const changes = { ...(await plant.water(c, doc)), stamps: 0, reward_ready: false, rewards_redeemed: doc.rewards_redeemed + 1 };
 
     await apply(c, code, changes, doc);
     await members.log(c, code, doc.name, user.email, members.REWARD_REDEEMED, previous, 0, true, false, drink);
@@ -133,8 +134,9 @@ export function register(api: Router) {
     const drink = await chosen(c, body);
     const code: string = doc.code;
     const remaining = doc.free_coffees - 1;
-    await c.db.members.updateOne({ code }, { $set: { free_coffees: remaining } });
-    doc.free_coffees = remaining;
+    const changes = { ...(await plant.water(c, doc)), free_coffees: remaining };
+    await c.db.members.updateOne({ code }, { $set: changes });
+    Object.assign(doc, changes);
     await notifyUpdate(c, code);
     await members.log(c, code, doc.name, user.email, members.FREE_COFFEE_REDEEMED, doc.stamps, doc.stamps, doc.reward_ready, doc.reward_ready, drink);
     return card(c, doc);

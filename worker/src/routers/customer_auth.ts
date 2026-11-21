@@ -7,6 +7,7 @@ import { createCustomerToken, getCurrentCustomer, hashToken } from '../security'
 import * as emailService from '../services/email';
 import * as members from '../services/members';
 import * as myOrders from '../services/my_orders';
+import * as plant from '../services/plant';
 import { isoAt, nowIso, parseIso, tokenUrlsafe } from '../util';
 
 /** Resolve a referral code, ignoring anything that isn't a real other member. */
@@ -97,8 +98,19 @@ export function register(api: Router) {
     const member = await getCurrentCustomer(c);
     return {
       ...members.publicView(c, member),
+      plant: await plant.view(c, member),
       session_token: await createCustomerToken(c, member.code, member.email),
     };
+  });
+
+  /** The coffee plant: "Nem érdekel" switches it off everywhere, the account settings switch it back on. */
+  api.post('/customer/plant', async (c) => {
+    const member = await getCurrentCustomer(c);
+    const b = (await c.json()) ?? {};
+    if (typeof b.on !== 'boolean') throw new HttpError(422, [{ loc: ['body', 'on'], msg: 'Input should be a valid boolean', type: 'bool_type' }]);
+    member.plant = { ...(member.plant || {}), on: b.on };
+    await c.db.members.updateOne({ code: member.code }, { $set: { plant: member.plant } });
+    return plant.view(c, member);
   });
 
   /** "Rendeléseim": the guest's Delivery orders and After Hours bookings; and one order for "Újra rendelem". */

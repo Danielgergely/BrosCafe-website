@@ -11,6 +11,7 @@ import {
 import { earnsStamp } from './drinks';
 import * as emailService from './email';
 import * as members from './members';
+import * as plant from './plant';
 import * as tiers from './tiers';
 import { notifyUpdate } from './wallet';
 import * as stripe from './stripe';
@@ -383,7 +384,7 @@ async function grantStamps(app: App, p: Doc) {
     const required = tiers.stampsRequired(member, s);
     if (required === 0 || member.reward_ready) break; // free drinkers and a waiting reward: nothing to add, as at the counter
     const prev = member.stamps, stamps = prev + 1, ready = stamps >= required;
-    const changes = { stamps, total_coffees: member.total_coffees + 1, reward_ready: ready };
+    const changes = { ...(await plant.water(app, member)), stamps, total_coffees: member.total_coffees + 1, reward_ready: ready };
     await app.db.members.updateOne({ code: member.code }, { $set: changes });
     Object.assign(member, changes);
     await members.log(app, member.code, member.name, 'delivery', members.COFFEE_ADDED, prev, stamps, false, ready, cup.product_id);
