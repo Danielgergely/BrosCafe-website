@@ -549,6 +549,12 @@
 .dl-bag-pop__list > li { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding: 11px 0; border-top: var(--hair); font: 500 15px/1.35 var(--sans); }
 .dl-bag-pop__list > li small { display: block; font-size: 13px; font-weight: 400; color: var(--text-soft); }
 .dl-bag-pop__list > li > :last-child:not(:first-child) { flex: none; font-variant-numeric: tabular-nums; }
+/* a bag line: name (tap = options), price, − / + */
+.dl-bag-pop__list > li.dl-bag-line { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 0; }
+.dl-bag-line__name { min-width: 0; padding: 0; border: 0; background: none; color: var(--text); text-align: left; cursor: pointer; }
+.dl-bag-line__name b { display: block; font: 600 15px/1.3 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-bag-line__name small { color: var(--olive-deep); }
+.dl-bag-line__price { font-variant-numeric: tabular-nums; }
 .dl-bag-pop__foot { display: grid; gap: 12px; padding: 12px 20px 18px; border-top: 1px solid var(--line-strong); }
 .dl-bag-pop__total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; font: 600 15px/1.3 var(--sans); }
 .dl-bag-pop__total output { font: 440 23px/1 var(--serif); font-variation-settings: var(--soft); font-variant-numeric: tabular-nums; }

@@ -484,15 +484,21 @@
         return;
       }
       if (e.target.closest('[data-dup]')) {
-        if (full()) { sayFull(); return; }
-        cups.splice(i + 1, 0, { ...cups[i], uid: newCup(cups[i].id).uid, who: '' }); syncMenu(); renderCups(); summary(); 
+        if (!dupCup(i)) return;
         $(`.dl-cup[data-uid="${cups[i + 1].uid}"] .dl-cup__who`, cupsEl)?.focus();
         return;
       }
       if (!e.target.closest('[data-del]')) return;
-      cups.splice(i, 1); syncMenu(); renderCups(); summary();
+      delCup(i);
       ($$('[data-del]', cupsEl)[Math.min(i, cups.length - 1)] || $('.dl-item button', menuEl))?.focus();
     });
+    // the same edits from the basket card and from the paper bag
+    function dupCup(i) {
+      if (full()) { sayFull(); return false; }
+      cups.splice(i + 1, 0, { ...cups[i], uid: newCup(cups[i].id).uid, who: '' }); syncMenu(); renderCups(); summary();
+      return true;
+    }
+    function delCup(i) { cups.splice(i, 1); syncMenu(); renderCups(); summary(); }
     cupsEl.addEventListener('input', (e) => {
       const li = e.target.closest('.dl-cup'), k = e.target.dataset.k; if (!li || !k) return;
       const c = cups.find((x) => x.uid === li.dataset.uid); readOpt(c, e.target);
@@ -650,10 +656,24 @@
     const curStep = () => { let k = 0; stepEls.forEach((el, i) => { if (el.getBoundingClientRect().top < innerHeight * 0.45) k = i; }); return k; };
     function railSet() { rail?.set({ current: curStep() + 1, done: stepEls.map((el, i) => (el.classList.contains('is-done') ? i + 1 : 0)).filter(Boolean) }); }
     bag = window.DLBag?.mount({ label: (n) => tn('Kosár: {n} ital', n), onCheckout: () => { sumCard.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' }); } }) || null;
+    bag?.list.addEventListener('click', (e) => {
+      const li = e.target.closest('[data-uid]'); if (!li) return;
+      const i = cups.findIndex((c) => c.uid === li.dataset.uid); if (i < 0) return;
+      const btns = (k) => $$(`.dl-bag-line [data-${k}]`, bag.list);
+      if (e.target.closest('[data-dup]')) { if (dupCup(i)) btns('dup')[i + 1]?.focus(); return; }
+      if (e.target.closest('[data-del]')) { delCup(i); btns('del')[Math.min(i, cups.length - 1)]?.focus(); return; }
+      if (e.target.closest('[data-custom]')) {
+        bag.close();
+        customize(cups[i], () => { renderCups(); summary(); }, () => { bag.open(); });
+      }
+    });
     function fillBag(n, sub, fee) {
       if (!bag) return;
       bag.set(n);
-      bag.list.innerHTML = cups.map((c) => { const d = menu.get(c.id), extra = [...cupOpts(c), c.who.trim()].filter(Boolean); return `<li><span>${esc(d.name)}${extra.length ? `<small>${esc(extra.join(' · '))}</small>` : ''}</span><span>${ft(cupPrice(c))}</span></li>`; }).join('') +
+      bag.list.innerHTML = cups.map((c) => { const d = menu.get(c.id), extra = [...cupOpts(c), c.who.trim()].filter(Boolean); return `<li class="dl-bag-line" data-uid="${c.uid}">
+        <button type="button" class="dl-bag-line__name" data-custom aria-label="${esc(`${t('Testreszabás')}: ${d.name}`)}"><b>${esc(d.name)}</b>${extra.length ? `<small>${esc(extra.join(' · '))}</small>` : `<small>${t('Testreszabás')}</small>`}</button>
+        <span class="dl-bag-line__price">${ft(cupPrice(c))}</span>
+        <span class="dl-cup__qty"><button type="button" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">−</button><button type="button" data-dup aria-label="${esc(`${t('Még egy ugyanilyen')}: ${d.name}`)}">+</button></span></li>`; }).join('') +
         (fee ? `<li><span>${t('Kiszállítás')}</span><span>${ft(fee)}</span></li>` : '');
       bag.total.textContent = ft(sub + fee);
     }
