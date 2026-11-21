@@ -88,6 +88,13 @@
   const cupPrice = (c) => { const d = menu.get(c.id); return (d.sizes[c.size] ? d.sizes[c.size].price : d.price) + (c.milk ? CONFIG.milkExtra : 0); };
   const cupOpts = (c) => { const d = menu.get(c.id); return [d.sizes[c.size] && d.sizes[c.size].label, c.milk && t(MILKS[c.milk] || c.milk), c.iced && t('jeges'), ...Object.keys(EXTRAS).filter((k) => c[k] && offers(d, k)).map((k) => t(EXTRAS[k]))].filter(Boolean); };
   const cupItem = (c) => ({ product_id: c.id, who: c.who.trim(), milk: c.milk, size: c.size, iced: c.iced, decaf: c.decaf, cream: c.cream, note: c.note.trim() });
+  const cupLine = (c) => [ft(cupPrice(c)), ...cupOpts(c), c.note.trim() && `„${c.note.trim()}”`].filter(Boolean);
+  // milk and decaf as pills right on the cup in the basket (the sheet keeps size, temperature, cream and the note)
+  const cupPills = (c, d) => {
+    const milk = d.milks.length ? [['', 'Tehéntej'], ...d.milks.map((m) => [m, MILKS[m] || m])].map(([v, l]) => `<label class="dl-pill dl-pill--sm"><input type="radio" name="m-${c.uid}" data-k="milk" value="${esc(v)}"${c.milk === v ? ' checked' : ''}><span>${esc(t(l))}</span></label>`).join('') : '';
+    const decaf = offers(d, 'decaf') ? `<label class="dl-pill dl-pill--sm dl-pill--toggle"><input type="checkbox" data-k="decaf"${c.decaf ? ' checked' : ''}><span>${t('Koffeinmentes')}</span></label>` : '';
+    return milk || decaf ? `<div class="dl-cup__pills" role="group" aria-label="${esc(d.name)}">${milk}${decaf}</div>` : '';
+  };
   const readOpt = (c, el) => { const k = el.dataset.k; c[k] = k === 'size' ? Number(el.value) : k === 'iced' ? el.value === 'true' : el.type === 'checkbox' ? el.checked : el.value; };
   const sliders = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>';
 
@@ -118,14 +125,14 @@
     const d = menu.get(c.id), uid = c.uid;
     sheetCup = c; sheetDone = onChange; sheetBack = back; sheetAdd = add || null; sheetQty = 1; sheetMax = Math.max(1, max); // back: puts the focus where the sheet was opened from
     const pills = (k, label, opts) => `<fieldset class="dl-custom__group"><legend>${t(label)}</legend><div class="dl-custom__pills">${opts.map(([v, l]) => `<label class="dl-pill"><input type="radio" name="c-${k}-${uid}" data-k="${k}" value="${esc(String(v))}"${String(c[k]) === String(v) ? ' checked' : ''}><span>${esc(l)}</span></label>`).join('')}</div></fieldset>`;
-    const box = (k, label) => `<label class="dl-check"><input type="checkbox" data-k="${k}"${c[k] ? ' checked' : ''}><span>${t(label)}</span></label>`;
+    const box = (k, label) => `<label class="dl-pill dl-pill--toggle"><input type="checkbox" data-k="${k}"${c[k] ? ' checked' : ''}><span>${t(label)}</span></label>`;
     $('#dl-custom-title').textContent = d.name;
     $('#dl-custom-body').innerHTML =
       (add ? `<div class="dl-custom__qty"><span>${t('Darab')}</span><span class="dl-qty"><button type="button" data-q="-1" aria-label="${t('Eggyel kevesebb')}">−</button><output id="dl-custom-qty" aria-live="polite">1</output><button type="button" data-q="1" aria-label="${t('Eggyel több')}">+</button></span></div>` : '') +
       (d.sizes.length ? pills('size', 'Méret', d.sizes.map((s, i) => [i, `${s.label} · ${ft(s.price)}`])) : '') +
       (d.temp === 'both' ? pills('iced', 'Forró vagy jeges', [['false', t('Forró')], ['true', t('Jeges')]]) : '') +
       (d.milks.length ? pills('milk', 'Tej', [['', t('Tehéntej')], ...d.milks.map((m) => [m, t(MILKS[m] || m)])]) : '') +
-      (offers(d, 'decaf') || offers(d, 'cream') ? `<div class="dl-custom__group">${offers(d, 'decaf') ? box('decaf', 'Koffeinmentes') : ''}${offers(d, 'cream') ? box('cream', 'Tejszínhabbal') : ''}</div>` : '') +
+      (offers(d, 'decaf') || offers(d, 'cream') ? `<div class="dl-custom__group dl-custom__pills">${offers(d, 'decaf') ? box('decaf', 'Koffeinmentes') : ''}${offers(d, 'cream') ? box('cream', 'Tejszínhabbal') : ''}</div>` : '') +
       `<div class="dl-field dl-custom__note"><label for="dl-custom-note">${t('Megjegyzés a baristának')} <i>(${t('nem kötelező')})</i></label><input id="dl-custom-note" type="text" data-k="note" maxlength="80" value="${esc(c.note)}" placeholder="${t('Pl. extra forró, kevés hab')}" autocomplete="off"></div>`;
     $('#dl-custom-done').textContent = t('Kész'); $('#dl-custom').dl.label();
     sheetApi.open();
@@ -438,11 +445,12 @@
     let whoShown = false; // the empty name fields stay red once the guest tried to send
     function renderCups() {
       $('#dl-cups-empty').hidden = !!cups.length; $('#dl-cups-hint').hidden = !cups.length;
-      cupsEl.innerHTML = cups.map((c, i) => { const d = menu.get(c.id), extra = [...cupOpts(c), c.note.trim() && `„${c.note.trim()}”`].filter(Boolean); return `
+      cupsEl.innerHTML = cups.map((c, i) => { const d = menu.get(c.id), extra = cupLine(c).slice(1); return `
         <li class="dl-cup" data-uid="${c.uid}">
-          <button type="button" class="dl-cup__name${extra.length ? ' is-set' : ''}" data-custom aria-label="${esc(`${t('Testreszabás')}: ${i + 1}. ${d.name}`)}"><b>${esc(d.name)}</b><small data-price>${esc([ft(cupPrice(c)), ...extra].join(' · '))}</small></button>
+          <button type="button" class="dl-cup__name${extra.length ? ' is-set' : ''}" data-custom aria-label="${esc(`${t('Testreszabás')}: ${i + 1}. ${d.name}`)}"><b>${esc(d.name)}</b><small data-price>${esc(cupLine(c).join(' · '))}</small></button>
           <input type="text" class="dl-cup__who" data-k="who" value="${esc(c.who)}" maxlength="24" autocomplete="off" required${whoShown && !c.who.trim() ? ' aria-invalid="true" aria-describedby="err-who"' : ''} placeholder="${t('Név')}" aria-label="${esc(`${t('Név a pohárra')}: ${i + 1}. ${d.name}`)}">
           <span class="dl-cup__qty"><button type="button" data-del aria-label="${esc(`${t('Pohár törlése')}: ${d.name}`)}">−</button><button type="button" data-dup aria-label="${esc(`${t('Még egy ugyanilyen')}: ${d.name}`)}">+</button></span>
+          ${cupPills(c, d)}
         </li>`; }).join('');
     }
     catsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-cat]'); if (!b) return; cat = b.dataset.cat; renderMenu(); $(`[data-cat="${cat}"]`, catsEl).focus(); });
@@ -486,8 +494,13 @@
       ($$('[data-del]', cupsEl)[Math.min(i, cups.length - 1)] || $('.dl-item button', menuEl))?.focus();
     });
     cupsEl.addEventListener('input', (e) => {
-      const li = e.target.closest('.dl-cup'); if (!li || e.target.dataset.k !== 'who') return;
+      const li = e.target.closest('.dl-cup'), k = e.target.dataset.k; if (!li || !k) return;
       const c = cups.find((x) => x.uid === li.dataset.uid); readOpt(c, e.target);
+      if (k !== 'who') {
+        const line = cupLine(c);
+        $('[data-price]', li).textContent = line.join(' · '); $('.dl-cup__name', li).classList.toggle('is-set', line.length > 1);
+        summary(); return;
+      }
       if (whoShown) { if (c.who.trim()) e.target.removeAttribute('aria-invalid'); if (!cups.some((x) => !x.who.trim())) check1('who'); }
     });
 
